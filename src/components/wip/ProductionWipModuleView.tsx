@@ -112,7 +112,7 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
     try {
       const [metricsRes, mosRes, transfersRes, routingsRes] = await Promise.all([
         fetch('/api/wip/dashboard').then(r => r.json()).catch(() => ({ success: false })),
-        fetch('/api/wip/orders').then(r => r.json()).catch(() => ({ success: false })),
+        fetch('/api/wip/manufacturing-orders').then(r => r.json()).catch(() => ({ success: false })),
         fetch('/api/wip/transfers').then(r => r.json()).catch(() => ({ success: false })),
         fetch('/api/routings').then(r => r.json()).catch(() => ({ success: false })),
       ]);
@@ -155,7 +155,7 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
   // API Handlers
   const handleCreateMo = async (payload: any) => {
     try {
-      const res = await fetch('/api/wip/orders', {
+      const res = await fetch('/api/wip/manufacturing-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

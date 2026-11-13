@@ -150,7 +150,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
         return;
       }
       await loadPlanningData();
-      setPlanToast('پیشنهاد برنامه جدید از اطلاعات PostgreSQL ایجاد شد. برای بررسی و تأیید به تب پیشنهاد برنامه بروید.');
+      setPlanToast(data.message || 'پیشنهاد برنامه جدید تولید با موفقیت ایجاد شد. برای بررسی و تأیید به تب پیشنهاد برنامه بروید.');
       if (onGlobalRefresh) await onGlobalRefresh();
     } catch (err) {
       setPlanToast(err instanceof Error ? err.message : 'خطا در تولید پیشنهاد برنامه');
@@ -212,7 +212,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
         title: `ویرایش سفارش ${orderId}`,
         details: `بروزرسانی تیراژ، موعد تحویل و اولویت (${payload.priority === 1 ? 'فوری' : 'عادی'})`,
       });
-      setPlanToast('تغییرات سفارش در PostgreSQL ذخیره شد.');
+      setPlanToast(data.message || 'تغییرات سفارش با موفقیت ذخیره شد و الزامات MRP بروزرسانی گردید.');
       return { success: true };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'خطا در ویرایش سفارش' };
@@ -240,7 +240,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
             title: `حذف سفارش ${order.orderNumber}`,
             details: `سفارش مشتری ${order.customerName} حذف شد.`,
           });
-          setPlanToast('سفارش از PostgreSQL حذف شد.');
+          setPlanToast(data.message || 'سفارش مشتری با موفقیت حذف شد.');
         } catch (error) {
           setPlanToast(error instanceof Error ? error.message : 'حذف سفارش ناموفق بود.');
         }
@@ -267,7 +267,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
         title: `تغییر اولویت سفارش ${orderId}`,
         details: `اولویت به ${newPriority === 1 ? 'فوری' : newPriority === 2 ? 'عادی' : 'مازاد'} تغییر یافت.`,
       });
-      setPlanToast(`اولویت سفارش در PostgreSQL به ${newPriority === 1 ? 'فوری' : newPriority === 2 ? 'عادی' : 'مازاد'} تغییر یافت.`);
+      setPlanToast(data.message || `اولویت سفارش به ${newPriority === 1 ? 'فوری' : newPriority === 2 ? 'عادی' : 'مازاد'} تغییر یافت.`);
     } catch (error) {
       await loadPlanningData();
       setPlanToast(error instanceof Error ? error.message : 'تغییر اولویت سفارش ناموفق بود.');

@@ -127,7 +127,14 @@ export const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({
     .filter(d => (d.documentType === 'RECEIPT_RAW_MATERIAL' || d.documentType === 'RECEIPT_FINISHED_GOODS') && d.postingStatus === 'POSTED')
     .reduce((s, d) => s + d.totalWeightKg, 0);
   const totalWeightOut = documents
-    .filter(d => d.documentType === 'ISSUE_RAW_MATERIAL' && d.postingStatus === 'POSTED')
+    .filter(
+      d =>
+        (d.documentType === 'ISSUE_RAW_MATERIAL' ||
+          d.documentType === 'ISSUE_FINISHED_GOODS' ||
+          d.documentType === 'DELIVERY_CUSTOMER' ||
+          d.documentType === 'SHIPMENT_CUSTOMER') &&
+        d.postingStatus === 'POSTED'
+    )
     .reduce((s, d) => s + d.totalWeightKg, 0);
 
   const handleExportCsv = () => {
@@ -185,7 +192,6 @@ export const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({
       if (res.success) {
         setReversalDoc(null);
         setReversalReason('');
-        await onRefresh();
       } else {
         setReversalError(res.message);
       }

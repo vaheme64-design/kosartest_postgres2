@@ -58,6 +58,7 @@ import { ParallelProductionFlowView } from './wip/ParallelProductionFlowView';
 import { TraceabilityTagModal } from './wip/TraceabilityTagModal';
 import { toPersianDigits } from '../utils/formatters';
 import { MasterDataSkeleton } from './ui/Skeleton';
+import { useEnterpriseUx } from '../context/EnterpriseUxContext';
 
 export type MasterSubSection =
   | 'HUB'
@@ -295,7 +296,38 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
     return () => window.removeEventListener('kpims:contextual-action', handleContextual);
   }, []);
 
+  const { requestConfirm } = useEnterpriseUx();
+  const [masterBanner, setMasterBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const notifyMaster = (type: 'success' | 'error', message: string) => {
+    setMasterBanner({ type, message });
+    setTimeout(() => setMasterBanner(null), 5000);
+  };
+
   const [rawSheets, setRawSheets] = useState<RawSheetSpec[]>(INITIAL_RAW_SHEETS);
+
+  useEffect(() => {
+    const rawParts = parts.filter(p => p.category === 'RAW_MATERIAL');
+    if (rawParts.length === 0) return;
+    setRawSheets(prev => {
+      const existingCodes = new Set(prev.map(s => s.code));
+      const syncedFromCatalog: RawSheetSpec[] = rawParts
+        .filter(p => !existingCodes.has(p.code))
+        .map(p => ({
+          id: `RM-PART-${p.id}`,
+          code: p.code,
+          name: p.name,
+          grade: p.materialGrade || 'DC01A',
+          thicknessMm: p.thicknessMm || 2.0,
+          dimensionsMm: 'کويل / شیت استاندارد',
+          sheetWeightKg: p.weightPerUnitKg || 1,
+          unit: p.unit === 'KG' ? 'کیلوگرم' : 'عدد',
+          contractsCount: 1,
+          active: true,
+        }));
+      return syncedFromCatalog.length > 0 ? [...syncedFromCatalog, ...prev] : prev;
+    });
+  }, [parts]);
+
   const [sheetSearch, setSheetSearch] = useState('');
   const [editingSheet, setEditingSheet] = useState<RawSheetSpec | null>(null);
   const [isNewSheetModalOpen, setIsNewSheetModalOpen] = useState(false);
@@ -478,27 +510,37 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await loadDynamicMasterData();
         setIsWarehouseModalOpen(false);
         setEditingWarehouse(null);
+        notifyMaster('success', 'اطلاعات انبار با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت انبار');
+        notifyMaster('error', data.error || 'خطا در ثبت انبار');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteWarehouse = async (id: string) => {
-    if (!confirm('آیا از حذف این انبار اطمینان دارید؟')) return;
-    try {
-      const res = await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-      } else {
-        alert(data.error || 'خطا در حذف انبار');
-      }
-    } catch {
-      alert('خطا در حذف انبار');
-    }
+  const handleDeleteWarehouse = (id: string) => {
+    requestConfirm({
+      title: 'حذف انبار',
+      message: 'آیا از حذف این انبار اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            notifyMaster('success', 'انبار با موفقیت حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف انبار');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف انبار');
+        }
+      },
+    });
   };
 
   const handleSaveUnit = async (e: React.FormEvent) => {
@@ -514,27 +556,37 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await loadDynamicMasterData();
         setIsUnitModalOpen(false);
         setEditingUnit(null);
+        notifyMaster('success', 'واحد سنجش با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت واحد');
+        notifyMaster('error', data.error || 'خطا در ثبت واحد');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteUnit = async (id: string) => {
-    if (!confirm('آیا از حذف این واحد اطمینان دارید؟')) return;
-    try {
-      const res = await fetch(`/api/units/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-      } else {
-        alert(data.error || 'خطا در حذف واحد');
-      }
-    } catch {
-      alert('خطا در حذف واحد');
-    }
+  const handleDeleteUnit = (id: string) => {
+    requestConfirm({
+      title: 'حذف واحد سنجش',
+      message: 'آیا از حذف این واحد سنجش اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/units/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            notifyMaster('success', 'واحد سنجش با موفقیت حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف واحد');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف واحد');
+        }
+      },
+    });
   };
 
   const handleSaveCustomer = async (e: React.FormEvent) => {
@@ -550,27 +602,37 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await loadDynamicMasterData();
         setIsCustomerModalOpen(false);
         setEditingCustomer(null);
+        notifyMaster('success', 'اطلاعات مشتری با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت مشتری');
+        notifyMaster('error', data.error || 'خطا در ثبت مشتری');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (!confirm('آیا از حذف این مشتری اطمینان دارید؟')) return;
-    try {
-      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-      } else {
-        alert(data.error || 'خطا در حذف مشتری');
-      }
-    } catch {
-      alert('خطا در حذف مشتری');
-    }
+  const handleDeleteCustomer = (id: string) => {
+    requestConfirm({
+      title: 'حذف مشتری',
+      message: 'آیا از حذف این مشتری اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            notifyMaster('success', 'مشتری با موفقیت حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف مشتری');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف مشتری');
+        }
+      },
+    });
   };
 
   const handleSaveShift = async (e: React.FormEvent) => {
@@ -586,27 +648,37 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await loadDynamicMasterData();
         setIsShiftModalOpen(false);
         setEditingShift(null);
+        notifyMaster('success', 'شیفت کاری با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت شیفت');
+        notifyMaster('error', data.error || 'خطا در ثبت شیفت');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteShift = async (id: string) => {
-    if (!confirm('آیا از حذف این شیفت اطمینان دارید؟')) return;
-    try {
-      const res = await fetch(`/api/shifts/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-      } else {
-        alert(data.error || 'خطا در حذف شیفت');
-      }
-    } catch {
-      alert('خطا در حذف شیفت');
-    }
+  const handleDeleteShift = (id: string) => {
+    requestConfirm({
+      title: 'حذف شیفت کاری',
+      message: 'آیا از حذف این شیفت اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/shifts/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            notifyMaster('success', 'شیفت کاری با موفقیت حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف شیفت');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف شیفت');
+        }
+      },
+    });
   };
 
   const handleSaveCarModel = async (e: React.FormEvent) => {
@@ -622,27 +694,37 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await loadDynamicMasterData();
         setIsCarModelModalOpen(false);
         setEditingCarModel(null);
+        notifyMaster('success', 'مدل خودرو با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت مدل خودرو');
+        notifyMaster('error', data.error || 'خطا در ثبت مدل خودرو');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteCarModel = async (id: string) => {
-    if (!confirm('آیا از حذف این مدل خودرو اطمینان دارید؟')) return;
-    try {
-      const res = await fetch(`/api/car-models/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-      } else {
-        alert(data.error || 'خطا در حذف مدل خودرو');
-      }
-    } catch {
-      alert('خطا در حذف مدل خودرو');
-    }
+  const handleDeleteCarModel = (id: string) => {
+    requestConfirm({
+      title: 'حذف مدل خودرو',
+      message: 'آیا از حذف این مدل خودرو اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/car-models/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            notifyMaster('success', 'مدل خودرو با موفقیت حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف مدل خودرو');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف مدل خودرو');
+        }
+      },
+    });
   };
 
   const handleSaveOperation = async (e: React.FormEvent) => {
@@ -658,34 +740,44 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await loadDynamicMasterData();
         setIsOperationModalOpen(false);
         setEditingOperation(null);
+        notifyMaster('success', 'عملیات استاندارد با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت عملیات');
+        notifyMaster('error', data.error || 'خطا در ثبت عملیات');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteOperation = async (id: string) => {
-    if (!confirm('آیا از حذف این عملیات استاندارد اطمینان دارید؟')) return;
-    try {
-      const res = await fetch(`/api/operations/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-      } else {
-        alert(data.error || 'خطا در حذف عملیات');
-      }
-    } catch {
-      alert('خطا در حذف عملیات');
-    }
+  const handleDeleteOperation = (id: string) => {
+    requestConfirm({
+      title: 'حذف عملیات استاندارد',
+      message: 'آیا از حذف این عملیات استاندارد اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/operations/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            notifyMaster('success', 'عملیات استاندارد حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف عملیات');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف عملیات');
+        }
+      },
+    });
   };
 
   // Factory Halls Handlers (مدیریت سالن‌های استقرار کارخانه)
   const handleSaveHall = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hallForm.code || !hallForm.name) {
-      alert('کد و نام سالن الزامی است.');
+      notifyMaster('error', 'کد و نام سالن الزامی است.');
       return;
     }
     try {
@@ -700,43 +792,54 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         await onRefresh();
         setIsHallModalOpen(false);
         setEditingHall(null);
+        notifyMaster('success', 'اطلاعات سالن تولید با موفقیت ذخیره شد.');
       } else {
-        alert(data.error || 'خطا در ثبت سالن');
+        notifyMaster('error', data.error || 'خطا در ثبت سالن');
       }
     } catch {
-      alert('خطای ارتباط با سرور هنگام ثبت سالن');
+      notifyMaster('error', 'خطای ارتباط با سرور هنگام ثبت سالن');
     }
   };
 
-  const handleDeleteHall = async (id: string) => {
-    if (!confirm('آیا از حذف این سالن تولید اطمینان دارید؟')) return;
-    try {
-      if (onDeleteHall) {
-        const res = await onDeleteHall(id);
-        if (res.success) {
-          await loadDynamicMasterData();
-          await onRefresh();
-          return;
+  const handleDeleteHall = (id: string) => {
+    requestConfirm({
+      title: 'حذف سالن تولید',
+      message: 'آیا از حذف این سالن تولید اطمینان دارید؟',
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          if (onDeleteHall) {
+            const res = await onDeleteHall(id);
+            if (res.success) {
+              await loadDynamicMasterData();
+              await onRefresh();
+              notifyMaster('success', 'سالن تولید با موفقیت حذف شد.');
+              return;
+            }
+          }
+          const res = await fetch(`/api/halls/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            await loadDynamicMasterData();
+            await onRefresh();
+            notifyMaster('success', 'سالن تولید با موفقیت حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف سالن');
+          }
+        } catch {
+          notifyMaster('error', 'خطای ارتباط با سرور هنگام حذف سالن');
         }
-      }
-      const res = await fetch(`/api/halls/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        await loadDynamicMasterData();
-        await onRefresh();
-      } else {
-        alert(data.error || 'خطا در حذف سالن');
-      }
-    } catch {
-      alert('خطای ارتباط با سرور هنگام حذف سالن');
-    }
+      },
+    });
   };
 
   // Process Category Handlers (مدیریت دسته‌بندی‌های فرآیندی پویا)
   const handleAddProcessCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryCode.trim() || !newCategoryName.trim()) {
-      alert('کد و نام دسته فرآیندی الزامی است.');
+      notifyMaster('error', 'کد و نام دسته فرآیندی الزامی است.');
       return;
     }
     const cleanCode = newCategoryCode.trim().toUpperCase().replace(/\s+/g, '_');
@@ -763,27 +866,37 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         setNewCategoryCode('');
         setNewCategoryName('');
         setIsProcessCategoryModalOpen(false);
+        notifyMaster('success', `دسته فرآیندی «${newCategoryName.trim()}» با موفقیت ثبت شد.`);
       } else {
-        alert(data.error || 'خطا در ثبت دسته فرآیندی');
+        notifyMaster('error', data.error || 'خطا در ثبت دسته فرآیندی');
       }
     } catch {
-      alert('خطای ارتباط با سرور');
+      notifyMaster('error', 'خطای ارتباط با سرور');
     }
   };
 
-  const handleDeleteProcessCategory = async (code: string) => {
-    if (!confirm(`آیا از حذف دسته فرآیندی «${code}» اطمینان دارید؟`)) return;
-    try {
-      const res = await fetch(`/api/processes/${code}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        setProcessCategories(prev => prev.filter(p => p.code !== code));
-      } else {
-        alert(data.error || 'خطا در حذف دسته فرآیندی');
-      }
-    } catch {
-      alert('خطا در حذف دسته فرآیندی');
-    }
+  const handleDeleteProcessCategory = (code: string) => {
+    requestConfirm({
+      title: 'حذف دسته فرآیندی',
+      message: `آیا از حذف دسته فرآیندی «${code}» اطمینان دارید؟`,
+      confirmLabel: 'حذف شود',
+      cancelLabel: 'انصراف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/processes/${code}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            setProcessCategories(prev => prev.filter(p => p.code !== code));
+            notifyMaster('success', 'دسته فرآیندی حذف شد.');
+          } else {
+            notifyMaster('error', data.error || 'خطا در حذف دسته فرآیندی');
+          }
+        } catch {
+          notifyMaster('error', 'خطا در حذف دسته فرآیندی');
+        }
+      },
+    });
   };
 
   // Hub Cards exactly matching Uploaded Image 1 (1_1da4846f.jpg)
@@ -980,6 +1093,20 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
   return (
     <div className="space-y-5">
+      {masterBanner && (
+        <div
+          className={`px-4 py-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-2xs ${
+            masterBanner.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}
+        >
+          <span>{masterBanner.message}</span>
+          <button type="button" onClick={() => setMasterBanner(null)} className="cursor-pointer opacity-70 hover:opacity-100">
+            ✕
+          </button>
+        </div>
+      )}
       {/* Grafana-Inspired Header & Flat Section Selector (Zero Nested Tabs) */}
       <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">

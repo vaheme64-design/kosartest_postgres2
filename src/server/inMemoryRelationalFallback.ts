@@ -1397,6 +1397,13 @@ export function saveFallbackReportConfig(payload: any): SavedReportConfig {
   return config;
 }
 
+export function deleteFallbackReportConfig(id: string): boolean {
+  const idx = fallbackSavedReportConfigsStore.findIndex(c => c.id === id);
+  if (idx === -1) return false;
+  fallbackSavedReportConfigsStore.splice(idx, 1);
+  return true;
+}
+
 // =========================================================================
 // LIVE-STORE MANAGEMENT REPORT FALLBACKS (PARITY WHEN POSTGRES IS UNSET)
 // =========================================================================

@@ -267,14 +267,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         .reduce((s, tx) => s + (tx.quantity || 0), 0);
 
       const currentOnHand = liveItem
-        ? Math.max(1, liveItem.onHandAfterConsumption)
-        : Math.max(1, item.minStockLevel);
+        ? Math.max(0, liveItem.onHandAfterConsumption)
+        : Math.max(0, item.minStockLevel);
       const totalIssuedOrDelivered = liveItem
-        ? Math.max(txOutQty, liveItem.totalConsumed, liveItem.totalEntered)
-        : Math.max(txOutQty, 600);
+        ? Math.max(txOutQty, liveItem.totalConsumed)
+        : txOutQty;
 
       const avgInventoryQty = currentOnHand;
-      const consumption30d = Math.max(250, totalIssuedOrDelivered);
+      const consumption30d = totalIssuedOrDelivered;
       const consumption60d = Math.round(consumption30d * 1.95);
       const consumption90d = Math.round(consumption30d * 2.9);
 
@@ -405,31 +405,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <ArrowLeft className="w-3 h-3" />
               </button>
             </div>
-            <div className="space-y-1.5 text-xs">
+            <div className="space-y-1.5 text-xs tabular-nums">
               <div className="flex items-center justify-between py-1 border-b border-slate-200/70">
-                <span className="text-slate-600 font-medium">رول ورق DC01A (ذوب HT-1404-ECU01):</span>
+                <span className="text-slate-600 font-medium">
+                  {tierGroups.coilItem?.partName || 'رول ورق'} ({coils[0]?.heatNumber || 'کلاف فعال'}):
+                </span>
                 <div className="font-mono font-bold text-slate-900">
-                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.coilItem?.onHandAfterConsumption ?? summary?.rawMaterialKg ?? 7415)}</span> kg
+                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.coilItem?.onHandAfterConsumption ?? summary?.rawMaterialKg ?? 0)}</span> kg
                   <span className="text-[10px] text-rose-600 mr-1.5">
-                    (مصرف: {formatNumber(tierGroups.coilItem?.totalConsumed ?? 1005)} kg)
+                    (مصرف: {formatNumber(tierGroups.coilItem?.totalConsumed ?? 0)} kg)
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between py-1 border-b border-slate-200/70">
-                <span className="text-slate-600 font-medium">مهره جوشی M6 (ضریب ۱۵ عدد):</span>
+                <span className="text-slate-600 font-medium">{tierGroups.nutItem?.partName || 'مهره جوشی M6'}:</span>
                 <div className="font-mono font-bold text-slate-900">
-                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.nutItem?.onHandAfterConsumption ?? 14250)}</span> عدد
+                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.nutItem?.onHandAfterConsumption ?? 0)}</span> عدد
                   <span className="text-[10px] text-rose-600 mr-1.5">
-                    (مصرف: {formatNumber(tierGroups.nutItem?.totalConsumed ?? 10750)})
+                    (مصرف: {formatNumber(tierGroups.nutItem?.totalConsumed ?? 0)})
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between pt-0.5">
-                <span className="text-slate-600 font-medium">پیچ جوشی M6×20 (ضریب ۲ عدد):</span>
+                <span className="text-slate-600 font-medium">{tierGroups.boltItem?.partName || 'پیچ جوشی M6×20'}:</span>
                 <div className="font-mono font-bold text-slate-900">
-                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.boltItem?.onHandAfterConsumption ?? 3700)}</span> عدد
+                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.boltItem?.onHandAfterConsumption ?? 0)}</span> عدد
                   <span className="text-[10px] text-rose-600 mr-1.5">
-                    (مصرف: {formatNumber(tierGroups.boltItem?.totalConsumed ?? 1300)})
+                    (مصرف: {formatNumber(tierGroups.boltItem?.totalConsumed ?? 0)})
                   </span>
                 </div>
               </div>
@@ -447,17 +449,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 ایستگاه جوش و مونتاژ
               </span>
             </div>
-            <div className="space-y-2 text-xs">
+            <div className="space-y-2 text-xs tabular-nums">
               <div className="p-2 rounded-lg bg-white border border-indigo-100 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-800">صفحه براکت اصلی (WIP-ECU-MAIN-BRK)</div>
+                  <div className="font-bold text-slate-800">{tierGroups.wipMain?.partName || 'صفحه براکت اصلی'} (WIP-ECU-MAIN-BRK)</div>
                   <div className="text-[10px] text-slate-500 font-mono">
-                    ورودی از پرس: {formatNumber(tierGroups.wipMain?.totalEntered ?? 650)} | مصرف در مونتاژ: {formatNumber(tierGroups.wipMain?.totalConsumed ?? 400)}
+                    ورودی: {formatNumber(tierGroups.wipMain?.totalEntered ?? 0)} | مصرف در مونتاژ: {formatNumber(tierGroups.wipMain?.totalConsumed ?? 0)}
                   </div>
                 </div>
                 <div className="text-left font-mono">
                   <div className="text-sm font-black text-indigo-700">
-                    {formatNumber(tierGroups.wipMain?.onHandAfterConsumption ?? 250)} <span className="text-[10px]">عدد</span>
+                    {formatNumber(tierGroups.wipMain?.onHandAfterConsumption ?? 0)} <span className="text-[10px]">عدد</span>
                   </div>
                   <div className="text-[10px] text-slate-500">مانده پای خط</div>
                 </div>
@@ -465,14 +467,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="p-2 rounded-lg bg-white border border-indigo-100 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-800">قطعه مکمل براکت (WIP-ECU-COMP-BRK)</div>
+                  <div className="font-bold text-slate-800">{tierGroups.wipComp?.partName || 'قطعه مکمل براکت'} (WIP-ECU-COMP-BRK)</div>
                   <div className="text-[10px] text-slate-500 font-mono">
-                    ورودی از پرس: {formatNumber(tierGroups.wipComp?.totalEntered ?? 650)} | مصرف در مونتاژ: {formatNumber(tierGroups.wipComp?.totalConsumed ?? 400)}
+                    ورودی: {formatNumber(tierGroups.wipComp?.totalEntered ?? 0)} | مصرف در مونتاژ: {formatNumber(tierGroups.wipComp?.totalConsumed ?? 0)}
                   </div>
                 </div>
                 <div className="text-left font-mono">
                   <div className="text-sm font-black text-indigo-700">
-                    {formatNumber(tierGroups.wipComp?.onHandAfterConsumption ?? 250)} <span className="text-[10px]">عدد</span>
+                    {formatNumber(tierGroups.wipComp?.onHandAfterConsumption ?? 0)} <span className="text-[10px]">عدد</span>
                   </div>
                   <div className="text-[10px] text-slate-500">مانده پای خط</div>
                 </div>
@@ -481,36 +483,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Tier 3: Finished Goods & Traceability Status */}
-          <div className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200/90 flex flex-col justify-between gap-2.5">
+          <div className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200/90 flex flex-col justify-between gap-2.5 tabular-nums">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-600" />
                 سطح ۳: محصول نهایی آماده تحویل (WH-FINISHED)
               </span>
               <span className="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                SAPCO-ASY-ECU-BRK-01
+                {tierGroups.fgBrk?.partCode || 'SAPCO-ASY-ECU-BRK-01'}
               </span>
             </div>
 
             <div className="p-2.5 rounded-lg bg-white border border-emerald-200/80 flex items-center justify-between">
               <div>
                 <div className="text-xs font-bold text-slate-900">
-                  مجموعه براکت ضدسرقت رایانه موتور (رنگ کاتافورز ED)
+                  {tierGroups.fgBrk?.partName || 'مجموعه براکت ضدسرقت رایانه موتور'}
                 </div>
                 <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                  وزن خالص: ۱.۴۸ kg | اسناد رهگیری ثبت‌شده: {toPersianDigits(tierGroups.totalPostedDocs || 7)} سند رسمی
+                  وزن خالص: {toPersianDigits(tierGroups.fgBrk?.unitWeightKg ?? 1.48)} kg | تراکنش رهگیری: {toPersianDigits(tierGroups.totalPostedDocs)} ردیف
                 </div>
               </div>
               <div className="text-left font-mono">
                 <div className="text-xl font-black text-emerald-700">
-                  {formatNumber(tierGroups.fgBrk?.onHandAfterConsumption ?? summary?.totalFinishedPcs ?? 400)}
+                  {formatNumber(tierGroups.fgBrk?.onHandAfterConsumption ?? summary?.totalFinishedPcs ?? 0)}
                 </div>
                 <div className="text-[10px] font-bold text-emerald-800">عدد موجودی قطعی</div>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-[11px] text-slate-600 pt-0.5">
-              <span>زنجیره رهگیری: ذوب HT-1404-ECU01 ← کلاف CP-1404-ECU-01 ← دستورکارها</span>
+              <span>زنجیره رهگیری: {coils[0]?.heatNumber ? `ذوب ${coils[0].heatNumber} ← کلاف ${coils[0].coilNumber}` : 'رهگیری زنده اسناد کاردکس'}</span>
               <button
                 type="button"
                 onClick={() => setActiveWorkspace('TRACEABILITY_FLOW')}
@@ -551,7 +553,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <GitBranch className="w-4 h-4" />
             <span>۲. زنجیره رهگیری اسناد (از کلاف تا محصول) و گراف جریان مواد</span>
             <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px]">
-              {toPersianDigits(docChain.length || 7)} سند
+              {toPersianDigits(docChain.length)} سند
             </span>
           </button>
 

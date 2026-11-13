@@ -190,6 +190,7 @@ import {
   postFallbackWipOperationProduction,
   getFallbackSavedReportConfigs,
   saveFallbackReportConfig,
+  deleteFallbackReportConfig,
   getFallbackDashboardSummary,
   getFallbackPlanVsActual,
   getFallbackProductionBacklog,
@@ -2365,16 +2366,16 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
       lines,
       totalQuantity: Math.round(totalQty * 1000) / 1000,
       totalWeightKg: Math.round(totalWeightKg * 1000) / 1000,
-      createdByUid: payload.user?.uid || 'USR-OP-01',
-      createdByName: payload.user?.displayName || 'کاربر سیستم',
+      createdByUid: payload.user?.uid || payload.createdByUid || 'USR-OP-01',
+      createdByName: payload.user?.displayName || payload.createdByName || 'کاربر سیستم',
       createdAt: now,
       updatedAt: now,
     };
 
     if (autoPost) {
       const user = {
-        uid: payload.user?.uid || 'USR-OP-01',
-        displayName: payload.user?.displayName || 'کاربر سیستم',
+        uid: payload.user?.uid || payload.createdByUid || 'USR-OP-01',
+        displayName: payload.user?.displayName || payload.createdByName || 'کاربر سیستم',
       };
       const previousReservations = JSON.parse(JSON.stringify(reservationsStore)) as InventoryReservation[];
       const postResult = atomicPostDocument(
@@ -2389,11 +2390,12 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, error: postResult.error });
       }
 
-      // Do not report a posted document until the relational ledger transaction commits.
-      const dbResult = await postDocumentInDbTransaction(newDoc, user);
-      if (!dbResult.success) {
-        reservationsStore.splice(0, reservationsStore.length, ...previousReservations);
-        return res.status(409).json({ success: false, error: dbResult.error || 'ثبت قطعی در PostgreSQL ناموفق بود.' });
+      if (isDatabaseUrlConfigured()) {
+        const dbResult = await postDocumentInDbTransaction(newDoc, user);
+        if (!dbResult.success) {
+          reservationsStore.splice(0, reservationsStore.length, ...previousReservations);
+          return res.status(409).json({ success: false, error: dbResult.error || 'ثبت قطعی در PostgreSQL ناموفق بود.' });
+        }
       }
 
       inventoryDocsStore.unshift(newDoc);
@@ -2546,14 +2548,15 @@ apiRouter.post('/inventory/documents/:id/post', async (req: Request, res: Respon
       return res.status(400).json({ success: false, error: postResult.error });
     }
 
-    // A successful response is sent only after the PostgreSQL transaction commits.
-    const dbResult = await postDocumentInDbTransaction(doc, postUser);
-    if (!dbResult.success) {
-      Object.assign(doc, previousState);
-      return res.status(409).json({
-        success: false,
-        error: dbResult.error || 'ثبت سند در PostgreSQL انجام نشد؛ وضعیت سند به حالت قبل بازگردانده شد.',
-      });
+    if (isDatabaseUrlConfigured()) {
+      const dbResult = await postDocumentInDbTransaction(doc, postUser);
+      if (!dbResult.success) {
+        Object.assign(doc, previousState);
+        return res.status(409).json({
+          success: false,
+          error: dbResult.error || 'ثبت سند در PostgreSQL انجام نشد؛ وضعیت سند به حالت قبل بازگردانده شد.',
+        });
+      }
     }
 
     if (postResult.auditRecord) {
@@ -2565,7 +2568,7 @@ apiRouter.post('/inventory/documents/:id/post', async (req: Request, res: Respon
 
     return res.json({
       success: true,
-      message: `سند شماره «${doc.documentNumber}» با موفقیت در PostgreSQL، کاردکس و موجودی رسمی ثبت قطعی گردید.`,
+      message: `سند شماره «${doc.documentNumber}» با موفقیت در کاردکس و موجودی رسمی ثبت قطعی گردید.`,
       data: doc,
     });
   } catch (error) {
@@ -2582,9 +2585,9 @@ apiRouter.post('/inventory/documents/:id/post', async (req: Request, res: Respon
 apiRouter.post('/inventory/documents/:id/reverse', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { reason, user } = req.body;
+    const { reason, user, reversedByUid, reversedByName } = req.body || {};
 
-    if (!reason || !reason.trim()) {
+    if (!reason || !String(reason).trim()) {
       return res.status(400).json({ success: false, error: 'ذکر دلیل ابطال و اصلاح سند الزامی است.' });
     }
 
@@ -2594,14 +2597,56 @@ apiRouter.post('/inventory/documents/:id/reverse', async (req: Request, res: Res
     }
 
     const targetDoc = inventoryDocsStore[docIndex];
-    const revUser = {
-      uid: user?.uid || 'USR-ADMIN',
-      displayName: user?.displayName || 'مدیر سیستم',
+    const previousState = {
+      postingStatus: targetDoc.postingStatus,
+      updatedAt: targetDoc.updatedAt,
     };
 
-    const reversalResult = createReversalDocument(targetDoc, reason, revUser);
+    const revUser = {
+      uid: user?.uid || reversedByUid || 'USR-ADMIN',
+      displayName: user?.displayName || reversedByName || 'مدیر سیستم',
+    };
+
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const reversalResult = createReversalDocument(targetDoc, String(reason).trim(), revUser, balances);
     if (!reversalResult.success || !reversalResult.reversalDocument) {
       return res.status(400).json({ success: false, error: reversalResult.error });
+    }
+
+    if (isDatabaseUrlConfigured()) {
+      const dbResult = await postDocumentInDbTransaction(reversalResult.reversalDocument, revUser);
+      if (!dbResult.success) {
+        targetDoc.postingStatus = previousState.postingStatus;
+        targetDoc.updatedAt = previousState.updatedAt;
+        return res.status(409).json({
+          success: false,
+          error: dbResult.error || 'ثبت سند اصلاحی در PostgreSQL ناموفق بود؛ وضعیت سند به حالت قبل بازگردانده شد.',
+        });
+      }
+    }
+
+    // Reconcile physical coil weights when reversing a raw coil issue or receipt
+    if (targetDoc.documentType === 'ISSUE_RAW_MATERIAL') {
+      for (const line of targetDoc.lines) {
+        if (!line.lotNumber) continue;
+        const coil = physicalCoilsStore.find(c => c.coilId === line.lotNumber || c.coilPackNumber === line.lotNumber);
+        if (coil) {
+          const restoredKg = Number(line.quantityKg || line.quantity || 0);
+          coil.remainingWeightKg = Math.min(coil.originalWeightKg, coil.remainingWeightKg + restoredKg);
+          coil.physicalStatus =
+            coil.remainingWeightKg >= coil.originalWeightKg - 0.01 ? 'AVAILABLE' : 'PARTIALLY_ISSUED';
+        }
+      }
+    } else if (targetDoc.documentType === 'RECEIPT_RAW_MATERIAL' || targetDoc.documentType === 'OPENING_BALANCE') {
+      for (const line of targetDoc.lines) {
+        const lotCode = line.lotNumber || `COIL-${targetDoc.documentNumber}-${line.lineNumber}`;
+        const coil = physicalCoilsStore.find(c => c.coilId === lotCode || c.coilPackNumber === lotCode);
+        if (coil) {
+          const deductedKg = Number(line.quantityKg || line.quantity || 0);
+          coil.remainingWeightKg = Math.max(0, coil.remainingWeightKg - deductedKg);
+          coil.physicalStatus = coil.remainingWeightKg <= 0.01 ? 'CONSUMED' : 'PARTIALLY_ISSUED';
+        }
+      }
     }
 
     inventoryDocsStore.unshift(reversalResult.reversalDocument);
@@ -5632,29 +5677,33 @@ apiRouter.get('/traceability/full-chain', (_req: Request, res: Response) => {
       const availableQty = partBalances.reduce((s, b) => s + (part.unit === 'KG' ? b.availableKg : b.availableQty), 0);
       const reservedQty = partBalances.reduce((s, b) => s + (part.unit === 'KG' ? b.reservedKg : b.reservedQty), 0);
 
-      // Compute total received and total consumed from posted documents
+      // Compute total received and total consumed strictly from un-reversed posted documents
+      // Note: Reversed docs + their REVERSAL compensating doc sum to 0 in balances, so excluding both keeps TotalEntered - TotalConsumed === OnHand
       let totalEntered = 0;
       let totalConsumed = 0;
       const relatedDocs: string[] = [];
 
       for (const doc of inventoryDocsStore) {
-        if (doc.postingStatus !== 'POSTED') continue;
+        if (doc.postingStatus !== 'POSTED' || doc.documentType === 'REVERSAL') continue;
         for (const line of doc.lines) {
           if (line.partId === part.id || line.partCode === part.code) {
-            const val = part.unit === 'KG' ? line.quantityKg || line.quantity : line.quantity;
+            const rawVal = part.unit === 'KG' ? line.quantityKg || line.quantity : line.quantity;
             if (
               doc.documentType === 'OPENING_BALANCE' ||
               doc.documentType === 'RECEIPT_RAW_MATERIAL' ||
               doc.documentType === 'RECEIPT_FINISHED_GOODS'
             ) {
-              totalEntered += val;
+              totalEntered += Math.abs(rawVal);
             } else if (
               doc.documentType === 'ISSUE_RAW_MATERIAL' ||
               doc.documentType === 'ISSUE_FINISHED_GOODS' ||
               doc.documentType === 'DELIVERY_CUSTOMER' ||
               doc.documentType === 'SHIPMENT_CUSTOMER'
             ) {
-              totalConsumed += val;
+              totalConsumed += Math.abs(rawVal);
+            } else if (doc.documentType === 'ADJUSTMENT') {
+              if (rawVal >= 0) totalEntered += rawVal;
+              else totalConsumed += Math.abs(rawVal);
             }
             if (!relatedDocs.includes(doc.documentNumber)) {
               relatedDocs.push(doc.documentNumber);
@@ -5685,33 +5734,41 @@ apiRouter.get('/traceability/full-chain', (_req: Request, res: Response) => {
       RECEIPT_RAW_MATERIAL: 'رسید ورود مواد اولیه و کلاف',
       ISSUE_RAW_MATERIAL: 'حواله مصرف خط تولید (BOM Backflush)',
       RECEIPT_FINISHED_GOODS: 'رسید تولید (WIP / محصول نهایی)',
+      ISSUE_FINISHED_GOODS: 'حواله خروج محصول نهایی',
       DELIVERY_CUSTOMER: 'حواله خروج به مشتری (ساپکو)',
+      SHIPMENT_CUSTOMER: 'ارسال بارنامه مشتری',
+      TRANSFER: 'انتقال بین‌انباری / پای کار',
+      ADJUSTMENT: 'تعدیل انبارگردانی',
+      REVERSAL: 'سند معکوس / ابطال',
     };
 
-    // Document Traceability Chain chronologically (newest first)
+    // Document Traceability Chain chronologically (newest first) without faking missing lot/heat numbers
     const documentChain = inventoryDocsStore
-      .filter(d => d.postingStatus === 'POSTED')
+      .filter(d => d.postingStatus === 'POSTED' || d.postingStatus === 'REVERSED')
       .flatMap(d =>
         d.lines.map(l => ({
           id: `${d.id}-${l.lineNumber}`,
           documentNumber: d.documentNumber,
           docNumber: d.documentNumber,
           documentType: d.documentType,
-          docType: docTypeLabelMap[d.documentType] || d.documentType,
+          docType: `${docTypeLabelMap[d.documentType] || d.documentType}${d.postingStatus === 'REVERSED' ? ' (ابطال‌شده)' : ''}`,
+          postingStatus: d.postingStatus,
           documentDate: d.documentDate,
           docDate: formatToJalali(d.documentDate),
           warehouseName: d.warehouseName,
-          sourceWh: d.documentType.startsWith('ISSUE') ? d.warehouseName : 'تأمین‌کننده / خط تولید',
-          targetWh: d.documentType.startsWith('ISSUE') ? 'ایستگاه کاری خط تولید' : d.warehouseName,
+          sourceWh: d.documentType === 'TRANSFER' || d.documentType.startsWith('ISSUE') || d.documentType.includes('DELIVERY')
+            ? d.warehouseName
+            : 'تأمین‌کننده / خط تولید',
+          targetWh: d.targetWarehouseName || (d.documentType.startsWith('ISSUE') ? 'ایستگاه کاری خط تولید' : d.warehouseName),
           partCode: l.partCode,
           partName: l.partName,
           qty: l.quantity,
           weightKg: l.quantityKg,
-          coilId: l.lotNumber || 'CP-1404-ECU-01',
-          heatNumber: l.heatNumber || 'HT-1404-ECU01',
-          referenceNumber: d.referenceNumber || '-',
-          referenceDoc: d.referenceNumber || d.contractNumber || 'CNT-SAPCO-ECU-BRK',
-          contractNumber: d.contractNumber || 'CNT-SAPCO-ECU-BRK',
+          coilId: l.lotNumber || '—',
+          heatNumber: l.heatNumber || '—',
+          referenceNumber: d.referenceNumber || '—',
+          referenceDoc: d.referenceNumber || d.contractNumber || '—',
+          contractNumber: d.contractNumber || '—',
           description: d.auditNote || l.notes || '',
         }))
       );
@@ -5922,9 +5979,12 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
         'اسناد مرتبط (کاردکس)',
       ];
 
+      const whFilter = warehouseId ? String(warehouseId) : '';
       const rows = partsStore
         .map(part => {
-          const partBalances = balances.filter(b => b.partId === part.id || b.partCode === part.code);
+          const partBalances = balances.filter(
+            b => (b.partId === part.id || b.partCode === part.code) && (!whFilter || b.warehouseId === whFilter)
+          );
           const onHand = partBalances.reduce((s, b) => s + (part.unit === 'KG' ? b.physicalKg : b.physicalQty), 0);
           const available = partBalances.reduce((s, b) => s + (part.unit === 'KG' ? b.availableKg : b.availableQty), 0);
 
@@ -5933,18 +5993,32 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           const docNos: string[] = [];
 
           for (const doc of inventoryDocsStore) {
-            if (doc.postingStatus !== 'POSTED') continue;
+            // Strictly exclude unposted drafts, reversed documents, and compensating REVERSAL documents
+            if (doc.postingStatus !== 'POSTED' || doc.documentType === 'REVERSAL') continue;
+            if (whFilter && doc.warehouseId !== whFilter && doc.targetWarehouseId !== whFilter) continue;
+
             for (const line of doc.lines) {
               if (line.partId === part.id || line.partCode === part.code) {
-                const val = part.unit === 'KG' ? line.quantityKg || line.quantity : line.quantity;
+                const rawVal = part.unit === 'KG' ? line.quantityKg || line.quantity : line.quantity;
+                const val = Number(rawVal || 0);
                 if (
                   doc.documentType === 'OPENING_BALANCE' ||
                   doc.documentType === 'RECEIPT_RAW_MATERIAL' ||
                   doc.documentType === 'RECEIPT_FINISHED_GOODS'
                 ) {
-                  entered += val;
-                } else {
-                  consumed += val;
+                  entered += Math.abs(val);
+                } else if (doc.documentType === 'ADJUSTMENT') {
+                  if (val >= 0) {
+                    entered += val;
+                  } else {
+                    consumed += Math.abs(val);
+                  }
+                } else if (doc.documentType !== 'TRANSFER') {
+                  consumed += Math.abs(val);
+                } else if (whFilter) {
+                  // When filtering by a single warehouse, transfers into/out of that warehouse affect its local total
+                  if (doc.targetWarehouseId === whFilter) entered += Math.abs(val);
+                  if (doc.warehouseId === whFilter) consumed += Math.abs(val);
                 }
                 if (!docNos.includes(doc.documentNumber)) docNos.push(doc.documentNumber);
               }
@@ -6001,6 +6075,7 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
       const columns = [
         'شماره سند رسمی',
         'نوع سند در زنجیره',
+        'تاریخ سند',
         'کد کالا / قطعه',
         'نام کالا / قطعه',
         'مقدار',
@@ -6018,25 +6093,36 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
         RECEIPT_RAW_MATERIAL: '۱. رسید ورود مواد اولیه به انبار',
         ISSUE_RAW_MATERIAL: '۲. حواله مصرف در خط تولید (Backflush)',
         RECEIPT_FINISHED_GOODS: '۳. رسید تولید نیمه‌ساخته (WIP) / محصول نهایی',
+        ISSUE_FINISHED_GOODS: '۴. حواله خروج محصول نهایی',
         DELIVERY_CUSTOMER: '۴. حواله ارسال به مشتری (ساپکو)',
+        SHIPMENT_CUSTOMER: '۴. حواله بارنامه و ارسال به خودروساز',
+        TRANSFER: 'انتقال بین‌انباری / بین‌ایستگاهی',
+        ADJUSTMENT: 'تعدیل انبارگردانی',
+        REVERSAL: 'سند اصلاحی / ابطال',
       };
 
+      const whFilter = warehouseId ? String(warehouseId) : '';
       const rows: any[] = [];
       for (const doc of inventoryDocsStore) {
         if (doc.postingStatus !== 'POSTED') continue;
+        if (whFilter && doc.warehouseId !== whFilter && doc.targetWarehouseId !== whFilter) continue;
         for (const line of doc.lines) {
+          const matchedCoil = line.lotNumber
+            ? physicalCoilsStore.find(c => c.coilId === line.lotNumber || c.coilPackNumber === line.lotNumber)
+            : undefined;
           const row = {
             'شماره سند رسمی': doc.documentNumber,
             'نوع سند در زنجیره': docTypeMap[doc.documentType] || doc.documentType,
+            'تاریخ سند': formatToJalali(doc.documentDate),
             'کد کالا / قطعه': line.partCode,
             'نام کالا / قطعه': line.partName,
             'مقدار': line.quantity,
             'واحد': line.unit,
             'وزن (KG)': line.quantityKg,
-            'شماره کلاف / لوت (Lot)': line.lotNumber || 'CP-1404-ECU-01',
-            'شماره ذوب (Heat No)': line.heatNumber || 'HT-1404-ECU01',
+            'شماره کلاف / لوت (Lot)': line.lotNumber || matchedCoil?.coilId || '—',
+            'شماره ذوب (Heat No)': line.heatNumber || matchedCoil?.heatNumber || '—',
             'شماره دستور کار / مرجع': doc.referenceNumber || doc.contractNumber || '-',
-            'انبار / ایستگاه': doc.warehouseName,
+            'انبار / ایستگاه': doc.targetWarehouseName ? `${doc.warehouseName} ← ${doc.targetWarehouseName}` : doc.warehouseName,
             'توضیحات رهگیری': line.notes || doc.auditNote || '-',
           };
           if (
@@ -6076,13 +6162,22 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
         'شماره ذوب / لوت مصرفی',
       ];
 
-      // Dynamically calculate actual BOM Backflush & Production receipts from live ledger
+      // Strictly inspect un-reversed posted ledger transactions (never fabricate zero issues as equal to BOM)
       const sumIssuedByCode = (partCode: string, keyword?: string) =>
         inventoryDocsStore
-          .filter(d => d.postingStatus === 'POSTED' && (d.documentType === 'ISSUE_RAW_MATERIAL' || d.documentType === 'TRANSFER'))
+          .filter(
+            d =>
+              d.postingStatus === 'POSTED' &&
+              (d.documentType === 'ISSUE_RAW_MATERIAL' || d.documentType === 'ISSUE_FINISHED_GOODS')
+          )
           .flatMap(d => d.lines)
-          .filter(l => l.partCode === partCode && (!keyword || (l.notes || '').includes(keyword) || (l.lotNumber || '').includes(keyword)))
+          .filter(
+            l =>
+              l.partCode === partCode &&
+              (!keyword || (l.notes || '').includes(keyword) || (l.lotNumber || '').includes(keyword))
+          )
           .reduce((s, l) => s + (Number(l.quantity) || 0), 0);
+
       const sumProducedByCode = (partCode: string) =>
         inventoryDocsStore
           .filter(d => d.postingStatus === 'POSTED' && d.documentType === 'RECEIPT_FINISHED_GOODS')
@@ -6090,21 +6185,40 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           .filter(l => l.partCode === partCode)
           .reduce((s, l) => s + (Number(l.quantity) || 0), 0);
 
-      const mainProduced = sumProducedByCode('WIP-ECU-MAIN-BRK') || manufacturingOrdersStore.find(m => m.partCode === 'WIP-ECU-MAIN-BRK')?.completedQuantity || 0;
-      const compProduced = sumProducedByCode('WIP-ECU-COMP-BRK') || manufacturingOrdersStore.find(m => m.partCode === 'WIP-ECU-COMP-BRK')?.completedQuantity || 0;
-      const fgProduced = sumProducedByCode('SAPCO-ASY-ECU-BRK-01') || manufacturingOrdersStore.find(m => m.partCode === 'SAPCO-ASY-ECU-BRK-01')?.completedQuantity || 0;
-      const coilIssuedTotal = sumIssuedByCode('RM-COIL-DC01A-2.0-1140') || (physicalCoilsStore[0] ? physicalCoilsStore[0].originalWeightKg - physicalCoilsStore[0].remainingWeightKg : 0);
+      const getDistinctLots = (partCode: string) => {
+        const lots = inventoryDocsStore
+          .filter(d => d.postingStatus === 'POSTED' && d.documentType === 'ISSUE_RAW_MATERIAL')
+          .flatMap(d => d.lines)
+          .filter(l => l.partCode === partCode && (l.heatNumber || l.lotNumber))
+          .map(l => [l.heatNumber, l.lotNumber].filter(Boolean).join(' / '));
+        return [...new Set(lots)].join(' ، ') || '—';
+      };
+
+      const mainProduced = sumProducedByCode('WIP-ECU-MAIN-BRK');
+      const compProduced = sumProducedByCode('WIP-ECU-COMP-BRK');
+      const fgProduced = sumProducedByCode('SAPCO-ASY-ECU-BRK-01');
+
       const mainCoilStd = Number((mainProduced * 0.98).toFixed(2));
       const compCoilStd = Number((compProduced * 0.47).toFixed(2));
-      const nutsActual = sumIssuedByCode('FST-NUT-WELD-M6') || mainProduced * 15;
-      const boltsActual = sumIssuedByCode('FST-BOLT-WELD-M6-20') || compProduced * 2;
-      const mainForAsyActual = sumIssuedByCode('WIP-ECU-MAIN-BRK') || fgProduced;
+      const totalCoilStd = mainCoilStd + compCoilStd;
+
+      const coilIssuedTotal = sumIssuedByCode('RM-COIL-DC01A-2.0-1140');
+      const mainCoilActual =
+        totalCoilStd > 0 ? Number((coilIssuedTotal * (mainCoilStd / totalCoilStd)).toFixed(2)) : coilIssuedTotal;
+      const compCoilActual =
+        totalCoilStd > 0 ? Number((coilIssuedTotal * (compCoilStd / totalCoilStd)).toFixed(2)) : 0;
+
+      const nutsActual = sumIssuedByCode('FST-NUT-WELD-M6');
+      const boltsActual = sumIssuedByCode('FST-BOLT-WELD-M6-20');
+      const mainForAsyActual = sumIssuedByCode('WIP-ECU-MAIN-BRK');
 
       const formatVariance = (actual: number, std: number, unit: string) => {
         const diff = Number((actual - std).toFixed(2));
         if (Math.abs(diff) < 0.05) return '۰ (منطبق با BOM)';
         return `${diff > 0 ? '+' : ''}${diff} ${unit}`;
       };
+
+      const coilTrace = getDistinctLots('RM-COIL-DC01A-2.0-1140');
 
       const rows = [
         {
@@ -6115,9 +6229,9 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           'واحد': 'KG',
           'تیراژ تولید ثبت‌شده (عدد)': mainProduced,
           'مصرف استاندارد مجاز': mainCoilStd,
-          'مصرف واقعی کسرشده از انبار': Number((coilIssuedTotal * (mainCoilStd / Math.max(1, mainCoilStd + compCoilStd))).toFixed(2)) || mainCoilStd,
-          'انحراف مصرف': formatVariance(Number((coilIssuedTotal * (mainCoilStd / Math.max(1, mainCoilStd + compCoilStd))).toFixed(2)) || mainCoilStd, mainCoilStd, 'KG'),
-          'شماره ذوب / لوت مصرفی': `${physicalCoilsStore[0]?.heatNumber || 'HT-DC01A-9921'} / ${physicalCoilsStore[0]?.coilId || 'COIL-ECU-001'}`,
+          'مصرف واقعی کسرشده از انبار': mainCoilActual,
+          'انحراف مصرف': formatVariance(mainCoilActual, mainCoilStd, 'KG'),
+          'شماره ذوب / لوت مصرفی': coilTrace,
         },
         {
           'زیرفرآیند / محصول': 'صفحه براکت اصلی (WIP-ECU-MAIN-BRK)',
@@ -6129,7 +6243,7 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           'مصرف استاندارد مجاز': mainProduced * 15,
           'مصرف واقعی کسرشده از انبار': nutsActual,
           'انحراف مصرف': formatVariance(nutsActual, mainProduced * 15, 'PCS'),
-          'شماره ذوب / لوت مصرفی': 'LOT-NUT-M6-01',
+          'شماره ذوب / لوت مصرفی': getDistinctLots('FST-NUT-WELD-M6'),
         },
         {
           'زیرفرآیند / محصول': 'قطعه مکمل براکت (WIP-ECU-COMP-BRK)',
@@ -6139,9 +6253,9 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           'واحد': 'KG',
           'تیراژ تولید ثبت‌شده (عدد)': compProduced,
           'مصرف استاندارد مجاز': compCoilStd,
-          'مصرف واقعی کسرشده از انبار': Number((coilIssuedTotal * (compCoilStd / Math.max(1, mainCoilStd + compCoilStd))).toFixed(2)) || compCoilStd,
-          'انحراف مصرف': formatVariance(Number((coilIssuedTotal * (compCoilStd / Math.max(1, mainCoilStd + compCoilStd))).toFixed(2)) || compCoilStd, compCoilStd, 'KG'),
-          'شماره ذوب / لوت مصرفی': `${physicalCoilsStore[0]?.heatNumber || 'HT-DC01A-9921'} / ${physicalCoilsStore[0]?.coilId || 'COIL-ECU-001'}`,
+          'مصرف واقعی کسرشده از انبار': compCoilActual,
+          'انحراف مصرف': formatVariance(compCoilActual, compCoilStd, 'KG'),
+          'شماره ذوب / لوت مصرفی': coilTrace,
         },
         {
           'زیرفرآیند / محصول': 'قطعه مکمل براکت (WIP-ECU-COMP-BRK)',
@@ -6153,7 +6267,7 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           'مصرف استاندارد مجاز': compProduced * 2,
           'مصرف واقعی کسرشده از انبار': boltsActual,
           'انحراف مصرف': formatVariance(boltsActual, compProduced * 2, 'PCS'),
-          'شماره ذوب / لوت مصرفی': 'LOT-BLT-M620-01',
+          'شماره ذوب / لوت مصرفی': getDistinctLots('FST-BOLT-WELD-M6-20'),
         },
         {
           'زیرفرآیند / محصول': 'مجموعه نهایی براکت ضدسرقت (SAPCO-ASY-ECU-BRK-01)',
@@ -6165,7 +6279,7 @@ apiRouter.get('/inventory/custom-reports', async (req: Request, res: Response) =
           'مصرف استاندارد مجاز': fgProduced,
           'مصرف واقعی کسرشده از انبار': mainForAsyActual,
           'انحراف مصرف': formatVariance(mainForAsyActual, fgProduced, 'SET'),
-          'شماره ذوب / لوت مصرفی': 'LOT-ECU-MAIN-W1 + LOT-ECU-COMP-W1',
+          'شماره ذوب / لوت مصرفی': getDistinctLots('WIP-ECU-MAIN-BRK'),
         },
       ].filter(r => {
         if (!searchStr) return true;
@@ -6326,6 +6440,27 @@ apiRouter.post('/inventory/report-configs', async (req: Request, res: Response) 
     res.status(500).json({
       success: false,
       error: err instanceof Error ? err.message : 'خطا در ذخیره پیکربندی گزارش در PostgreSQL',
+    });
+  }
+});
+
+apiRouter.delete('/inventory/report-configs/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!isDatabaseUrlConfigured()) {
+      const deleted = deleteFallbackReportConfig(id);
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: 'قالب گزارش ذخیره‌شده یافت نشد.' });
+      }
+      return res.json({ success: true, message: 'قالب گزارش ذخیره‌شده حذف شد.' });
+    }
+
+    await getPrismaClient().savedReportConfig.delete({ where: { id } });
+    return res.json({ success: true, message: 'پیکربندی گزارش از PostgreSQL حذف شد.' });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : 'خطا در حذف پیکربندی گزارش',
     });
   }
 });
@@ -7176,6 +7311,18 @@ apiRouter.get('/wip/manufacturing-orders', (_req: Request, res: Response) => {
   }
 });
 
+apiRouter.get('/wip/orders', (_req: Request, res: Response) => {
+  try {
+    const orders = getManufacturingOrdersList();
+    res.json({ success: true, count: orders.length, data: orders });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'خطا در دریافت دستورات ساخت',
+    });
+  }
+});
+
 /**
  * 17.3. Get Single Manufacturing Order Details & Operations
  */
@@ -7480,13 +7627,45 @@ apiRouter.get('/wip/logs', (_req: Request, res: Response) => {
 /**
  * 18.1. Get Planning Dashboard Metrics
  */
-apiRouter.get('/planning/dashboard-metrics', (_req: Request, res: Response) => {
+apiRouter.get('/planning/dashboard-metrics', async (_req: Request, res: Response) => {
   try {
     if (isDatabaseUrlConfigured()) {
-      return res.status(409).json({
-        success: false,
-        code: 'RELATIONAL_PLANNING_DASHBOARD_PENDING',
-        error: 'داشبورد برنامه‌ریزی تا تکمیل محاسبات و ذخیره‌سازی relational فعال نیست؛ داده نمونه نمایش داده نمی‌شود.',
+      const prisma = getPrismaClient();
+      const [readModel, openOrdersCount, proposals] = await Promise.all([
+        getRelationalPlanningReadModel(),
+        prisma.customerOrder.count({ where: { documentStatus: { notIn: ['CLOSED', 'CANCELLED'] } } }),
+        prisma.productionPlanProposal.findMany({ select: { status: true } }),
+      ]);
+      const requirements = readModel.requirements || [];
+      const totalGrossDemandPieces = requirements.reduce((sum: number, r: any) => sum + Number(r.grossDemandQuantity || 0), 0);
+      const totalNetProductionRequirementsPieces = requirements.reduce((sum: number, r: any) => sum + Number(r.netToProduceQuantity || 0), 0);
+      const totalMaterialShortageKg = requirements.reduce((sum: number, r: any) => sum + Number(r.materialShortageKg || 0), 0);
+      const activeSuggestionsCount = proposals.filter((p: any) => p.status === 'DRAFT').length;
+      const approvedPlansCount = proposals.filter((p: any) => p.status === 'APPROVED' || p.status === 'RELEASED').length;
+      const criticalPartsRequiringImmediateAction = requirements
+        .filter((r: any) => Number(r.netToProduceQuantity || 0) > 0 || r.hasMaterialShortage)
+        .map((r: any) => ({
+          partCode: r.partCode,
+          partName: r.partName,
+          netShortage: Number(r.netToProduceQuantity || 0),
+          dueDate: r.demandLines?.[0]?.dueDate || new Date().toISOString(),
+          hasMaterialShortage: Boolean(r.hasMaterialShortage),
+        }));
+
+      return res.json({
+        success: true,
+        source: 'postgresql',
+        data: {
+          totalOpenOrdersCount: openOrdersCount,
+          totalGrossDemandPieces,
+          totalNetProductionRequirementsPieces,
+          totalMaterialShortageKg,
+          activeSuggestionsCount,
+          approvedPlansCount,
+          infeasiblePlansCount: 0,
+          averageMachineCapacityUtilizationPercent: 0,
+          criticalPartsRequiringImmediateAction,
+        },
       });
     }
     const metrics = getPlanningDashboardMetrics();

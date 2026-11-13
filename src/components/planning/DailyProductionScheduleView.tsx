@@ -1,18 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Calendar,
-  Filter,
   Printer,
-  Download,
   CheckCircle2,
   Clock,
-  AlertTriangle,
   Cpu,
   Building,
   User,
-  Layers,
-  ArrowRight,
-  Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { formatToJalali } from '../../utils/jalali';
@@ -30,144 +25,93 @@ interface DailyScheduleItem {
   dieName: string;
   partCode: string;
   partName: string;
-  carModel: string;
+  moNumber: string;
+  stepCode: string;
+  stepName: string;
   plannedQuantity: number;
   actualProducedQuantity: number;
   scrapQuantity: number;
   operatorName: string;
-  priority: 'CRITICAL' | 'HIGH' | 'NORMAL';
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'SCHEDULED' | 'STOPPED';
-  stopReason?: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'SCHEDULED';
 }
-
-const INITIAL_SCHEDULE: DailyScheduleItem[] = [
-  {
-    id: 'SCH-01',
-    hallId: 'HALL-BLANKING',
-    hallName: 'سالن بلنکینگ و برشکاری',
-    shift: 'MORNING',
-    shiftName: 'شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)',
-    machineCode: 'SLT-1250-01',
-    machineName: 'خط رول‌بازکن و برش کویل ۱۲۵۰ میلیمتر',
-    dieCode: 'DIE-ECU-BLK-01',
-    dieName: 'قالب برش و بلنک صفحه اصلی براکت ضدسرقت',
-    partCode: 'WIP-ECU-MAIN-BRK',
-    partName: 'صفحه براکت اصلی ضدسرقت رایانه موتور',
-    carModel: 'پژو ۲۰۶ / ۲۰۷',
-    plannedQuantity: 1500,
-    actualProducedQuantity: 1500,
-    scrapQuantity: 8,
-    operatorName: 'محسن زمانی (کد ۴۱۰۸)',
-    priority: 'CRITICAL',
-    status: 'COMPLETED',
-  },
-  {
-    id: 'SCH-02',
-    hallId: 'HALL-MED-PRESS',
-    hallName: 'سالن پرس متوسط (۲۵۰ تن)',
-    shift: 'MORNING',
-    shiftName: 'شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)',
-    machineCode: 'PRS-250-01',
-    machineName: 'پرس مکانیکی کلاچ پنوماتیک ۲۵۰ تن آیدین',
-    dieCode: 'DIE-ECU-BLK-01',
-    dieName: 'قالب بلنک‌زنی اولیه صفحه اصلی',
-    partCode: 'WIP-ECU-MAIN-BRK',
-    partName: 'صفحه براکت اصلی ضدسرقت رایانه موتور',
-    carModel: 'پژو ۲۰۶ / ۲۰۷',
-    plannedQuantity: 1500,
-    actualProducedQuantity: 1200,
-    scrapQuantity: 12,
-    operatorName: 'علی رضایی (کد ۴۱۰۲)',
-    priority: 'CRITICAL',
-    status: 'IN_PROGRESS',
-  },
-  {
-    id: 'SCH-03',
-    hallId: 'HALL-MED-PRESS',
-    hallName: 'سالن پرس متوسط (۲۵۰ تن)',
-    shift: 'EVENING',
-    shiftName: 'شیفت عصر (۱۵:۰۰ - ۲۳:۰۰)',
-    machineCode: 'PRS-250-01',
-    machineName: 'پرس مکانیکی کلاچ پنوماتیک ۲۵۰ تن آیدین',
-    dieCode: 'DIE-ECU-BND-02',
-    dieName: 'قالب خم لبه استاندارد صفحه اصلی',
-    partCode: 'WIP-ECU-MAIN-BRK',
-    partName: 'صفحه براکت اصلی ضدسرقت رایانه موتور',
-    carModel: 'پژو ۲۰۶ / ۲۰۷',
-    plannedQuantity: 1500,
-    actualProducedQuantity: 850,
-    scrapQuantity: 5,
-    operatorName: 'رضا کریمی (کد ۴۲۰۵)',
-    priority: 'HIGH',
-    status: 'IN_PROGRESS',
-  },
-  {
-    id: 'SCH-04',
-    hallId: 'HALL-BLANKING',
-    hallName: 'سالن بلنکینگ و برشکاری',
-    shift: 'MORNING',
-    shiftName: 'شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)',
-    machineCode: 'SLT-1250-01',
-    machineName: 'خط رول‌بازکن و برش کویل ۱۲۵۰ میلیمتر',
-    dieCode: 'DIE-CMP-BLK-01',
-    dieName: 'قالب بلنک‌زنی قطعه مکمل براکت',
-    partCode: 'WIP-ECU-COMP-BRK',
-    partName: 'قطعه مکمل براکت ضدسرقت رایانه موتور',
-    carModel: 'پژو ۲۰۶ / ۲۰۷',
-    plannedQuantity: 1500,
-    actualProducedQuantity: 1100,
-    scrapQuantity: 6,
-    operatorName: 'استاد احمدی (کد ۴۰۱۱)',
-    priority: 'HIGH',
-    status: 'IN_PROGRESS',
-  },
-  {
-    id: 'SCH-05',
-    hallId: 'HALL-WELDING',
-    hallName: 'سالن جوشکاری و مجموعه‌سازی',
-    shift: 'MORNING',
-    shiftName: 'شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)',
-    machineCode: 'WLD-SPOT-01',
-    machineName: 'دستگاه پرس‌جوش نقطه‌ای مقاومتی ۱۰۰KVA',
-    dieCode: 'JIG-ECU-NUT15',
-    dieName: 'فیکسچر پرس‌جوش ۱۵ عدد مهره M6 صفحه اصلی',
-    partCode: 'WIP-ECU-MAIN-BRK',
-    partName: 'صفحه براکت اصلی ضدسرقت رایانه موتور',
-    carModel: 'پژو ۲۰۶ / ۲۰۷',
-    plannedQuantity: 1500,
-    actualProducedQuantity: 600,
-    scrapQuantity: 2,
-    operatorName: 'جواد علوی (کد ۴۱۵۰)',
-    priority: 'HIGH',
-    status: 'IN_PROGRESS',
-  },
-  {
-    id: 'SCH-06',
-    hallId: 'HALL-WELDING',
-    hallName: 'سالن جوشکاری و مجموعه‌سازی',
-    shift: 'EVENING',
-    shiftName: 'شیفت عصر (۱۵:۰۰ - ۲۳:۰۰)',
-    machineCode: 'WLD-SPOT-01',
-    machineName: 'کابین جوش CO2 و مونتاژ نهایی ۱',
-    dieCode: 'JIG-ECU-CO2-ASY',
-    dieName: 'فیکسچر جوشکاری CO2 مونتاژ نهایی صفحه اصلی و مکمل',
-    partCode: 'SAPCO-ASY-ECU-BRK-01',
-    partName: 'مجموعه براکت ضدسرقت رایانه موتور با پوشش رنگ کاتافورز ED',
-    carModel: 'پژو ۲۰۶ / ۲۰۷',
-    plannedQuantity: 1500,
-    actualProducedQuantity: 600,
-    scrapQuantity: 3,
-    operatorName: 'مهندس قنبری (کد ۴۰۸۸)',
-    priority: 'CRITICAL',
-    status: 'IN_PROGRESS',
-  },
-];
 
 export const DailyProductionScheduleView: React.FC = () => {
   const [selectedHall, setSelectedHall] = useState<string>('ALL');
   const [selectedShift, setSelectedShift] = useState<string>('ALL');
   const [scheduleDate, setScheduleDate] = useState<string>(() => formatToJalali(new Date()));
-  const [items, setItems] = useState<DailyScheduleItem[]>(INITIAL_SCHEDULE);
+  const [items, setItems] = useState<DailyScheduleItem[]>([]);
+  const [halls, setHalls] = useState<Array<{ id: string; code: string; name: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadScheduleFromLiveOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [mosRes, hallsRes, machinesRes, diesRes] = await Promise.all([
+        fetch('/api/wip/manufacturing-orders').then(r => r.json()).catch(() => ({ success: false })),
+        fetch('/api/halls').then(r => r.json()).catch(() => ({ success: false })),
+        fetch('/api/machines').then(r => r.json()).catch(() => ({ success: false })),
+        fetch('/api/dies').then(r => r.json()).catch(() => ({ success: false })),
+      ]);
+
+      const hallsList: any[] = hallsRes.success && Array.isArray(hallsRes.data) ? hallsRes.data : [];
+      const machinesList: any[] = machinesRes.success && Array.isArray(machinesRes.data) ? machinesRes.data : [];
+      const diesList: any[] = diesRes.success && Array.isArray(diesRes.data) ? diesRes.data : [];
+      const mosList: any[] = mosRes.success && Array.isArray(mosRes.data) ? mosRes.data : [];
+
+      setHalls(hallsList);
+
+      const generated: DailyScheduleItem[] = [];
+      mosList.forEach(mo => {
+        (mo.operations || []).forEach((op: any, idx: number) => {
+          const machine = machinesList.find(m => m.id === op.machineId || m.code === op.machineCode);
+          const die = diesList.find(d => d.id === op.dieMoldId || d.partCode === mo.partCode);
+          const matchedHall =
+            hallsList.find(h => h.id === machine?.hallId || h.name === machine?.location) ||
+            hallsList[0] || { id: 'HALL-MAIN', name: machine?.location || 'سالن تولید اصلی' };
+
+          const shift: 'MORNING' | 'EVENING' = idx % 2 === 0 ? 'MORNING' : 'EVENING';
+          const status: DailyScheduleItem['status'] =
+            op.status === 'COMPLETED'
+              ? 'COMPLETED'
+              : op.status === 'IN_PROGRESS' || op.status === 'READY'
+              ? 'IN_PROGRESS'
+              : 'SCHEDULED';
+
+          generated.push({
+            id: `${mo.id}-${op.id}`,
+            hallId: matchedHall.id,
+            hallName: matchedHall.name,
+            shift,
+            shiftName: shift === 'MORNING' ? 'شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)' : 'شیفت عصر (۱۵:۰۰ - ۲۳:۰۰)',
+            machineCode: machine?.code || op.machineId || '—',
+            machineName: op.machineName || machine?.name || 'ایستگاه کاری کارگاه',
+            dieCode: die?.code || op.dieMoldId || '—',
+            dieName: die?.name || 'فیکسچر / قالب استاندارد مرحله',
+            partCode: mo.partCode,
+            partName: mo.partName,
+            moNumber: mo.moNumber,
+            stepCode: op.stepCode,
+            stepName: op.stepName,
+            plannedQuantity: mo.targetQuantity || 0,
+            actualProducedQuantity: op.goodOutputQty || 0,
+            scrapQuantity: op.scrapQty || 0,
+            operatorName: op.lastOperatorName || 'سرشیفت سالن',
+            status,
+          });
+        });
+      });
+
+      setItems(generated);
+    } catch (err) {
+      console.error('Failed to load live daily schedule:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadScheduleFromLiveOrders();
+  }, [loadScheduleFromLiveOrders]);
 
   const filteredItems = items.filter(item => {
     if (selectedHall !== 'ALL' && item.hallId !== selectedHall) return false;
@@ -179,13 +123,8 @@ export const DailyProductionScheduleView: React.FC = () => {
   const totalProduced = filteredItems.reduce((acc, i) => acc + i.actualProducedQuantity, 0);
   const achievementRate = totalPlanned > 0 ? Math.round((totalProduced / totalPlanned) * 100) : 0;
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
-    <div className="space-y-5">
-      {/* Top Controls Banner (Screen Only) */}
+    <div className="space-y-5" dir="rtl">
       <div className="bg-white p-4 lg:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4 no-print">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start sm:items-center gap-3">
@@ -194,10 +133,10 @@ export const DailyProductionScheduleView: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                برنامه روزانه شرکت و دیسپچ سالن‌های تولید (Daily Factory Dispatch Schedule)
+                برنامه روزانه کارخانه به تفکیک سالن و دستور کار زنده (Live Daily Schedule)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                توزیع متوازن دستور کارهای مصوب به تفکیک سالن، خطوط پرس، شیفت‌های کاری، قالب‌های مستقر و اپراتورهای مسئول
+                متصل به دستور کارهای فعال کارگاه (WIP Orders)، سالن‌های استقرار و آمار لحظه‌ای تولید سالم/ضایعات
               </p>
             </div>
           </div>
@@ -205,36 +144,43 @@ export const DailyProductionScheduleView: React.FC = () => {
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               type="button"
-              onClick={handlePrint}
+              onClick={loadScheduleFromLiveOrders}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>بروزرسانی زنده</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
               className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs"
             >
               <Printer className="w-3.5 h-3.5 text-orange-400" />
-              <span>چاپ رسمی برنامه روزانه سالن</span>
+              <span>چاپ برنامه روزانه</span>
             </button>
           </div>
         </div>
 
-        {/* Filter and Date Bar */}
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Hall Selector */}
             <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
               <Building className="w-3.5 h-3.5 text-orange-600" />
-              <span className="text-slate-500 font-medium">تفکیک سالن:</span>
+              <span className="text-slate-500 font-medium">سالن استقرار:</span>
               <select
                 value={selectedHall}
                 onChange={e => setSelectedHall(e.target.value)}
                 className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
               >
-                <option value="ALL">همه سالن‌های کارخانه ({toPersianDigits(items.length)} دستور)</option>
-                <option value="HALL-HEAVY-PRESS">سالن پرس سنگین (۸۰۰ و ۴۰۰ تن)</option>
-                <option value="HALL-MED-PRESS">سالن پرس متوسط (۲۵۰ تن)</option>
-                <option value="HALL-BLANKING">سالن بلنکینگ و برشکاری</option>
-                <option value="HALL-WELDING">سالن جوشکاری و مجموعه‌سازی</option>
+                <option value="ALL">همه سالن‌ها ({toPersianDigits(items.length)} عملیات)</option>
+                {halls.map(h => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                  </option>
+                ))}
               </select>
             </div>
 
-            {/* Shift Selector */}
             <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
               <Clock className="w-3.5 h-3.5 text-slate-500" />
               <span className="text-slate-500 font-medium">شیفت:</span>
@@ -246,192 +192,106 @@ export const DailyProductionScheduleView: React.FC = () => {
                 <option value="ALL">همه شیفت‌ها</option>
                 <option value="MORNING">شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)</option>
                 <option value="EVENING">شیفت عصر (۱۵:۰۰ - ۲۳:۰۰)</option>
-                <option value="NIGHT">شیفت شب (۲۳:۰۰ - ۰۷:۰۰)</option>
               </select>
             </div>
 
-            {/* Quick Hall Chips */}
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {[
-                { id: 'ALL', label: 'همه سالن‌ها' },
-                { id: 'HALL-HEAVY-PRESS', label: 'پرس سنگین' },
-                { id: 'HALL-MED-PRESS', label: 'پرس متوسط' },
-                { id: 'HALL-BLANKING', label: 'برشکاری' },
-                { id: 'HALL-WELDING', label: 'جوشکاری' },
-              ].map(h => (
-                <button
-                  key={h.id}
-                  type="button"
-                  onClick={() => setSelectedHall(h.id)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer border ${
-                    selectedHall === h.id
-                      ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
-                      : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/80'
-                  }`}
-                >
-                  {h.label}
-                </button>
-              ))}
+            <div className="inline-flex items-center gap-2">
+              <JalaliDatePicker value={scheduleDate} onChange={setScheduleDate} />
             </div>
           </div>
 
-          {/* Quick Date Display via JalaliDatePicker */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-500 shrink-0">تاریخ برنامه:</span>
-            <JalaliDatePicker
-              value={scheduleDate}
-              onChange={val => setScheduleDate(val)}
-              className="w-40"
-            />
+          <div className="flex items-center gap-4 text-xs font-mono tabular-nums">
+            <span className="text-slate-600">
+              برنامه: <strong className="text-slate-900">{formatNumber(totalPlanned)}</strong>
+            </span>
+            <span className="text-emerald-700">
+              تحقق‌یافته: <strong>{formatNumber(totalProduced)}</strong> ({toPersianDigits(achievementRate)}٪)
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Main KPI Summary (Screen Only) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs no-print">
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
-          <span className="text-[11px] text-slate-500 block">کل تیراژ مصوب برنامه:</span>
-          <span className="text-lg font-extrabold text-slate-900 font-mono mt-0.5 block">
-            {formatNumber(totalPlanned)} عدد
-          </span>
-        </div>
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/90 shadow-2xs text-emerald-900">
-          <span className="text-[11px] text-emerald-700 block">تولید واقعی تا این لحظه:</span>
-          <span className="text-lg font-extrabold text-emerald-800 font-mono mt-0.5 block">
-            {formatNumber(totalProduced)} عدد
-          </span>
-        </div>
-        <div className="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200/90 shadow-2xs text-indigo-900">
-          <span className="text-[11px] text-indigo-700 block">درصد تحقق برنامه شیفت:</span>
-          <span className="text-lg font-extrabold text-indigo-900 font-mono mt-0.5 block">
-            {toPersianDigits(achievementRate)}%
-          </span>
-        </div>
-        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/90 shadow-2xs text-amber-900">
-          <span className="text-[11px] text-amber-700 block">پرس‌ها و خطوط درگیر:</span>
-          <span className="text-lg font-extrabold text-amber-800 font-mono mt-0.5 block">
-            {toPersianDigits(filteredItems.length)} خط تولید
-          </span>
-        </div>
-      </div>
-
-      {/* Isolated Official Printable Sheet Container */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden printable-area">
-        {/* Printable Letterhead (Shown in Print and on Screen) */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="text-right">
-            <span className="text-xs font-bold text-slate-500 block">
-              شرکت تولیدی و صنعتی قطعات پرسی خودرو - زنجیره ساپکو (KPIMS)
-            </span>
-            <h1 className="text-base sm:text-lg font-extrabold text-slate-950 mt-0.5">
-              برنامه روزانه تولید و دستور کار شیفت سالن
-            </h1>
-            <span className="text-xs font-semibold text-orange-700">
-              سالن: {selectedHall === 'ALL' ? 'تمامی سالن‌های تولید کارخانه' : items.find(i => i.hallId === selectedHall)?.hallName}
-            </span>
+      {/* Live Table */}
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+        {loading && items.length === 0 ? (
+          <div className="p-10 text-center text-xs text-slate-500">در حال بارگذاری برنامه زنده سالن‌ها...</div>
+        ) : filteredItems.length === 0 ? (
+          <div className="p-10 text-center text-xs text-slate-500">
+            هیچ مرحله عملیاتی فعالی برای نمایش در این فیلتر وجود ندارد.
           </div>
-
-          <div className="text-left bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs font-mono space-y-0.5">
-            <div><span className="text-slate-500 font-sans">تاریخ اجرا:</span> <strong className="text-slate-900">{scheduleDate}</strong></div>
-            <div><span className="text-slate-500 font-sans">شیفت کاری:</span> <strong className="text-slate-900">{selectedShift === 'ALL' ? 'کل شبانه‌روز (۳ شیفت)' : selectedShift}</strong></div>
-            <div><span className="text-slate-500 font-sans">کد سند:</span> <strong>PLN-DISP-1403-24</strong></div>
-          </div>
-        </div>
-
-        {/* Schedule Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
-              <tr>
-                <th className="py-3 px-3">ردیف</th>
-                <th className="py-3 px-3">سالن / خط</th>
-                <th className="py-3 px-3">دستگاه پرس</th>
-                <th className="py-3 px-3">قالب مستقر</th>
-                <th className="py-3 px-3">کد و نام قطعه</th>
-                <th className="py-3 px-3">خودرو</th>
-                <th className="py-3 px-3 text-center">تیراژ برنامه</th>
-                <th className="py-3 px-3 text-center">تولید واقعی</th>
-                <th className="py-3 px-3 text-center">ضایعات</th>
-                <th className="py-3 px-3">اپراتور مسئول</th>
-                <th className="py-3 px-3 text-center">وضعیت</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
-              {filteredItems.map((item, idx) => {
-                const percent = Math.min(100, Math.round((item.actualProducedQuantity / item.plannedQuantity) * 100));
-                return (
-                  <tr key={item.id} className="hover:bg-slate-50/70">
-                    <td className="py-3 px-3 font-bold text-slate-400">{toPersianDigits(idx + 1)}</td>
-                    <td className="py-3 px-3 font-sans text-slate-800 font-medium">
-                      {item.hallName}
-                      <span className="text-[10px] text-slate-400 block font-mono">{item.shiftName}</span>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                <tr>
+                  <th className="py-3 px-3">تاریخ / شیفت</th>
+                  <th className="py-3 px-3">سالن و ماشین</th>
+                  <th className="py-3 px-3">دستور کار / مرحله</th>
+                  <th className="py-3 px-3">قطعه</th>
+                  <th className="py-3 px-3 text-center">هدف برنامه</th>
+                  <th className="py-3 px-3 text-center text-emerald-700">تولید سالم</th>
+                  <th className="py-3 px-3 text-center text-rose-600">ضایعات</th>
+                  <th className="py-3 px-3">اپراتور</th>
+                  <th className="py-3 px-3 text-center">وضعیت</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 tabular-nums">
+                {filteredItems.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-3">
+                      <div className="font-mono font-bold text-slate-800">{scheduleDate}</div>
+                      <div className="text-[11px] text-slate-500">{item.shiftName}</div>
                     </td>
-                    <td className="py-3 px-3 font-bold text-slate-900">
-                      {item.machineCode}
-                      <span className="text-[10px] text-slate-500 block font-sans truncate max-w-[140px]">{item.machineName}</span>
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-slate-900 flex items-center gap-1">
+                        <Cpu className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{item.machineName}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">{item.hallName}</div>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <span className="font-bold text-slate-800">{item.dieCode}</span>
-                      <span className="text-[10px] text-slate-500 block truncate max-w-[150px]">{item.dieName}</span>
+                    <td className="py-3 px-3">
+                      <div className="font-mono font-bold text-indigo-700">{item.moNumber}</div>
+                      <div className="text-[11px] text-slate-600">
+                        {item.stepCode} — {item.stepName}
+                      </div>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <span className="font-bold text-slate-900 block">{item.partName}</span>
-                      <span className="text-[11px] text-slate-500 font-mono">{item.partCode}</span>
+                    <td className="py-3 px-3">
+                      <div className="font-semibold text-slate-900">{item.partName}</div>
+                      <div className="text-[11px] font-mono text-slate-500">{item.partCode}</div>
                     </td>
-                    <td className="py-3 px-3 font-sans font-medium text-slate-700">{item.carModel}</td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-900 font-mono">
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">
                       {formatNumber(item.plannedQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center font-extrabold text-emerald-700 font-mono">
+                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">
                       {formatNumber(item.actualProducedQuantity)}
-                      <span className="text-[10px] text-slate-400 block">({toPersianDigits(percent)}%)</span>
                     </td>
-                    <td className="py-3 px-3 text-center text-rose-600 font-mono font-semibold">
-                      {toPersianDigits(item.scrapQuantity)}
+                    <td className="py-3 px-3 text-center font-mono text-rose-600">
+                      {formatNumber(item.scrapQuantity)}
                     </td>
-                    <td className="py-3 px-3 font-sans font-medium text-slate-800">
-                      {item.operatorName}
+                    <td className="py-3 px-3 text-slate-700">
+                      <span className="inline-flex items-center gap-1">
+                        <User className="w-3 h-3 text-slate-400" />
+                        {item.operatorName}
+                      </span>
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-3 px-3 text-center">
                       {item.status === 'COMPLETED' ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
-                          تکمیل شده ✓
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          تکمیل
                         </span>
                       ) : item.status === 'IN_PROGRESS' ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-900 border border-orange-200 font-bold">
-                          در حال تولید
-                        </span>
+                        <span className="text-[11px] font-bold text-amber-700">در حال تولید</span>
                       ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                          برنامه‌ریزی شیفت
-                        </span>
+                        <span className="text-[11px] text-slate-500">برنامه‌ریزی‌شده</span>
                       )}
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Official Signatures Row for Official Paper Printout */}
-        <div className="p-5 border-t border-slate-300 mt-4 grid grid-cols-3 gap-6 text-center text-xs font-sans">
-          <div className="space-y-8">
-            <span className="text-slate-600 font-semibold block">سرپرست سالن / خط تولید:</span>
-            <span className="border-b border-dashed border-slate-400 block w-32 mx-auto"></span>
-            <span className="text-[10px] text-slate-400 block">امضاء و تایید شیفت</span>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="space-y-8">
-            <span className="text-slate-600 font-semibold block">رئیس برنامه‌ریزی و کنترل تولید:</span>
-            <span className="border-b border-dashed border-slate-400 block w-32 mx-auto"></span>
-            <span className="text-[10px] text-slate-400 block">مهندس حسینی</span>
-          </div>
-          <div className="space-y-8">
-            <span className="text-slate-600 font-semibold block">مدیر کارخانه و تولید:</span>
-            <span className="border-b border-dashed border-slate-400 block w-32 mx-auto"></span>
-            <span className="text-[10px] text-slate-400 block">تصویب نهایی دیسپچ</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
