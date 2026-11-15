@@ -750,17 +750,48 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
   };
 
   return (
-    <div className="space-y-5">
-      {/* Page Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <Boxes className="w-5 h-5 text-slate-700" />
-            <span>جستجو، استعلام موجودی و کاردکس اختصاصی هر کالا / ورق</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            انتخاب هر قطعه یا رول ورق جهت مشاهده همزمان «موجودی تفکیکی در انبارها» و «کاردکس کامل گردش ورود و خروج»
-          </p>
+    <div className="space-y-4">
+      {/* Compact Single-Row Toolbar: Mode Tabs + Actions */}
+      <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
+          <button
+            type="button"
+            onClick={() => setInquiryMode('PART_CARDEX')}
+            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
+              inquiryMode === 'PART_CARDEX'
+                ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <History className="w-3.5 h-3.5 text-slate-500" />
+            <span>۱. فهرست قطعات و کاردکس کالا</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setInquiryMode('ANALYTICAL_TABLE')}
+            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
+              inquiryMode === 'ANALYTICAL_TABLE'
+                ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
+            <span>۲. جدول تحلیلی کل موجودی انبارها</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setInquiryMode('COIL_SLITTING')}
+            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
+              inquiryMode === 'COIL_SLITTING'
+                ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <GitBranch className="w-3.5 h-3.5 text-slate-500" />
+            <span>۳. شجره‌نامه برش کلاف</span>
+          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -768,7 +799,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
             <button
               type="button"
               onClick={() => setShowColumnPicker(!showColumnPicker)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200/60 transition-colors cursor-pointer whitespace-nowrap"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
               <span>تنظیم ستون‌ها</span>
@@ -778,7 +809,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200/60 transition-colors cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>به‌روزرسانی</span>
@@ -786,54 +817,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           <button
             type="button"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>دانلود اکسل (CSV)</span>
+            <span>خروجی اکسل (CSV)</span>
           </button>
         </div>
-      </div>
-
-      {/* Mode Switcher Bar: Part Stock + Cardex vs Analytical Table vs Coil Slitting Genealogy */}
-      <div className="bg-white p-2 rounded-xl border border-slate-200 flex flex-wrap items-center gap-2 shadow-2xs">
-        <button
-          type="button"
-          onClick={() => setInquiryMode('PART_CARDEX')}
-          className={`flex-1 min-w-[210px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            inquiryMode === 'PART_CARDEX'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          <History className="w-4 h-4 text-amber-400" />
-          <span>۱. فهرست قطعات + موجودی، نقطه سفارش و کاردکس</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setInquiryMode('ANALYTICAL_TABLE')}
-          className={`flex-1 min-w-[210px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            inquiryMode === 'ANALYTICAL_TABLE'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-          <span>۲. جدول تحلیلی کل موجودی انبارها و نقطه سفارش</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setInquiryMode('COIL_SLITTING')}
-          className={`flex-1 min-w-[210px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            inquiryMode === 'COIL_SLITTING'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          <GitBranch className="w-4 h-4 text-indigo-400" />
-          <span>۳. شجره‌نامه برش کلاف (Parent ➔ Child Slitting)</span>
-        </button>
       </div>
 
       {/* ==================================================================== */}
@@ -842,38 +831,38 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
       {inquiryMode === 'COIL_SLITTING' ? (
         <CoilSlittingGenealogyPanel />
       ) : inquiryMode === 'PART_CARDEX' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* Right Sidebar: Searchable List of Parts */}
-          <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div className="p-3.5 border-b border-slate-200 bg-slate-50 space-y-2.5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          {/* Right Sidebar: Compact Searchable List of Parts (3 columns) */}
+          <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+            <div className="p-3 border-b border-slate-100 bg-slate-50/40 space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-900">فهرست قطعات، ورق‌ها و ملزومات</h3>
-                <span className="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">
-                  {toPersianDigits(catalogPartsWithStock.length)} کالا
+                <h3 className="text-xs font-medium text-slate-800">فهرست اقلام و ورق‌ها</h3>
+                <span className="text-[11px] font-mono tabular-nums bg-white px-2 py-0.5 rounded border border-slate-200/60 text-slate-600">
+                  {toPersianDigits(catalogPartsWithStock.length)} قلم
                 </span>
               </div>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2" />
                 <input
                   type="text"
                   value={partSearchQuery}
                   onChange={e => setPartSearchQuery(e.target.value)}
-                  placeholder="جستجوی نام قطعه، کد کالا یا گرید ورق..."
-                  className="w-full bg-white border border-slate-300 rounded-lg pr-8 pl-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-900"
+                  placeholder="جستجوی نام یا کد کالا..."
+                  className="w-full bg-white border border-slate-200/70 rounded-lg pr-8 pl-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-slate-400"
                 />
               </div>
-              <label className="flex items-center gap-2 text-[11px] font-semibold text-rose-700 cursor-pointer pt-0.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-normal text-slate-600 cursor-pointer pt-0.5">
                 <input
                   type="checkbox"
                   checked={onlyBelowReorderPoint}
                   onChange={e => setOnlyBelowReorderPoint(e.target.checked)}
-                  className="rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                  className="rounded border-slate-300 text-slate-800 focus:ring-slate-500"
                 />
-                <span>فقط اقلام زیر نقطه سفارش (نیاز به خرید)</span>
+                <span>فقط اقلام زیر نقطه سفارش</span>
               </label>
             </div>
 
-            <div className="max-h-[640px] overflow-y-auto divide-y divide-slate-100">
+            <div className="max-h-[660px] overflow-y-auto divide-y divide-slate-100">
               {catalogPartsWithStock.map(item => {
                 const isSelected =
                   activeCardexPartSummary?.part.id === item.part.id;
@@ -882,75 +871,51 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                     key={item.part.id}
                     type="button"
                     onClick={() => setSelectedCardexPartId(item.part.id)}
-                    className={`w-full text-right p-3.5 transition-all flex items-start justify-between gap-2 cursor-pointer ${
+                    className={`w-full text-right px-3 py-2.5 transition-colors flex items-start justify-between gap-2 cursor-pointer ${
                       isSelected
-                        ? 'bg-amber-50/90 border-r-4 border-amber-600'
-                        : item.isVIP
-                        ? 'bg-amber-50/35 hover:bg-amber-50/70 border-r-2 border-amber-400'
-                        : 'hover:bg-slate-50'
+                        ? 'bg-slate-100/90 text-slate-900 border-r-2 border-slate-700'
+                        : 'hover:bg-slate-50/70 text-slate-800'
                     }`}
                   >
-                    <div className="space-y-1">
-                      <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5 flex-wrap">
-                        <span>{item.part.name}</span>
-                        {item.isVIP && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 text-[9px] font-extrabold">
-                            <Pin className="w-2.5 h-2.5 fill-slate-950" />
-                            VIP
-                          </span>
-                        )}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className={`text-xs leading-snug truncate ${isSelected ? 'font-medium text-slate-900' : 'font-normal text-slate-800'}`}>
+                        {item.part.name}
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200">
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                          isSelected
+                            ? 'bg-white text-slate-700 border border-slate-200/70'
+                            : 'bg-slate-100/80 text-slate-500'
+                        }`}>
                           {item.part.code}
                         </span>
-                        <span className="text-[10px] text-slate-500">
-                          {item.part.category === 'RAW_MATERIAL'
-                            ? 'ماده اولیه / ورق'
-                            : item.part.category === 'WIP_PART'
-                            ? 'نیمه‌ساخته'
-                            : 'محصول نهایی'}
-                        </span>
                         {item.blockedTotal > 0 && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-                            <Lock className="w-2.5 h-2.5" />
-                            قرنطینه کیفی (QC Hold)
-                          </span>
+                          <span className="w-2 h-2 rounded-full bg-rose-500" title="دارای موجودی قرنطینه کیفی" />
                         )}
                         {item.needsPurchase && (
-                          <span
-                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                              item.isCriticalShortage
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : 'bg-amber-50 text-amber-800 border-amber-200'
-                            }`}
-                            title={`موجودی آزاد (${formatNumber(item.availableTotal)}) کمتر از نقطه سفارش (${formatNumber(item.reorderPoint)}) است`}
-                          >
-                            <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
-                            {item.isVIP ? 'کسری اولویت اول (VIP)' : 'نیاز به خرید'}
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-50 text-rose-700">
+                            کسری
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="text-left shrink-0">
+                    <div className="text-left shrink-0 tabular-nums">
                       <div
-                        className={`text-xs font-mono font-bold ${
+                        className={`text-xs font-mono font-medium whitespace-nowrap ${
                           item.needsPurchase
-                            ? item.isCriticalShortage
-                              ? 'text-rose-600'
-                              : 'text-amber-700'
+                            ? 'text-rose-600'
                             : item.availableTotal > 0
                             ? 'text-emerald-700'
                             : 'text-slate-400'
                         }`}
                       >
                         {formatNumber(item.availableTotal)}{' '}
-                        <span className="text-[10px] font-sans">
+                        <span className="text-[10px] font-sans font-normal">
                           {item.part.unit === 'KG' ? 'kg' : 'عدد'}
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                      <div className="text-[10px] mt-0.5 font-mono whitespace-nowrap text-slate-400">
                         حداقل: {formatNumber(item.reorderPoint)}
                       </div>
                     </div>
@@ -960,100 +925,115 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
             </div>
           </div>
 
-          {/* Left Main Panel: Selected Part Stock Breakdown + Chronological Cardex */}
-          <div className="lg:col-span-8 space-y-4">
+          {/* Left Main Panel: Selected Part Stock Breakdown + Chronological Cardex (9 columns) */}
+          <div className="lg:col-span-9 space-y-4">
             {activeCardexPartSummary ? (
               <>
-                {/* Part Header & Total Stock KPIs */}
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                    <div>
+                {/* Part Header & Warehouse Stock Breakdown */}
+                <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/40 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                    <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-0.5 rounded bg-slate-900 text-white font-mono text-xs font-bold">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200/70 font-mono text-xs font-medium whitespace-nowrap">
                           {activeCardexPartSummary.part.code}
                         </span>
-                        <h3 className="text-base font-bold text-slate-900">
+                        <h3 className="text-sm font-medium text-slate-800">
                           {activeCardexPartSummary.part.name}
                         </h3>
                         {activeCardexPartSummary.needsPurchase ? (
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                              activeCardexPartSummary.isCriticalShortage
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : 'bg-amber-50 text-amber-800 border-amber-200'
-                            }`}
-                          >
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                            نیاز به خرید (زیر نقطه سفارش: {formatNumber(activeCardexPartSummary.reorderPoint)})
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60 whitespace-nowrap">
+                            <AlertTriangle className="w-3 h-3" />
+                            زیر نقطه سفارش
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            موجودی ایمن (بالای نقطه سفارش: {formatNumber(activeCardexPartSummary.reorderPoint)})
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 whitespace-nowrap">
+                            <CheckCircle2 className="w-3 h-3" />
+                            موجودی ایمن
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-[11px] text-slate-500">
                         واحد سنجش:{' '}
-                        <strong>
+                        <strong className="text-slate-700">
                           {activeCardexPartSummary.part.unit === 'KG' ? 'کیلوگرم (KG)' : 'عدد (PCS)'}
                         </strong>
                         {activeCardexPartSummary.part.materialGrade && (
                           <span>
                             {' '}
-                            · جنس/گرید: <strong>{activeCardexPartSummary.part.materialGrade}</strong>
+                            · گرید: <strong className="text-slate-700">{activeCardexPartSummary.part.materialGrade}</strong>
                           </span>
                         )}
                         {activeCardexPartSummary.part.thicknessMm && (
                           <span>
                             {' '}
-                            · ضخامت: <strong>{activeCardexPartSummary.part.thicknessMm} mm</strong>
+                            · ضخامت: <strong className="text-slate-700">{activeCardexPartSummary.part.thicknessMm} mm</strong>
                           </span>
                         )}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl">
+                    {/* Clean Inline KPI Strip */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs bg-white px-3.5 py-2 rounded-lg border border-slate-200 tabular-nums">
                       <div>
-                        <span className="text-[11px] text-emerald-800 block">
-                          موجودی قابل استفاده در کل انبارها:
-                        </span>
-                        <strong className="font-mono text-lg text-emerald-700">
+                        <span className="text-slate-400 text-[11px] ml-1.5">موجودی فیزیکی:</span>
+                        <strong className="font-mono text-slate-900">
+                          {formatNumber(activeCardexPartSummary.physicalTotal)}
+                        </strong>
+                      </div>
+                      <div className="h-3.5 w-px bg-slate-200" />
+                      <div>
+                        <span className="text-slate-400 text-[11px] ml-1.5">قرنطینه:</span>
+                        <strong className="font-mono text-rose-600">
+                          {formatNumber(activeCardexPartSummary.blockedTotal)}
+                        </strong>
+                      </div>
+                      <div className="h-3.5 w-px bg-slate-200" />
+                      <div>
+                        <span className="text-slate-500 text-[11px] ml-1.5">موجودی آزاد (ATP):</span>
+                        <strong className="font-mono text-sm text-emerald-700">
                           {formatNumber(activeCardexPartSummary.availableTotal)}{' '}
-                          <span className="text-xs font-sans">
-                            {activeCardexPartSummary.part.unit === 'KG' ? 'کیلوگرم' : 'عدد'}
+                          <span className="text-[11px] font-sans font-normal">
+                            {activeCardexPartSummary.part.unit === 'KG' ? 'kg' : 'عدد'}
                           </span>
+                        </strong>
+                      </div>
+                      <div className="h-3.5 w-px bg-slate-200" />
+                      <div>
+                        <span className="text-slate-400 text-[11px] ml-1.5">نقطه سفارش:</span>
+                        <strong className="font-mono text-slate-700">
+                          {formatNumber(activeCardexPartSummary.reorderPoint)}
                         </strong>
                       </div>
                     </div>
                   </div>
 
                   {/* Section A: Warehouse & Coil-Pack Balances for this Part */}
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <Boxes className="w-4 h-4 text-blue-600" />
-                      <span>
-                        الف) تفکیک موجودی فعلی این کالا در انبارها و کویل‌پک‌ها (
-                        {toPersianDigits(activeCardexPartSummary.balances.length)} ردیف):
-                      </span>
-                    </h4>
+                  <div className="p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Boxes className="w-3.5 h-3.5 text-slate-500" />
+                        <span>
+                          الف) تفکیک موجودی در انبارها و بچ‌ها ({toPersianDigits(activeCardexPartSummary.balances.length)} ردیف)
+                        </span>
+                      </h4>
+                    </div>
 
                     {activeCardexPartSummary.balances.length === 0 ? (
-                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 text-center">
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500 text-center">
                         در حال حاضر هیچ موجودی فعالی برای این قطعه در انبارها ثبت نشده است.
                       </div>
                     ) : (
-                      <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                      <div className="overflow-x-auto border border-slate-200 rounded-lg">
                         <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
                             <tr>
-                              <th className="py-2.5 px-3">انبار و جایگاه</th>
-                              <th className="py-2.5 px-3">شماره کویل‌پک / بچ</th>
-                              <th className="py-2.5 px-3">قرارداد مرتبط</th>
-                              <th className="py-2.5 px-3">مالکیت</th>
-                              <th className="py-2.5 px-3">موجودی فیزیکی</th>
-                              <th className="py-2.5 px-3 text-rose-700">قرنطینه کیفی</th>
-                              <th className="py-2.5 px-3 text-emerald-700">
+                              <th className="py-2 px-3 whitespace-nowrap">انبار و جایگاه</th>
+                              <th className="py-2 px-3 whitespace-nowrap">شماره کویل‌پک / بچ</th>
+                              <th className="py-2 px-3 whitespace-nowrap">قرارداد مرتبط</th>
+                              <th className="py-2 px-3 whitespace-nowrap">مالکیت</th>
+                              <th className="py-2 px-3 whitespace-nowrap">موجودی فیزیکی</th>
+                              <th className="py-2 px-3 whitespace-nowrap text-rose-700">قرنطینه کیفی</th>
+                              <th className="py-2 px-3 whitespace-nowrap text-emerald-700">
                                 <span className="inline-flex items-center">
                                   <span>موجودی آزاد (ATP)</span>
                                   <FormulaTooltip
@@ -1064,64 +1044,59 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                                   />
                                 </span>
                               </th>
-                              <th className="py-2.5 px-3 text-center">کنترل کیفیت (QC Hold)</th>
+                              <th className="py-2 px-3 text-center whitespace-nowrap">وضعیت کیفی</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 tabular-nums">
                             {activeCardexPartSummary.balances.map(b => {
                               const isHeld = b.qualityBlockedQty > 0;
                               return (
                                 <tr
                                   key={b.id}
-                                  className={isHeld ? 'bg-rose-50/70 hover:bg-rose-50' : 'hover:bg-slate-50'}
+                                  className={isHeld ? 'bg-rose-50/50 hover:bg-rose-50' : 'hover:bg-slate-50/80'}
                                 >
-                                  <td className="py-2.5 px-3 font-medium text-slate-900">
-                                    {b.warehouseName}{' '}
+                                  <td className="py-2.5 px-3 font-medium text-slate-900 whitespace-nowrap">
+                                    <span>{b.warehouseName}</span>{' '}
                                     <span className="text-[10px] font-mono text-slate-400">
                                       ({b.locationCode})
                                     </span>
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                                  <td className="py-2.5 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
                                     {b.lotNumber || 'عمومی'}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono text-slate-700">
+                                  <td className="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap">
                                     {b.contractNumber || 'آزاد'}
                                   </td>
-                                  <td className="py-2.5 px-3">
+                                  <td className="py-2.5 px-3 whitespace-nowrap">
                                     {b.ownership === 'SAPCO_SUPPLIER_OWNED' ? (
-                                      <span className="text-amber-800 font-semibold">امانی ساپکو</span>
+                                      <span className="text-amber-800 font-medium">امانی ساپکو</span>
                                     ) : (
-                                      <span className="text-slate-700">ملکی شرکت</span>
+                                      <span className="text-slate-600">ملکی شرکت</span>
                                     )}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900 whitespace-nowrap">
                                     {formatNumber(b.physicalQty)} {b.unit === 'KG' ? 'kg' : 'عدد'}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-rose-700">
+                                  <td className="py-2.5 px-3 font-mono font-bold text-rose-700 whitespace-nowrap">
                                     {b.qualityBlockedQty > 0
                                       ? `${formatNumber(b.qualityBlockedQty)} ${b.unit === 'KG' ? 'kg' : 'عدد'}`
                                       : '—'}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
+                                  <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
                                     {formatNumber(b.availableQty)} {b.unit === 'KG' ? 'kg' : 'عدد'}
                                   </td>
-                                  <td className="py-2.5 px-3 text-center">
+                                  <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                     <button
                                       type="button"
                                       onClick={() => handleToggleQcHoldOnBalance(b)}
-                                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 border transition-colors cursor-pointer ${
+                                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold inline-flex items-center gap-1 border transition-colors cursor-pointer whitespace-nowrap ${
                                         isHeld
                                           ? 'bg-rose-600 text-white border-rose-700 hover:bg-rose-700'
-                                          : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+                                          : 'bg-white text-slate-700 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
                                       }`}
-                                      title={
-                                        isHeld
-                                          ? 'کلیک جهت رفع قرنطینه کیفی و بازگشت به ATP'
-                                          : 'قرنطینه کیفی این ردیف و کسر مستقیم از موجودی آزاد (ATP) در MRP'
-                                      }
                                     >
                                       {isHeld ? <Unlock className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                                      <span>{isHeld ? 'رفع قرنطینه (QC)' : 'قرنطینه کیفی / QC Hold'}</span>
+                                      <span>{isHeld ? 'رفع قرنطینه' : 'قرنطینه کیفی'}</span>
                                     </button>
                                   </td>
                                 </tr>
@@ -1135,21 +1110,20 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                 </div>
 
                 {/* Section B: Chronological Stock Cardex (کاردکس جامع ورود و خروج قطعه) */}
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                    <h4 className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                      <History className="w-4 h-4 text-amber-600" />
+                <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-slate-500" />
                       <span>
-                        ب) کاردکس رسمی گردش کالا (تاریخچه ورود، خروج و مانده لحظه‌ای «
-                        {activeCardexPartSummary.part.name}»)
+                        ب) کاردکس گردش کالا («{activeCardexPartSummary.part.name}»)
                       </span>
                     </h4>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-slate-500 tabular-nums">
                       تعداد اسناد گردش:{' '}
                       <strong className="font-mono text-slate-900">
                         {toPersianDigits(selectedPartCardexRows.length)}
                       </strong>{' '}
-                      تراکنش قطعی
+                      تراکنش
                     </span>
                   </div>
 
@@ -1158,74 +1132,72 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                       در حال بارگذاری کاردکس گردش کالا...
                     </div>
                   ) : selectedPartCardexRows.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
                       هنوز هیچ سند ورود یا خروجی برای این کالا در کاردکس ثبت نشده است.
                     </div>
                   ) : (
-                    <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <div className="overflow-x-auto border border-slate-200 rounded-lg">
                       <table className="w-full text-right text-xs">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
                           <tr>
-                            <th className="py-2.5 px-3">تاریخ و ساعت</th>
-                            <th className="py-2.5 px-3">شماره سند</th>
-                            <th className="py-2.5 px-3">نوع عملیات</th>
-                            <th className="py-2.5 px-3">انبار</th>
-                            <th className="py-2.5 px-3">کویل‌پک / بچ</th>
-                            <th className="py-2.5 px-3 text-emerald-700">وارده (+)</th>
-                            <th className="py-2.5 px-3 text-rose-700">صادره (-)</th>
-                            <th className="py-2.5 px-3 bg-slate-100 font-bold text-slate-900">
+                            <th className="py-2 px-3 whitespace-nowrap">تاریخ و ساعت</th>
+                            <th className="py-2 px-3 whitespace-nowrap">شماره سند</th>
+                            <th className="py-2 px-3 whitespace-nowrap">نوع عملیات</th>
+                            <th className="py-2 px-3 whitespace-nowrap">انبار</th>
+                            <th className="py-2 px-3 whitespace-nowrap">کویل‌پک / بچ</th>
+                            <th className="py-2 px-3 whitespace-nowrap text-emerald-700">وارده (+)</th>
+                            <th className="py-2 px-3 whitespace-nowrap text-rose-700">صادره (-)</th>
+                            <th className="py-2 px-3 whitespace-nowrap bg-slate-100/80 font-bold text-slate-900">
                               مانده پس از سند
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 tabular-nums">
                           {selectedPartCardexRows.map(tx => {
                             const badge = getDocTypeBadge(tx.docType);
                             return (
-                              <tr key={tx.id} className="hover:bg-slate-50">
-                                <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600">
+                              <tr key={tx.id} className="hover:bg-slate-50/80">
+                                <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">
                                   {formatDateTime(tx.docDate)}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                                <td className="py-2.5 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
                                   <div>{tx.docNumber}</div>
                                   {tx.referenceNumber !== '—' && (
-                                    <div className="text-[10px] text-slate-500">
+                                    <div className="text-[10px] text-slate-400 font-normal">
                                       مرجع: {tx.referenceNumber}
                                     </div>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-2.5 px-3 whitespace-nowrap">
                                   <span
-                                    className={`inline-block px-2 py-0.5 rounded border text-[10px] font-bold ${badge.color}`}
+                                    className={`inline-block px-2 py-0.5 rounded border text-[10px] font-semibold ${badge.color}`}
                                   >
                                     {badge.label}
                                   </span>
                                 </td>
-                                <td className="py-2.5 px-3 text-slate-700">{tx.warehouseName}</td>
-                                <td className="py-2.5 px-3 font-mono text-slate-800">
+                                <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">{tx.warehouseName}</td>
+                                <td className="py-2.5 px-3 font-mono text-slate-700 whitespace-nowrap">
                                   {tx.lotNumber}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
+                                <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
                                   {tx.inQty > 0 ? (
-                                    <span className="flex items-center gap-0.5">
-                                      <ArrowDownLeft className="w-3.5 h-3.5" />+
-                                      {formatNumber(tx.inQty)}
+                                    <span className="inline-flex items-center gap-0.5">
+                                      <ArrowDownLeft className="w-3.5 h-3.5" />+{formatNumber(tx.inQty)}
                                     </span>
                                   ) : (
                                     '—'
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-rose-700">
+                                <td className="py-2.5 px-3 font-mono font-bold text-rose-700 whitespace-nowrap">
                                   {tx.outQty > 0 ? (
-                                    <span className="flex items-center gap-0.5">
-                                      <ArrowUpRight className="w-3.5 h-3.5" />-
-                                      {formatNumber(tx.outQty)}
+                                    <span className="inline-flex items-center gap-0.5">
+                                      <ArrowUpRight className="w-3.5 h-3.5" />-{formatNumber(tx.outQty)}
                                     </span>
                                   ) : (
                                     '—'
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-slate-900 bg-slate-50/80">
+                                <td className="py-2.5 px-3 font-mono font-bold text-slate-900 bg-slate-50/80 whitespace-nowrap">
                                   {formatNumber(tx.runningBalance)}{' '}
                                   <span className="text-[10px] font-normal text-slate-500">
                                     {tx.unit === 'KG' ? 'kg' : 'عدد'}

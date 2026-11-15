@@ -366,10 +366,10 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
   return (
     <div className="space-y-5">
       {/* Clean Enterprise Header & Section Tabs */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+      <div className="bg-white p-4 rounded-xl border border-slate-200/60 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h1 className="text-base font-bold text-slate-900">
+            <h1 className="text-sm font-medium text-slate-800">
               برنامه‌ریزی کلان تولید و نیازسنجی مواد (MRP)
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -382,7 +382,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
               type="button"
               onClick={loadPlanningData}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/60 rounded-lg text-xs font-normal transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>بروزرسانی</span>
@@ -390,7 +390,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
             <button
               type="button"
               onClick={() => setIsOrderModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>ثبت سفارش مشتری</span>
@@ -398,7 +398,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
           {[
             { id: 'mrp', label: '۱. انفجار BOM و نیاز ورق (MRP)' },
             { id: 'capacity_planning', label: '۲. تقویم ظرفیت ماشین‌آلات (Capacity Planning)' },
@@ -411,10 +411,10 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
               key={item.id}
               type="button"
               onClick={() => handleSelectSubTab(item.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
                 activeSubTab === item.id
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
+                  ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {item.label}

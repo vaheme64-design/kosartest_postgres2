@@ -103,7 +103,7 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
+          enabled: false,
           type: 'module',
           suppressWarnings: true,
         },
@@ -119,6 +119,7 @@ export default defineConfig(() => {
       port: 3000,
       strictPort: false,
       hmr: false,
+      ws: false as const,
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     preview: {

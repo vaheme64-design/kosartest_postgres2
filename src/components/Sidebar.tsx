@@ -720,89 +720,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside
-      style={
-        isDarkSidebar
-          ? { backgroundColor: themeMeta.sidebarDarkHex }
-          : undefined
-      }
-      className={`${
-        collapsed ? 'w-full md:w-18' : 'w-full md:w-64 lg:w-68'
-      } ${
-        isDarkSidebar
-          ? 'text-slate-200 border-b md:border-b-0 md:border-l border-slate-800'
-          : 'bg-white text-slate-800 border-b md:border-b-0 md:border-l border-slate-200'
-      } p-3.5 shrink-0 flex flex-col justify-between transition-all select-none`}
-    >
-      <div className="space-y-3.5">
-        {/* In Template 1 (HUB_WORKSPACE - Image 1), render the KPIMS + KP emerald logo header at the top of the dark sidebar */}
-        {isDarkSidebar ? (
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            {!collapsed && (
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm"
-                  style={{ backgroundColor: themeMeta.primaryHex }}
-                >
-                  KP
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-white tracking-tight">KPIMS</div>
-                  <div className="text-[11px] text-slate-400">سامانه تولید و موجودی کوثر</div>
-                </div>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setCollapsed(!collapsed)}
-              title={collapsed ? 'باز کردن منوی کناری' : 'جمع کردن منوی کناری'}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-            >
-              {collapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between px-1.5">
-            {!collapsed && (
-              <span className="text-[11px] font-bold text-slate-500">
-                {layoutTemplate === 'TABBED_WORKBENCH' ? 'منوی اصلی سامانه' : 'دسترسی سریع ماژول‌ها'}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => setCollapsed(!collapsed)}
-              title={collapsed ? 'باز کردن منوی کناری' : 'جمع کردن منوی کناری'}
-              className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-            >
-              {collapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
-            </button>
-          </div>
-        )}
+    <aside className={`${
+      collapsed ? 'w-full md:w-16' : 'w-full md:w-60 lg:w-64'
+    } bg-white text-slate-700 border-b md:border-b-0 md:border-l border-slate-200/60 p-3 shrink-0 flex flex-col justify-between transition-all select-none`}>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1.5">
+          {!collapsed && (
+            <span className="text-[11px] font-medium text-slate-400">
+              بخش‌های سامانه
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? 'باز کردن منوی کناری' : 'جمع کردن منوی کناری'}
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+          >
+            {collapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
+          </button>
+        </div>
 
         {/* Instant Module & Sub-Module Search Input */}
         {!collapsed && (
           <div className="relative">
-            <Search
-              className={`w-3.5 h-3.5 absolute right-3 top-2.5 pointer-events-none ${
-                isDarkSidebar ? 'text-slate-400' : 'text-slate-400'
-              }`}
-            />
+            <Search className="w-3.5 h-3.5 absolute right-2.5 top-2 pointer-events-none text-slate-400" />
             <input
               type="text"
               value={moduleSearch}
               onChange={e => setModuleSearch(e.target.value)}
-              placeholder="جستجوی ماژول یا زیرماژول..."
-              className={`w-full rounded-xl pr-8 pl-7 py-1.5 text-xs focus:outline-none transition-colors ${
-                isDarkSidebar
-                  ? 'bg-white/8 border border-white/10 text-white placeholder:text-slate-400 focus:bg-white/15 focus:border-emerald-400'
-                  : 'bg-slate-50 border border-slate-200 focus:bg-white focus:border-slate-900 text-slate-900 placeholder:text-slate-400'
-              }`}
+              placeholder="فیلتر سریع منو..."
+              className="w-full rounded-lg pr-8 pl-6 py-1.5 text-xs focus:outline-none transition-colors bg-slate-50/70 border border-slate-200/60 focus:bg-white focus:border-slate-300 text-slate-700 placeholder:text-slate-400"
             />
             {moduleSearch && (
               <button
                 type="button"
                 onClick={() => setModuleSearch('')}
-                className="absolute left-2.5 top-2 text-slate-400 hover:text-slate-200 cursor-pointer"
+                className="absolute left-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -810,20 +763,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* AI Assistant Quick Tool (Quiet & Professional) */}
+        {/* AI Assistant Quick Tool (Subtle & Minimal) */}
         {onOpenAiAssistant && (
           <button
             type="button"
             onClick={onOpenAiAssistant}
-            title="دستیار هوشمند کارخانه (کلید میانبر Ctrl + Space)"
-            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+            title="دستیار هوشمند کارخانه (Ctrl + Space)"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50/70 hover:bg-slate-100/80 text-slate-600 border border-slate-200/60 transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-              {!collapsed && <span>دستیار هوشمند کارخانه</span>}
+              <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              {!collapsed && <span>دستیار هوشمند</span>}
             </span>
             {!collapsed && (
-              <span className="px-1.5 py-0.5 rounded bg-white text-[9px] font-mono text-slate-500 border border-slate-200">
+              <span className="px-1.5 py-0.5 rounded bg-white text-[9px] font-mono text-slate-400 border border-slate-200/60">
                 Ctrl+Space
               </span>
             )}
@@ -831,10 +784,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* =================================================================
-            FLAT CLEAN NAVIGATION (ODOO 17 / SAP FIORI STYLE)
+            FLAT CLEAN NAVIGATION (Minimal Soft-Contrast Style)
            ================================================================= */}
         {isFlatListMode && !searchNormalized ? (
-          <nav className="space-y-1">
+          <nav className="space-y-0.5">
             {displayNavItems.map(item => {
               const isMainActive = activeTab === item.tab;
               const Icon = item.icon;
@@ -851,25 +804,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => handleTriggerNavigation(item.tab, item.defaultNavParams || item.inventorySubTab)}
                     title={collapsed ? item.label : undefined}
                     className={`w-full flex items-center ${
-                      collapsed ? 'justify-center px-2' : 'justify-between px-3'
-                    } py-2.5 rounded-lg text-xs transition-colors cursor-pointer text-right ${
+                      collapsed ? 'justify-center px-2' : 'justify-between px-2.5'
+                    } py-2 rounded-lg text-xs transition-colors cursor-pointer text-right ${
                       isMainActive
-                        ? 'bg-slate-900 text-white font-bold shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+                        ? 'bg-slate-100 text-slate-900 font-semibold'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Icon
                         className={`w-4 h-4 shrink-0 ${
-                          isMainActive ? 'text-amber-400' : 'text-slate-500'
+                          isMainActive ? 'text-slate-800' : 'text-slate-400'
                         }`}
                       />
                       {!collapsed && <span className="truncate">{item.label}</span>}
                     </div>
                     {!collapsed && item.tab === 'inventory' && reorderAlertsCount > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums ${
-                        isMainActive ? 'bg-amber-400 text-slate-950' : 'bg-rose-50 text-rose-700 border border-rose-200'
-                      }`}>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums bg-amber-50 text-amber-700 border border-amber-200/60">
                         {toPersianDigits(reorderAlertsCount)}
                       </span>
                     )}
@@ -877,7 +828,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   {/* Sub-Modules under Active Tab */}
                   {showSubModules && (
-                    <div className="mr-3 pr-2 border-r border-slate-200 space-y-0.5 py-1">
+                    <div className="mr-3 pr-2 border-r border-slate-100 space-y-0.5 py-0.5">
                       {item.subModules?.map(sub => {
                         const isSubActive = isSubItemActive(sub);
                         const SubIcon = sub.icon;
@@ -888,22 +839,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             onClick={() => handleTriggerNavigation(sub.tab, sub.navParams || sub.inventorySubTab)}
                             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-[11px] transition-colors cursor-pointer text-right ${
                               isSubActive
-                                ? 'bg-slate-100 text-slate-950 font-bold border-r-2 border-slate-900'
-                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                ? 'bg-slate-100/70 text-slate-900 font-medium border-r-2 border-slate-600'
+                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/70 font-normal'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-slate-900' : 'text-slate-400'}`} />
+                              <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-slate-700' : 'text-slate-400'}`} />
                               <span className="truncate">{sub.label}</span>
                             </div>
                             {sub.badge && (
                               <span
-                                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
+                                className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium tabular-nums ${
                                   sub.badgeHighlight
-                                    ? 'bg-amber-400 text-slate-950'
-                                    : isDarkSidebar
-                                    ? 'bg-white/10 text-slate-300'
-                                    : 'bg-slate-100 text-slate-600'
+                                    ? 'bg-amber-50 text-amber-700'
+                                    : 'bg-slate-100 text-slate-500'
                                 }`}
                               >
                                 {sub.badge}

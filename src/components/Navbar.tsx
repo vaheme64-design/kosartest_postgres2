@@ -118,8 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const themeMeta = COLOR_THEMES[colorTheme];
-  const isDarkHeader =
-    layoutTemplate === 'TABBED_WORKBENCH' || layoutTemplate === 'ODOO_ENTERPRISE';
+  const isDarkHeader = false;
 
   useEffect(() => {
     fetch('/api/db/status')
@@ -242,47 +241,27 @@ export const Navbar: React.FC<NavbarProps> = ({
   const jalaliNumeric = formatToJalali(now);
 
   return (
-    <header
-      style={
-        isDarkHeader
-          ? {
-              backgroundColor:
-                layoutTemplate === 'ODOO_ENTERPRISE'
-                  ? themeMeta.headerDarkHex
-                  : '#0f172a',
-            }
-          : undefined
-      }
-      className={`${
-        isDarkHeader
-          ? 'text-white border-b border-slate-800'
-          : 'bg-white text-slate-900 border-b border-slate-200'
-      } sticky top-0 z-40 px-4 lg:px-6 py-2.5 transition-colors`}
-    >
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
+    <header className="bg-white/95 backdrop-blur-xs text-slate-800 border-b border-slate-200/60 sticky top-0 z-40 px-4 lg:px-6 py-2 transition-colors">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-2.5">
         {/* RIGHT SIDE: App Matrix + Brand / Active Page Title */}
-        <div className="flex items-center justify-between w-full lg:w-auto gap-3">
+        <div className="flex items-center justify-between w-full lg:w-auto gap-2.5">
           <div className="flex items-center gap-2.5">
-            {/* Odoo-style 9-dots App Switcher */}
+            {/* Minimal App Switcher */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowAppMatrix(!showAppMatrix)}
-                title="ماتریس سریع برنامه‌ها و ماژول‌ها (سبک Odoo)"
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                  isDarkHeader
-                    ? 'bg-white/10 hover:bg-white/20 text-white'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
+                title="دسترسی سریع ماژول‌ها"
+                className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200/60 transition-colors cursor-pointer"
               >
                 <Grid className="w-4 h-4" />
               </button>
 
               {showAppMatrix && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white text-slate-900 border border-slate-200 rounded-2xl shadow-2xl p-4 z-50">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-                    <span className="text-xs font-bold text-slate-800">
-                      ماتریس ماژول‌های KPIMS (سبک Odoo)
+                <div className="absolute right-0 top-full mt-2 w-76 bg-white text-slate-800 border border-slate-200/80 rounded-xl shadow-lg p-3.5 z-50">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
+                    <span className="text-xs font-medium text-slate-700">
+                      ماژول‌های سامانه
                     </span>
                     <button
                       type="button"
@@ -292,7 +271,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ✕
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-3 gap-2">
                     {appMatrixItems.map(item => {
                       const Icon = item.icon;
                       return (
@@ -303,18 +282,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                             if (onNavigate) onNavigate(item.tab);
                             setShowAppMatrix(false);
                           }}
-                          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-slate-50 border transition-all cursor-pointer ${
+                          className={`flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-slate-50 border transition-all cursor-pointer ${
                             activeTab === item.tab
-                              ? 'border-emerald-500 bg-emerald-50/40'
+                              ? 'border-slate-300 bg-slate-50/80'
                               : 'border-transparent'
                           }`}
                         >
-                          <div
-                            className={`w-9 h-9 rounded-xl ${item.color} text-white flex items-center justify-center shadow-xs`}
-                          >
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
                             <Icon className="w-4 h-4" />
                           </div>
-                          <span className="text-[11px] font-bold text-slate-800 text-center leading-tight">
+                          <span className="text-[11px] font-medium text-slate-700 text-center leading-tight">
                             {item.label}
                           </span>
                         </button>
@@ -325,93 +302,52 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* In Template 1 (HUB_WORKSPACE - Image 1), the KPIMS brand is inside the dark right sidebar, so the white top bar cleanly shows the current module title */}
-            {layoutTemplate === 'HUB_WORKSPACE' ? (
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200/70 flex items-center justify-center text-slate-700 shrink-0">
+                <Factory className="w-3.5 h-3.5" />
+              </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm md:text-base font-bold text-slate-900">
+                <span className="text-xs font-semibold text-slate-800">
                   {TAB_TITLES[activeTab]}
                 </span>
+                <span className="text-slate-200 hidden sm:inline">|</span>
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  سامانه تولید و موجودی کوثر
+                </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs"
-                  style={{ backgroundColor: themeMeta.primaryHex }}
-                >
-                  <Factory className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-sm font-bold ${
-                        isDarkHeader ? 'text-white' : 'text-slate-900'
-                      }`}
-                    >
-                      KPIMS
-                    </span>
-                    <span className={isDarkHeader ? 'text-slate-600' : 'text-slate-300'}>|</span>
-                    <span
-                      className={`text-xs font-medium ${
-                        isDarkHeader ? 'text-slate-300' : 'text-slate-700'
-                      }`}
-                    >
-                      سامانه مدیریت تولید و موجودی کوثر
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
         {/* CENTER: Universal Global Search Bar */}
-        <div className="relative w-full lg:max-w-md flex items-center gap-2">
+        <div className="relative w-full lg:max-w-sm flex items-center gap-2">
           <div
             onClick={() => setIsSearchPaletteOpen(true)}
-            className={`flex-1 relative flex items-center rounded-xl pr-9 pl-14 py-2 text-xs cursor-pointer transition-all select-none ${
-              isDarkHeader
-                ? 'bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 shadow-xs'
-                : 'bg-slate-50 hover:bg-slate-100/90 border border-slate-200 text-slate-700 shadow-2xs'
-            }`}
+            className="flex-1 relative flex items-center rounded-lg pr-8 pl-12 py-1.5 text-xs cursor-pointer transition-colors select-none bg-slate-50/80 hover:bg-slate-100/70 border border-slate-200/60 text-slate-500"
           >
-            <Search
-              className={`w-4 h-4 absolute right-3 top-2.5 pointer-events-none ${
-                isDarkHeader ? 'text-slate-300' : 'text-slate-400'
-              }`}
-            />
-            <span className="truncate text-slate-400 text-xs">
-              جستجوی سراسری قطعات، دستور کار، کویل و اسناد…
+            <Search className="w-3.5 h-3.5 absolute right-2.5 top-2 pointer-events-none text-slate-400" />
+            <span className="truncate text-slate-400 text-[11px]">
+              جستجوی قطعات، دستور کار، کویل و اسناد…
             </span>
-            <kbd
-              className={`absolute left-2.5 top-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium pointer-events-none ${
-                isDarkHeader
-                  ? 'bg-white/15 text-slate-200'
-                  : 'bg-white border border-slate-200 text-slate-500 shadow-2xs'
-              }`}
-            >
+            <kbd className="absolute left-2 top-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-white border border-slate-200/60 pointer-events-none">
               Ctrl+K
             </kbd>
           </div>
         </div>
 
-        {/* LEFT SIDE: Serene Executive Controls (PWA Install, Quiet Alerts, Bell & User Menu) */}
+        {/* LEFT SIDE: Minimal Executive Controls */}
         <div className="flex items-center gap-2 shrink-0">
           <PWAInstallButton />
-          {/* Reorder Point Alert Pill (Subtle & Informative) */}
           {reorderAlertsCount > 0 && (
             <button
               type="button"
               onClick={() => {
                 if (onNavigate) onNavigate('inventory', 'ALERTS');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                criticalAlertsCount > 0
-                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
-                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
-              }`}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer bg-amber-50/60 hover:bg-amber-50 text-amber-700 border-amber-200/60"
               title="مشاهده فهرست اقلام زیر نقطه سفارش"
             >
-              <BellRing className="w-3.5 h-3.5" />
+              <BellRing className="w-3 h-3" />
               <span>{toPersianDigits(reorderAlertsCount)} کسری موجودی</span>
             </button>
           )}
@@ -421,23 +357,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`p-2 rounded-lg border transition-colors cursor-pointer relative ${
-                isDarkHeader
-                  ? 'bg-white/10 hover:bg-white/15 text-white border-white/15'
-                  : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow-2xs'
-              }`}
+              className="p-1.5 rounded-lg border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-500 transition-colors cursor-pointer relative"
               title="اعلان‌های خط تولید و انبار"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-3.5 h-3.5" />
               {reorderAlertsCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5" />
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 absolute top-1.5 right-1.5" />
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute left-0 top-full mt-2 w-80 bg-white text-slate-900 border border-slate-200 rounded-xl shadow-xl p-3 z-50 text-xs space-y-2 animate-in fade-in">
+              <div className="absolute left-0 top-full mt-2 w-80 bg-white text-slate-800 border border-slate-200/80 rounded-xl shadow-lg p-3 z-50 text-xs space-y-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="font-bold text-slate-900">اعلان‌ها و رویدادهای کارخانه</span>
+                  <span className="font-medium text-slate-800">اعلان‌ها و رویدادهای کارخانه</span>
                   <button
                     type="button"
                     onClick={() => setShowNotifications(false)}
@@ -454,12 +386,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                         if (onNavigate) onNavigate('inventory', 'ALERTS');
                         setShowNotifications(false);
                       }}
-                      className="w-full text-right p-2.5 bg-rose-50/60 hover:bg-rose-100/70 rounded-lg border border-rose-200 cursor-pointer block"
+                      className="w-full text-right p-2.5 bg-rose-50/40 hover:bg-rose-50/70 rounded-lg border border-rose-200/60 cursor-pointer block"
                     >
-                      <div className="font-bold text-rose-900">
+                      <div className="font-medium text-rose-800">
                         هشدار کسری نقطه سفارش ({toPersianDigits(reorderAlertsCount)} قلم کالا)
                       </div>
-                      <div className="text-[11px] text-rose-700 mt-0.5">
+                      <div className="text-[11px] text-rose-600 mt-0.5">
                         بررسی جدول کسری‌ها و صدور دستور خرید یا تولید جبرانی ←
                       </div>
                     </button>
@@ -471,9 +403,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                       if (onNavigate) onNavigate('inventory', 'COILS');
                       setShowNotifications(false);
                     }}
-                    className="w-full text-right p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-lg border border-slate-100 cursor-pointer block"
+                    className="w-full text-right p-2.5 bg-slate-50/70 hover:bg-slate-100/70 rounded-lg border border-slate-100 cursor-pointer block"
                   >
-                    <div className="font-semibold text-slate-800">موجودی کلاف‌های ورق در انبار</div>
+                    <div className="font-medium text-slate-700">موجودی کلاف‌های ورق در انبار</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">
                       {toPersianDigits(coilsCount)} رول فیزیکی با برچسب و کویل‌پک آماده برش در سالن است.
                     </div>
@@ -483,25 +415,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Consolidated User Profile & System Menu (Odoo / SAP Fiori Style) */}
+          {/* User Profile & System Menu */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className={`flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border transition-all cursor-pointer ${
-                isDarkHeader
-                  ? 'bg-white/10 hover:bg-white/15 text-white border-white/15'
-                  : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 shadow-2xs'
-              }`}
+              className="flex items-center gap-2 pl-2.5 pr-1.5 py-1 rounded-lg border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
             >
-              <div className="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center font-bold text-[11px]">
+              <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 border border-slate-200/70 flex items-center justify-center font-medium text-[11px]">
                 {currentUser.displayName ? currentUser.displayName[0] : 'ک'}
               </div>
               <div className="hidden md:block text-right leading-tight">
-                <div className="text-xs font-bold text-slate-900 truncate max-w-[130px]">
+                <div className="text-[11px] font-medium text-slate-700 truncate max-w-[120px]">
                   {currentUser.displayName || 'مدیر تولید'}
                 </div>
-                <div className="text-[10px] text-slate-500 truncate max-w-[130px]">
+                <div className="text-[10px] text-slate-400 truncate max-w-[120px]">
                   {roleLabels[currentUser.role] || 'مدیر سیستم'}
                 </div>
               </div>

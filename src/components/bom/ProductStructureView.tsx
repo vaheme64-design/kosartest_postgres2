@@ -376,185 +376,122 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
     setNewAssemblyNotes('');
   };
 
-  // Recursive Tree Node Renderer Component
-  const renderTreeNode = (node: SubComponentNode, depth: number = 1) => {
+  // Recursive Tree Row Renderer Component (Clean Tabular Hierarchy)
+  const renderTreeNode = (node: SubComponentNode, depth: number = 1): React.ReactNode => {
     const hasChildren = node.subComponents && node.subComponents.length > 0;
     const isExpanded = expandedNodes[node.id] ?? true;
 
     return (
-      <div key={node.id} className="space-y-2">
-        <div
-          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
-            depth === 1
-              ? 'bg-amber-50/70 border-amber-200'
-              : depth === 2
-              ? 'bg-indigo-50/60 border-indigo-200 mr-4'
-              : 'bg-slate-50 border-slate-200 mr-8'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            {hasChildren ? (
-              <button
-                type="button"
-                onClick={() => toggleExpand(node.id)}
-                className="p-1 rounded bg-white/80 border border-slate-200 text-slate-600 hover:text-slate-900 cursor-pointer"
-              >
-                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-            ) : (
-              <div className="w-6 h-6 shrink-0 flex items-center justify-center text-slate-400">
-                •
-              </div>
-            )}
-
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono font-bold text-xs text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
-                  {node.partCode}
+      <React.Fragment key={node.id}>
+        <tr className="hover:bg-slate-50/80 transition-colors">
+          <td className="py-2.5 px-4">
+            <div
+              className="flex items-center gap-2"
+              style={{ paddingRight: `${(depth - 1) * 24}px` }}
+            >
+              {hasChildren ? (
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(node.id)}
+                  className="w-5 h-5 rounded border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer shrink-0"
+                >
+                  {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                </button>
+              ) : (
+                <span className="w-5 h-5 flex items-center justify-center text-slate-300 shrink-0">
+                  └
                 </span>
-                <span className="font-bold text-xs text-slate-900">{node.partName}</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
-                  سطح {toPersianDigits(depth)}
-                </span>
-              </div>
-              {node.notes && (
-                <p className="text-[11px] text-slate-500 mt-0.5">{node.notes}</p>
               )}
+              <span className="font-semibold text-xs text-slate-900">{node.partName}</span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            <div className="text-left font-mono">
-              <span className="text-xs font-bold text-slate-900">
-                {toPersianDigits(node.quantity)}
-              </span>{' '}
-              <span className="text-[11px] text-slate-500 font-sans">{node.unit}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
+          </td>
+          <td className="py-2.5 px-3 font-mono text-xs text-slate-700 whitespace-nowrap">
+            {node.partCode}
+          </td>
+          <td className="py-2.5 px-3 whitespace-nowrap">
+            <span
+              className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                depth === 1
+                  ? 'bg-slate-100 text-slate-800 border-slate-200'
+                  : 'bg-slate-50 text-slate-600 border-slate-200'
+              }`}
+            >
+              سطح {toPersianDigits(depth)}
+            </span>
+          </td>
+          <td className="py-2.5 px-3 font-mono font-bold text-xs text-slate-900 tabular-nums whitespace-nowrap">
+            {toPersianDigits(node.quantity)}{' '}
+            <span className="text-[11px] font-sans font-normal text-slate-500">{node.unit}</span>
+          </td>
+          <td className="py-2.5 px-3 text-[11px] text-slate-500">
+            {node.notes || '—'}
+          </td>
+          <td className="py-2.5 px-3 text-left whitespace-nowrap">
+            <div className="inline-flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => handleOpenAddSubComponent(node.id)}
-                className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
-                title="افزودن جزء متشکله فرعی زیر این مجموعه"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-[11px] font-medium inline-flex items-center gap-1 transition cursor-pointer"
+                title="افزودن جزء فرعی زیر این ردیف"
               >
                 <Plus className="w-3 h-3" />
-                <span>+ زیرجزء</span>
+                <span>زیرجزء</span>
               </button>
-
               <button
                 type="button"
                 onClick={() => handleOpenEditSubComponent(node)}
-                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white rounded-lg transition cursor-pointer"
-                title="ویرایش این جزء"
+                className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition cursor-pointer"
+                title="ویرایش"
               >
                 <Edit3 className="w-3.5 h-3.5" />
               </button>
-
               <button
                 type="button"
                 onClick={() => handleDeleteNode(node.id)}
-                className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                title="حذف این جزء"
+                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                title="حذف"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
-          </div>
-        </div>
-
-        {hasChildren && isExpanded && (
-          <div className="space-y-2 pr-2 border-r-2 border-amber-300 mr-2">
-            {node.subComponents!.map(sub => renderTreeNode(sub, depth + 1))}
-          </div>
-        )}
-      </div>
+          </td>
+        </tr>
+        {hasChildren &&
+          isExpanded &&
+          node.subComponents!.map(sub => renderTreeNode(sub, depth + 1))}
+      </React.Fragment>
     );
   };
 
   return (
-    <div className="space-y-5 text-right font-sans">
+    <div className="space-y-4 text-right font-sans">
       {/* Save Notification Toast */}
       {saveMessage && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-2xl p-3.5 text-xs font-bold flex items-center justify-between shadow-sm">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl px-4 py-2.5 text-xs font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{saveMessage}</span>
           </div>
           <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-            ذخیره پایدار در سرور و مرورگر
+            همگام با MRP
           </span>
         </div>
       )}
 
-      {/* Educational Banner: Difference between ProductStructure and BOM */}
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex items-start gap-3 shadow-2xs leading-relaxed">
-        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <div className="space-y-1.5">
-          <strong className="block font-bold text-amber-950 text-sm">
-            تفاوت «ساختار درختی محصول (ProductStructure)» با «جدول BOM مهندسی» و نقش آن‌ها در برنامه‌ریزی تولید (MRP):
-          </strong>
-          <p>
-            • <strong>۱. ساختار درختی محصول (این صفحه - ProductStructure):</strong> نمای گرافیکی و بازگشتی (چندسطحی) مونتاژ است؛ مثلاً نشان می‌دهد «مجموعه براکت ضدسرقت» (سطح ۰) از ۲ زیرمجموعه نیمه‌ساخته «صفحه اصلی» و «مکمل» (سطح ۱) تشکیل شده و هر کدام از این زیرمجموعه‌ها خود از چه ورق خام و چند عدد مهره/پیچ جوشی (سطح ۲) ساخته می‌شوند. این ساختار برای <strong>صدور دستورات ساخت مرحله‌ای (Sub-Assembly MOs)</strong> در ایستگاه‌های پرس و جوش به کار می‌رود.
-          </p>
-          <p>
-            • <strong>۲. جدول BOM مهندسی (Advanced BOM):</strong> فهرست مسطح و مهندسی مقادیر مصرف، درصد پرت ورق (Scrap %)، وزن بلنک و ارتباط با قالب‌های مشترک چپ و راست است که برای <strong>محاسبه دقیق تناژ ورق مورد نیاز و موازنه کلاف (MRP Netting)</strong> استفاده می‌شود. هر تغییری که اینجا ذخیره کنید به صورت خودکار در پایگاه داده و محاسبات برنامه‌ریزی تولید (MRP) لحاظ می‌گردد.
-          </p>
-        </div>
-      </div>
-
-      {/* Main Header & Assembly Selector */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
-              <FolderTree className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                مدیریت ساختار محصول درختی (Recursive Assembly Trees)
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                تعریف محصولات مرکب و تخصیص زیرمجموعه‌ها به صورت بازگشتی با ضرایب مصرف (متصل به موتور MRP)
-              </p>
-            </div>
+      {/* Unified Compact Header & Structure Selector */}
+      <div className="bg-white border border-slate-200/60 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <FolderTree className="w-4 h-4 text-slate-600" />
+            <h3 className="text-sm font-medium text-slate-800">ساختار درختی محصول (BOM چندسطحی)</h3>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              disabled={isSyncing}
-              onClick={() =>
-                persistStructures(
-                  structures,
-                  'تمامی ساختارهای درختی محصول با موفقیت در سرور و ماژول برنامه‌ریزی تولید (MRP) ذخیره و همگام‌سازی شدند.'
-                )
-              }
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-50"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isSyncing ? 'در حال ذخیره...' : 'ذخیره نهایی و بروزرسانی در MRP'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsNewAssemblyModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-amber-400" />
-              <span>+ تعریف ساختار محصول جدید</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Structure Selector Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-slate-500 font-semibold">انتخاب ساختار محصول جاری:</span>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">محصول:</span>
             <select
               value={selectedStructureId}
               onChange={e => setSelectedStructureId(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-900 focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="bg-slate-50 border border-slate-200/70 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-slate-400 cursor-pointer"
             >
               {structures.map(s => (
                 <option key={s.id} value={s.id}>
@@ -563,58 +500,95 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
               ))}
             </select>
           </div>
+        </div>
 
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => handleOpenAddSubComponent(null)}
-            className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl font-bold transition cursor-pointer flex items-center gap-1 text-xs"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/70 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 text-xs whitespace-nowrap"
           >
-            <Plus className="w-4 h-4 text-amber-600" />
-            <span>+ افزودن زیرمجموعه سطح ۱</span>
+            <Plus className="w-3.5 h-3.5 text-slate-500" />
+            <span>افزودن زیرمجموعه سطح ۱</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsNewAssemblyModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/80 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            <Plus className="w-3.5 h-3.5 text-slate-600" />
+            <span>محصول جدید</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSyncing}
+            onClick={() =>
+              persistStructures(
+                structures,
+                'ساختار درختی محصول در سرور و ماژول برنامه‌ریزی تولید (MRP) ذخیره شد.'
+              )
+            }
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>{isSyncing ? 'در حال ذخیره...' : 'ذخیره در MRP'}</span>
           </button>
         </div>
       </div>
 
-      {/* Tree Visualization Card */}
+      {/* Clean Hierarchical Tree Table */}
       {activeStructure && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-          {/* Root Assembly Banner */}
-          <div className="p-4 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-            <div>
-              <span className="text-[10px] bg-amber-500 text-slate-950 font-bold px-2 py-0.5 rounded uppercase font-mono">
-                محصول نهایی ریشه (Root Assembly)
+        <div className="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
+          {/* Subtle Root Summary Bar */}
+          <div className="px-4 py-2.5 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-mono font-medium bg-slate-100 text-slate-800 border border-slate-200/70 px-2 py-0.5 rounded">
+                {activeStructure.rootPartCode}
               </span>
-              <h4 className="text-base font-bold mt-1">
-                [{activeStructure.rootPartCode}] {activeStructure.rootPartName}
-              </h4>
-              <p className="text-xs text-slate-300 mt-0.5">
-                مدل خودرو: <strong>{activeStructure.carModel}</strong>
-                {activeStructure.notes && <span> — {activeStructure.notes}</span>}
-              </p>
+              <span className="text-xs font-medium text-slate-800">
+                {activeStructure.rootPartName}
+              </span>
+              <span className="text-[11px] text-slate-500">
+                ({activeStructure.carModel})
+              </span>
+              {activeStructure.notes && (
+                <span className="text-[11px] text-slate-400">— {activeStructure.notes}</span>
+              )}
             </div>
-
-            <span className="text-xs font-mono bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
-              کل اجزا: <strong>{toPersianDigits(activeStructure.subComponents.length)}</strong> زیرمجموعه مستقیم
+            <span className="text-[11px] text-slate-500 tabular-nums">
+              زیرمجموعه‌های سطح اول:{' '}
+              <strong className="font-mono text-slate-800">
+                {toPersianDigits(activeStructure.subComponents.length)}
+              </strong>{' '}
+              ردیف
             </span>
           </div>
 
-          {/* Recursive Child Nodes Display */}
-          <div className="space-y-3 pt-2">
-            <h5 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-              <ListTree className="w-4 h-4 text-amber-600" />
-              <span>اجزای متشکله درختی (Recursive Sub-Components):</span>
-            </h5>
-
-            {activeStructure.subComponents.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-xs">
-                هنوز هیچ زیرمجموعه‌ای برای این ساختار محصول تعریف نشده است. جهت افزودن اولین زیرمجموعه دکمه «+ افزودن زیرمجموعه سطح ۱» را بزنید.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {activeStructure.subComponents.map(node => renderTreeNode(node, 1))}
-              </div>
-            )}
-          </div>
+          {activeStructure.subComponents.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-xs">
+              هنوز هیچ زیرمجموعه‌ای برای این ساختار محصول تعریف نشده است. از دکمه «افزودن زیرمجموعه سطح ۱» استفاده کنید.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-right text-xs">
+                <thead className="bg-slate-50/60 border-b border-slate-200 text-slate-500 font-semibold">
+                  <tr>
+                    <th className="py-2.5 px-4">نام قطعه / زیرمجموعه (ساختار درختی)</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">کد فنی</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">سطح</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">ضریب مصرف</th>
+                    <th className="py-2.5 px-3">توضیحات فرآیند</th>
+                    <th className="py-2.5 px-3 text-left whitespace-nowrap">عملیات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {activeStructure.subComponents.map(node => renderTreeNode(node, 1))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

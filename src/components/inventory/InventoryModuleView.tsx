@@ -402,24 +402,24 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
     <div className="space-y-4">
       {/* Top Compact Alert Banner */}
       {reorderAlerts.length > 0 && activeSubTab !== 'ALERTS' && (
-        <div className="bg-amber-50 border border-amber-200/90 rounded-xl px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
+        <div className="bg-amber-50/60 border border-amber-200/60 rounded-xl px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5 text-xs">
-            <span className="p-1.5 rounded-lg bg-amber-500 text-white shrink-0">
+            <span className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
               <BellRing className="w-3.5 h-3.5" />
             </span>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-900">
+              <span className="font-medium text-slate-800">
                 هشدار کسری و نقطه سفارش:
               </span>
-              <span className="text-slate-700">
+              <span className="text-slate-600">
                 هم‌اکنون{' '}
-                <strong className="font-bold text-amber-900 underline underline-offset-4">
+                <strong className="font-medium text-amber-900 underline underline-offset-4">
                   {toPersianDigits(reorderAlerts.length)} قلم کالا و ورق
                 </strong>{' '}
                 پایین‌تر از حداقل موجودی اطمینان قرار دارند
               </span>
               {criticalAlertsCount > 0 && (
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
                   {toPersianDigits(criticalAlertsCount)} مورد بحرانی
                 </span>
               )}
@@ -430,173 +430,132 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
             <button
               type="button"
               onClick={() => setActiveSubTab('ALERTS')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-amber-50 text-slate-800 border border-amber-200/80 rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
               <span>مشاهده و مدیریت کسری‌ها</span>
-              <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-600" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Grafana-Inspired Clean Header & Unified Flat Section Toolbar (No Nested Sub-Tab Rows) */}
-      <div className="bg-white p-4 lg:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200/70 text-orange-600 flex items-center justify-center shrink-0">
-              <Boxes className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-base lg:text-lg font-bold text-slate-900">
-                مرکز فرماندهی انبار، رول‌های ورق و قراردادها
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                عملیات روزانه انبار را با دکمه‌های سریع انجام دهید یا بخش مورد نظر خود را از فیلتر یکپارچه زیر انتخاب کنید
-              </p>
-            </div>
-          </div>
-
-          {/* Primary Task-Oriented Operations + Progressive Disclosure Menu */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setIsReceiptOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
-            >
-              <ArrowDownLeft className="w-3.5 h-3.5" />
-              <span>ثبت رسید کالا / رول</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIssueModalPreset({ subType: 'PRODUCTION_LINE', warehouseId: 'WH-RAW' });
-                setIsIssueOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
-            >
-              <ArrowUpRight className="w-3.5 h-3.5 text-orange-400" />
-              <span>حواله خروج به خط</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIssueModalPreset({ subType: 'CUSTOMER_DELIVERY', warehouseId: 'WH-FINISHED' });
-                setIsIssueOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span>تحویل به مشتری</span>
-            </button>
-
-            <div className="relative">
+      {/* Clean Single-Row Navigation & Primary Actions Bar */}
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        {/* Sub-module Navigation Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
+          {[...primaryTabs, ...secondaryTabs].map(tab => {
+            const isActive = activeSubTab === tab.id;
+            return (
               <button
+                key={tab.id}
                 type="button"
-                onClick={() => setShowMoreActions(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                  showMoreActions
-                    ? 'bg-slate-200 text-slate-900 border-slate-300'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                onClick={() => handleSelectSubTab(tab.id)}
+                className={`px-3 py-1.5 rounded-md text-xs transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <MoreHorizontal className="w-3.5 h-3.5" />
-                <span>سایر عملیات انبار</span>
+                {tab.label}
               </button>
-              {showMoreActions && (
-                <div className="absolute left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 z-30 space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMoreActions(false);
-                      setIsMaterialIssueOpen(true);
-                    }}
-                    className="w-full text-right px-3 py-2 rounded-lg text-xs font-semibold text-violet-800 hover:bg-violet-50 flex items-center gap-2 cursor-pointer"
-                  >
-                    <ArrowRightLeft className="w-3.5 h-3.5 text-violet-600" />
-                    <span>حواله مواد به عملیات (OP)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMoreActions(false);
-                      setIsReturnOpen(true);
-                    }}
-                    className="w-full text-right px-3 py-2 rounded-lg text-xs font-semibold text-blue-800 hover:bg-blue-50 flex items-center gap-2 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
-                    <span>برگشت از خط به انبار</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMoreActions(false);
-                      setIsTransferOpen(true);
-                    }}
-                    className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
-                  >
-                    <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
-                    <span>انتقال بین انبارها</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMoreActions(false);
-                      setIsAdjustmentOpen(true);
-                    }}
-                    className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
-                  >
-                    <Scale className="w-3.5 h-3.5 text-slate-500" />
-                    <span>تعدیل و انبارگردانی</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+            );
+          })}
         </div>
 
-        {/* Single Flat Filter / View Selector Bar (Replaces multi-row sub-tabs) */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <Layers className="w-3.5 h-3.5 text-orange-600" />
-              <span className="text-slate-500 font-medium">نمای بخش انبار:</span>
-              <select
-                value={activeSubTab}
-                onChange={e => handleSelectSubTab(e.target.value as InventorySubTab)}
-                className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
-              >
-                {[...primaryTabs, ...secondaryTabs].map(tab => (
-                  <option key={tab.id} value={tab.id}>
-                    {tab.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Primary Task-Oriented Operations + Progressive Disclosure Menu */}
+        <div className="flex items-center gap-2 flex-wrap shrink-0 self-end xl:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsReceiptOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <ArrowDownLeft className="w-3.5 h-3.5" />
+            <span>ثبت رسید</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIssueModalPreset({ subType: 'PRODUCTION_LINE', warehouseId: 'WH-RAW' });
+              setIsIssueOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <ArrowUpRight className="w-3.5 h-3.5 text-amber-400" />
+            <span>حواله به خط</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIssueModalPreset({ subType: 'CUSTOMER_DELIVERY', warehouseId: 'WH-FINISHED' });
+              setIsIssueOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <Truck className="w-3.5 h-3.5 text-slate-600" />
+            <span>تحویل مشتری</span>
+          </button>
 
-            {/* Quick Tag Filter Chips (Compact Grafana Tag Style) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              {primaryTabs.slice(0, 5).map(tab => {
-                const isActive = activeSubTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => handleSelectSubTab(tab.id)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
-                      isActive
-                        ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
-                        : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/80'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="text-[11px] text-slate-400">
-            کل رول‌های فعال: {toPersianDigits(coils.length)} • قراردادها: {toPersianDigits(contracts.length)}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMoreActions(prev => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                showMoreActions
+                  ? 'bg-slate-200 text-slate-900 border-slate-300'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+              }`}
+            >
+              <MoreHorizontal className="w-3.5 h-3.5" />
+              <span>سایر عملیات</span>
+            </button>
+            {showMoreActions && (
+              <div className="absolute left-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 z-30 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreActions(false);
+                    setIsMaterialIssueOpen(true);
+                  }}
+                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
+                  <span>حواله مواد به عملیات (OP)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreActions(false);
+                    setIsReturnOpen(true);
+                  }}
+                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                  <span>برگشت از خط به انبار</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreActions(false);
+                    setIsTransferOpen(true);
+                  }}
+                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
+                  <span>انتقال بین انبارها</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreActions(false);
+                    setIsAdjustmentOpen(true);
+                  }}
+                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                >
+                  <Scale className="w-3.5 h-3.5 text-slate-500" />
+                  <span>تعدیل و انبارگردانی</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

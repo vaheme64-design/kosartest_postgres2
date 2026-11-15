@@ -1108,14 +1108,14 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         </div>
       )}
       {/* Grafana-Inspired Header & Flat Section Selector (Zero Nested Tabs) */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4">
+      <div className="bg-white border border-slate-200/60 rounded-xl p-4 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200/70 text-orange-600 flex items-center justify-center shrink-0">
-              <Boxes className="w-5 h-5" />
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 text-slate-600 flex items-center justify-center shrink-0">
+              <Boxes className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900">اطلاعات پایه کارخانه</h1>
+              <h1 className="text-sm font-medium text-slate-800">اطلاعات پایه کارخانه</h1>
               <p className="text-xs text-slate-500 mt-0.5">
                 مدیریت یکپارچه قطعات، ورق‌ها، درخت محصول (BOM)، مسیر تولید، ماشین‌آلات، انبارها و مشتریان
               </p>
@@ -1123,20 +1123,20 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
-            <div className="inline-flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <div className="inline-flex items-center bg-slate-100/80 p-1 rounded-lg border border-slate-200/60">
               <button
                 type="button"
                 onClick={() => {
                   setViewMode('CARDS_HUB');
                   setActiveSection('HUB');
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
                   viewMode === 'CARDS_HUB' && activeSection === 'HUB'
                     ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <LayoutGrid className="w-3.5 h-3.5 text-orange-600" />
+                <LayoutGrid className="w-3.5 h-3.5 text-slate-600" />
                 <span>فهرست کارتی</span>
               </button>
               <button
@@ -1145,7 +1145,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   setViewMode('SEGMENTED_TABS');
                   if (activeSection === 'HUB') setActiveSection('RAW_MATERIALS');
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
                   activeSection !== 'HUB'
                     ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1159,9 +1159,9 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
             <button
               type="button"
               onClick={onRefresh}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/70 rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-orange-400" />
+              <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
               <span>به‌روزرسانی</span>
             </button>
           </div>
@@ -1170,8 +1170,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         {/* Single Flat Section Selector Bar */}
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <span className="text-slate-500 font-medium">انتخاب جدول پایه:</span>
+            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200/60 rounded-lg px-3 py-1.5">
+              <span className="text-slate-500 font-normal">انتخاب جدول پایه:</span>
               <select
                 value={activeSection}
                 onChange={e => {
@@ -1179,7 +1179,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   setActiveSection(val);
                   if (val !== 'HUB') setViewMode('SEGMENTED_TABS');
                 }}
-                className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
+                className="bg-transparent font-medium text-slate-800 focus:outline-none cursor-pointer"
               >
                 <option value="HUB">پیشخوان همه جداول اطلاعات پایه (۱۳ بخش)</option>
                 {segmentedTabs.map(t => (
@@ -1192,7 +1192,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto">
+            <div className="flex items-center gap-1 overflow-x-auto bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
               {[
                 { id: 'PARTS', label: 'قطعات' },
                 { id: 'RAW_MATERIALS', label: 'ورق و کویل' },
@@ -1209,10 +1209,10 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                     setActiveSection(tab.id as MasterSubSection);
                     setViewMode('SEGMENTED_TABS');
                   }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] transition-all whitespace-nowrap cursor-pointer ${
                     activeSection === tab.id
-                      ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
-                      : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/80'
+                      ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {tab.label}

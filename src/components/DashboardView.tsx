@@ -342,95 +342,86 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-4" dir="rtl">
-      {/* 1. Compact 3-Tier Live Stock & Post-Consumption Control Strip */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs space-y-3.5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center shrink-0">
-              <Layers className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm sm:text-base font-black text-slate-900">
-                  کنترل لحظه‌ای موجودی ۳ سطحی پس از مصرف و زنجیره رهگیری (Anti-Theft ECU Bracket)
-                </h2>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
-                  بک‌فلاش خودکار BOM فعال
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                مانده لحظه‌ای از کلاف ورق (<span className="font-mono text-slate-700">HT-1404-ECU01</span>) و پیچ/مهره جوشی تا نیمه‌ساخته (<span className="font-mono text-slate-700">WIP</span>) و محصول نهایی رنگ کاتافورز (<span className="font-mono text-slate-700">SAPCO-ASY-ECU-BRK-01</span>)
-              </p>
-            </div>
+      {/* 1. Minimal 3-Tier Live Stock & Post-Consumption Strip (Hairline Divided, No Nested Boxes) */}
+      <div className="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Layers className="w-4 h-4 text-slate-400 shrink-0" />
+            <h2 className="text-xs sm:text-sm font-semibold text-slate-800">
+              وضعیت لحظه‌ای موجودی ۳ سطحی و زنجیره رهگیری
+            </h2>
+            <span className="px-2 py-0.5 rounded bg-emerald-50/70 text-emerald-700 border border-emerald-200/50 text-[10px] font-medium">
+              بک‌فلاش خودکار BOM
+            </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             <button
               type="button"
               onClick={() => onNavigateToTab('inventory', 'CUSTOM_REPORTS')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60 rounded-lg text-xs font-medium transition cursor-pointer"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>گزارش‌ساز پویا و سفارشی</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
+              <span>گزارش‌ساز سفارشی</span>
             </button>
 
             <button
               type="button"
               onClick={fetchTraceabilityChain}
               disabled={traceLoading}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/60 rounded-lg text-xs font-normal transition cursor-pointer"
               title="بروزرسانی زنجیره رهگیری و موجودی ۳ سطحی"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${traceLoading ? 'animate-spin text-indigo-600' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${traceLoading ? 'animate-spin text-slate-700' : 'text-slate-400'}`} />
               <span>بروزرسانی</span>
             </button>
           </div>
         </div>
 
-        {/* 3 Cards for the 3 Inventory Tiers (Raw Material -> WIP -> Finished Goods) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* 3 Hairline-Divided Columns for the 3 Inventory Tiers */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x lg:divide-x-reverse divide-slate-100">
           {/* Tier 1: Raw Materials & Fasteners */}
-          <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/90 flex flex-col justify-between gap-2.5">
+          <div className="p-4 flex flex-col justify-between gap-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                سطح ۱: انبار مواد اولیه و اتصالات (WH-RAW)
+              <span className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                سطح ۱: مواد اولیه و اتصالات
               </span>
               <button
                 type="button"
                 onClick={() => onNavigateToTab('inventory', 'INQUIRY')}
-                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer"
+                className="text-[11px] font-normal text-slate-500 hover:text-slate-800 flex items-center gap-0.5 cursor-pointer"
               >
                 <span>کاردکس</span>
                 <ArrowLeft className="w-3 h-3" />
               </button>
             </div>
             <div className="space-y-1.5 text-xs tabular-nums">
-              <div className="flex items-center justify-between py-1 border-b border-slate-200/70">
-                <span className="text-slate-600 font-medium">
-                  {tierGroups.coilItem?.partName || 'رول ورق'} ({coils[0]?.heatNumber || 'کلاف فعال'}):
+              <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500">
+                  {tierGroups.coilItem?.partName || 'رول ورق'} ({coils[0]?.heatNumber || 'کلاف فعال'})
                 </span>
-                <div className="font-mono font-bold text-slate-900">
-                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.coilItem?.onHandAfterConsumption ?? summary?.rawMaterialKg ?? 0)}</span> kg
-                  <span className="text-[10px] text-rose-600 mr-1.5">
-                    (مصرف: {formatNumber(tierGroups.coilItem?.totalConsumed ?? 0)} kg)
+                <div className="font-mono text-slate-700">
+                  <span className="font-medium text-slate-900">{formatNumber(tierGroups.coilItem?.onHandAfterConsumption ?? summary?.rawMaterialKg ?? 0)}</span> kg
+                  <span className="text-[10px] text-slate-400 mr-1.5">
+                    (مصرف: {formatNumber(tierGroups.coilItem?.totalConsumed ?? 0)})
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between py-1 border-b border-slate-200/70">
-                <span className="text-slate-600 font-medium">{tierGroups.nutItem?.partName || 'مهره جوشی M6'}:</span>
-                <div className="font-mono font-bold text-slate-900">
-                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.nutItem?.onHandAfterConsumption ?? 0)}</span> عدد
-                  <span className="text-[10px] text-rose-600 mr-1.5">
+              <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                <span className="text-slate-500">{tierGroups.nutItem?.partName || 'مهره جوشی M6'}</span>
+                <div className="font-mono text-slate-700">
+                  <span className="font-medium text-slate-900">{formatNumber(tierGroups.nutItem?.onHandAfterConsumption ?? 0)}</span> عدد
+                  <span className="text-[10px] text-slate-400 mr-1.5">
                     (مصرف: {formatNumber(tierGroups.nutItem?.totalConsumed ?? 0)})
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between pt-0.5">
-                <span className="text-slate-600 font-medium">{tierGroups.boltItem?.partName || 'پیچ جوشی M6×20'}:</span>
-                <div className="font-mono font-bold text-slate-900">
-                  مانده: <span className="text-emerald-700">{formatNumber(tierGroups.boltItem?.onHandAfterConsumption ?? 0)}</span> عدد
-                  <span className="text-[10px] text-rose-600 mr-1.5">
+                <span className="text-slate-500">{tierGroups.boltItem?.partName || 'پیچ جوشی M6×20'}</span>
+                <div className="font-mono text-slate-700">
+                  <span className="font-medium text-slate-900">{formatNumber(tierGroups.boltItem?.onHandAfterConsumption ?? 0)}</span> عدد
+                  <span className="text-[10px] text-slate-400 mr-1.5">
                     (مصرف: {formatNumber(tierGroups.boltItem?.totalConsumed ?? 0)})
                   </span>
                 </div>
@@ -439,140 +430,136 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Tier 2: WIP Sub-Assemblies */}
-          <div className="p-3.5 rounded-xl bg-indigo-50/40 border border-indigo-200/80 flex flex-col justify-between gap-2.5">
+          <div className="p-4 flex flex-col justify-between gap-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-indigo-600" />
-                سطح ۲: نیمه‌ساخته پای خط (WH-WIP-WELD)
+              <span className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                سطح ۲: نیمه‌ساخته پای خط (WIP)
               </span>
-              <span className="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded">
+              <span className="text-[10px] text-slate-400">
                 ایستگاه جوش و مونتاژ
               </span>
             </div>
             <div className="space-y-2 text-xs tabular-nums">
-              <div className="p-2 rounded-lg bg-white border border-indigo-100 flex items-center justify-between">
+              <div className="py-1.5 border-b border-slate-50 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-800">{tierGroups.wipMain?.partName || 'صفحه براکت اصلی'} (WIP-ECU-MAIN-BRK)</div>
-                  <div className="text-[10px] text-slate-500 font-mono">
-                    ورودی: {formatNumber(tierGroups.wipMain?.totalEntered ?? 0)} | مصرف در مونتاژ: {formatNumber(tierGroups.wipMain?.totalConsumed ?? 0)}
+                  <div className="font-medium text-slate-700">{tierGroups.wipMain?.partName || 'صفحه براکت اصلی'}</div>
+                  <div className="text-[10px] text-slate-400 font-mono">
+                    ورودی: {formatNumber(tierGroups.wipMain?.totalEntered ?? 0)} · مصرف: {formatNumber(tierGroups.wipMain?.totalConsumed ?? 0)}
                   </div>
                 </div>
                 <div className="text-left font-mono">
-                  <div className="text-sm font-black text-indigo-700">
-                    {formatNumber(tierGroups.wipMain?.onHandAfterConsumption ?? 0)} <span className="text-[10px]">عدد</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500">مانده پای خط</div>
+                  <span className="text-sm font-semibold text-slate-800">
+                    {formatNumber(tierGroups.wipMain?.onHandAfterConsumption ?? 0)}
+                  </span>{' '}
+                  <span className="text-[10px] text-slate-400">عدد</span>
                 </div>
               </div>
 
-              <div className="p-2 rounded-lg bg-white border border-indigo-100 flex items-center justify-between">
+              <div className="py-1 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-800">{tierGroups.wipComp?.partName || 'قطعه مکمل براکت'} (WIP-ECU-COMP-BRK)</div>
-                  <div className="text-[10px] text-slate-500 font-mono">
-                    ورودی: {formatNumber(tierGroups.wipComp?.totalEntered ?? 0)} | مصرف در مونتاژ: {formatNumber(tierGroups.wipComp?.totalConsumed ?? 0)}
+                  <div className="font-medium text-slate-700">{tierGroups.wipComp?.partName || 'قطعه مکمل براکت'}</div>
+                  <div className="text-[10px] text-slate-400 font-mono">
+                    ورودی: {formatNumber(tierGroups.wipComp?.totalEntered ?? 0)} · مصرف: {formatNumber(tierGroups.wipComp?.totalConsumed ?? 0)}
                   </div>
                 </div>
                 <div className="text-left font-mono">
-                  <div className="text-sm font-black text-indigo-700">
-                    {formatNumber(tierGroups.wipComp?.onHandAfterConsumption ?? 0)} <span className="text-[10px]">عدد</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500">مانده پای خط</div>
+                  <span className="text-sm font-semibold text-slate-800">
+                    {formatNumber(tierGroups.wipComp?.onHandAfterConsumption ?? 0)}
+                  </span>{' '}
+                  <span className="text-[10px] text-slate-400">عدد</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Tier 3: Finished Goods & Traceability Status */}
-          <div className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200/90 flex flex-col justify-between gap-2.5 tabular-nums">
+          <div className="p-4 flex flex-col justify-between gap-2.5 tabular-nums">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                سطح ۳: محصول نهایی آماده تحویل (WH-FINISHED)
+              <span className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                سطح ۳: محصول نهایی آماده تحویل
               </span>
-              <span className="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-slate-400">
                 {tierGroups.fgBrk?.partCode || 'SAPCO-ASY-ECU-BRK-01'}
               </span>
             </div>
 
-            <div className="p-2.5 rounded-lg bg-white border border-emerald-200/80 flex items-center justify-between">
+            <div className="py-1.5 border-b border-slate-50 flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-slate-900">
+                <div className="text-xs font-medium text-slate-800">
                   {tierGroups.fgBrk?.partName || 'مجموعه براکت ضدسرقت رایانه موتور'}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                  وزن خالص: {toPersianDigits(tierGroups.fgBrk?.unitWeightKg ?? 1.48)} kg | تراکنش رهگیری: {toPersianDigits(tierGroups.totalPostedDocs)} ردیف
+                <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                  وزن واحد: {toPersianDigits(tierGroups.fgBrk?.unitWeightKg ?? 1.48)} kg · اسناد: {toPersianDigits(tierGroups.totalPostedDocs)}
                 </div>
               </div>
               <div className="text-left font-mono">
-                <div className="text-xl font-black text-emerald-700">
+                <div className="text-lg font-semibold text-emerald-700">
                   {formatNumber(tierGroups.fgBrk?.onHandAfterConsumption ?? summary?.totalFinishedPcs ?? 0)}
                 </div>
-                <div className="text-[10px] font-bold text-emerald-800">عدد موجودی قطعی</div>
+                <div className="text-[10px] text-slate-400">عدد موجودی قطعی</div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-600 pt-0.5">
-              <span>زنجیره رهگیری: {coils[0]?.heatNumber ? `ذوب ${coils[0].heatNumber} ← کلاف ${coils[0].coilNumber}` : 'رهگیری زنده اسناد کاردکس'}</span>
+            <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <span className="truncate">{coils[0]?.heatNumber ? `ذوب ${coils[0].heatNumber} ← ${coils[0].coilNumber}` : 'رهگیری زنده اسناد کاردکس'}</span>
               <button
                 type="button"
                 onClick={() => setActiveWorkspace('TRACEABILITY_FLOW')}
-                className="font-bold text-emerald-800 hover:underline cursor-pointer"
+                className="font-medium text-slate-700 hover:text-slate-900 cursor-pointer shrink-0"
               >
-                مشاهده زنجیره اسناد ←
+                زنجیره اسناد ←
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Progressive Disclosure Segmented Workspace Bar (Prevents Stacking Multiple Heavy Screens) */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shadow-2xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+      {/* 2. Soft-Contrast Segmented Workspace Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        <div className="inline-flex items-center gap-1 p-1 bg-slate-100/90 border border-slate-200/60 rounded-lg overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveWorkspace('WORKBENCH')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer whitespace-nowrap ${
               activeWorkspace === 'WORKBENCH'
-                ? 'bg-slate-900 text-amber-400 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-white text-slate-800 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Boxes className="w-4 h-4" />
-            <span>۱. میز کار عملیاتی تولید، دستورکارها و ثبت مصرف</span>
+            <Boxes className="w-3.5 h-3.5 text-slate-500" />
+            <span>۱. میز کار عملیاتی تولید و دستورکارها</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveWorkspace('TRACEABILITY_FLOW')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer whitespace-nowrap ${
               activeWorkspace === 'TRACEABILITY_FLOW'
-                ? 'bg-slate-900 text-amber-400 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-white text-slate-800 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <GitBranch className="w-4 h-4" />
-            <span>۲. زنجیره رهگیری اسناد (از کلاف تا محصول) و گراف جریان مواد</span>
-            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px]">
-              {toPersianDigits(docChain.length)} سند
+            <GitBranch className="w-3.5 h-3.5 text-slate-500" />
+            <span>۲. زنجیره رهگیری اسناد و جریان مواد</span>
+            <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">
+              {toPersianDigits(docChain.length)}
             </span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveWorkspace('ANALYTICS_ITR')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer whitespace-nowrap ${
               activeWorkspace === 'ANALYTICS_ITR'
-                ? 'bg-slate-900 text-amber-400 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-white text-slate-800 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Activity className="w-4 h-4" />
-            <span>۳. تحلیل نرخ چرخش موجودی (ITR) و تداخل ظرفیت ایستگاه‌ها</span>
+            <Activity className="w-3.5 h-3.5 text-slate-500" />
+            <span>۳. تحلیل نرخ چرخش موجودی (ITR) و ظرفیت</span>
           </button>
-        </div>
-
-        <div className="flex items-center gap-2 px-2 text-[11px] text-slate-500">
-          <span>نمایش تفکیکی جهت جلوگیری از شلوغی صفحه</span>
         </div>
       </div>
 
@@ -596,37 +583,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         />
       )}
 
-      {/* WORKSPACE 2: End-to-End Document Traceability Ledger + Live D3 Material Flow */}
+      {/* WORKSPACE 2: End-to-End Document Traceability Ledger + Live Material Flow */}
       {activeWorkspace === 'TRACEABILITY_FLOW' && (
         <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-emerald-600 text-white">
-                  <FileCheck2 className="w-4 h-4" />
-                </div>
+          <div className="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <FileCheck2 className="w-4 h-4 text-slate-400" />
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    زنجیره کامل رهگیری اسناد از ورود رول ورق تا مصرف پای خط و رسید محصول نهایی
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-800">
+                    زنجیره کامل رهگیری اسناد از ورود رول ورق تا رسید محصول نهایی
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    هر ردیف نشان‌دهنده یک سند قطعی انبار با ارتباط مستقیم به شماره ذوب (Heat Number)، کد کلاف و دستورکار تولید (WO) است
-                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onNavigateToTab('inventory', 'CUSTOM_REPORTS')}
-                className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/70 text-slate-700 text-xs font-medium flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-amber-400" />
-                <span>خروجی اکسل و گزارش‌ساز سفارشی</span>
+                <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
+                <span>خروجی اکسل و گزارش‌ساز</span>
               </button>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-700 font-bold">
+                <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-medium">
                   <tr>
                     <th className="py-2.5 px-3">شماره سند</th>
                     <th className="py-2.5 px-3">تاریخ</th>
@@ -639,40 +621,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <th className="py-2.5 px-3">سند مرجع / دستورکار</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-slate-600 tabular-nums">
                   {docChain.map((doc, idx) => (
-                    <tr key={`${doc.docNumber}-${idx}`} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 font-mono font-bold text-indigo-700">{doc.docNumber}</td>
-                      <td className="py-2.5 px-3 font-mono text-slate-600">{toPersianDigits(doc.docDate)}</td>
+                    <tr key={`${doc.docNumber}-${idx}`} className="hover:bg-slate-50/60">
+                      <td className="py-2.5 px-3 font-mono font-medium text-slate-800">{doc.docNumber}</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-500">{toPersianDigits(doc.docDate)}</td>
                       <td className="py-2.5 px-3">
                         <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                             doc.docType.includes('رسید')
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : 'bg-amber-50 text-amber-900 border border-amber-200'
+                              ? 'bg-emerald-50/60 text-emerald-700 border border-emerald-200/50'
+                              : 'bg-slate-100 text-slate-700'
                           }`}
                         >
                           {doc.docType}
                         </span>
                       </td>
                       <td className="py-2.5 px-3">
-                        <div className="font-bold text-slate-900">{doc.partName}</div>
-                        <div className="text-[10px] font-mono text-slate-500">{doc.partCode}</div>
+                        <div className="font-medium text-slate-800">{doc.partName}</div>
+                        <div className="text-[10px] font-mono text-slate-400">{doc.partCode}</div>
                       </td>
-                      <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
+                      <td className="py-2.5 px-3 text-center font-mono font-medium text-slate-800">
                         {formatNumber(doc.qty)}
                       </td>
-                      <td className="py-2.5 px-3 text-center font-mono text-slate-600">
+                      <td className="py-2.5 px-3 text-center font-mono text-slate-500">
                         {formatNumber(doc.weightKg)}
                       </td>
-                      <td className="py-2.5 px-3 text-[11px] text-slate-600">
-                        {doc.sourceWh} ← <strong className="text-slate-900">{doc.targetWh}</strong>
+                      <td className="py-2.5 px-3 text-[11px] text-slate-500">
+                        {doc.sourceWh} ← <span className="text-slate-800 font-medium">{doc.targetWh}</span>
                       </td>
                       <td className="py-2.5 px-3 font-mono text-[11px]">
-                        <span className="text-slate-800 font-bold">{doc.coilId}</span>
-                        <span className="block text-[10px] text-slate-500">{doc.heatNumber}</span>
+                        <span className="text-slate-700">{doc.coilId}</span>
+                        <span className="block text-[10px] text-slate-400">{doc.heatNumber}</span>
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-indigo-700 font-semibold">
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600">
                         {doc.referenceDoc}
                       </td>
                     </tr>
@@ -682,7 +664,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Live D3 Material Flow & WIP Buffer Diagram */}
           <D3MaterialFlowDiagram />
         </div>
       )}
@@ -690,142 +671,100 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* WORKSPACE 3: VIP Inventory Turnover Ratio (ITR) + Machine Capacity Overlap Check */}
       {activeWorkspace === 'ANALYTICS_ITR' && (
         <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-            <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-xs shrink-0 mt-0.5">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-sm sm:text-base font-black text-slate-900">
-                      نرخ چرخش موجودی قطعات استراتژیک (VIP Inventory Turnover Ratio)
-                    </h2>
-                    <MetricTooltip metricKey="ITR" showBadgeText customLabel="فرمول ITR و DSI" />
-                    <FormulaTooltip
-                      title="نرخ چرخش موجودی (ITR) و دوره ماندگاری (DSI)"
-                      formula="ITR = کل مصرف یا خروج دوره ÷ موجودی فعلی پس از مصرف | DSI = روزهای دوره ÷ ITR"
-                      variables={[
-                        { name: 'بازه ۳۰ روزه', description: 'سنجش سرعت گردش ماهانه قطعات خط خودروساز' },
-                        { name: 'بازه ۶۰ روزه', description: 'تحلیل میان‌مدت دوماهه برای تعادل سفارشات' },
-                        { name: 'بازه ۹۰ روزه', description: 'ارزیابی فصلی سرمایه در گردش' },
-                      ]}
-                      interpretation="محاسبه متصل به موجودی واقعی پس از مصرف در انبارهای WIP و محصول نهایی."
-                    />
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    مقایسه تحلیلی دفعات گردش موجودی (ITR) و روزهای توقف در انبار (DSI) بر اساس موجودی واقعی پس از کسر حواله‌های مصرف
-                  </p>
-                </div>
+          <div className="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <TrendingUp className="w-4 h-4 text-slate-400" />
+                <h2 className="text-xs sm:text-sm font-semibold text-slate-800">
+                  نرخ چرخش موجودی قطعات استراتژیک (ITR) و دوره ماندگاری (DSI)
+                </h2>
+                <MetricTooltip metricKey="ITR" showBadgeText customLabel="فرمول ITR و DSI" />
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap shrink-0">
-                <div className="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-                  {([30, 60, 90] as HorizonDays[]).map(days => (
-                    <button
-                      key={days}
-                      type="button"
-                      onClick={() => setSelectedHorizon(days)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                        selectedHorizon === days
-                          ? 'bg-slate-900 text-amber-400 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      بازه {toPersianDigits(days)} روزه
-                    </button>
-                  ))}
-                </div>
+              <div className="inline-flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200/60 self-start lg:self-auto">
+                {([30, 60, 90] as HorizonDays[]).map(days => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => setSelectedHorizon(days)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                      selectedHorizon === days
+                        ? 'bg-white text-slate-800 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {toPersianDigits(days)} روزه
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-200/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-indigo-800 font-bold block">
-                      میانگین نرخ چرخش ({toPersianDigits(selectedHorizon)} روزه)
-                    </span>
-                    <div className="text-2xl font-black text-indigo-950 font-mono mt-1">
-                      {toPersianDigits(horizonStats.avgItr)}{' '}
-                      <span className="text-xs font-sans font-bold text-indigo-700">بار در دوره</span>
-                    </div>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 flex items-center justify-center font-mono font-black text-xs">
-                    ITR
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 border border-slate-100 rounded-lg bg-slate-50/30">
+                <div className="p-3">
+                  <span className="text-[11px] text-slate-500 block">
+                    میانگین نرخ چرخش ({toPersianDigits(selectedHorizon)} روزه)
+                  </span>
+                  <div className="text-lg font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+                    {toPersianDigits(horizonStats.avgItr)}{' '}
+                    <span className="text-[11px] font-sans font-normal text-slate-400">بار در دوره</span>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-amber-900 font-bold block">
-                      متوسط دوره ماندگاری در انبار (DSI)
-                    </span>
-                    <div className="text-2xl font-black text-amber-950 font-mono mt-1">
-                      {toPersianDigits(horizonStats.avgDsi)}{' '}
-                      <span className="text-xs font-sans font-bold text-amber-800">روز کاری</span>
-                    </div>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center">
-                    <Clock className="w-5 h-5" />
+                <div className="p-3">
+                  <span className="text-[11px] text-slate-500 block">
+                    متوسط ماندگاری در انبار (DSI)
+                  </span>
+                  <div className="text-lg font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+                    {toPersianDigits(horizonStats.avgDsi)}{' '}
+                    <span className="text-[11px] font-sans font-normal text-slate-400">روز کاری</span>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-emerald-900 font-bold block">
-                      کل خروج/مصرف قطعات ({toPersianDigits(selectedHorizon)} روز)
-                    </span>
-                    <div className="text-2xl font-black text-emerald-950 font-mono mt-1">
-                      {formatNumber(horizonStats.totalConsumption)}{' '}
-                      <span className="text-xs font-sans font-bold text-emerald-700">قطعه</span>
-                    </div>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-700 flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5" />
+                <div className="p-3">
+                  <span className="text-[11px] text-slate-500 block">
+                    کل خروج/مصرف ({toPersianDigits(selectedHorizon)} روز)
+                  </span>
+                  <div className="text-lg font-semibold text-emerald-700 font-mono mt-1 tabular-nums">
+                    {formatNumber(horizonStats.totalConsumption)}{' '}
+                    <span className="text-[11px] font-sans font-normal text-slate-400">قطعه</span>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-slate-600 font-bold block">
-                      توازن سرعت گردش اقلام
+                <div className="p-3">
+                  <span className="text-[11px] text-slate-500 block">
+                    توازن سرعت گردش اقلام
+                  </span>
+                  <div className="flex items-center gap-3 mt-1.5 text-xs">
+                    <span className="text-emerald-700 font-medium">
+                      {toPersianDigits(horizonStats.fastCount)} سریع
                     </span>
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        {toPersianDigits(horizonStats.fastCount)} چرخش سریع
-                      </span>
-                      <span className="text-xs font-bold text-rose-600 flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        {toPersianDigits(horizonStats.slowCount)} کند/راکد
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center">
-                    <Calculator className="w-5 h-5" />
+                    <span className="text-slate-300">·</span>
+                    <span className="text-rose-600 font-medium">
+                      {toPersianDigits(horizonStats.slowCount)} کند
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <div className="border border-slate-100 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-right text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                    <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-medium">
                       <tr>
-                        <th className="py-3 px-3">قطعه استراتژیک (VIP Part)</th>
-                        <th className="py-3 px-3 text-center">موجودی فعلی پس از مصرف</th>
-                        <th className="py-3 px-3 text-center">
+                        <th className="py-2.5 px-3">قطعه</th>
+                        <th className="py-2.5 px-3 text-center">موجودی فعلی پس از مصرف</th>
+                        <th className="py-2.5 px-3 text-center">
                           خروج/مصرف {toPersianDigits(selectedHorizon)} روزه
                         </th>
-                        <th className="py-3 px-3 text-center">چرخش ۳۰ روزه (ITR)</th>
-                        <th className="py-3 px-3 text-center">چرخش ۶۰ روزه (ITR)</th>
-                        <th className="py-3 px-3 text-center">چرخش ۹۰ روزه (ITR)</th>
-                        <th className="py-3 px-3 text-center">ماندگاری (DSI)</th>
-                        <th className="py-3 px-3 text-center">وضعیت گردش سرمایه</th>
+                        <th className="py-2.5 px-3 text-center">چرخش ۳۰ روزه</th>
+                        <th className="py-2.5 px-3 text-center">چرخش ۶۰ روزه</th>
+                        <th className="py-2.5 px-3 text-center">چرخش ۹۰ روزه</th>
+                        <th className="py-2.5 px-3 text-center">ماندگاری (DSI)</th>
+                        <th className="py-2.5 px-3 text-center">وضعیت</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                    <tbody className="divide-y divide-slate-100 text-slate-600 tabular-nums">
                       {vipTurnoverRows.map(row => {
                         const activeItr =
                           selectedHorizon === 30
@@ -849,45 +788,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         const isFast = activeItr >= 2.0;
 
                         return (
-                          <tr key={row.partId} className="hover:bg-slate-50/90 transition">
-                            <td className="py-3 px-3">
-                              <div className="flex items-center gap-2">
-                                <span className="p-1 rounded bg-amber-100 text-amber-800 border border-amber-200">
-                                  <Pin className="w-3 h-3 rotate-45" />
-                                </span>
-                                <div>
-                                  <div className="font-bold text-slate-900">{row.partName}</div>
-                                  <div className="text-[10px] text-slate-500 font-mono">{row.partCode}</div>
-                                </div>
-                              </div>
+                          <tr key={row.partId} className="hover:bg-slate-50/60 transition">
+                            <td className="py-2.5 px-3">
+                              <div className="font-medium text-slate-800">{row.partName}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{row.partCode}</div>
                             </td>
-                            <td className="py-3 px-3 text-center font-mono font-semibold text-slate-800">
+                            <td className="py-2.5 px-3 text-center font-mono text-slate-700">
                               {formatNumber(row.avgInventoryQty)} <span className="text-[10px] text-slate-400">عدد</span>
                             </td>
-                            <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">
+                            <td className="py-2.5 px-3 text-center font-mono font-medium text-emerald-700">
                               {formatNumber(activeCons)} <span className="text-[10px] text-slate-400">عدد</span>
                             </td>
-                            <td className="py-3 px-3 text-center font-mono font-bold text-indigo-700">
+                            <td className="py-2.5 px-3 text-center font-mono text-slate-800">
                               {toPersianDigits(row.itr30)}x
                             </td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-600">
+                            <td className="py-2.5 px-3 text-center font-mono text-slate-500">
                               {toPersianDigits(row.itr60)}x
                             </td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-600">
+                            <td className="py-2.5 px-3 text-center font-mono text-slate-500">
                               {toPersianDigits(row.itr90)}x
                             </td>
-                            <td className="py-3 px-3 text-center font-mono font-bold text-amber-800">
+                            <td className="py-2.5 px-3 text-center font-mono text-slate-700">
                               هر {toPersianDigits(activeDsi)} روز
                             </td>
-                            <td className="py-3 px-3 text-center">
+                            <td className="py-2.5 px-3 text-center">
                               {isFast ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
-                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                  چرخش سریع (بهینه)
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50/70 text-emerald-700 text-[10px] font-medium">
+                                  چرخش سریع
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-bold">
-                                  گردش متعادل
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium">
+                                  متعادل
                                 </span>
                               )}
                             </td>

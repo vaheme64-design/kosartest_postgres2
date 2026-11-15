@@ -9,10 +9,11 @@
   html,
   body {
     font-family: var(--font-sans);
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #fafafa;
+    color: #334155;
+    font-weight: 400;
     letter-spacing: 0 !important;
-    line-height: 1.6;
+    line-height: 1.65;
     font-feature-settings: "tnum" on, "lnum" on;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -30,12 +31,34 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" on, "lnum" on;
   }
+
+  /* Soften overly heavy typography weights globally for a lighter, calmer Persian UI */
+  .font-black,
+  .font-extrabold {
+    font-weight: 600 !important;
+  }
+
+  .font-bold {
+    font-weight: 500 !important;
+  }
+
+  th {
+    font-weight: 500 !important;
+  }
+
+  /* Soften border contrast globally for cleaner, less boxed-in containers */
+  .border-slate-200,
+  .border-slate-200\/90,
+  .border-slate-200\/80,
+  .border-slate-300 {
+    border-color: rgba(226, 232, 240, 0.65) !important;
+  }
 }
 
 /* Minimal neutral scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -43,12 +66,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #e2e8f0;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #cbd5e1;
 }
 
 /* ==========================================================================

@@ -711,7 +711,7 @@ function AppContent() {
   );
 
   const mainContentElement = (
-    <main className="flex-1 p-5 md:p-7 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
+    <main className="flex-1 px-4 py-4 md:px-6 md:py-5 overflow-y-auto max-w-[1440px] mx-auto w-full space-y-4">
       {/* 1. Dashboard */}
       {activeTab === 'dashboard' && (
         <DashboardView
@@ -815,16 +815,16 @@ function AppContent() {
 
           {/* 4. Production */}
           {activeTab === 'production' && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg">
+                <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200/60">
                   <button
                     type="button"
                     onClick={() => setProductionViewMode('ERP_WORKBENCH')}
-                    className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       productionViewMode === 'ERP_WORKBENCH'
-                        ? 'bg-white text-slate-900 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-white text-slate-800 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     میز کار و برنامه تولید
@@ -832,10 +832,10 @@ function AppContent() {
                   <button
                     type="button"
                     onClick={() => setProductionViewMode('VOUCHERS')}
-                    className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       productionViewMode === 'VOUCHERS'
-                        ? 'bg-white text-slate-900 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-white text-slate-800 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     ثبت قبض تکی کارگاه
@@ -959,9 +959,8 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-emerald-700 selection:text-white">
+    <div className="min-h-screen bg-[#fafafa] text-slate-700 flex flex-col font-sans selection:bg-slate-800 selection:text-white">
       {isSidebarFullHeight ? (
-        /* Layout A (Image 1 / ERPNext Workspace): Dark Right Sidebar spans full height, White Top Bar sits above main workspace */
         <div className="flex-1 flex flex-col md:flex-row min-h-screen">
           {sidebarElement}
           <div className="flex-1 flex flex-col min-w-0">
@@ -970,7 +969,6 @@ function AppContent() {
           </div>
         </div>
       ) : (
-        /* Layout B (Image 2 / Odoo / Classic): Full-width Top Header spans across top, Right Sidebar + Main Content below */
         <>
           {navbarElement}
           <div className="flex-1 flex flex-col md:flex-row">
@@ -979,14 +977,6 @@ function AppContent() {
           </div>
         </>
       )}
-
-      {/* Contextual Action Floating Menu (Bottom-Right of Each View) */}
-      <ContextualActionMenu
-        activeTab={activeTab}
-        onNavigate={handleDeepNavigate}
-        onSubModuleNavigate={handleSubModuleNavigate}
-        onOpenNewVoucher={handleOpenVoucherWithType}
-      />
 
       {/* Offline Mode Indicator for Factory Floor Operations */}
       <OfflineIndicator />

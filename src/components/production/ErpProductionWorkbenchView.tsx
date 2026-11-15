@@ -1879,22 +1879,43 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
   const uniqueHalls = ['سالن برش', 'سالن پرس', 'سالن پرس سنگین', 'سالن جوشکاری', 'سالن رنگ', 'سالن کیفیت'];
 
   return (
-    <div className="space-y-5 text-right font-sans" dir="rtl">
+    <div className="space-y-4 text-right font-sans" dir="rtl">
       {/* ==================================================================== */}
-      {/* CLEAN ENTERPRISE CONTROL BAR (Odoo 17 / ERPNext Style)               */}
+      {/* CLEAN ENTERPRISE WORKSPACE HEADER & FILTER BAR                       */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">
-              برنامه‌ریزی و اجرای مراحل تولید (OP)
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              زمان‌بندی ایستگاه‌ها، کنترل تقدم و تأخر مراحل، بافر پای خط (WIP) و رسید خودکار انبار محصول
-            </p>
+      <div className="bg-white border border-slate-200/60 rounded-xl p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
+            {[
+              { id: 'MULTI_PART_SCHEDULER' as const, title: '۱. برنامه مراحل تولید (OP)', icon: Calendar },
+              { id: 'DAILY_DISPATCH_SHEET' as const, title: '۲. برگه کار روزانه شیفت', icon: Printer },
+              { id: 'LIVE_WIP_OP_TRACKER' as const, title: '۳. موجودی پای خط (WIP)', icon: ArrowRightLeft },
+              { id: 'KPI_OEE_REPORTS' as const, title: '۴. شاخص‌های OEE و راندمان', icon: Gauge },
+              { id: 'MATERIAL_REQUIREMENT_PROJECTION' as const, title: '۵. کسری ورق و مواد (MRP)', icon: Boxes },
+              { id: 'TREE_TIMELINE_REPORT' as const, title: '۶. نمودار درختی و توقفات', icon: Activity },
+              { id: 'SAP_PP_WORKFLOW' as const, title: '۷. راهنمای گردش کار', icon: GitBranch },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const active = activeModuleTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleSelectModuleTab(tab.id)}
+                  className={`px-2.5 py-1.5 rounded-md text-xs transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${active ? 'text-slate-700' : 'text-slate-400'}`} />
+                  <span>{tab.title}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 self-end lg:self-auto">
             <button
               type="button"
               onClick={() => {
@@ -1906,7 +1927,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   detail: 'فهرست استاندارد قطعات بارگذاری گردید.',
                 });
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/60 rounded-lg text-xs font-normal transition cursor-pointer whitespace-nowrap"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>بازنشانی</span>
@@ -1914,351 +1935,293 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             <button
               type="button"
               onClick={() => router.openCreateMoModal()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>افزودن دستور کار جدید</span>
+              <span>دستور کار جدید</span>
             </button>
           </div>
         </div>
 
-        {/* Clean Horizontal Segmented Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {[
-            { id: 'MULTI_PART_SCHEDULER' as const, title: '۱. ماتریس مراحل تولید (OP)', icon: Calendar },
-            { id: 'DAILY_DISPATCH_SHEET' as const, title: '۲. برنامه روزانه و چاپ شیفت', icon: Printer },
-            { id: 'LIVE_WIP_OP_TRACKER' as const, title: '۳. موجودی بین ایستگاهی (WIP)', icon: ArrowRightLeft },
-            { id: 'KPI_OEE_REPORTS' as const, title: '۴. شاخص‌های OEE و راندمان', icon: Gauge },
-            { id: 'MATERIAL_REQUIREMENT_PROJECTION' as const, title: '۵. پیش‌بینی کسری ورق و مواد (MRP)', icon: Boxes },
-            { id: 'TREE_TIMELINE_REPORT' as const, title: '۶. نمودار درختی و توقفات', icon: Activity },
-            { id: 'SAP_PP_WORKFLOW' as const, title: '۷. راهنمای گردش کار', icon: GitBranch },
-          ].map(tab => {
-            const Icon = tab.icon;
-            const active = activeModuleTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleSelectModuleTab(tab.id)}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  active
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${active ? 'text-amber-400' : 'text-slate-400'}`} />
-                <span>{tab.title}</span>
-              </button>
-            );
-          })}
+        {/* Compact Single-Row Search & Filter Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 text-xs items-center">
+          <div className="lg:col-span-5 relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="جستجوی نام قطعه، کد کالا، شماره دستور ساخت، مرحله OP یا کد دستگاه..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-8 pl-3 py-1.5 text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400"
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <select
+              value={selectedCarFilter}
+              onChange={e => {
+                setSelectedCarFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">همه خودروها ({toPersianDigits(uniqueCars.length)})</option>
+              {uniqueCars.map(car => (
+                <option key={car} value={car}>
+                  {car}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-3">
+            <select
+              value={selectedHallFilter}
+              onChange={e => {
+                setSelectedHallFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">همه سالن‌ها و خطوط تولید</option>
+              {uniqueHalls.map(h => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-2 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+            <span className="text-slate-500 font-medium whitespace-nowrap">روز فعال:</span>
+            <select
+              value={selectedDayFilter}
+              onChange={e => setSelectedDayFilter(Number(e.target.value))}
+              className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
+            >
+              {WORK_DAYS.map(d => (
+                <option key={d.index} value={d.index}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Live Toast Notification */}
       {toastNotice && (
         <div
-          className={`rounded-2xl p-4 text-xs flex items-center justify-between gap-3 shadow-xs border ${
+          className={`rounded-xl p-3.5 text-xs flex items-center justify-between gap-3 border ${
             toastNotice.type === 'warning'
-              ? 'bg-amber-50 border-amber-300 text-amber-950'
-              : 'bg-emerald-50 border-emerald-300 text-emerald-950'
+              ? 'bg-amber-50 border-amber-200 text-amber-950'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-950'
           }`}
         >
           <div className="flex items-start gap-2.5">
             {toastNotice.type === 'warning' ? (
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             ) : (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             )}
             <div>
-              <div className="font-bold text-sm">{toastNotice.title}</div>
-              <div
-                className={`mt-0.5 ${
-                  toastNotice.type === 'warning' ? 'text-amber-800' : 'text-emerald-800'
-                }`}
-              >
-                {toastNotice.detail}
-              </div>
+              <div className="font-bold">{toastNotice.title}</div>
+              <div className="text-slate-600 mt-0.5">{toastNotice.detail}</div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setToastNotice(null)}
-            className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer shrink-0 ${
-              toastNotice.type === 'warning'
-                ? 'bg-amber-100 hover:bg-amber-200 text-amber-900'
-                : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900'
-            }`}
+            className="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold cursor-pointer shrink-0"
           >
             بستن
           </button>
         </div>
       )}
 
-      {/* Global Search & Filter Bar (Handles High-Volume Data Cleanly) */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-        <div className="lg:col-span-2 relative">
-          <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            placeholder="جستجوی نام قطعه، کد کالا، شماره دستور ساخت، مرحله OP یا کد دستگاه..."
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg pr-9 pl-3 py-2 text-slate-900 focus:outline-none focus:bg-white focus:border-slate-900"
-          />
-        </div>
-
-        <select
-          value={selectedCarFilter}
-          onChange={e => {
-            setSelectedCarFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 font-medium focus:outline-none"
-        >
-          <option value="ALL">همه خانواده‌های خودرو ({toPersianDigits(uniqueCars.length)})</option>
-          {uniqueCars.map(car => (
-            <option key={car} value={car}>
-              پروژه / خودرو: {car}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={selectedHallFilter}
-          onChange={e => {
-            setSelectedHallFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 font-medium focus:outline-none"
-        >
-          <option value="ALL">همه سالن‌ها و خطوط تولید</option>
-          {uniqueHalls.map(h => (
-            <option key={h} value={h}>
-              {h}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200 rounded-lg px-3 py-2">
-          <span className="text-amber-950 font-semibold">روز فعال خط:</span>
-          <select
-            value={selectedDayFilter}
-            onChange={e => setSelectedDayFilter(Number(e.target.value))}
-            className="bg-transparent font-bold text-amber-950 focus:outline-none cursor-pointer"
-          >
-            {WORK_DAYS.map(d => (
-              <option key={d.index} value={d.index}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
       {/* ==================================================================== */}
       {/* TAB 1: MULTI-PART & STAGGERED MULTI-OP SCHEDULER MATRIX              */}
       {/* ==================================================================== */}
       {activeModuleTab === 'MULTI_PART_SCHEDULER' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <MachineOverlapAlertWidget compact />
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm">
-                  جدول زمان‌بندی پله‌ای مراحل تولید قطعات (Staggered Multi-OP Scheduling Matrix)
-                </h3>
-              <p className="text-slate-500 mt-0.5">
-                برای هر قطعه می‌توانید مشخص کنید کدام مراحل (مثلاً OP10 تا OP30) امروز انجام شوند و کدام مراحل (مثلاً OP40 و OP50) در روزهای بعد؛ روی هر مرحله کلیک کنید تا تولید آن ثبت شود.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 font-mono">
-                نمایش {toPersianDigits(paginatedParts.length)} از {toPersianDigits(filteredParts.length)} قطعه
-              </span>
-            </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                <tr>
-                  <th className="py-3 px-3 w-56">
-                    <span className="inline-flex items-center">
-                      <span>مشخصات قطعه و دستور کار</span>
-                      <MetricTooltip metric="MO" />
-                    </span>
-                  </th>
-                  <th className="py-3 px-3 w-28">
-                    <span className="inline-flex items-center">
-                      <span>تیراژ و ورق</span>
-                      <MetricTooltip metric="ATP" />
-                    </span>
-                  </th>
-                  <th className="py-3 px-3">
-                    <span className="inline-flex items-center">
-                      <span>توالی مراحل عملیات (OP10 تا مرحله آخر) — انتخاب روز هر مرحله و وضعیت بافر WIP</span>
-                      <MetricTooltip metric="WIP" />
-                    </span>
-                  </th>
-                  <th className="py-3 px-3 w-36 text-center">عملیات انبار و خط</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {paginatedParts.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-8 px-4 text-center">
-                      <EmptyState
-                        variant={searchQuery || selectedCarFilter !== 'ALL' || selectedHallFilter !== 'ALL' ? 'FILTER_NO_MATCH' : 'NO_DATA'}
-                        title={searchQuery ? `قطعه‌ای با عبارت «${searchQuery}» یافت نشد` : 'هیچ برنامه‌ای در ماتریس زمان‌بندی وجود ندارد'}
-                        actionLabel={searchQuery || selectedCarFilter !== 'ALL' || selectedHallFilter !== 'ALL' ? 'پاک‌کردن فیلترها' : 'افزودن قطعه جدید به ماتریس'}
-                        onAction={() => {
-                          if (searchQuery || selectedCarFilter !== 'ALL' || selectedHallFilter !== 'ALL') {
-                            setSearchQuery('');
-                            setSelectedCarFilter('ALL');
-                            setSelectedHallFilter('ALL');
-                          } else {
-                            setIsAddPartModalOpen(true);
-                          }
-                        }}
-                        compact
-                      />
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedParts.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 align-top">
-                    {/* Part Info */}
-                    <td className="py-3.5 px-3 space-y-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
+          {paginatedParts.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
+              <EmptyState
+                variant={searchQuery || selectedCarFilter !== 'ALL' || selectedHallFilter !== 'ALL' ? 'FILTER_NO_MATCH' : 'NO_DATA'}
+                title={searchQuery ? `قطعه‌ای با عبارت «${searchQuery}» یافت نشد` : 'هیچ برنامه‌ای در ماتریس زمان‌بندی وجود ندارد'}
+                actionLabel={searchQuery || selectedCarFilter !== 'ALL' || selectedHallFilter !== 'ALL' ? 'پاک‌کردن فیلترها' : 'افزودن قطعه جدید به ماتریس'}
+                onAction={() => {
+                  if (searchQuery || selectedCarFilter !== 'ALL' || selectedHallFilter !== 'ALL') {
+                    setSearchQuery('');
+                    setSelectedCarFilter('ALL');
+                    setSelectedHallFilter('ALL');
+                  } else {
+                    setIsAddPartModalOpen(true);
+                  }
+                }}
+                compact
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {paginatedParts.map(item => {
+                const finalOpReceiptDoc = item.ops[item.ops.length - 1]?.warehouseReceiptDocNumber;
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white border border-slate-200/60 rounded-xl overflow-hidden"
+                  >
+                    {/* Compact Single-Line Order Header Bar */}
+                    <div className="px-4 py-2.5 bg-slate-50/40 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2.5 flex-wrap">
                         <button
                           type="button"
                           onClick={() => {
                             setActiveTimelineOrder(item);
                             setIsTimelineModalOpen(true);
                           }}
-                          className="font-mono font-bold text-[11px] bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1 border border-slate-700 shadow-2xs"
-                          title="مشاهده شناسنامه و تایم‌لاین دستور ساخت (MO Timeline)"
+                          className="font-mono font-medium text-xs bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/70 px-2.5 py-0.5 rounded cursor-pointer transition flex items-center gap-1.5 whitespace-nowrap"
+                          title="مشاهده تایم‌لاین و شناسنامه دستور ساخت"
                         >
-                          <Clock className="w-3 h-3 text-amber-400" />
+                          <Clock className="w-3.5 h-3.5 text-slate-500" />
                           <span>{item.orderCode}</span>
                         </button>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
-                          {item.carModel}
-                        </span>
+                        <span className="font-medium text-slate-800 text-sm">{item.partName}</span>
+                        <span className="font-mono text-slate-500">{item.partCode}</span>
+                        <span className="text-slate-300">·</span>
+                        <span className="text-slate-600">{item.carModel}</span>
+                        {item.parentProductCode && (
+                          <>
+                            <span className="text-slate-300">·</span>
+                            <span className="text-slate-500 font-mono text-[11px]">
+                              زیرمجموعه: {item.parentProductCode}
+                            </span>
+                          </>
+                        )}
                       </div>
-                      <div className="font-bold text-slate-900 text-xs">{item.partName}</div>
-                      <div className="font-mono text-[10px] text-slate-500">{item.partCode}</div>
-                      {item.parentProductCode && (
-                        <div className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded inline-block border border-amber-200">
-                          زیرمجموعه: {item.parentProductCode}
+
+                      <div className="flex items-center justify-between lg:justify-end gap-4 flex-wrap">
+                        {/* Key Metrics Inline */}
+                        <div className="flex items-center gap-3 font-mono tabular-nums text-xs">
+                          <span className="text-slate-600">
+                            هدف: <strong className="text-slate-900">{formatNumber(item.weeklyTargetQty)}</strong> عدد
+                          </span>
+                          <span className="text-slate-300">·</span>
+                          <span className="text-slate-600">
+                            نیاز ورق: <strong className="text-slate-900">{formatNumber(item.rawMaterialIssuedKg)}</strong> kg
+                          </span>
+                          <span className="text-slate-300">·</span>
+                          <span className="text-emerald-700">
+                            رسید انبار: <strong>{formatNumber(item.warehouseReceivedQty)}</strong> عدد
+                            {finalOpReceiptDoc ? ` (${finalOpReceiptDoc})` : ''}
+                          </span>
                         </div>
-                      )}
-                    </td>
 
-                    {/* Target Qty & Raw Material */}
-                    <td className="py-3.5 px-3 space-y-1 font-mono">
-                      <div>
-                        <span className="text-[10px] text-slate-500 font-sans block">تیراژ برنامه:</span>
-                        <strong className="text-slate-900 text-xs">
-                          {formatNumber(item.weeklyTargetQty)} عدد
-                        </strong>
+                        {/* Compact Action Controls */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleIssueRawMaterialToLine(item)}
+                            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-md text-[11px] font-semibold transition cursor-pointer whitespace-nowrap"
+                          >
+                            حواله ورق به OP10
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTimelineOrder(item);
+                              setIsTimelineModalOpen(true);
+                            }}
+                            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-md text-[11px] font-medium transition cursor-pointer whitespace-nowrap"
+                          >
+                            تایم‌لاین
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditScheduleItem(item)}
+                            className="p-1.5 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md transition cursor-pointer"
+                            title="ویرایش دستور کار"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteScheduleItem(item.id, item.partName)}
+                            className="p-1.5 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 rounded-md transition cursor-pointer"
+                            title="حذف برنامه تولید"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-slate-500 font-sans block">نیاز ورق:</span>
-                        <span className="text-slate-700 text-[11px]">
-                          {formatNumber(item.rawMaterialIssuedKg)} kg
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-emerald-700 font-sans block">رسید انبار محصول:</span>
-                        <strong className="text-emerald-700 text-xs">
-                          {formatNumber(item.warehouseReceivedQty)} عدد
-                        </strong>
-                      </div>
-                    </td>
+                    </div>
 
-                    {/* Horizontal Staggered Operations Pipeline */}
-                    <td className="py-3.5 px-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
-                        {item.ops.map((op, oIdx) => {
-                          const isScheduledForSelectedDay =
-                            op.scheduledDayIndex === selectedDayFilter;
-                          const prevOp = oIdx > 0 ? item.ops[oIdx - 1] : null;
-                          const isLocked = prevOp !== null && prevOp.completedGoodQty === 0;
+                    {/* Full-Width High-Density Operations Table (Zero Overlapping Selects) */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-right text-xs">
+                        <thead className="bg-slate-50/40 border-b border-slate-200 text-slate-500 font-semibold">
+                          <tr>
+                            <th className="py-2 px-3 w-24">کد مرحله</th>
+                            <th className="py-2 px-3">شرح عملیات</th>
+                            <th className="py-2 px-3">ایستگاه کاری / دستگاه</th>
+                            <th className="py-2 px-3 w-28">روز اجرا</th>
+                            <th className="py-2 px-3 w-32">وضعیت</th>
+                            <th className="py-2 px-3 w-40">بافر ورودی (پای خط)</th>
+                            <th className="py-2 px-3 w-32">تولید سالم / هدف</th>
+                            <th className="py-2 px-3 w-28">موجودی خروجی</th>
+                            <th className="py-2 px-3 w-40 text-left">ثبت کارکرد</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 tabular-nums">
+                          {item.ops.map((op, oIdx) => {
+                            const isScheduledForSelectedDay = op.scheduledDayIndex === selectedDayFilter;
+                            const prevOp = oIdx > 0 ? item.ops[oIdx - 1] : null;
+                            const isLocked = prevOp !== null && prevOp.completedGoodQty === 0;
+                            const inputWip = calculateOpInputWip(item, oIdx);
+                            const isWipSufficient = inputWip >= op.effectiveTargetQty;
+                            const isWipEmpty = inputWip === 0;
 
-                          return (
-                            <div
-                              key={op.opId}
-                              className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
-                                isLocked
-                                  ? 'bg-slate-50/70 border-slate-300 border-dashed opacity-85'
-                                  : op.status === 'COMPLETED'
-                                  ? 'bg-emerald-50/70 border-emerald-300'
-                                  : isScheduledForSelectedDay
-                                  ? 'bg-amber-50/90 border-amber-400 shadow-2xs'
-                                  : 'bg-white border-slate-200'
-                              }`}
-                            >
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="font-mono font-bold text-[11px] px-1.5 py-0.5 rounded bg-slate-900 text-white">
-                                    {op.opCode}
-                                  </span>
-                                  {isLocked ? (
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
-                                      🔒 قفل تقدم ({prevOp?.opCode})
+                            return (
+                              <tr
+                                key={op.opId}
+                                className={`transition-colors ${
+                                  isLocked
+                                    ? 'bg-slate-50/40 text-slate-500'
+                                    : isScheduledForSelectedDay
+                                    ? 'bg-amber-50/25 hover:bg-amber-50/40'
+                                    : 'hover:bg-slate-50/80'
+                                }`}
+                              >
+                                <td className="py-2.5 px-3 whitespace-nowrap">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold text-slate-900">
+                                      {op.opCode}
                                     </span>
-                                  ) : op.isFinalOp ? (
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-700 text-white">
-                                      مرحله آخر (رسید انبار)
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <div className="font-bold text-slate-900 text-[11px] leading-snug">
+                                    {op.isFinalOp && (
+                                      <span className="text-[10px] text-emerald-700 font-semibold">
+                                        · نهایی
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                <td className="py-2.5 px-3 font-medium text-slate-900">
                                   {op.opTitle}
-                                </div>
-                                <div className="text-[10px] text-slate-500 truncate">
-                                  {op.machineName} ({op.machineCode})
-                                </div>
-                              </div>
+                                </td>
 
-                              <div className="space-y-1.5 pt-1.5 border-t border-slate-200/70 text-[10px]">
-                                {/* Status Selector backed by Audit Trail */}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-slate-500 font-bold">وضعیت مرحله:</span>
-                                  <select
-                                    value={op.status}
-                                    onChange={e =>
-                                      handleChangeOpStatusAudit(
-                                        item,
-                                        op,
-                                        e.target.value as ScheduledOpStep['status']
-                                      )
-                                    }
-                                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-pointer focus:outline-none ${
-                                      op.status === 'COMPLETED'
-                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                        : op.status === 'IN_PROGRESS'
-                                        ? 'bg-blue-50 text-blue-800 border-blue-300'
-                                        : op.status === 'ON_HOLD'
-                                        ? 'bg-rose-50 text-rose-800 border-rose-300'
-                                        : 'bg-slate-100 text-slate-700 border-slate-300'
-                                    }`}
-                                    title="تغییر وضعیت مرحله با ثبت الزامی دلیل ممیزی"
-                                  >
-                                    <option value="PLANNED">برنامه‌ریزی‌شده</option>
-                                    <option value="IN_PROGRESS">در جریان</option>
-                                    <option value="ON_HOLD">توقف موقت</option>
-                                    <option value="COMPLETED">تکمیل‌شده</option>
-                                  </select>
-                                </div>
+                                <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
+                                  <span>{op.machineName}</span>
+                                  <span className="font-mono text-[11px] text-slate-400 mr-1">
+                                    ({op.machineCode})
+                                  </span>
+                                </td>
 
-                                {/* Day Selector for this specific OP */}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-slate-500">روز اجرا:</span>
+                                <td className="py-2.5 px-3 whitespace-nowrap">
                                   <select
                                     value={op.scheduledDayIndex}
                                     onChange={e =>
@@ -2268,7 +2231,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                         Number(e.target.value)
                                       )
                                     }
-                                    className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-bold text-slate-900 focus:outline-none cursor-pointer"
+                                    className="bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:border-slate-400 cursor-pointer"
                                   >
                                     {WORK_DAYS.map(d => (
                                       <option key={d.index} value={d.index}>
@@ -2276,10 +2239,53 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                       </option>
                                     ))}
                                   </select>
-                                </div>
+                                </td>
 
-                                <div className="flex items-center justify-between font-mono">
-                                  <span className="font-sans text-slate-500">تولید / هدف:</span>
+                                <td className="py-2.5 px-3 whitespace-nowrap">
+                                  <select
+                                    value={op.status}
+                                    onChange={e =>
+                                      handleChangeOpStatusAudit(
+                                        item,
+                                        op,
+                                        e.target.value as ScheduledOpStep['status']
+                                      )
+                                    }
+                                    className={`text-xs font-semibold px-2 py-1 rounded border cursor-pointer focus:outline-none ${
+                                      op.status === 'COMPLETED'
+                                        ? 'bg-emerald-50/70 text-emerald-800 border-emerald-200'
+                                        : op.status === 'IN_PROGRESS'
+                                        ? 'bg-blue-50/70 text-blue-800 border-blue-200'
+                                        : op.status === 'ON_HOLD'
+                                        ? 'bg-rose-50/70 text-rose-800 border-rose-200'
+                                        : 'bg-white text-slate-700 border-slate-200'
+                                    }`}
+                                  >
+                                    <option value="PLANNED">برنامه‌ریزی‌شده</option>
+                                    <option value="IN_PROGRESS">در جریان</option>
+                                    <option value="ON_HOLD">توقف موقت</option>
+                                    <option value="COMPLETED">تکمیل‌شده</option>
+                                  </select>
+                                </td>
+
+                                <td className="py-2.5 px-3 whitespace-nowrap font-mono">
+                                  <span
+                                    className={`font-bold ${
+                                      isWipEmpty
+                                        ? 'text-rose-600'
+                                        : isWipSufficient
+                                        ? 'text-emerald-700'
+                                        : 'text-slate-900'
+                                    }`}
+                                  >
+                                    {formatNumber(inputWip)} عدد
+                                  </span>
+                                  <span className="font-sans text-[10px] text-slate-400 mr-1.5">
+                                    · {isWipEmpty ? 'بدون بافر' : isWipSufficient ? 'کافی' : 'تغذیه جزئی'}
+                                  </span>
+                                </td>
+
+                                <td className="py-2.5 px-3 whitespace-nowrap font-mono">
                                   <strong
                                     className={
                                       op.completedGoodQty >= op.effectiveTargetQty
@@ -2287,185 +2293,76 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                         : 'text-slate-900'
                                     }
                                   >
-                                    {formatNumber(op.completedGoodQty)} /{' '}
+                                    {formatNumber(op.completedGoodQty)}
+                                  </strong>
+                                  <span className="text-slate-400 mx-1">/</span>
+                                  <span className="text-slate-600">
                                     {formatNumber(op.effectiveTargetQty)}
-                                  </strong>
-                                </div>
-
-                                {/* Computed WIP Buffer before this OP (فرمول محاسباتی: تولید سالم OP قبلی - مصرف‌شده در OP فعلی) */}
-                                {(() => {
-                                  const inputWip = calculateOpInputWip(item, oIdx);
-                                  const isWipSufficient = inputWip >= op.effectiveTargetQty;
-                                  const isWipEmpty = inputWip === 0;
-
-                                  return (
-                                    <div
-                                      className={`px-2 py-1.5 rounded-lg border text-[10px] space-y-1 ${
-                                        isWipEmpty
-                                          ? 'bg-rose-50/80 border-rose-200 text-rose-950'
-                                          : isWipSufficient
-                                          ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
-                                          : 'bg-indigo-50/90 border-indigo-200 text-indigo-950'
-                                      }`}
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <span className="flex items-center gap-1 font-sans font-bold">
-                                          <Layers
-                                            className={`w-3 h-3 ${
-                                              isWipEmpty
-                                                ? 'text-rose-600'
-                                                : isWipSufficient
-                                                ? 'text-emerald-600'
-                                                : 'text-indigo-600'
-                                            }`}
-                                          />
-                                          <span>بافر ورودی / قبل از تولید:</span>
-                                        </span>
-                                        <strong className="font-mono font-bold">
-                                          {formatNumber(inputWip)} عدد
-                                        </strong>
-                                      </div>
-                                      <div className="flex items-center justify-between text-[9px] pt-0.5 border-t border-slate-200/50">
-                                        <span className="text-slate-500">
-                                          {oIdx === 0
-                                            ? 'مانده کل سفارش'
-                                            : `خروجی ${prevOp?.opCode}: ${formatNumber(prevOp?.completedGoodQty || 0)}`}
-                                        </span>
-                                        <span
-                                          className={`px-1 rounded font-bold ${
-                                            isWipEmpty
-                                              ? 'bg-rose-200 text-rose-800'
-                                              : isWipSufficient
-                                              ? 'bg-emerald-200 text-emerald-800'
-                                              : 'bg-amber-200 text-amber-900'
-                                          }`}
-                                        >
-                                          {isWipEmpty ? 'فاقد بافر' : isWipSufficient ? 'کافی' : 'تغذیه جزئی'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  );
-                                })()}
-
-                                <div className="flex items-center justify-between font-mono">
-                                  <span className="font-sans text-slate-500">
-                                    {op.isFinalOp ? 'تحویل به انبار:' : 'موجودی بعد از OP:'}
                                   </span>
-                                  <strong className="text-indigo-700">
-                                    {formatNumber(op.wipBufferAfterOp)} عدد
-                                  </strong>
-                                </div>
+                                </td>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenOpExecutionModal(item, op)}
-                                  className={`w-full mt-1 py-1 rounded-lg font-bold text-[10px] transition cursor-pointer flex items-center justify-center gap-1 ${
-                                    isLocked
-                                      ? 'bg-slate-200 hover:bg-slate-300 text-slate-700 border border-slate-300'
-                                      : 'bg-slate-900 hover:bg-slate-800 text-white'
-                                  }`}
-                                >
-                                  {isLocked
-                                    ? `🔒 قفل (نیاز به ${prevOp?.opCode})`
-                                    : op.isFinalOp
-                                    ? 'ثبت تولید + رسید انبار'
-                                    : 'ثبت تولید / انتقال مانده'}
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </td>
+                                <td className="py-2.5 px-3 whitespace-nowrap font-mono font-bold text-slate-800">
+                                  {formatNumber(op.wipBufferAfterOp)} عدد
+                                </td>
 
-                    {/* Warehouse Feed & Cardex Actions & Plan Management */}
-                    <td className="py-3.5 px-3 space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => handleIssueRawMaterialToLine(item)}
-                        className="w-full py-1.5 px-2.5 bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 rounded-lg text-[11px] font-bold transition cursor-pointer"
-                      >
-                        حواله ورق از انبار به OP10
-                      </button>
-                      {item.ops[item.ops.length - 1]?.warehouseReceiptDocNumber && (
-                        <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-900 text-center font-mono">
-                          سند رسید انبار:
-                          <strong className="block text-emerald-800">
-                            {item.ops[item.ops.length - 1].warehouseReceiptDocNumber}
-                          </strong>
-                        </div>
-                      )}
-                      <div className="pt-1.5 border-t border-slate-200/80 space-y-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTimelineOrder(item);
-                            setIsTimelineModalOpen(true);
-                          }}
-                          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[10px] font-bold transition cursor-pointer shadow-2xs"
-                          title="مشاهده تایم‌لاین کامل و گردش کار دستور ساخت"
-                        >
-                          <Clock className="w-3 h-3 text-amber-600" />
-                          <span>تایم‌لاین و شناسنامه MO</span>
-                        </button>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditScheduleItem(item)}
-                            className="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-300 hover:border-blue-300 rounded-lg text-[10px] font-bold transition cursor-pointer"
-                            title="ویرایش برنامه، تیراژ و شماره دستور ساخت (استاندارد ERPNext / Odoo)"
-                          >
-                            <Edit3 className="w-3 h-3 text-blue-600" />
-                            <span>ویرایش</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteScheduleItem(item.id, item.partName)}
-                            className="flex items-center justify-center gap-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-bold transition cursor-pointer"
-                            title="حذف برنامه تولید این قطعه"
-                          >
-                            <Trash2 className="w-3 h-3 text-rose-600" />
-                            <span>حذف</span>
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )))}
-              </tbody>
-            </table>
-          </div>
+                                <td className="py-2.5 px-3 whitespace-nowrap text-left">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenOpExecutionModal(item, op)}
+                                    className={`px-3 py-1 rounded-md font-medium text-[11px] transition cursor-pointer ${
+                                      isLocked
+                                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200/60'
+                                        : 'bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/80'
+                                    }`}
+                                  >
+                                    {isLocked
+                                      ? `قفل (${prevOp?.opCode})`
+                                      : op.isFinalOp
+                                      ? 'ثبت تولید + رسید انبار'
+                                      : 'ثبت کارکرد مرحله'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
 
-          {/* Pagination Footer */}
-          {totalPages > 1 && (
-            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
-              <span className="text-slate-600">
-                صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)} (کل قطعات:{' '}
-                {toPersianDigits(filteredParts.length)})
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  className="px-3 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                  <span>قبلی</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
-                >
-                  <span>بعدی</span>
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {/* Pagination Footer */}
+              {totalPages > 1 && (
+                <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-slate-600">
+                    صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)} (کل قطعات:{' '}
+                    {toPersianDigits(filteredParts.length)})
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                      <span>قبلی</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
+                    >
+                      <span>بعدی</span>
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          </div>
         </div>
       )}
 
