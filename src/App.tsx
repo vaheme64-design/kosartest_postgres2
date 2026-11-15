@@ -634,9 +634,8 @@ function AppContent() {
     }
   });
 
-  // In HUB_WORKSPACE (Image 1), the dark sidebar spans full height on the right while the white navbar sits over the main workspace.
-  // In TABBED_WORKBENCH (Image 2), ODOO_ENTERPRISE, and CLASSIC_COMMAND, the navbar spans full width across the top.
-  const isSidebarFullHeight = layoutTemplate === 'HUB_WORKSPACE';
+  // SAP S/4HANA Fiori layout: full-width Shell Bar spanning across the top above the side navigation and canvas.
+  const isSidebarFullHeight = false;
 
   const navbarElement = (
     <Navbar
@@ -779,6 +778,8 @@ function AppContent() {
         <SalesContractsModuleView
           parts={parts}
           currentUser={currentUser}
+          onNavigateToPlanning={() => handleSubModuleNavigate('planning', { planningSubTab: 'mrp' })}
+          onNavigateToInventoryLedger={contractCode => router.traceDocument(contractCode, 'INVENTORY_LEDGER')}
           onNavigateToTab={handleDeepNavigate}
           onNavigateSubModule={handleSubModuleNavigate}
           onGlobalRefresh={loadAllData}
@@ -796,6 +797,7 @@ function AppContent() {
             role: currentUser.role,
           }}
           initialSubTab={activeInventorySubTab}
+          initialSearchQuery={router.route.docQuery || undefined}
           initialActionModal={pendingInventoryModal}
           initialReceiptDraft={aiReceiptDraft}
           initialIssueDraft={aiIssueDraft}
@@ -808,7 +810,7 @@ function AppContent() {
           onNavigateToPlanning={() => setActiveTab('planning')}
           onSubTabChange={subTab => {
             setActiveInventorySubTab(subTab);
-            router.navigate({ inventorySubTab: subTab });
+            router.navigate({ inventorySubTab: subTab, docQuery: null });
           }}
         />
       )}
@@ -816,29 +818,25 @@ function AppContent() {
           {/* 4. Production */}
           {activeTab === 'production' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200/60">
+              <div className="sap-card px-2 flex items-center justify-between">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setProductionViewMode('ERP_WORKBENCH')}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                      productionViewMode === 'ERP_WORKBENCH'
-                        ? 'bg-white text-slate-800 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
+                    className={`sap-icon-tab ${
+                      productionViewMode === 'ERP_WORKBENCH' ? 'sap-icon-tab-active' : ''
                     }`}
                   >
-                    میز کار و برنامه تولید
+                    میز کار و برنامه تولید (PP)
                   </button>
                   <button
                     type="button"
                     onClick={() => setProductionViewMode('VOUCHERS')}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                      productionViewMode === 'VOUCHERS'
-                        ? 'bg-white text-slate-800 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
+                    className={`sap-icon-tab ${
+                      productionViewMode === 'VOUCHERS' ? 'sap-icon-tab-active' : ''
                     }`}
                   >
-                    ثبت قبض تکی کارگاه
+                    ثبت قبض تکی کارگاه (MIGO)
                   </button>
                 </div>
               </div>
@@ -874,7 +872,7 @@ function AppContent() {
                   initialPartId={initialPartId}
                   initialStageId={initialStageId}
                   onSubmitVoucher={handleSubmitVoucher}
-                  onTrackVoucher={() => handleDeepNavigate('inventory', 'MOVEMENT')}
+                  onTrackVoucher={docQuery => router.traceDocument(docQuery || '', 'INVENTORY_LEDGER')}
                 />
               )}
             </div>
@@ -887,6 +885,8 @@ function AppContent() {
               machines={machines}
               operators={operators}
               stageBalances={summary?.stageBalances || []}
+              initialView={router.route.wipSubTab}
+              initialTraceQuery={router.route.docQuery || undefined}
               onGlobalRefresh={loadAllData}
             />
           )}
@@ -959,7 +959,7 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-slate-700 flex flex-col font-sans selection:bg-slate-800 selection:text-white">
+    <div className="min-h-screen bg-[#f0f0f0] text-[#333333] flex flex-col font-sans selection:bg-[#007cc0] selection:text-white">
       {isSidebarFullHeight ? (
         <div className="flex-1 flex flex-col md:flex-row min-h-screen">
           {sidebarElement}

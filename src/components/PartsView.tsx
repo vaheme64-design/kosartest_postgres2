@@ -20,6 +20,7 @@ import { formatNumber, formatWeightKg, exportToCsv, toPersianDigits } from '../u
 import { SearchableSelect } from './common/SearchableSelect';
 import { loadVipPartsMap, saveVipPartsMap, isPartVip } from '../utils/qcHoldStore';
 import { useEnterpriseUx } from '../context/EnterpriseUxContext';
+import { useErpRouter } from '../context/RouterContext';
 
 interface PartsViewProps {
   parts: Part[];
@@ -28,6 +29,7 @@ interface PartsViewProps {
 
 export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
   const { showUndoToast, recordAudit } = useEnterpriseUx();
+  const { traceDocument } = useErpRouter();
   const [vipMap, setVipMap] = useState<Record<string, boolean>>(() => loadVipPartsMap());
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -269,32 +271,32 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="bg-slate-100 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="sap-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base lg:text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-blue-400" />
+            <h2 className="text-base font-bold text-[#333333] flex items-center gap-2">
+              <Layers className="w-5 h-5 text-[#007cc0]" />
               کاتالوگ جامع قطعات و مواد اولیه ({toPersianDigits(parts.length)} قطعه فعال)
             </h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#666666] mt-1">
             اطلاعات پایه قطعات بدنه و سازه خودرو (پژو ۲۰۶، تارا، دنا پلاس، شاهین، کوییک)، مشخصات فنی ساپکو و وزن مرجع
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-medium border border-slate-200 transition-all"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <Download className="w-3.5 h-3.5 text-[#107e3e]" />
             <span>خروجی اکسل (CSV)</span>
           </button>
           <button
             onClick={handleOpenNewModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-slate-900 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-900/30"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs"
           >
             <Plus className="w-4 h-4" />
             <span>تعریف قطعه جدید</span>
@@ -303,17 +305,17 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3 flex-1">
+      <div className="sap-card p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Search */}
           <div className="relative min-w-[240px] flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#666666] absolute right-3 top-2" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="جستجوی نام قطعه، کد کاتالوگ یا کد ساپکو..."
-              className="w-full bg-white border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm pr-9 pl-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
 
@@ -321,7 +323,7 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-semibold"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] font-semibold"
           >
             <option value="ALL">همه دسته‌بندی‌ها</option>
             <option value="PINNED">📌 قطعات کلیدی نشانه‌گذاری‌شده (VIP)</option>
@@ -334,7 +336,7 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
           <select
             value={carModelFilter}
             onChange={e => setCarModelFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-semibold"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] font-semibold"
           >
             <option value="ALL">همه خودروها</option>
             {carModels.map(m => (
@@ -346,10 +348,10 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
           <button
             type="button"
             onClick={() => setCategoryFilter(categoryFilter === 'PINNED' ? 'ALL' : 'PINNED')}
-            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-sm text-xs font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
               categoryFilter === 'PINNED'
-                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
+                ? 'bg-[#e9730c] text-white border-[#e9730c]'
+                : 'bg-[#fff4e5] hover:bg-[#ffe8cc] text-[#e9730c] border-[#f9d6a7]'
             }`}
           >
             <Pin className="w-3.5 h-3.5 fill-current" />
@@ -357,31 +359,31 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
           </button>
         </div>
 
-        <div className="text-xs text-slate-500">
-          تعداد نمایش: <span className="font-bold text-slate-900">{formatNumber(filteredParts.length)}</span> قطعه
+        <div className="text-xs text-[#666666]">
+          تعداد نمایش: <span className="font-bold text-[#333333]">{formatNumber(filteredParts.length)}</span> قطعه
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+      <div className="sap-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-right text-xs sap-table-compact">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                <th className="py-3 px-3 w-24 text-center">قطعه کلیدی (📌 VIP)</th>
-                <th className="py-3 px-3">کد کاتالوگ</th>
-                <th className="py-3 px-3">عنوان قطعه / ماده اولیه</th>
-                <th className="py-3 px-3">دسته‌بندی</th>
-                <th className="py-3 px-3">مدل خودرو</th>
-                <th className="py-3 px-3">کد ساپکو</th>
-                <th className="py-3 px-3">وزن واحد (kg)</th>
-                <th className="py-3 px-3">ضخامت (mm)</th>
-                <th className="py-3 px-3">گرید فولاد</th>
-                <th className="py-3 px-3">واحد پایه</th>
-                <th className="py-3 px-3">عملیات</th>
+              <tr className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
+                <th className="w-24 text-center">قطعه کلیدی (VIP)</th>
+                <th>کد کاتالوگ</th>
+                <th>عنوان قطعه / ماده اولیه</th>
+                <th>دسته‌بندی</th>
+                <th>مدل خودرو</th>
+                <th>کد ساپکو</th>
+                <th>وزن واحد (kg)</th>
+                <th>ضخامت (mm)</th>
+                <th>گرید فولاد</th>
+                <th>واحد پایه</th>
+                <th className="text-center">عملیات</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#e8e8e8]">
               {filteredParts.map(p => {
                 const isRaw = p.category === 'RAW_MATERIAL';
                 const isFinished = p.category === 'FINISHED_GOOD';
@@ -390,65 +392,74 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
                   <tr
                     key={p.id}
                     className={`transition-colors ${
-                      isVip ? 'bg-amber-50/70 hover:bg-amber-100/60' : 'hover:bg-slate-50'
+                      isVip ? 'bg-[#fff4e5]/60 hover:bg-[#fff4e5]' : 'hover:bg-[#e5f3fa]'
                     }`}
                   >
-                    <td className="py-3 px-3 text-center">
+                    <td className="text-center">
                       <button
                         type="button"
                         onClick={() => handleToggleVip(p)}
-                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center gap-1 transition-all cursor-pointer ${
+                        className={`px-2 py-0.5 rounded-sm border text-[11px] font-semibold inline-flex items-center gap-1 transition-all cursor-pointer ${
                           isVip
-                            ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-2xs hover:bg-amber-400'
-                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300'
+                            ? 'bg-[#e9730c] text-white border-[#e9730c] hover:bg-[#d06408]'
+                            : 'bg-[#f5f5f5] text-[#666666] border-[#d9d9d9] hover:bg-[#fff4e5] hover:text-[#e9730c] hover:border-[#f9d6a7]'
                         }`}
-                        title={isVip ? 'حذف نشان قطعه کلیدی (VIP)' : 'افزودن به قطعات کلیدی استراتژیک (📌 VIP)'}
+                        title={isVip ? 'حذف نشان قطعه کلیدی (VIP)' : 'افزودن به قطعات کلیدی استراتژیک (VIP)'}
                       >
-                        <Pin className={`w-3.5 h-3.5 ${isVip ? 'fill-slate-950' : ''}`} />
+                        <Pin className={`w-3 h-3 ${isVip ? 'fill-white' : ''}`} />
                         <span>{isVip ? 'VIP فعال' : 'نشان VIP'}</span>
                       </button>
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold text-slate-900">{p.code}</td>
-                    <td className="py-3 px-3 text-slate-900 font-medium max-w-xs">
+                    <td className="font-mono font-bold">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(p.code, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link"
+                        title="رهگیری کاردکس و سوابق موجودی این قطعه"
+                      >
+                        {p.code}
+                      </button>
+                    </td>
+                    <td className="text-[#333333] font-medium max-w-xs">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={isVip ? 'font-bold text-slate-950' : ''}>{p.name}</span>
+                        <span className={isVip ? 'font-bold text-[#333333]' : ''}>{p.name}</span>
                         {isVip && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold border border-amber-500">
-                            📌 قطعه کلیدی (VIP)
+                          <span className="px-1.5 py-0.5 rounded-sm bg-[#fff4e5] text-[#e9730c] text-[10px] font-semibold border border-[#f9d6a7]">
+                            VIP
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-3">
+                    <td>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                        className={`px-2 py-0.5 rounded-sm text-[10px] font-medium border ${
                           isRaw
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            ? 'bg-[#fff4e5] text-[#e9730c] border-[#f9d6a7]'
                             : isFinished
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                            ? 'bg-[#ebf7ef] text-[#107e3e] border-[#a9dfbf]'
+                            : 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]'
                         }`}
                       >
                         {isRaw ? 'ماده اولیه' : isFinished ? 'محصول نهایی' : 'نیمه‌ساخته WIP'}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-slate-700">
+                    <td className="text-[#333333]">
                       <div className="flex items-center gap-1">
-                        <Car className="w-3 h-3 text-slate-500" />
+                        <Car className="w-3 h-3 text-[#666666]" />
                         <span>{p.carModel || 'مشترک'}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-3 font-mono text-slate-400 text-[11px]">{p.sapcoCode || '-'}</td>
-                    <td className="py-3 px-3 font-bold text-slate-900 font-mono">{p.weightPerUnitKg}</td>
-                    <td className="py-3 px-3 font-mono text-slate-700">{p.thicknessMm ? `${p.thicknessMm} mm` : '-'}</td>
-                    <td className="py-3 px-3 font-mono text-indigo-700">{p.materialGrade || '-'}</td>
-                    <td className="py-3 px-3 text-slate-400">{p.unit}</td>
-                    <td className="py-3 px-3">
+                    <td className="font-mono text-[#666666] text-[11px]">{p.sapcoCode || '-'}</td>
+                    <td className="font-bold text-[#333333] font-mono">{p.weightPerUnitKg}</td>
+                    <td className="font-mono text-[#333333]">{p.thicknessMm ? `${p.thicknessMm} mm` : '-'}</td>
+                    <td className="font-mono text-[#007cc0] font-semibold">{p.materialGrade || '-'}</td>
+                    <td className="text-[#666666]">{p.unit}</td>
+                    <td>
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleEditPart(p)}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          className="sap-btn-standard px-2 py-0.5 text-[11px] inline-flex items-center gap-1"
                           title="ویرایش مشخصات قطعه / کلاف"
                         >
                           <Edit3 className="w-3 h-3" />
@@ -457,7 +468,7 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
                         <button
                           type="button"
                           onClick={() => handleDuplicatePart(p)}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white border border-slate-200 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          className="px-2 py-0.5 rounded-sm text-[11px] font-medium text-[#333333] bg-[#f5f5f5] hover:bg-[#e8e8e8] border border-[#d9d9d9] inline-flex items-center gap-1 transition-colors cursor-pointer"
                           title="کپی‌گیری سریع (Duplicate) برای ایجاد رکورد مشابه"
                         >
                           <Copy className="w-3 h-3" />
@@ -475,22 +486,22 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
 
       {/* Modal for Create/Edit Part */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 className="text-sm font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm w-full max-w-xl p-5 shadow-lg">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <h3 className="text-sm font-bold text-[#333333]">
                 {editingPart ? 'ویرایش مشخصات قطعه' : 'تعریف قطعه / ماده اولیه جدید'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-900 transition-colors"
+                className="text-[#666666] hover:text-[#333333] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs">
+              <div className="mt-3 p-3 rounded-sm bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] text-xs">
                 {formError}
               </div>
             )}
@@ -498,23 +509,23 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
             <form onSubmit={handleFormSubmit} className="mt-4 space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">کد کاتالوگ قطعه *</label>
+                  <label className="text-[#333333] font-medium">کد کاتالوگ قطعه *</label>
                   <input
                     type="text"
                     value={formData.code || ''}
                     onChange={e => setFormData({ ...formData, code: e.target.value })}
                     placeholder="مثال: IKCO-206-BRK05"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">دسته‌بندی *</label>
+                  <label className="text-[#333333] font-medium">دسته‌بندی *</label>
                   <select
                     value={formData.category}
                     onChange={e => setFormData({ ...formData, category: e.target.value as any })}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="RAW_MATERIAL">ماده اولیه (کویل/ورق ساپکو)</option>
                     <option value="WIP_PART">قطعه نیمه‌ساخته (WIP)</option>
@@ -524,24 +535,24 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-700 font-medium">عنوان کامل قطعه در خط تولید *</label>
+                <label className="text-[#333333] font-medium">عنوان کامل قطعه در خط تولید *</label>
                 <input
                   type="text"
                   value={formData.name || ''}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: براکت تقویتی ستون وسط تارا با پوشش کاتافورز"
-                  className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">واحد اندازه‌گیری *</label>
+                  <label className="text-[#333333] font-medium">واحد اندازه‌گیری *</label>
                   <select
                     value={formData.unit}
                     onChange={e => setFormData({ ...formData, unit: e.target.value as any })}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="PCS">عدد (PCS)</option>
                     <option value="KG">کیلوگرم (KG)</option>
@@ -549,45 +560,45 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">وزن واحد (کیلوگرم) *</label>
+                  <label className="text-[#333333] font-medium">وزن واحد (کیلوگرم) *</label>
                   <input
                     type="number"
                     step="0.001"
                     min="0.001"
                     value={formData.weightPerUnitKg || 1}
                     onChange={e => setFormData({ ...formData, weightPerUnitKg: parseFloat(e.target.value) || 1 })}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">ضخامت ورق (mm)</label>
+                  <label className="text-[#333333] font-medium">ضخامت ورق (mm)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={formData.thicknessMm || ''}
                     onChange={e => setFormData({ ...formData, thicknessMm: parseFloat(e.target.value) || undefined })}
                     placeholder="مثلاً: 1.5"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">گرید فولاد</label>
+                  <label className="text-[#333333] font-medium">گرید فولاد</label>
                   <input
                     type="text"
                     value={formData.materialGrade || ''}
                     onChange={e => setFormData({ ...formData, materialGrade: e.target.value })}
                     placeholder="ST14, DC04, DX51D"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">مدل خودرو / خانواده محصول</label>
+                  <label className="text-[#333333] font-medium">مدل خودرو / خانواده محصول</label>
                   <SearchableSelect
                     value={formData.carModel || ''}
                     onChange={val => setFormData({ ...formData, carModel: val })}
@@ -606,29 +617,29 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">کد ساپکو / OEM</label>
+                  <label className="text-[#333333] font-medium">کد ساپکو / OEM</label>
                   <input
                     type="text"
                     value={formData.sapcoCode || ''}
                     onChange={e => setFormData({ ...formData, sapcoCode: e.target.value })}
                     placeholder="SAP-88102"
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-100 text-slate-700 rounded-xl font-medium transition-colors"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-md shadow-blue-900/30"
+                  className="sap-btn-emphasized px-5 py-1.5"
                 >
                   {formLoading ? 'در حال ذخیره...' : 'ذخیره در کاتالوگ'}
                 </button>

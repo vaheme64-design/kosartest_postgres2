@@ -22,6 +22,7 @@ import {
   exportToCsv,
 } from '../utils/formatters';
 import { TableSkeleton, KpiCardsSkeleton } from './common/Skeleton';
+import { useErpRouter } from '../context/RouterContext';
 
 interface InventoryReportViewProps {
   balances: StageInventorySummary[];
@@ -34,6 +35,7 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
   onRefresh,
   loading,
 }) => {
+  const { traceDocument } = useErpRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStageFilter, setSelectedStageFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -123,32 +125,34 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header and Summary Cards */}
-      <div className="bg-slate-100 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="sap-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base lg:text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Boxes className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-base font-bold text-[#333333] flex items-center gap-2">
+            <Boxes className="w-5 h-5 text-[#007cc0]" />
             گزارش کاردکس و موجودی چندمرحله‌ای (مواد اولیه، WIP و محصول)
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#666666] mt-1">
             موجودی از گردش دفاتر تراکنش‌های معتبر و با تفکیک قطعی موجودی آزاد، رزرو و در انتظار انتقال محاسبه شده است.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-medium border border-slate-200 transition-all"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
             title="به‌روزرسانی لحظه‌ای محاسبه دفاتر"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>محاسبه مجدد</span>
           </button>
           <button
+            type="button"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-all shadow-md shadow-emerald-900/30"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
             <Download className="w-3.5 h-3.5" />
             <span>خروجی اکسل (CSV)</span>
@@ -158,30 +162,30 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
 
       {/* 4 Summary Micro-Cards for Current Filter */}
       {loading ? (
-        <KpiCardsSkeleton count={4} columns={4} theme="dark" />
+        <KpiCardsSkeleton count={4} columns={4} theme="light" />
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-slate-100 p-3 rounded-xl border border-slate-200">
-            <span className="text-[11px] text-slate-400">موجودی آزاد و قابل استفاده</span>
-            <div className="text-base lg:text-lg font-bold text-emerald-400 mt-1">
+          <div className="sap-card p-3">
+            <span className="text-[11px] text-[#666666]">موجودی آزاد و قابل استفاده</span>
+            <div className="text-base lg:text-lg font-bold text-[#107e3e] mt-1 tabular-nums font-mono">
               {formatNumber(totalUsableQty)}
             </div>
           </div>
-          <div className="bg-slate-100 p-3 rounded-xl border border-slate-200">
-            <span className="text-[11px] text-slate-400">موجودی در حال انتقال (بین مراحل)</span>
-            <div className="text-base lg:text-lg font-bold text-purple-400 mt-1">
+          <div className="sap-card p-3">
+            <span className="text-[11px] text-[#666666]">موجودی در حال انتقال (بین مراحل)</span>
+            <div className="text-base lg:text-lg font-bold text-[#007cc0] mt-1 tabular-nums font-mono">
               {formatNumber(totalInTransitQty)}
             </div>
           </div>
-          <div className="bg-slate-100 p-3 rounded-xl border border-slate-200">
-            <span className="text-[11px] text-slate-400">وزن کل موجودی در این نما</span>
-            <div className="text-base lg:text-lg font-bold text-slate-900 mt-1">
+          <div className="sap-card p-3">
+            <span className="text-[11px] text-[#666666]">وزن کل موجودی در این نما</span>
+            <div className="text-base lg:text-lg font-bold text-[#333333] mt-1 tabular-nums font-mono">
               {formatWeightKg(totalWeightKg)}
             </div>
           </div>
-          <div className="bg-slate-100 p-3 rounded-xl border border-slate-200">
-            <span className="text-[11px] text-slate-400">مجموع ضایعات ثبتی</span>
-            <div className="text-base lg:text-lg font-bold text-rose-400 mt-1">
+          <div className="sap-card p-3">
+            <span className="text-[11px] text-[#666666]">مجموع ضایعات ثبتی</span>
+            <div className="text-base lg:text-lg font-bold text-[#bb0000] mt-1 tabular-nums font-mono">
               {formatNumber(totalScrapQty)}
             </div>
           </div>
@@ -189,17 +193,17 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+      <div className="sap-card p-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 flex-1">
           {/* Search */}
           <div className="relative min-w-[220px] flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#666666] absolute right-3 top-2" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="جستجوی نام قطعه، کد کاتالوگ یا ایستگاه..."
-              className="w-full bg-white border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm pr-9 pl-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
 
@@ -207,7 +211,7 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
           <select
             value={selectedStageFilter}
             onChange={e => setSelectedStageFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه ایستگاه‌ها و انبارها</option>
             {FACTORY_STAGES.map(st => (
@@ -218,121 +222,132 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
           </select>
 
           {/* Non-zero checkbox */}
-          <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-xs text-[#333333] cursor-pointer select-none">
             <input
               type="checkbox"
               checked={onlyNonZero}
               onChange={e => setOnlyNonZero(e.target.checked)}
-              className="rounded bg-white border-slate-200 text-amber-500 focus:ring-0"
+              className="rounded-sm bg-[#ffffff] border-[#bfbfbf] text-[#007cc0] focus:ring-0"
             />
             <span>فقط ردیف‌های دارای موجودی یا گردش</span>
           </label>
         </div>
 
-        <div className="text-xs text-slate-400">
-          تعداد ردیف‌ها: <span className="font-bold text-slate-900">{formatNumber(filteredBalances.length)}</span>
+        <div className="text-xs text-[#666666]">
+          تعداد ردیف‌ها: <span className="font-bold text-[#333333] tabular-nums">{formatNumber(filteredBalances.length)}</span>
         </div>
       </div>
 
       {/* Data Table */}
       {loading ? (
-        <TableSkeleton rows={8} columns={8} theme="dark" />
+        <TableSkeleton rows={8} columns={8} theme="light" />
       ) : (
-      <div className="bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="sap-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
+          <table className="sap-table-compact w-full text-right text-xs">
             <thead>
-              <tr className="bg-white border-b border-slate-200 text-slate-400 font-semibold select-none">
-                <th className="py-3 px-3">ایستگاه / مرحله</th>
-                <th className="py-3 px-3">کد قطعه</th>
-                <th className="py-3 px-3">عنوان قطعه / شیت</th>
+              <tr className="bg-[#f5f5f5] border-b border-[#d9d9d9] text-[#666666] font-semibold select-none">
+                <th>ایستگاه / مرحله</th>
+                <th>کد قطعه</th>
+                <th>عنوان قطعه / شیت</th>
                 <th
                   onClick={() => handleSort('usableQty')}
-                  className="py-3 px-3 cursor-pointer hover:text-slate-900"
+                  className="cursor-pointer hover:text-[#007cc0]"
                 >
                   <div className="flex items-center gap-1">
                     <span>موجودی آزاد</span>
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
-                <th className="py-3 px-3 text-purple-400">در راه (انتقال)</th>
+                <th className="text-[#007cc0]">در راه (انتقال)</th>
                 <th
                   onClick={() => handleSort('totalQty')}
-                  className="py-3 px-3 cursor-pointer hover:text-slate-900"
+                  className="cursor-pointer hover:text-[#007cc0]"
                 >
                   <div className="flex items-center gap-1">
                     <span>موجودی کل</span>
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
-                <th className="py-3 px-3">واحد</th>
+                <th>واحد</th>
                 <th
                   onClick={() => handleSort('totalKg')}
-                  className="py-3 px-3 cursor-pointer hover:text-slate-900"
+                  className="cursor-pointer hover:text-[#007cc0]"
                 >
                   <div className="flex items-center gap-1">
                     <span>وزن کل</span>
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
-                <th className="py-3 px-3 text-rose-400">ضایعات</th>
-                <th className="py-3 px-3">نرخ ضایعات</th>
-                <th className="py-3 px-3">آخرین تراکنش</th>
+                <th className="text-[#bb0000]">ضایعات</th>
+                <th>نرخ ضایعات</th>
+                <th>آخرین تراکنش</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#e8e8e8]">
               {pagedData.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-8 text-center text-slate-400">
+                  <td colSpan={11} className="py-8 text-center text-[#666666]">
                     هیچ رکوردی منطبق با فیلترهای انتخابی یافت نشد.
                   </td>
                 </tr>
               ) : (
                 pagedData.map(item => (
-                  <tr key={`${item.stageId}_${item.partId}`} className="hover:bg-slate-100 transition-colors">
-                    <td className="py-3 px-3 font-medium text-slate-700">
+                  <tr key={`${item.stageId}_${item.partId}`} className="hover:bg-[#f5f5f5] transition-colors">
+                    <td className="font-medium text-[#333333]">
                       <div className="flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                        <Building2 className="w-3.5 h-3.5 text-[#007cc0]" />
                         <span>{item.stageName}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-3 font-mono text-amber-400 font-semibold">{item.partCode}</td>
-                    <td className="py-3 px-3 text-slate-900 font-medium">
+                    <td className="font-mono font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(item.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link font-mono"
+                        title="رهگیری کاردکس قطعه"
+                      >
+                        {item.partCode}
+                      </button>
+                    </td>
+                    <td className="text-[#333333] font-medium">
                       <div>{item.partName}</div>
                     </td>
-                    <td className="py-3 px-3 font-bold text-emerald-400 font-mono">
+                    <td className="font-bold text-[#107e3e] font-mono tabular-nums">
                       {formatNumber(item.usableQty)}
                     </td>
-                    <td className="py-3 px-3 font-mono text-purple-700">
+                    <td className="font-mono text-[#007cc0] tabular-nums">
                       {item.inTransitQty > 0 ? (
                         <span className="flex items-center gap-1">
-                          <ArrowRightLeft className="w-3 h-3 text-purple-400" />
+                          <ArrowRightLeft className="w-3 h-3 text-[#007cc0]" />
                           {formatNumber(item.inTransitQty)}
                         </span>
                       ) : (
                         '-'
                       )}
                     </td>
-                    <td className="py-3 px-3 font-bold text-slate-900 font-mono">
+                    <td className="font-bold text-[#333333] font-mono tabular-nums">
                       {formatNumber(item.totalQty)}
                     </td>
-                    <td className="py-3 px-3 text-slate-400 font-medium">{item.unit}</td>
-                    <td className="py-3 px-3 text-slate-700 font-medium">{formatWeightKg(item.totalKg)}</td>
-                    <td className="py-3 px-3 text-rose-400 font-mono">
+                    <td className="text-[#666666] font-medium">{item.unit}</td>
+                    <td className="text-[#333333] font-medium tabular-nums">{formatWeightKg(item.totalKg)}</td>
+                    <td className="text-[#bb0000] font-mono tabular-nums">
                       {item.scrapQty > 0 ? formatNumber(item.scrapQty) : '-'}
                     </td>
-                    <td className="py-3 px-3">
+                    <td>
                       {item.scrapRatePercent > 0 ? (
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          item.scrapRatePercent > 2.5 ? 'bg-rose-500/20 text-rose-700' : 'bg-slate-700 text-slate-700'
+                        <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold border ${
+                          item.scrapRatePercent > 2.5
+                            ? 'bg-[#ffecec] text-[#bb0000] border-[#f5b7b1]'
+                            : 'bg-[#f5f5f5] text-[#333333] border-[#d9d9d9]'
                         }`}>
                           {toPersianDigits(item.scrapRatePercent)}٪
                         </span>
                       ) : (
-                        <span className="text-slate-600">-</span>
+                        <span className="text-[#666666]">-</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-slate-400 text-[11px] font-mono">
+                    <td className="text-[#666666] text-[11px] font-mono tabular-nums">
                       {formatDateTime(item.lastActivityDate)}
                     </td>
                   </tr>
@@ -344,35 +359,38 @@ export const InventoryReportView: React.FC<InventoryReportViewProps> = ({
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-400">
+          <div className="p-3 bg-[#f7f7f7] border-t border-[#d9d9d9] flex items-center justify-between text-xs text-[#666666]">
             <div>
               نمایش صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)}
             </div>
             <div className="flex items-center gap-1.5">
               <button
+                type="button"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-100 text-slate-900 rounded-lg disabled:opacity-40 transition-colors"
+                className="sap-btn-standard px-2.5 py-1 disabled:opacity-40"
               >
                 قبلی
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 7).map(pageNum => (
                 <button
+                  type="button"
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-7 h-7 rounded-lg font-mono font-medium transition-colors ${
+                  className={`w-7 h-7 rounded-sm font-mono font-medium transition-colors border cursor-pointer ${
                     currentPage === pageNum
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'bg-slate-100 hover:bg-slate-100 text-slate-700'
+                      ? 'bg-[#007cc0] text-white border-[#007cc0] font-bold'
+                      : 'bg-[#ffffff] hover:bg-[#e5f3fa] text-[#333333] border-[#d9d9d9]'
                   }`}
                 >
                   {toPersianDigits(pageNum)}
                 </button>
               ))}
               <button
+                type="button"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-100 text-slate-900 rounded-lg disabled:opacity-40 transition-colors"
+                className="sap-btn-standard px-2.5 py-1 disabled:opacity-40"
               >
                 بعدی
               </button>

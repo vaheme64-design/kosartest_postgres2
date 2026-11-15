@@ -16,10 +16,12 @@ import {
 } from '../types/inventory';
 import {
   calculateDetailedStockBalances,
+  atomicPostDocument,
   issuePhysicalCoilPartial,
   returnPhysicalCoilPartial,
   AuditRecord,
 } from './inventoryEngine';
+import { getAllBoms } from './bomAndParallelEngine';
 import {
   manufacturingOrdersStore,
   productionLogsStore,
@@ -115,20 +117,29 @@ export function getFallbackPlanningReadModel(
       };
     });
 
+    let stockCoverRemaining = req.availableFinishedGoodsQty + req.totalDownstreamWip;
     const orderLine = customerOrdersStore
       .filter(o => o.status === 'OPEN' || o.status === 'PARTIALLY_FULFILLED')
       .flatMap(o =>
         o.lines
-          .filter(l => l.partCode === req.partCode && l.remainingQuantity > 0)
+          .filter(l => (l.partCode === req.partCode || l.partId === req.partId) && l.remainingQuantity > 0)
           .map(l => ({
             customerOrderLineId: l.id,
             customerOrderNumber: o.orderNumber,
             dueDate: l.dueDate || o.dueDate,
             remainingQty: l.remainingQuantity,
-            plannedQty: req.netProductionRequirement > 0 ? req.netProductionRequirement : l.remainingQuantity,
             priority: o.priority,
           })),
-      );
+      )
+      .sort((a, b) => a.priority - b.priority || new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .map(l => {
+        const covered = Math.min(l.remainingQty, stockCoverRemaining);
+        stockCoverRemaining = Math.max(0, stockCoverRemaining - covered);
+        return {
+          ...l,
+          plannedQty: Math.max(0, l.remainingQty - covered),
+        };
+      });
 
     return {
       partId: part?.id || req.partId,
@@ -346,6 +357,7 @@ export async function releaseFallbackProposal(
     const moRes = createManufacturingOrder({
       partId: part.id,
       targetQuantity: Number(line.plannedQty) || 500,
+      initialInputQuantity: 0,
       routingId: routing.id,
       dueDate: line.plannedEndDate,
       notes: `صادرشده از پیشنهاد برنامه ${proposal.proposalNumber} (نسخه ${proposal.version}) توسط ${releasedBy}`,
@@ -355,6 +367,17 @@ export async function releaseFallbackProposal(
       moRes.data.status = 'RELEASED';
       if (moRes.data.operations[0]) {
         moRes.data.operations[0].status = 'READY';
+      }
+      // Sync selected machine assignments from proposal into released MO operations & workload
+      for (const op of moRes.data.operations) {
+        const assign = (line.operationAssignments || []).find((a: any) => a.stepNumber === op.stepNumber);
+        if (assign?.machineId) {
+          op.machineId = assign.machineId;
+        }
+        if (op.machineId) {
+          const estHours = Math.round((((op.standardCycleTimeSec || 12) * moRes.data.targetQuantity) / 3600 + 0.5) * 10) / 10;
+          machineWorkloadHoursMap[op.machineId] = Math.round(((machineWorkloadHoursMap[op.machineId] || 0) + estHours) * 10) / 10;
+        }
       }
       createdMos.push(moRes.data);
     }
@@ -1243,17 +1266,72 @@ export async function postFallbackWipOperationProduction(
           notes: `مصرف قطعه مکمل در مونتاژ ${mo.moNumber}`,
         },
       );
+    } else {
+      // Dynamic fallback BOM backflush for any custom assembly/part defined via Advanced BOM or Part Master
+      const dynamicBom = getAllBoms().find(b => b.assemblyPartId === mo.partId || b.assemblyPartCode === mo.partCode);
+      const matchedPart = parts.find(p => p.code === mo.partCode || p.id === mo.partId);
+      if (dynamicBom && dynamicBom.components.length > 0 && isFirstOp) {
+        dynamicBom.components.forEach((cmp, cIdx) => {
+          const cmpPart = parts.find(p => p.id === cmp.componentPartId || p.code === cmp.componentPartCode);
+          const isSheet = cmp.componentType === 'RAW_SHEET' || cmpPart?.unit === 'KG';
+          const scrapMultiplier = 1 + (cmp.scrapAllowancePercent || 0) / 100;
+          const reqQty = isSheet
+            ? Number(((goodQty + scrapQty) * cmp.quantityPerAssembly * (cmp.grossWeightKg || 1) * scrapMultiplier).toFixed(2))
+            : Math.ceil(goodQty * cmp.quantityPerAssembly * scrapMultiplier);
+          if (reqQty <= 0) return;
+          issueLines.push({
+            id: `LN-WIP-BF-${suffix}-${cIdx + 1}`,
+            documentId: `DOC-WIP-BF-${suffix}`,
+            lineNumber: cIdx + 1,
+            partId: cmpPart?.id || cmp.componentPartId,
+            partCode: cmpPart?.code || cmp.componentPartCode,
+            partName: cmpPart?.name || cmp.componentPartName,
+            lotNumber: isSheet ? coilNumber : `LOT-${cmp.componentPartCode}`,
+            heatNumber,
+            ownership: cmp.supplierSource === 'SAPCO_CONSIGNMENT' ? 'SAPCO_SUPPLIER_OWNED' : 'COMPANY_OWNED',
+            locationCode: 'LOC-RAW-A1',
+            quantity: reqQty,
+            unit: isSheet ? 'KG' : cmp.unit || 'PCS',
+            quantityKg: isSheet ? reqQty : Number((reqQty * (cmpPart?.weightPerUnitKg || 0.05)).toFixed(3)),
+            qualityStatus: 'AVAILABLE',
+            notes: `مصرف خودکار BOM در ${op.stepCode} دستور ${mo.moNumber}`,
+          });
+        });
+      } else if (isFirstOp && matchedPart && matchedPart.materialGrade) {
+        const consumedKg = Number(((goodQty + scrapQty) * (matchedPart.weightPerUnitKg || 1.1) * 1.1).toFixed(2));
+        const rawPart = parts.find(
+          p => p.category === 'RAW_MATERIAL' && p.unit === 'KG' && p.materialGrade === matchedPart.materialGrade
+        );
+        if (rawPart && consumedKg > 0) {
+          issueLines.push({
+            id: `LN-WIP-BF-${suffix}-RAW`,
+            documentId: `DOC-WIP-BF-${suffix}`,
+            lineNumber: 1,
+            partId: rawPart.id,
+            partCode: rawPart.code,
+            partName: rawPart.name,
+            lotNumber: coilNumber,
+            heatNumber,
+            ownership: 'SAPCO_SUPPLIER_OWNED',
+            locationCode: 'LOC-RAW-A1',
+            quantity: consumedKg,
+            unit: 'KG',
+            quantityKg: consumedKg,
+            qualityStatus: 'AVAILABLE',
+            notes: `مصرف خودکار ورق بر اساس گرید ${matchedPart.materialGrade} در ${op.stepCode}`,
+          });
+        }
+      }
     }
 
     if (issueLines.length > 0) {
-      postedTxCount += issueLines.length;
-      inventoryDocs.unshift({
+      const bfDoc: InventoryDocument = {
         id: `DOC-WIP-BF-${suffix}`,
         documentNumber: `ISS-WIP-${suffix}`,
         documentType: 'ISSUE_RAW_MATERIAL',
         documentDate: nowIso,
-        documentStatus: 'CONFIRMED',
-        postingStatus: 'POSTED',
+        documentStatus: 'DRAFT',
+        postingStatus: 'UNPOSTED',
         warehouseId: sourceWhId,
         warehouseName: sourceWhName,
         ownership: issueLines[0].ownership,
@@ -1266,12 +1344,20 @@ export async function postFallbackWipOperationProduction(
         totalWeightKg: issueLines.reduce((s, l) => s + l.quantityKg, 0),
         createdByUid: body.createdByUserId || 'USR-PROD',
         createdByName: body.operatorName || 'اپراتور تولید',
-        postedByUid: body.createdByUserId || 'USR-PROD',
-        postedByName: body.operatorName || 'اپراتور تولید',
-        postedAt: nowIso,
         createdAt: nowIso,
         updatedAt: nowIso,
+      };
+      // Validate via atomicPostDocument when warehouse balance covers the lines (never exceed physical balance silently)
+      const checkRes = atomicPostDocument(bfDoc, inventoryDocs, [], parts, {
+        uid: body.createdByUserId || 'USR-PROD',
+        displayName: body.operatorName || 'اپراتور تولید',
       });
+      if (checkRes.success) {
+        postedTxCount += issueLines.length;
+        inventoryDocs.unshift(bfDoc);
+      } else {
+        throw Object.assign(new Error(checkRes.error || 'موجودی انبار برای کسر خودکار BOM کافی نیست.'), { statusCode: 400 });
+      }
     }
 
     if (isFinalOp) {

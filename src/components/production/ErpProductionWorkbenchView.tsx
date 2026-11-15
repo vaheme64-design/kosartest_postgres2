@@ -1881,11 +1881,11 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
   return (
     <div className="space-y-4 text-right font-sans" dir="rtl">
       {/* ==================================================================== */}
-      {/* CLEAN ENTERPRISE WORKSPACE HEADER & FILTER BAR                       */}
+      {/* SAP FIORI WORKSPACE ICON TAB BAR & FILTER BAR                        */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200/60 rounded-xl p-4 space-y-3">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
+      <div className="sap-card overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 px-3 border-b border-[#D9DFE5]">
+          <div className="sap-icon-tab-bar border-b-0 flex-1">
             {[
               { id: 'MULTI_PART_SCHEDULER' as const, title: '۱. برنامه مراحل تولید (OP)', icon: Calendar },
               { id: 'DAILY_DISPATCH_SHEET' as const, title: '۲. برگه کار روزانه شیفت', icon: Printer },
@@ -1902,20 +1902,16 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   key={tab.id}
                   type="button"
                   onClick={() => handleSelectModuleTab(tab.id)}
-                  className={`px-2.5 py-1.5 rounded-md text-xs transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
-                    active
-                      ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`sap-icon-tab ${active ? 'sap-icon-tab-active' : ''}`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${active ? 'text-slate-700' : 'text-slate-400'}`} />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{tab.title}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 self-end lg:self-auto">
+          <div className="flex items-center gap-2 shrink-0 py-2 lg:py-0">
             <button
               type="button"
               onClick={() => {
@@ -1927,7 +1923,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   detail: 'فهرست استاندارد قطعات بارگذاری گردید.',
                 });
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/60 rounded-lg text-xs font-normal transition cursor-pointer whitespace-nowrap"
+              className="sap-btn-standard flex items-center gap-1.5 px-2.5 py-1.5 text-xs cursor-pointer whitespace-nowrap"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>بازنشانی</span>
@@ -1935,7 +1931,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             <button
               type="button"
               onClick={() => router.openCreateMoModal()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>دستور کار جدید</span>
@@ -1944,9 +1940,9 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
         </div>
 
         {/* Compact Single-Row Search & Filter Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 text-xs items-center">
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 text-xs items-center bg-[#f7f7f7]">
           <div className="lg:col-span-5 relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-[#666666] absolute right-3 top-2" />
             <input
               type="text"
               value={searchQuery}
@@ -1955,7 +1951,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                 setCurrentPage(1);
               }}
               placeholder="جستجوی نام قطعه، کد کالا، شماره دستور ساخت، مرحله OP یا کد دستگاه..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-8 pl-3 py-1.5 text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded pr-8 pl-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
 
@@ -1966,7 +1962,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                 setSelectedCarFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-none cursor-pointer"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1.5 text-[#333333] font-medium focus:outline-none focus:border-[#007cc0] cursor-pointer"
             >
               <option value="ALL">همه خودروها ({toPersianDigits(uniqueCars.length)})</option>
               {uniqueCars.map(car => (
@@ -1984,7 +1980,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                 setSelectedHallFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-none cursor-pointer"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1.5 text-[#333333] font-medium focus:outline-none focus:border-[#007cc0] cursor-pointer"
             >
               <option value="ALL">همه سالن‌ها و خطوط تولید</option>
               {uniqueHalls.map(h => (
@@ -1995,12 +1991,12 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             </select>
           </div>
 
-          <div className="lg:col-span-2 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-            <span className="text-slate-500 font-medium whitespace-nowrap">روز فعال:</span>
+          <div className="lg:col-span-2 flex items-center justify-between bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1.5">
+            <span className="text-[#666666] font-medium whitespace-nowrap">روز فعال:</span>
             <select
               value={selectedDayFilter}
               onChange={e => setSelectedDayFilter(Number(e.target.value))}
-              className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
+              className="bg-transparent font-semibold text-[#333333] focus:outline-none cursor-pointer"
             >
               {WORK_DAYS.map(d => (
                 <option key={d.index} value={d.index}>
@@ -2015,27 +2011,27 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* Live Toast Notification */}
       {toastNotice && (
         <div
-          className={`rounded-xl p-3.5 text-xs flex items-center justify-between gap-3 border ${
+          className={`rounded p-3 text-xs flex items-center justify-between gap-3 border ${
             toastNotice.type === 'warning'
-              ? 'bg-amber-50 border-amber-200 text-amber-950'
-              : 'bg-emerald-50 border-emerald-200 text-emerald-950'
+              ? 'bg-[#fff4e5] border-[#f5cba7] text-[#333333]'
+              : 'bg-[#ebf5ec] border-[#b7dfbf] text-[#333333]'
           }`}
         >
-          <div className="flex items-start gap-2.5">
+          <div className="flex items-start gap-2">
             {toastNotice.type === 'warning' ? (
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-[#e9730c] shrink-0 mt-0.5" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0 mt-0.5" />
             )}
             <div>
-              <div className="font-bold">{toastNotice.title}</div>
-              <div className="text-slate-600 mt-0.5">{toastNotice.detail}</div>
+              <div className="font-semibold text-[#333333]">{toastNotice.title}</div>
+              <div className="text-[#666666] mt-0.5">{toastNotice.detail}</div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setToastNotice(null)}
-            className="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold cursor-pointer shrink-0"
+            className="sap-btn-standard px-2.5 py-1 text-xs cursor-pointer shrink-0"
           >
             بستن
           </button>
@@ -2074,60 +2070,78 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                 return (
                   <div
                     key={item.id}
-                    className="bg-white border border-slate-200/60 rounded-xl overflow-hidden"
+                    className="sap-card overflow-hidden"
                   >
-                    {/* Compact Single-Line Order Header Bar */}
-                    <div className="px-4 py-2.5 bg-slate-50/40 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2.5 flex-wrap">
+                    {/* SAP Object Header Bar */}
+                    <div className="px-3.5 py-2.5 bg-[#f7f7f7] border-b border-[#d9d9d9] flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => {
                             setActiveTimelineOrder(item);
                             setIsTimelineModalOpen(true);
                           }}
-                          className="font-mono font-medium text-xs bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/70 px-2.5 py-0.5 rounded cursor-pointer transition flex items-center gap-1.5 whitespace-nowrap"
+                          className="font-mono font-semibold text-xs bg-[#e5f3fa] hover:bg-[#d2eaf7] text-[#007cc0] border border-[#b3ddf2] px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1 whitespace-nowrap"
                           title="مشاهده تایم‌لاین و شناسنامه دستور ساخت"
                         >
-                          <Clock className="w-3.5 h-3.5 text-slate-500" />
+                          <Clock className="w-3.5 h-3.5" />
                           <span>{item.orderCode}</span>
                         </button>
-                        <span className="font-medium text-slate-800 text-sm">{item.partName}</span>
-                        <span className="font-mono text-slate-500">{item.partCode}</span>
-                        <span className="text-slate-300">·</span>
-                        <span className="text-slate-600">{item.carModel}</span>
+                        <span className="font-semibold text-[#333333] text-sm">{item.partName}</span>
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(item.partCode, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link font-mono cursor-pointer"
+                        >
+                          {item.partCode}
+                        </button>
+                        <span className="text-[#d9d9d9]">·</span>
+                        <span className="text-[#666666]">{item.carModel}</span>
                         {item.parentProductCode && (
                           <>
-                            <span className="text-slate-300">·</span>
-                            <span className="text-slate-500 font-mono text-[11px]">
+                            <span className="text-[#d9d9d9]">·</span>
+                            <button
+                              type="button"
+                              onClick={() => router.traceDocument(item.parentProductCode!, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                            >
                               زیرمجموعه: {item.parentProductCode}
-                            </span>
+                            </button>
                           </>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between lg:justify-end gap-4 flex-wrap">
+                      <div className="flex items-center justify-between lg:justify-end gap-3 flex-wrap">
                         {/* Key Metrics Inline */}
-                        <div className="flex items-center gap-3 font-mono tabular-nums text-xs">
-                          <span className="text-slate-600">
-                            هدف: <strong className="text-slate-900">{formatNumber(item.weeklyTargetQty)}</strong> عدد
+                        <div className="flex items-center gap-2.5 font-mono tabular-nums text-xs">
+                          <span className="text-[#666666]">
+                            هدف: <strong className="text-[#333333]">{formatNumber(item.weeklyTargetQty)}</strong> عدد
                           </span>
-                          <span className="text-slate-300">·</span>
-                          <span className="text-slate-600">
-                            نیاز ورق: <strong className="text-slate-900">{formatNumber(item.rawMaterialIssuedKg)}</strong> kg
+                          <span className="text-[#d9d9d9]">·</span>
+                          <span className="text-[#666666]">
+                            نیاز ورق: <strong className="text-[#333333]">{formatNumber(item.rawMaterialIssuedKg)}</strong> kg
                           </span>
-                          <span className="text-slate-300">·</span>
-                          <span className="text-emerald-700">
-                            رسید انبار: <strong>{formatNumber(item.warehouseReceivedQty)}</strong> عدد
-                            {finalOpReceiptDoc ? ` (${finalOpReceiptDoc})` : ''}
+                          <span className="text-[#d9d9d9]">·</span>
+                          <span className="text-[#107e3e] flex items-center gap-1">
+                            <span>رسید انبار: <strong>{formatNumber(item.warehouseReceivedQty)}</strong> عدد</span>
+                            {finalOpReceiptDoc && (
+                              <button
+                                type="button"
+                                onClick={() => router.traceDocument(finalOpReceiptDoc, 'INVENTORY_LEDGER')}
+                                className="sap-doc-link font-mono cursor-pointer"
+                              >
+                                ({finalOpReceiptDoc})
+                              </button>
+                            )}
                           </span>
                         </div>
 
-                        {/* Compact Action Controls */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Compact SAP Action Controls */}
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
                             type="button"
                             onClick={() => handleIssueRawMaterialToLine(item)}
-                            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-md text-[11px] font-semibold transition cursor-pointer whitespace-nowrap"
+                            className="sap-btn-standard px-2.5 py-1 text-[11px] cursor-pointer whitespace-nowrap"
                           >
                             حواله ورق به OP10
                           </button>
@@ -2137,14 +2151,14 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                               setActiveTimelineOrder(item);
                               setIsTimelineModalOpen(true);
                             }}
-                            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-md text-[11px] font-medium transition cursor-pointer whitespace-nowrap"
+                            className="sap-btn-standard px-2.5 py-1 text-[11px] cursor-pointer whitespace-nowrap"
                           >
                             تایم‌لاین
                           </button>
                           <button
                             type="button"
                             onClick={() => handleOpenEditScheduleItem(item)}
-                            className="p-1.5 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md transition cursor-pointer"
+                            className="p-1.5 bg-[#ffffff] hover:bg-[#e5f3fa] text-[#007cc0] border border-[#bfbfbf] rounded transition cursor-pointer"
                             title="ویرایش دستور کار"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -2152,7 +2166,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                           <button
                             type="button"
                             onClick={() => handleDeleteScheduleItem(item.id, item.partName)}
-                            className="p-1.5 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 rounded-md transition cursor-pointer"
+                            className="p-1.5 bg-[#ffffff] hover:bg-[#ffecec] text-[#666666] hover:text-[#bb0000] border border-[#bfbfbf] rounded transition cursor-pointer"
                             title="حذف برنامه تولید"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2161,23 +2175,23 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       </div>
                     </div>
 
-                    {/* Full-Width High-Density Operations Table (Zero Overlapping Selects) */}
+                    {/* Full-Width SAP ALV Operations Table */}
                     <div className="overflow-x-auto">
-                      <table className="w-full text-right text-xs">
-                        <thead className="bg-slate-50/40 border-b border-slate-200 text-slate-500 font-semibold">
+                      <table className="sap-table-compact w-full text-right text-xs">
+                        <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
                           <tr>
-                            <th className="py-2 px-3 w-24">کد مرحله</th>
-                            <th className="py-2 px-3">شرح عملیات</th>
-                            <th className="py-2 px-3">ایستگاه کاری / دستگاه</th>
-                            <th className="py-2 px-3 w-28">روز اجرا</th>
-                            <th className="py-2 px-3 w-32">وضعیت</th>
-                            <th className="py-2 px-3 w-40">بافر ورودی (پای خط)</th>
-                            <th className="py-2 px-3 w-32">تولید سالم / هدف</th>
-                            <th className="py-2 px-3 w-28">موجودی خروجی</th>
-                            <th className="py-2 px-3 w-40 text-left">ثبت کارکرد</th>
+                            <th className="w-24">کد مرحله</th>
+                            <th>شرح عملیات</th>
+                            <th>ایستگاه کاری / دستگاه</th>
+                            <th className="w-28">روز اجرا</th>
+                            <th className="w-32">وضعیت</th>
+                            <th className="w-40">بافر ورودی (پای خط)</th>
+                            <th className="w-32">تولید سالم / هدف</th>
+                            <th className="w-28">موجودی خروجی</th>
+                            <th className="w-40 text-left">ثبت کارکرد</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 tabular-nums">
+                        <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                           {item.ops.map((op, oIdx) => {
                             const isScheduledForSelectedDay = op.scheduledDayIndex === selectedDayFilter;
                             const prevOp = oIdx > 0 ? item.ops[oIdx - 1] : null;
@@ -2191,37 +2205,37 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                 key={op.opId}
                                 className={`transition-colors ${
                                   isLocked
-                                    ? 'bg-slate-50/40 text-slate-500'
+                                    ? 'bg-[#f7f7f7] text-[#666666]'
                                     : isScheduledForSelectedDay
-                                    ? 'bg-amber-50/25 hover:bg-amber-50/40'
-                                    : 'hover:bg-slate-50/80'
+                                    ? 'bg-[#fff4e5]/40 hover:bg-[#e5f3fa]'
+                                    : 'hover:bg-[#e5f3fa]'
                                 }`}
                               >
-                                <td className="py-2.5 px-3 whitespace-nowrap">
+                                <td className="whitespace-nowrap">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-mono font-bold text-slate-900">
+                                    <span className="font-mono font-semibold text-[#333333]">
                                       {op.opCode}
                                     </span>
                                     {op.isFinalOp && (
-                                      <span className="text-[10px] text-emerald-700 font-semibold">
+                                      <span className="text-[10px] text-[#107e3e] font-semibold">
                                         · نهایی
                                       </span>
                                     )}
                                   </div>
                                 </td>
 
-                                <td className="py-2.5 px-3 font-medium text-slate-900">
+                                <td className="font-medium text-[#333333]">
                                   {op.opTitle}
                                 </td>
 
-                                <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
+                                <td className="text-[#666666] whitespace-nowrap">
                                   <span>{op.machineName}</span>
-                                  <span className="font-mono text-[11px] text-slate-400 mr-1">
+                                  <span className="font-mono text-[11px] text-[#666666] mr-1">
                                     ({op.machineCode})
                                   </span>
                                 </td>
 
-                                <td className="py-2.5 px-3 whitespace-nowrap">
+                                <td className="whitespace-nowrap">
                                   <select
                                     value={op.scheduledDayIndex}
                                     onChange={e =>
@@ -2231,7 +2245,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                         Number(e.target.value)
                                       )
                                     }
-                                    className="bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:border-slate-400 cursor-pointer"
+                                    className="bg-[#ffffff] border border-[#bfbfbf] rounded px-2 py-0.5 text-xs font-semibold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
                                   >
                                     {WORK_DAYS.map(d => (
                                       <option key={d.index} value={d.index}>
@@ -2241,7 +2255,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                   </select>
                                 </td>
 
-                                <td className="py-2.5 px-3 whitespace-nowrap">
+                                <td className="whitespace-nowrap">
                                   <select
                                     value={op.status}
                                     onChange={e =>
@@ -2251,14 +2265,14 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                         e.target.value as ScheduledOpStep['status']
                                       )
                                     }
-                                    className={`text-xs font-semibold px-2 py-1 rounded border cursor-pointer focus:outline-none ${
+                                    className={`text-xs font-semibold px-2 py-0.5 rounded border cursor-pointer focus:outline-none ${
                                       op.status === 'COMPLETED'
-                                        ? 'bg-emerald-50/70 text-emerald-800 border-emerald-200'
+                                        ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
                                         : op.status === 'IN_PROGRESS'
-                                        ? 'bg-blue-50/70 text-blue-800 border-blue-200'
+                                        ? 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]'
                                         : op.status === 'ON_HOLD'
-                                        ? 'bg-rose-50/70 text-rose-800 border-rose-200'
-                                        : 'bg-white text-slate-700 border-slate-200'
+                                        ? 'bg-[#ffecec] text-[#bb0000] border-[#f5b7b1]'
+                                        : 'bg-[#ffffff] text-[#333333] border-[#bfbfbf]'
                                     }`}
                                   >
                                     <option value="PLANNED">برنامه‌ریزی‌شده</option>
@@ -2268,51 +2282,51 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                   </select>
                                 </td>
 
-                                <td className="py-2.5 px-3 whitespace-nowrap font-mono">
+                                <td className="whitespace-nowrap font-mono">
                                   <span
                                     className={`font-bold ${
                                       isWipEmpty
-                                        ? 'text-rose-600'
+                                        ? 'text-[#bb0000]'
                                         : isWipSufficient
-                                        ? 'text-emerald-700'
-                                        : 'text-slate-900'
+                                        ? 'text-[#107e3e]'
+                                        : 'text-[#333333]'
                                     }`}
                                   >
                                     {formatNumber(inputWip)} عدد
                                   </span>
-                                  <span className="font-sans text-[10px] text-slate-400 mr-1.5">
+                                  <span className="font-sans text-[10px] text-[#666666] mr-1.5">
                                     · {isWipEmpty ? 'بدون بافر' : isWipSufficient ? 'کافی' : 'تغذیه جزئی'}
                                   </span>
                                 </td>
 
-                                <td className="py-2.5 px-3 whitespace-nowrap font-mono">
+                                <td className="whitespace-nowrap font-mono">
                                   <strong
                                     className={
                                       op.completedGoodQty >= op.effectiveTargetQty
-                                        ? 'text-emerald-700'
-                                        : 'text-slate-900'
+                                        ? 'text-[#107e3e]'
+                                        : 'text-[#333333]'
                                     }
                                   >
                                     {formatNumber(op.completedGoodQty)}
                                   </strong>
-                                  <span className="text-slate-400 mx-1">/</span>
-                                  <span className="text-slate-600">
+                                  <span className="text-[#666666] mx-1">/</span>
+                                  <span className="text-[#666666]">
                                     {formatNumber(op.effectiveTargetQty)}
                                   </span>
                                 </td>
 
-                                <td className="py-2.5 px-3 whitespace-nowrap font-mono font-bold text-slate-800">
+                                <td className="whitespace-nowrap font-mono font-bold text-[#333333]">
                                   {formatNumber(op.wipBufferAfterOp)} عدد
                                 </td>
 
-                                <td className="py-2.5 px-3 whitespace-nowrap text-left">
+                                <td className="whitespace-nowrap text-left">
                                   <button
                                     type="button"
                                     onClick={() => handleOpenOpExecutionModal(item, op)}
-                                    className={`px-3 py-1 rounded-md font-medium text-[11px] transition cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded font-medium text-[11px] transition cursor-pointer ${
                                       isLocked
-                                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200/60'
-                                        : 'bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/80'
+                                        ? 'bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#666666] border border-[#d9d9d9]'
+                                        : 'sap-btn-standard'
                                     }`}
                                   >
                                     {isLocked
@@ -2334,8 +2348,8 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
 
               {/* Pagination Footer */}
               {totalPages > 1 && (
-                <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-                  <span className="text-slate-600">
+                <div className="p-2.5 sap-card flex items-center justify-between text-xs">
+                  <span className="text-[#666666]">
                     صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)} (کل قطعات:{' '}
                     {toPersianDigits(filteredParts.length)})
                   </span>
@@ -2344,7 +2358,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
+                      className="sap-btn-standard px-2.5 py-1 disabled:opacity-40 cursor-pointer flex items-center gap-1"
                     >
                       <ChevronRight className="w-3.5 h-3.5" />
                       <span>قبلی</span>
@@ -2353,7 +2367,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
+                      className="sap-btn-standard px-2.5 py-1 disabled:opacity-40 cursor-pointer flex items-center gap-1"
                     >
                       <span>بعدی</span>
                       <ChevronLeft className="w-3.5 h-3.5" />
@@ -2370,17 +2384,17 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* TAB 2: DAILY SHOP-FLOOR DISPATCH SHEET (PRINTABLE FOR LINE)          */}
       {/* ==================================================================== */}
       {activeModuleTab === 'DAILY_DISPATCH_SHEET' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div className="sap-card p-4 space-y-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Printer className="w-4 h-4 text-amber-600" />
+              <h3 className="text-sm font-semibold text-[#333333] flex items-center gap-2">
+                <Printer className="w-4 h-4 text-[#007cc0]" />
                 <span>
                   برنامه روزانه ایستگاه‌ها و خطوط تولید جهت تحویل به سرپرستان سالن —{' '}
                   {WORK_DAYS.find(d => d.index === selectedDayFilter)?.name}
                 </span>
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 فهرست تمامی مراحلی (OP) از قطعات مختلف که قرار است در روز انتخاب‌شده روی دستگاه‌ها و پرس‌ها اجرا شوند
               </p>
             </div>
@@ -2389,7 +2403,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               <select
                 value={selectedShiftFilter}
                 onChange={e => setSelectedShiftFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900"
+                className="bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-semibold text-[#333333] focus:border-[#007cc0] focus:outline-none"
               >
                 <option value="ALL">همه شیفت‌ها (صبح و عصر)</option>
                 <option value="شیفت صبح">فقط شیفت صبح</option>
@@ -2399,9 +2413,9 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               <button
                 type="button"
                 onClick={handlePrintDailyDispatchSheet}
-                className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer"
               >
-                <Printer className="w-4 h-4 text-amber-400" />
+                <Printer className="w-3.5 h-3.5" />
                 <span>چاپ رسمی برگه برنامه روزانه خط (A4 ایزوله)</span>
               </button>
 
@@ -2438,25 +2452,25 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   ]);
                   exportToCsv(`برنامه_روزانه_خط_تولید_روز_${selectedDayFilter}`, headers, rows);
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#107e3e] hover:bg-[#0d6832] text-[#ffffff] rounded text-xs font-medium cursor-pointer"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
                 <span>خروجی اکسل برنامه خط</span>
               </button>
             </div>
           </div>
 
-          {/* Day Selector Quick Pills */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Day Selector Quick Buttons */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {WORK_DAYS.map(d => (
               <button
                 key={d.index}
                 type="button"
                 onClick={() => setSelectedDayFilter(d.index)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                className={`px-3 py-1 rounded text-xs font-medium border transition cursor-pointer ${
                   selectedDayFilter === d.index
-                    ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    ? 'bg-[#007cc0] text-[#ffffff] border-[#007cc0]'
+                    : 'bg-[#f7f7f7] text-[#333333] border-[#d9d9d9] hover:bg-[#e5f3fa] hover:text-[#007cc0]'
                 }`}
               >
                 {d.name} ({d.date})
@@ -2464,46 +2478,46 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             ))}
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+          <div className="overflow-x-auto border border-[#d9d9d9] rounded">
+            <table className="sap-table-compact w-full text-right text-xs">
+              <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333]">
                 <tr>
-                  <th className="py-3 px-3">#</th>
-                  <th className="py-3 px-3">
+                  <th>#</th>
+                  <th>
                     <span className="inline-flex items-center">
                       <span>دستور کار</span>
                       <MetricTooltip metric="MO" />
                     </span>
                   </th>
-                  <th className="py-3 px-3">
+                  <th>
                     <span className="inline-flex items-center">
                       <span>قطعه و پروژه</span>
                       <MetricTooltip metric="BOM" />
                     </span>
                   </th>
-                  <th className="py-3 px-3">مرحله (OP)</th>
-                  <th className="py-3 px-3">سالن و دستگاه / پرس</th>
-                  <th className="py-3 px-3">
+                  <th>مرحله (OP)</th>
+                  <th>سالن و دستگاه / پرس</th>
+                  <th>
                     <span className="inline-flex items-center">
                       <span>کد قالب</span>
                       <MetricTooltip metric="SMED" />
                     </span>
                   </th>
-                  <th className="py-3 px-3">شیفت</th>
-                  <th className="py-3 px-3">
+                  <th>شیفت</th>
+                  <th>
                     <span className="inline-flex items-center">
                       <span>تغذیه ورودی</span>
                       <MetricTooltip metric="WIP" />
                     </span>
                   </th>
-                  <th className="py-3 px-3 font-bold text-slate-900">هدف امروز (با انتقالی)</th>
-                  <th className="py-3 px-3 text-emerald-700">تولید سالم</th>
-                  <th className="py-3 px-3 text-amber-800">مانده مرحله</th>
-                  <th className="py-3 px-3 text-center">وضعیت خط</th>
-                  <th className="py-3 px-3 text-left">عملیات و اکشن‌ها</th>
+                  <th className="font-semibold text-[#333333]">هدف امروز (با انتقالی)</th>
+                  <th className="text-[#107e3e]">تولید سالم</th>
+                  <th className="text-[#e9730c]">مانده مرحله</th>
+                  <th className="text-center">وضعیت خط</th>
+                  <th className="text-left">عملیات و اکشن‌ها</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                 {dailyScheduledOperations.length === 0 ? (
                   <tr>
                     <td colSpan={13} className="py-8 px-4 text-center">
@@ -2529,11 +2543,11 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     const isRolled = entry.op.status === 'ROLLED_FORWARD';
 
                     return (
-                      <tr key={entry.op.opId} className={`hover:bg-slate-50 ${isHold ? 'bg-amber-50/40' : ''}`}>
-                        <td className="py-2.5 px-3 font-mono text-slate-400">
+                      <tr key={entry.op.opId} className={`hover:bg-[#e5f3fa]/50 ${isHold ? 'bg-[#fff4e5]/60' : ''}`}>
+                        <td className="font-mono text-[#666666]">
                           {toPersianDigits(idx + 1)}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        <td className="font-mono font-semibold text-[#333333]">
                           <button
                             type="button"
                             onClick={() => {
@@ -2541,79 +2555,86 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                               setIsTimelineModalOpen(true);
                               if (onMoSelect) onMoSelect(entry.partItem.orderCode);
                             }}
-                            className="hover:underline hover:text-amber-600 cursor-pointer flex items-center gap-1 text-slate-900 transition"
+                            className="sap-doc-link cursor-pointer inline-flex items-center gap-1"
                             title="مشاهده شناسنامه و تایم‌لاین دستور ساخت"
                           >
-                            <Clock className="w-3 h-3 text-amber-500" />
+                            <Clock className="w-3 h-3 text-[#007cc0]" />
                             <span>{entry.partItem.orderCode}</span>
                           </button>
                         </td>
-                        <td className="py-2.5 px-3">
-                          <div className="font-bold text-slate-900">{entry.partItem.partName}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">
-                            {entry.partItem.partCode} • {entry.partItem.carModel}
+                        <td>
+                          <div className="font-semibold text-[#333333]">{entry.partItem.partName}</div>
+                          <div className="text-[10px] text-[#666666] font-mono flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => router.traceDocument(entry.partItem.partCode, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link cursor-pointer"
+                            >
+                              {entry.partItem.partCode}
+                            </button>
+                            <span>• {entry.partItem.carModel}</span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3">
-                          <span className="font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] ml-1.5">
+                        <td>
+                          <span className="font-mono font-semibold px-1.5 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] text-[10px] ml-1.5">
                             {entry.op.opCode}
                           </span>
-                          <span className="font-bold text-slate-800">{entry.op.opTitle}</span>
+                          <span className="font-semibold text-[#333333]">{entry.op.opTitle}</span>
                           {entry.op.isFinalOp && (
-                            <span className="mr-1.5 text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-bold">
+                            <span className="mr-1.5 text-[10px] bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] px-1.5 py-0.5 rounded font-semibold">
                               مرحله آخر (رسید انبار)
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3">
-                          <div className="font-semibold text-slate-900">{entry.op.machineName}</div>
-                          <div className="text-[10px] text-slate-500">
+                        <td>
+                          <div className="font-semibold text-[#333333]">{entry.op.machineName}</div>
+                          <div className="text-[10px] text-[#666666]">
                             {entry.op.stationHall} • <span className="font-mono">{entry.op.machineCode}</span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-700">{entry.op.dieCode}</td>
-                        <td className="py-2.5 px-3">{entry.op.shiftName}</td>
-                        <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600">
+                        <td className="font-mono text-[#333333]">{entry.op.dieCode}</td>
+                        <td>{entry.op.shiftName}</td>
+                        <td className="font-mono text-[11px] text-[#666666]">
                           {entry.prevOpCode}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-950 text-sm">
+                        <td className="font-mono font-bold text-[#333333]">
                           {formatNumber(entry.op.effectiveTargetQty)}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
+                        <td className="font-mono font-bold text-[#107e3e]">
                           {formatNumber(entry.op.completedGoodQty)}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-amber-800">
+                        <td className="font-mono font-bold text-[#e9730c]">
                           {formatNumber(rem)}
                         </td>
                         {/* Status Column */}
-                        <td className="py-2.5 px-3 text-center">
+                        <td className="text-center">
                           {isHold ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-300 animate-pulse" title={entry.op.holdReasonText}>
-                              <Pause className="w-2.5 h-2.5 text-amber-700" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#ffecec] text-[#bb0000] text-[10px] font-semibold border border-[#f5b7b1]" title={entry.op.holdReasonText}>
+                              <Pause className="w-2.5 h-2.5 text-[#bb0000]" />
                               <span>متوقف موقت</span>
                             </span>
                           ) : isRolled ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 text-[10px] font-bold border border-blue-200">
-                              <FastForward className="w-2.5 h-2.5 text-blue-700" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] text-[10px] font-semibold border border-[#b3ddf2]">
+                              <FastForward className="w-2.5 h-2.5 text-[#007cc0]" />
                               <span>انتقال به بعد</span>
                             </span>
                           ) : rem === 0 ? (
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] text-[10px] font-semibold">
                               تکمیل شیفت
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-medium">
+                            <span className="px-2 py-0.5 rounded bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] text-[10px] font-medium">
                               در جریان
                             </span>
                           )}
                         </td>
                         {/* Actions Column */}
-                        <td className="py-2.5 px-3">
+                        <td>
                           {isHold ? (
                             <button
                               type="button"
                               onClick={() => handleResumeOrder(entry.partItem, entry.op)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold cursor-pointer transition shadow-2xs"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#107e3e] hover:bg-[#0d6832] text-[#ffffff] rounded text-[10px] font-semibold cursor-pointer transition"
                               title="رفع علت توقف و ادامه کار دستگاه"
                             >
                               <Play className="w-3 h-3 fill-current" />
@@ -2626,28 +2647,28 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                               const isLocked = prevOp !== null && prevOp.completedGoodQty === 0;
 
                               return (
-                                <div className="flex items-center gap-1.5 flex-wrap">
+                                <div className="flex items-center gap-1 flex-wrap">
                                   {/* 1. ثبت کارکرد */}
                                   <button
                                     type="button"
                                     onClick={() => handleOpenOpExecutionModal(entry.partItem, entry.op)}
-                                    className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition ${
+                                    className={`px-2 py-1 rounded text-[10px] font-medium cursor-pointer transition ${
                                       isLocked
-                                        ? 'bg-slate-200 hover:bg-slate-300 text-slate-700 border border-slate-300'
-                                        : 'bg-slate-900 hover:bg-slate-800 text-white'
+                                        ? 'bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#666666] border border-[#d9d9d9]'
+                                        : 'sap-btn-emphasized'
                                     }`}
                                   >
-                                    {isLocked ? `🔒 قفل (${prevOp?.opCode})` : 'ثبت کارکرد'}
+                                    {isLocked ? `قفل (${prevOp?.opCode})` : 'ثبت کارکرد'}
                                   </button>
 
                                   {/* 2. توقف موقت (Pause / Hold) */}
                                   <button
                                     type="button"
                                     onClick={() => handleOpenHoldModal(entry.partItem, entry.op)}
-                                    className="p-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer transition"
+                                    className="p-1 rounded bg-[#fff4e5] hover:bg-[#e9730c] text-[#e9730c] hover:text-[#ffffff] border border-[#f5cba7] cursor-pointer transition"
                                     title="توقف موقت کار (Pause/Hold) با ثبت الزامی علت خرابی یا ستاپ"
                                   >
-                                    <Pause className="w-3.5 h-3.5" />
+                                    <Pause className="w-3 h-3" />
                                   </button>
 
                                   {/* 3. انتقال مانده به شیفت بعد (Roll-Forward) */}
@@ -2655,10 +2676,10 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                     <button
                                       type="button"
                                       onClick={() => handleOpenRollForwardModal(entry.partItem, entry.op)}
-                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold cursor-pointer transition"
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#e5f3fa] hover:bg-[#007cc0] text-[#007cc0] hover:text-[#ffffff] border border-[#b3ddf2] text-[10px] font-semibold cursor-pointer transition"
                                       title="انتقال مانده تیراژ به شیفت بعد (Roll-Forward)"
                                     >
-                                      <FastForward className="w-3 h-3 text-blue-600" />
+                                      <FastForward className="w-3 h-3" />
                                       <span>انتقال مانده</span>
                                     </button>
                                   )}
@@ -2681,126 +2702,142 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* TAB 3: LIVE WIP PER OP TRACKER & AUTO WAREHOUSE RECEIPT              */}
       {/* ==================================================================== */}
       {activeModuleTab === 'LIVE_WIP_OP_TRACKER' && (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           <D3MaterialFlowDiagram />
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="sap-card p-4 space-y-3.5">
+            <div className="border-b border-[#e8e8e8] pb-2.5 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-sm font-semibold text-[#333333] flex items-center gap-2">
+                  <ArrowRightLeft className="w-4 h-4 text-[#007cc0]" />
                   <span>
                     رهگیر لحظه‌ای موجودی بین‌مرحله‌ای قطعات در خط (WIP per OP) و رسید خودکار انبار در مرحله آخر
                   </span>
                 </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 مشاهده دقیق اینکه از هر قطعه در کدام مرحله (OP10، OP20، OP30...) چند عدد نیمه‌ساخته در خط وجود دارد و چند عدد از مرحله آخر وارد انبار محصول نهایی شده است.
               </p>
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {filteredParts.map(item => (
               <div
                 key={item.id}
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3"
+                className="p-3.5 rounded border border-[#d9d9d9] bg-[#f7f7f7] space-y-2.5"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8e8e8] pb-2 text-xs">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTimelineOrder(item);
-                        setIsTimelineModalOpen(true);
-                      }}
-                      className="font-mono font-bold bg-slate-900 hover:bg-slate-800 text-amber-300 px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1 border border-slate-700"
-                      title="مشاهده تایم‌لاین این دستور کار"
-                    >
-                      <Clock className="w-3 h-3 text-amber-400" />
-                      <span>{item.orderCode}</span>
-                    </button>
-                    <span className="font-mono font-bold bg-slate-200 text-slate-800 px-2.5 py-0.5 rounded text-[11px]">
-                      {item.partCode}
-                    </span>
-                    <strong className="text-slate-900 text-sm">{item.partName}</strong>
-                    <span className="text-slate-500">({item.carModel})</span>
-                  </div>
-                  <div className="flex items-center gap-4 font-mono">
-                    <span className="text-slate-600">
-                      تیراژ هدف: <strong className="text-slate-900">{formatNumber(item.weeklyTargetQty)} عدد</strong>
-                    </span>
-                    <span className="text-emerald-700 font-bold">
-                      رسید شده به انبار محصول: {formatNumber(item.warehouseReceivedQty)} عدد
-                    </span>
-                  </div>
-                </div>
-
-                {/* Chain from Raw Warehouse -> OPs -> Finished Warehouse */}
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-2 items-stretch text-xs">
-                  {item.ops.map(op => (
-                    <div
-                      key={op.opId}
-                      className={`p-3 rounded-xl border flex flex-col justify-between ${
-                        op.isFinalOp
-                          ? 'bg-emerald-50/80 border-emerald-300'
-                          : 'bg-white border-slate-200'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-bold text-slate-900">{op.opCode}</span>
-                          <span className="text-[10px] text-slate-500">
-                            {WORK_DAYS.find(d => d.index === op.scheduledDayIndex)?.shortName}
-                          </span>
-                        </div>
-                        <div className="font-bold text-slate-800 text-[11px] mt-1">{op.opTitle}</div>
-                      </div>
-
-                      <div className="mt-2 pt-2 border-t border-slate-100 space-y-1 font-mono text-[11px]">
-                        <div className="flex justify-between">
-                          <span className="font-sans text-slate-500">تولید مرحله:</span>
-                          <strong className="text-emerald-700">
-                            {formatNumber(op.completedGoodQty)} عدد
-                          </strong>
-                        </div>
-                        <div className="flex justify-between bg-indigo-50/80 px-1.5 py-0.5 rounded text-indigo-900">
-                          <span className="font-sans font-bold">
-                            {op.isFinalOp ? 'رسید به انبار:' : 'موجودی پای خط:'}
-                          </span>
-                          <strong className="font-bold">
-                            {formatNumber(op.wipBufferAfterOp)} عدد
-                          </strong>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenOpExecutionModal(item, op)}
-                          className="w-full mt-1 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-[10px] font-sans font-bold cursor-pointer"
-                        >
-                          {op.isFinalOp ? 'ثبت تولید + رسید انبار' : 'ثبت کارکرد این OP'}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTimelineOrder(item);
+                          setIsTimelineModalOpen(true);
+                        }}
+                        className="font-mono font-semibold bg-[#e5f3fa] hover:bg-[#d2eaf7] text-[#007cc0] px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1 border border-[#b3ddf2]"
+                        title="مشاهده تایم‌لاین این دستور کار"
+                      >
+                        <Clock className="w-3 h-3" />
+                        <span>{item.orderCode}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => router.traceDocument(item.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link font-mono bg-[#ffffff] border border-[#d9d9d9] px-2 py-0.5 rounded text-[11px] cursor-pointer"
+                      >
+                        {item.partCode}
+                      </button>
+                      <strong className="text-[#333333] text-sm">{item.partName}</strong>
+                      <span className="text-[#666666]">({item.carModel})</span>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-4 font-mono tabular-nums">
+                      <span className="text-[#666666]">
+                        تیراژ هدف: <strong className="text-[#333333]">{formatNumber(item.weeklyTargetQty)} عدد</strong>
+                      </span>
+                      <span className="text-[#107e3e] font-semibold">
+                        رسید شده به انبار محصول: {formatNumber(item.warehouseReceivedQty)} عدد
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Chain from Raw Warehouse -> OPs -> Finished Warehouse */}
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-2 items-stretch text-xs">
+                    {item.ops.map(op => (
+                      <div
+                        key={op.opId}
+                        className={`p-2.5 rounded border flex flex-col justify-between ${
+                          op.isFinalOp
+                            ? 'bg-[#ebf5ec]/70 border-[#b7dfbf]'
+                            : 'bg-[#ffffff] border-[#d9d9d9]'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-semibold text-[#007cc0]">{op.opCode}</span>
+                            <span className="text-[10px] text-[#666666]">
+                              {WORK_DAYS.find(d => d.index === op.scheduledDayIndex)?.shortName}
+                            </span>
+                          </div>
+                          <div className="font-semibold text-[#333333] text-[11px] mt-1">{op.opTitle}</div>
+                        </div>
+
+                        <div className="mt-2 pt-2 border-t border-[#e8e8e8] space-y-1 font-mono text-[11px] tabular-nums">
+                          <div className="flex justify-between">
+                            <span className="font-sans text-[#666666]">تولید مرحله:</span>
+                            <strong className="text-[#107e3e]">
+                              {formatNumber(op.completedGoodQty)} عدد
+                            </strong>
+                          </div>
+                          <div className="flex justify-between bg-[#e5f3fa] px-1.5 py-0.5 rounded text-[#007cc0]">
+                            <span className="font-sans font-semibold">
+                              {op.isFinalOp ? 'رسید به انبار:' : 'موجودی پای خط:'}
+                            </span>
+                            <strong className="font-semibold">
+                              {formatNumber(op.wipBufferAfterOp)} عدد
+                            </strong>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenOpExecutionModal(item, op)}
+                            className="w-full mt-1 py-1 sap-btn-emphasized text-[10px] font-sans cursor-pointer"
+                          >
+                            {op.isFinalOp ? 'ثبت تولید + رسید انبار' : 'ثبت کارکرد این OP'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
 
                   {/* Final Warehouse Destination Card */}
-                  <div className="p-3 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50/40 flex flex-col justify-between">
+                  <div className="p-2.5 rounded border border-dashed border-[#107e3e] bg-[#ebf5ec]/50 flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-bold text-emerald-800 block">
+                      <span className="text-[10px] font-semibold text-[#107e3e] block">
                         مقصد نهایی پس از آخرین OP
                       </span>
-                      <strong className="text-xs text-slate-900 block mt-0.5">
+                      <strong className="text-xs text-[#333333] block mt-0.5">
                         انبار محصولات نهایی (WH-FINISHED)
                       </strong>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-emerald-200/70">
-                      <div className="text-[11px] text-emerald-900">
+                    <div className="mt-2 pt-2 border-t border-[#b7dfbf]">
+                      <div className="text-[11px] text-[#107e3e]">
                         تحویل‌شده به انبار:{' '}
-                        <strong className="font-mono text-sm">
+                        <strong className="font-mono text-sm tabular-nums">
                           {formatNumber(item.warehouseReceivedQty)} عدد
                         </strong>
                       </div>
                       {item.ops[item.ops.length - 1]?.warehouseReceiptDocNumber && (
-                        <div className="text-[10px] font-mono text-emerald-700 mt-0.5">
-                          سند: {item.ops[item.ops.length - 1].warehouseReceiptDocNumber}
+                        <div className="text-[10px] font-mono text-[#107e3e] mt-0.5 flex items-center gap-1">
+                          <span>سند:</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.traceDocument(
+                                item.ops[item.ops.length - 1].warehouseReceiptDocNumber!,
+                                'INVENTORY_LEDGER'
+                              )
+                            }
+                            className="sap-doc-link cursor-pointer"
+                          >
+                            {item.ops[item.ops.length - 1].warehouseReceiptDocNumber}
+                          </button>
                         </div>
                       )}
                     </div>
@@ -2817,11 +2854,11 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* TAB 4: MULTI-HORIZON ANALYTICS (DAILY/WEEKLY/MONTHLY, OEE, PM, KPI)  */}
       {/* ==================================================================== */}
       {activeModuleTab === 'KPI_OEE_REPORTS' && (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* Horizon Selector Bar */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-700">بازه زمانی گزارش تحلیلی:</span>
+          <div className="sap-card p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-[#333333] ml-1">بازه زمانی گزارش تحلیلی:</span>
               {[
                 { id: 'DAILY' as const, label: 'گزارش روزانه (Daily)' },
                 { id: 'WEEKLY' as const, label: 'گزارش هفتگی (Weekly)' },
@@ -2832,10 +2869,10 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   key={h.id}
                   type="button"
                   onClick={() => setReportHorizon(h.id)}
-                  className={`px-3.5 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+                  className={`px-3 py-1.5 rounded font-medium transition cursor-pointer border ${
                     reportHorizon === h.id
-                      ? 'bg-slate-900 text-white shadow-2xs'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-[#007cc0] text-[#ffffff] border-[#007cc0]'
+                      : 'bg-[#f7f7f7] text-[#333333] border-[#d9d9d9] hover:bg-[#e5f3fa] hover:text-[#007cc0]'
                   }`}
                 >
                   {h.label}
@@ -2850,26 +2887,26 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   type="text"
                   value={customFromDate}
                   onChange={e => setCustomFromDate(e.target.value)}
-                  className="w-28 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 font-mono text-slate-900"
+                  className="w-28 bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 font-mono text-[#333333] focus:border-[#007cc0] focus:outline-none"
                 />
                 <span>تا تاریخ:</span>
                 <input
                   type="text"
                   value={customToDate}
                   onChange={e => setCustomToDate(e.target.value)}
-                  className="w-28 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 font-mono text-slate-900"
+                  className="w-28 bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 font-mono text-[#333333] focus:border-[#007cc0] focus:outline-none"
                 />
               </div>
             )}
           </div>
 
-          {/* 4 Industrial KPI Groups: Planning, Production, OEE/Efficiency, PM/Maintenance (All Clickable for Drill-Down) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 4 Industrial KPI Groups */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Group 1: Planning KPIs */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900">۱. شاخص‌های برنامه‌ریزی تولید</span>
-                <Calendar className="w-4 h-4 text-blue-600" />
+            <div className="sap-card p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+                <span className="text-xs font-semibold text-[#333333]">۱. شاخص‌های برنامه‌ریزی تولید</span>
+                <Calendar className="w-4 h-4 text-[#007cc0]" />
               </div>
               <div className="space-y-1 text-xs">
                 <button
@@ -2884,13 +2921,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.isFinalOp),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#007cc0] flex items-center gap-1">
                     <span>درصد تحقق برنامه (Attainment):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-emerald-700 text-sm group-hover:underline">
+                  <strong className="font-mono text-[#107e3e] text-sm tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.attainmentPct)}٪
                   </strong>
                 </button>
@@ -2907,13 +2944,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords,
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#007cc0] flex items-center gap-1">
                     <span>تعداد قطعات فعال در برنامه:</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-slate-900 group-hover:underline">
+                  <strong className="font-mono text-[#333333] tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.totalPartsScheduled)} قطعه
                   </strong>
                 </button>
@@ -2930,13 +2967,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords,
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#007cc0] flex items-center gap-1">
                     <span>کل مراحل کاری (OPs):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-slate-900 group-hover:underline">
+                  <strong className="font-mono text-[#333333] tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.totalOpsCount)} مرحله
                   </strong>
                 </button>
@@ -2953,13 +2990,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.status === 'ROLLED_FORWARD' || r.completedGoodQty < r.targetQty),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-amber-50/50 transition cursor-pointer group text-amber-900"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#fff4e5] transition cursor-pointer group text-[#e9730c]"
                 >
-                  <span className="group-hover:text-amber-800 flex items-center gap-1">
+                  <span className="flex items-center gap-1">
                     <span>مراحل دارای انتقال به روز بعد:</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono group-hover:underline">
+                  <strong className="font-mono tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.rolledForwardOpsCount)} مرحله
                   </strong>
                 </button>
@@ -2967,10 +3004,10 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             </div>
 
             {/* Group 2: Production & Warehouse Flow KPIs */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900">۲. شاخص‌های تولید، WIP و انبار</span>
-                <PackageCheck className="w-4 h-4 text-emerald-600" />
+            <div className="sap-card p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+                <span className="text-xs font-semibold text-[#333333]">۲. شاخص‌های تولید، WIP و انبار</span>
+                <PackageCheck className="w-4 h-4 text-[#107e3e]" />
               </div>
               <div className="space-y-1 text-xs">
                 <button
@@ -2985,13 +3022,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.completedGoodQty > 0),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#007cc0] flex items-center gap-1">
                     <span>کل عملیات تولید سالم (OPs):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-slate-900 text-sm group-hover:underline">
+                  <strong className="font-mono text-[#333333] text-sm tabular-nums group-hover:underline">
                     {formatNumber(kpiSummary.scaledGoodPcs)} ضرب
                   </strong>
                 </button>
@@ -3008,13 +3045,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.isFinalOp && r.completedGoodQty > 0),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-emerald-50/50 transition cursor-pointer group text-emerald-800"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#ebf5ec] transition cursor-pointer group text-[#107e3e]"
                 >
-                  <span className="group-hover:text-emerald-700 flex items-center gap-1">
+                  <span className="flex items-center gap-1">
                     <span>محصول نهایی رسیدشده به انبار:</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono group-hover:underline">
+                  <strong className="font-mono tabular-nums group-hover:underline">
                     {formatNumber(kpiSummary.scaledWarehouseReceiptsPcs)} عدد
                   </strong>
                 </button>
@@ -3031,13 +3068,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.wipQty > 0),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-indigo-50/50 transition cursor-pointer group text-indigo-800"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group text-[#007cc0]"
                 >
-                  <span className="group-hover:text-indigo-700 flex items-center gap-1">
+                  <span className="flex items-center gap-1">
                     <span>موجودی نیمه‌ساخته در خط (WIP):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono group-hover:underline">
+                  <strong className="font-mono tabular-nums group-hover:underline">
                     {formatNumber(kpiSummary.totalWipInLinePcs)} عدد
                   </strong>
                 </button>
@@ -3054,13 +3091,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.scrapQty > 0),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-rose-50/50 transition cursor-pointer group text-rose-800"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#ffecec] transition cursor-pointer group text-[#bb0000]"
                 >
-                  <span className="group-hover:text-rose-700 flex items-center gap-1">
+                  <span className="flex items-center gap-1">
                     <span>ضایعات ثبت‌شده دوره:</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono group-hover:underline">
+                  <strong className="font-mono tabular-nums group-hover:underline">
                     {formatNumber(kpiSummary.scaledScrapPcs)} عدد
                   </strong>
                 </button>
@@ -3068,12 +3105,12 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             </div>
 
             {/* Group 3: OEE, Efficiency & Productivity */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900">
+            <div className="sap-card p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+                <span className="text-xs font-semibold text-[#333333]">
                   ۳. شاخص OEE، بهره‌وری و کارایی
                 </span>
-                <Gauge className="w-4 h-4 text-amber-600" />
+                <Gauge className="w-4 h-4 text-[#e9730c]" />
               </div>
               <div className="space-y-1 text-xs">
                 <button
@@ -3088,20 +3125,20 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords,
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-amber-50/50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#fff4e5] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-amber-800 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#e9730c] flex items-center gap-1">
                     <span>شاخص کل اثربخشی (OEE):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-amber-700 text-sm group-hover:underline">
+                  <strong className="font-mono text-[#e9730c] text-sm tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.oeePct)}٪
                   </strong>
                 </button>
 
-                <div className="flex justify-between px-1.5 py-1 text-slate-500">
+                <div className="flex justify-between px-1.5 py-1 text-[#666666]">
                   <span>دسترس‌پذیری × عملکرد × کیفیت:</span>
-                  <span className="font-mono text-[11px] text-slate-800">
+                  <span className="font-mono text-[11px] text-[#333333] tabular-nums">
                     {toPersianDigits(kpiSummary.availabilityPct)}٪ ×{' '}
                     {toPersianDigits(kpiSummary.performancePct)}٪ ×{' '}
                     {toPersianDigits(kpiSummary.qualityPct)}٪
@@ -3120,13 +3157,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords.filter(r => r.completedGoodQty > 0),
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#007cc0] flex items-center gap-1">
                     <span>کارایی نیروی انسانی (Efficiency):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-slate-900 group-hover:underline">
+                  <strong className="font-mono text-[#333333] tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.laborEfficiencyPct)}٪
                   </strong>
                 </button>
@@ -3143,13 +3180,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords,
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#e5f3fa] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-blue-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#007cc0] flex items-center gap-1">
                     <span>بهره‌وری ظرفیت ماشین‌آلات:</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-slate-900 group-hover:underline">
+                  <strong className="font-mono text-[#333333] tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.machineUtilizationPct)}٪
                   </strong>
                 </button>
@@ -3157,12 +3194,12 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             </div>
 
             {/* Group 4: PM (Preventive Maintenance) & Machine Reliability */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900">
+            <div className="sap-card p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+                <span className="text-xs font-semibold text-[#333333]">
                   ۴. شاخص‌های نت پیشگیرانه (PM) و ماشین‌آلات
                 </span>
-                <Wrench className="w-4 h-4 text-indigo-600" />
+                <Wrench className="w-4 h-4 text-[#007cc0]" />
               </div>
               <div className="space-y-1 text-xs">
                 <button
@@ -3177,27 +3214,27 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords,
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer group"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#ebf5ec] transition cursor-pointer group"
                 >
-                  <span className="text-slate-600 group-hover:text-emerald-700 flex items-center gap-1">
+                  <span className="text-[#666666] group-hover:text-[#107e3e] flex items-center gap-1">
                     <span>تحقق برنامه نت پیشگیرانه (PM):</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono text-emerald-700 text-sm group-hover:underline">
+                  <strong className="font-mono text-[#107e3e] text-sm tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.pmCompliancePct)}٪
                   </strong>
                 </button>
 
-                <div className="flex justify-between px-1.5 py-1 text-slate-600">
+                <div className="flex justify-between px-1.5 py-1 text-[#666666]">
                   <span>میانگین زمان بین خرابی (MTBF):</span>
-                  <strong className="font-mono text-slate-900">
+                  <strong className="font-mono text-[#333333] tabular-nums">
                     {toPersianDigits(kpiSummary.mtbfHours)} ساعت
                   </strong>
                 </div>
 
-                <div className="flex justify-between px-1.5 py-1 text-slate-600">
+                <div className="flex justify-between px-1.5 py-1 text-[#666666]">
                   <span>میانگین زمان تعمیر (MTTR):</span>
-                  <strong className="font-mono text-slate-900">
+                  <strong className="font-mono text-[#333333] tabular-nums">
                     {toPersianDigits(kpiSummary.mttrMinutes)} دقیقه
                   </strong>
                 </div>
@@ -3214,13 +3251,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       records: allRawRecords,
                     })
                   }
-                  className="w-full flex justify-between items-center text-right p-1.5 rounded-lg hover:bg-rose-50/50 transition cursor-pointer group text-rose-800"
+                  className="w-full flex justify-between items-center text-right p-1.5 rounded hover:bg-[#ffecec] transition cursor-pointer group text-[#bb0000]"
                 >
-                  <span className="group-hover:text-rose-700 flex items-center gap-1">
+                  <span className="flex items-center gap-1">
                     <span>توقفات اضطراری دوره:</span>
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
                   </span>
-                  <strong className="font-mono group-hover:underline">
+                  <strong className="font-mono tabular-nums group-hover:underline">
                     {toPersianDigits(kpiSummary.unplannedDowntimeHours)} ساعت
                   </strong>
                 </button>
@@ -3231,36 +3268,36 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
           {/* ==================================================================== */}
           {/* ENTERPRISE OEE BREAKDOWN BY MACHINE & SEPARATED LABOR EFFICIENCY     */}
           {/* ==================================================================== */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
             {/* 1. OEE Per Machine in Active Shift */}
-            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div className="lg:col-span-2 sap-card p-3.5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8e8e8] pb-2.5">
                 <div className="flex items-center gap-2">
-                  <Gauge className="w-4 h-4 text-amber-600" />
-                  <h4 className="font-bold text-xs text-slate-900">
+                  <Gauge className="w-4 h-4 text-[#007cc0]" />
+                  <h4 className="font-semibold text-xs text-[#333333]">
                     شاخص OEE به تفکیک ماشین‌آلات (در شیفت فعال امروز: شیفت صبح)
                   </h4>
                 </div>
-                <span className="text-[10px] bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded font-mono font-bold">
+                <span className="text-[10px] bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7] px-2 py-0.5 rounded font-mono font-semibold">
                   Shift: MORNING • Horizon: TODAY
                 </span>
               </div>
 
-              <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+              <div className="overflow-x-auto border border-[#d9d9d9] rounded">
+                <table className="sap-table-compact w-full text-right text-xs">
+                  <thead className="bg-[#ffffff] text-[#333333] font-semibold border-b border-[#d9d9d9]">
                     <tr>
-                      <th className="py-2 px-2.5">ماشین و کد</th>
-                      <th className="py-2 px-2.5">سالن / ایستگاه</th>
-                      <th className="py-2 px-2.5">شیفت فعال</th>
-                      <th className="py-2 px-2.5">دسترس‌پذیری (A)</th>
-                      <th className="py-2 px-2.5">عملکرد (P)</th>
-                      <th className="py-2 px-2.5">کیفیت (Q)</th>
-                      <th className="py-2 px-2.5">OEE ماشین</th>
-                      <th className="py-2 px-2.5 text-center">Drill-Down</th>
+                      <th>ماشین و کد</th>
+                      <th>سالن / ایستگاه</th>
+                      <th>شیفت فعال</th>
+                      <th>دسترس‌پذیری (A)</th>
+                      <th>عملکرد (P)</th>
+                      <th>کیفیت (Q)</th>
+                      <th>OEE ماشین</th>
+                      <th className="text-center">Drill-Down</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-[11px]">
+                  <tbody className="divide-y divide-[#e8e8e8] text-[11px] tabular-nums">
                     {[
                       { code: 'PRS-250T-01', name: 'پرس ۲۵۰ تن ۱ (کشش/بلنک)', hall: 'سالن پرس', shift: 'شیفت صبح (جاری)', a: 91.2, p: 84.5, q: 98.4, oee: 75.8 },
                       { code: 'PRS-160T-01', name: 'پرس ۱۶۰ تن ۱ (خم/پانچ)', hall: 'سالن پرس', shift: 'شیفت صبح (جاری)', a: 89.5, p: 82.0, q: 99.1, oee: 72.7 },
@@ -3269,30 +3306,30 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       { code: 'WLD-SPOT-01', name: 'پرس‌جوش مقاومتی ۱۰۰KVA', hall: 'سالن جوشکاری', shift: 'شیفت صبح (جاری)', a: 87.5, p: 83.0, q: 98.9, oee: 71.8 },
                       { code: 'WLD-ROB-01', name: 'ربات جوش CO2 شماره ۱', hall: 'سالن جوشکاری', shift: 'شیفت صبح (جاری)', a: 92.1, p: 85.0, q: 99.2, oee: 77.7 },
                     ].map(m => (
-                      <tr key={m.code} className="hover:bg-slate-50 transition">
-                        <td className="py-2 px-2.5">
-                          <strong className="text-slate-900 block">{m.name}</strong>
-                          <span className="font-mono text-[10px] text-slate-500">{m.code}</span>
+                      <tr key={m.code} className="hover:bg-[#e5f3fa]/50 transition">
+                        <td>
+                          <strong className="text-[#333333] block">{m.name}</strong>
+                          <span className="font-mono text-[10px] text-[#666666]">{m.code}</span>
                         </td>
-                        <td className="py-2 px-2.5 text-slate-600">{m.hall}</td>
-                        <td className="py-2 px-2.5">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-800 font-bold">
+                        <td className="text-[#666666]">{m.hall}</td>
+                        <td>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-semibold">
                             {m.shift}
                           </span>
                         </td>
-                        <td className="py-2 px-2.5 font-mono font-bold text-blue-700">{toPersianDigits(m.a)}٪</td>
-                        <td className="py-2 px-2.5 font-mono font-bold text-indigo-700">{toPersianDigits(m.p)}٪</td>
-                        <td className="py-2 px-2.5 font-mono font-bold text-emerald-700">{toPersianDigits(m.q)}٪</td>
-                        <td className="py-2 px-2.5 font-mono font-bold">
-                          <span className={`px-2 py-0.5 rounded text-[11px] ${
+                        <td className="font-mono font-bold text-[#007cc0]">{toPersianDigits(m.a)}٪</td>
+                        <td className="font-mono font-bold text-[#333333]">{toPersianDigits(m.p)}٪</td>
+                        <td className="font-mono font-bold text-[#107e3e]">{toPersianDigits(m.q)}٪</td>
+                        <td className="font-mono font-bold">
+                          <span className={`px-2 py-0.5 rounded text-[11px] border ${
                             m.oee >= 75
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
+                              ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
+                              : 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
                           }`}>
                             {toPersianDigits(m.oee)}٪
                           </span>
                         </td>
-                        <td className="py-2 px-2.5 text-center">
+                        <td className="text-center">
                           <button
                             type="button"
                             onClick={() =>
@@ -3305,7 +3342,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                 records: allRawRecords.filter(r => r.machineCode === m.code),
                               })
                             }
-                            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[10px] font-bold cursor-pointer transition"
+                            className="sap-btn-standard px-2 py-0.5 text-[10px] cursor-pointer"
                           >
                             مشاهده سوابق
                           </button>
@@ -3318,42 +3355,42 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             </div>
 
             {/* 2. Differentiated Human Labor Efficiency */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div className="sap-card p-3.5 space-y-3 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2.5">
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-emerald-600" />
-                    <h4 className="font-bold text-xs text-slate-900">
+                    <Users className="w-4 h-4 text-[#107e3e]" />
+                    <h4 className="font-semibold text-xs text-[#333333]">
                       راندمان نیروی انسانی (Labor Efficiency)
                     </h4>
                   </div>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-900 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+                  <span className="text-[10px] bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] px-2 py-0.5 rounded font-semibold">
                     تفکیک‌شده از OEE ماشین
                   </span>
                 </div>
 
                 <div className="mt-3 space-y-2.5 text-xs">
-                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                  <p className="text-[#666666] text-[11px] leading-relaxed">
                     در استانداردهای ERP سازمانی (SAP / D365)، شاخص راندمان نیروی انسانی بر مبنای نسبت «ساعت کار استاندارد حاصل از تولید سالم (Earned Hours)» به «کل ساعت حضور اپراتورها (Clocked Hours)» اندازه‌گیری می‌شود و از توقفات مکانیکی دستگاه مجزاست:
                   </p>
 
-                  <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 font-mono text-[11px]">
+                  <div className="p-2.5 bg-[#f7f7f7] border border-[#d9d9d9] rounded space-y-1.5 font-mono text-[11px] tabular-nums">
                     <div className="flex justify-between">
-                      <span className="text-slate-500 font-sans">ساعت استاندارد کسب‌شده (Earned):</span>
-                      <strong className="text-slate-900">۹۲.۴ ساعت</strong>
+                      <span className="text-[#666666] font-sans">ساعت استاندارد کسب‌شده (Earned):</span>
+                      <strong className="text-[#333333]">۹۲.۴ ساعت</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500 font-sans">ساعت واقعی حضور اپراتورها (Clocked):</span>
-                      <strong className="text-slate-900">۱۰۳.۲ ساعت</strong>
+                      <span className="text-[#666666] font-sans">ساعت واقعی حضور اپراتورها (Clocked):</span>
+                      <strong className="text-[#333333]">۱۰۳.۲ ساعت</strong>
                     </div>
-                    <div className="flex justify-between border-t border-slate-200 pt-1 text-emerald-800 font-bold">
+                    <div className="flex justify-between border-t border-[#e8e8e8] pt-1 text-[#107e3e] font-bold">
                       <span className="font-sans">راندمان نیروی انسانی (Efficiency):</span>
                       <span className="text-sm">{toPersianDigits(kpiSummary.laborEfficiencyPct)}٪</span>
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200 text-[10px] text-blue-900 space-y-1">
-                    <strong className="block font-bold">اصل تفکیک نقص مکانیکی از عملکرد انسانی:</strong>
+                  <div className="p-2.5 rounded bg-[#e5f3fa] border border-[#b3ddf2] text-[10px] text-[#333333] space-y-1">
+                    <strong className="block font-semibold text-[#007cc0]">اصل تفکیک نقص مکانیکی از عملکرد انسانی:</strong>
                     <span>
                       توقفات ناشی از شکستگی سنبه، نشت روغن یا عیب مدار هیدرولیک فقط در دسترس‌پذیری ماشین (Machine OEE) محاسبه شده و از سوابق کارایی اپراتورها کسر نمی‌گردد.
                     </span>
@@ -3373,7 +3410,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     records: allRawRecords.filter(r => r.completedGoodQty > 0),
                   })
                 }
-                className="w-full mt-2 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs cursor-pointer flex items-center justify-center gap-1.5 transition"
+                className="sap-btn-emphasized w-full mt-2 py-2 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>بررسی ریز رکوردهای کارایی نیروی انسانی</span>
@@ -3382,15 +3419,15 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
           </div>
 
           {/* Detailed Multi-Horizon Breakdown Table + Print & Excel Export */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="sap-card p-4 space-y-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
               <div>
-                <h4 className="font-bold text-sm text-slate-900">
+                <h4 className="font-semibold text-sm text-[#333333]">
                   جدول جامع عملکرد برنامه‌ریزی، تولید، موجودی مراحل (WIP)، رسید انبار، OEE و نت (PM) به تفکیک قطعه و خط
                 </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#666666] mt-0.5">
                   مقیاس گزارش فعال:{' '}
-                  <strong className="text-slate-800">
+                  <strong className="text-[#333333]">
                     {reportHorizon === 'DAILY'
                       ? 'روزانه (Daily)'
                       : reportHorizon === 'WEEKLY'
@@ -3503,9 +3540,9 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       </html>
                     `);
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer"
+                  className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-2 text-xs"
                 >
-                  <Printer className="w-4 h-4 text-amber-400" />
+                  <Printer className="w-4 h-4" />
                   <span>چاپ رسمی گزارش مدیریتی دوره (A4 ایزوله)</span>
                 </button>
 
@@ -3557,31 +3594,31 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     });
                     exportToCsv(`گزارش_جامع_تولید_OEE_PM_${reportHorizon}`, headers, rows);
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#107e3e] hover:bg-[#0d6832] text-[#ffffff] rounded text-xs font-semibold cursor-pointer"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3.5 h-3.5" />
                   <span>خروجی اکسل شاخص‌ها (CSV)</span>
                 </button>
               </div>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-xl">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+            <div className="overflow-x-auto border border-[#d9d9d9] rounded">
+              <table className="sap-table-compact w-full text-right text-xs">
+                <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333]">
                   <tr>
-                    <th className="py-2.5 px-3">دستور کار</th>
-                    <th className="py-2.5 px-3">نام و کد قطعه</th>
-                    <th className="py-2.5 px-3">تعداد مراحل (OP)</th>
-                    <th className="py-2.5 px-3">تیراژ برنامه</th>
-                    <th className="py-2.5 px-3 text-indigo-700">موجودی پای خط (WIP)</th>
-                    <th className="py-2.5 px-3 text-emerald-700">رسید انبار محصول</th>
-                    <th className="py-2.5 px-3 text-rose-700">ضایعات</th>
-                    <th className="py-2.5 px-3">درصد تحقق</th>
-                    <th className="py-2.5 px-3">OEE خط</th>
-                    <th className="py-2.5 px-3">وضعیت PM و بهره‌وری</th>
+                    <th>دستور کار</th>
+                    <th>نام و کد قطعه</th>
+                    <th>تعداد مراحل (OP)</th>
+                    <th>تیراژ برنامه</th>
+                    <th className="text-[#007cc0]">موجودی پای خط (WIP)</th>
+                    <th className="text-[#107e3e]">رسید انبار محصول</th>
+                    <th className="text-[#bb0000]">ضایعات</th>
+                    <th>درصد تحقق</th>
+                    <th>OEE خط</th>
+                    <th>وضعیت PM و بهره‌وری</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                   {filteredParts.map(item => {
                     const wipPcs = item.ops.reduce(
                       (acc, o) => acc + (o.isFinalOp ? 0 : o.wipBufferAfterOp),
@@ -3595,8 +3632,8 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       )
                     );
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <tr key={item.id} className="hover:bg-[#e5f3fa]/50">
+                        <td className="font-mono font-semibold text-[#333333]">
                           <button
                             type="button"
                             onClick={() =>
@@ -3609,25 +3646,32 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                 records: allRawRecords.filter(r => r.orderCode === item.orderCode),
                               })
                             }
-                            className="hover:text-blue-700 hover:underline cursor-pointer font-bold"
+                            className="sap-doc-link cursor-pointer"
                           >
                             {item.orderCode}
                           </button>
                         </td>
-                        <td className="py-2.5 px-3">
-                          <div className="font-bold text-slate-900">{item.partName}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">
-                            {item.partCode} • {item.carModel}
+                        <td>
+                          <div className="font-semibold text-[#333333]">{item.partName}</div>
+                          <div className="text-[10px] text-[#666666] font-mono flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => router.traceDocument(item.partCode, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link cursor-pointer"
+                            >
+                              {item.partCode}
+                            </button>
+                            <span>• {item.carModel}</span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 font-mono">
+                        <td className="font-mono">
                           {toPersianDigits(item.ops.length)} مرحله (OP10 تا{' '}
                           {item.ops[item.ops.length - 1]?.opCode})
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        <td className="font-mono font-semibold text-[#333333]">
                           {formatNumber(item.weeklyTargetQty)}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-indigo-700">
+                        <td className="font-mono font-semibold text-[#007cc0]">
                           <button
                             type="button"
                             onClick={() =>
@@ -3645,7 +3689,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                             {formatNumber(wipPcs)} عدد
                           </button>
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
+                        <td className="font-mono font-semibold text-[#107e3e]">
                           <button
                             type="button"
                             onClick={() =>
@@ -3663,7 +3707,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                             {formatNumber(item.warehouseReceivedQty)} عدد
                           </button>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-rose-700">
+                        <td className="font-mono text-[#bb0000]">
                           <button
                             type="button"
                             onClick={() =>
@@ -3676,12 +3720,12 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                 records: allRawRecords.filter(r => r.orderCode === item.orderCode && r.scrapQty > 0),
                               })
                             }
-                            className="hover:underline cursor-pointer font-bold"
+                            className="hover:underline cursor-pointer font-semibold"
                           >
                             {formatNumber(scrapPcs)}
                           </button>
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold">
+                        <td className="font-mono font-semibold">
                           <button
                             type="button"
                             onClick={() =>
@@ -3698,17 +3742,17 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                             title="مشاهده ریز رکوردهای تحقق برنامه"
                           >
                             <span
-                              className={`px-2 py-0.5 rounded ${
+                              className={`px-2 py-0.5 rounded border ${
                                 attainment >= 80
-                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                  : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                  ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
+                                  : 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
                               }`}
                             >
                               {toPersianDigits(attainment)}٪
                             </span>
                           </button>
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                        <td className="font-mono font-semibold text-[#333333]">
                           <button
                             type="button"
                             onClick={() =>
@@ -3721,13 +3765,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                 records: allRawRecords.filter(r => r.orderCode === item.orderCode),
                               })
                             }
-                            className="hover:text-amber-700 hover:underline cursor-pointer"
+                            className="hover:text-[#007cc0] hover:underline cursor-pointer"
                             title="مشاهده ریز رکوردهای OEE ماشین‌آلات"
                           >
                             {toPersianDigits(kpiSummary.oeePct)}٪
                           </button>
                         </td>
-                        <td className="py-2.5 px-3">
+                        <td>
                           <button
                             type="button"
                             onClick={() =>
@@ -3740,7 +3784,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                                 records: allRawRecords.filter(r => r.orderCode === item.orderCode),
                               })
                             }
-                            className="text-[11px] bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-semibold transition cursor-pointer"
+                            className="text-[11px] bg-[#e5f3fa] hover:bg-[#d2eaf7] text-[#007cc0] border border-[#b3ddf2] px-2 py-0.5 rounded font-semibold transition cursor-pointer"
                             title="مشاهده سوابق نت پیشگیرانه و کارایی پرسنل"
                           >
                             PM: {toPersianDigits(kpiSummary.pmCompliancePct)}٪ | کارایی:{' '}
@@ -3788,54 +3832,54 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* SLIDE-OVER DRAWER: INTERACTIVE RAW DRILL-DOWN ACROSS ALL REPORTS/OEE */}
       {/* ==================================================================== */}
       {drillDownContext && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex justify-end">
-          <div className="relative w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col text-right text-xs">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-[#333333]/40 flex justify-end">
+          <div className="relative w-full max-w-4xl bg-[#ffffff] border-r border-[#d9d9d9] h-full shadow-2xl flex flex-col text-right text-xs">
             {/* Drawer Header */}
-            <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <div className="p-4 border-b border-[#d9d9d9] bg-[#f7f7f7] flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] text-[10px] font-semibold">
                     Drill-Down رکوردهای خام ERP
                   </span>
                   {drillDownContext.filterBadge && (
-                    <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7] text-[10px] font-semibold">
                       {drillDownContext.filterBadge}
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-base text-slate-900 mt-1">
+                <h3 className="font-semibold text-base text-[#333333] mt-1">
                   {drillDownContext.title}
                 </h3>
-                <p className="text-slate-500 text-xs mt-0.5">
+                <p className="text-[#666666] text-xs mt-0.5">
                   {drillDownContext.description} • شاخص انتخابی:{' '}
-                  <strong className="text-slate-900">{drillDownContext.metricLabel} = {drillDownContext.metricValue}</strong>
+                  <strong className="text-[#333333]">{drillDownContext.metricLabel} = {drillDownContext.metricValue}</strong>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setDrillDownContext(null)}
-                className="p-1.5 hover:bg-slate-200 rounded-xl text-slate-500 hover:text-slate-800 cursor-pointer"
+                className="p-1.5 hover:bg-[#e8e8e8] rounded text-[#666666] hover:text-[#333333] cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Filter & Export Toolbar */}
-            <div className="p-3 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-3 bg-[#ffffff] border-b border-[#e8e8e8] flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 flex-1 max-w-sm">
-                <Search className="w-4 h-4 text-slate-400" />
+                <Search className="w-4 h-4 text-[#666666]" />
                 <input
                   type="text"
                   placeholder="جستجو در دستور ساخت، نام قطعه، ماشین، مرحله..."
                   value={drillDownSearch}
                   onChange={e => setDrillDownSearch(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex items-center gap-2 text-slate-600 text-xs">
+              <div className="flex items-center gap-2 text-[#666666] text-xs">
                 <span>تعداد رکوردهای استخراج‌شده:</span>
-                <strong className="font-mono text-slate-900 text-sm">
+                <strong className="font-mono text-[#333333] text-sm tabular-nums">
                   {toPersianDigits(
                     drillDownContext.records.filter(r => {
                       if (!drillDownSearch.trim()) return true;
@@ -3903,7 +3947,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     ]);
                     exportToCsv(`DrillDown_${drillDownContext.metricLabel}`, headers, rows);
                   }}
-                  className="flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1 bg-[#107e3e] hover:bg-[#0d6832] text-[#ffffff] rounded text-xs font-semibold cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>اکسل (CSV)</span>
@@ -3913,24 +3957,24 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
 
             {/* Scrollable Raw Records Table */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
+              <div className="border border-[#d9d9d9] rounded overflow-hidden">
+                <table className="sap-table-compact w-full text-right text-xs">
+                  <thead className="bg-[#ffffff] text-[#333333] font-semibold border-b border-[#d9d9d9]">
                     <tr>
-                      <th className="py-2 px-2.5">دستور ساخت</th>
-                      <th className="py-2 px-2.5">قطعه و خودرو</th>
-                      <th className="py-2 px-2.5">مرحله (OP)</th>
-                      <th className="py-2 px-2.5">ماشین و سالن</th>
-                      <th className="py-2 px-2.5">قالب</th>
-                      <th className="py-2 px-2.5">شیفت / روز</th>
-                      <th className="py-2 px-2.5">هدف</th>
-                      <th className="py-2 px-2.5 text-emerald-700">تولید سالم</th>
-                      <th className="py-2 px-2.5 text-indigo-700">WIP ورودی</th>
-                      <th className="py-2 px-2.5 text-rose-700">ضایعات</th>
-                      <th className="py-2 px-2.5">وضعیت</th>
+                      <th>دستور ساخت</th>
+                      <th>قطعه و خودرو</th>
+                      <th>مرحله (OP)</th>
+                      <th>ماشین و سالن</th>
+                      <th>قالب</th>
+                      <th>شیفت / روز</th>
+                      <th>هدف</th>
+                      <th className="text-[#107e3e]">تولید سالم</th>
+                      <th className="text-[#007cc0]">WIP ورودی</th>
+                      <th className="text-[#bb0000]">ضایعات</th>
+                      <th>وضعیت</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                  <tbody className="divide-y divide-[#e8e8e8] font-mono text-[11px] tabular-nums">
                     {drillDownContext.records
                       .filter(r => {
                         if (!drillDownSearch.trim()) return true;
@@ -3944,38 +3988,59 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                         );
                       })
                       .map((r, rIdx) => (
-                        <tr key={rIdx} className="hover:bg-slate-50 transition">
-                          <td className="py-2 px-2.5 font-bold text-slate-900">{r.orderCode}</td>
-                          <td className="py-2 px-2.5 font-sans">
-                            <span className="font-bold text-slate-800 block truncate max-w-[130px]">{r.partName}</span>
-                            <span className="text-[10px] text-slate-500 font-mono">{r.partCode} ({r.carModel})</span>
+                        <tr key={rIdx} className="hover:bg-[#e5f3fa]/50 transition">
+                          <td className="font-semibold text-[#333333]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDrillDownContext(null);
+                                router.traceDocument(r.orderCode, 'WIP_TRACEABILITY');
+                              }}
+                              className="sap-doc-link cursor-pointer"
+                            >
+                              {r.orderCode}
+                            </button>
                           </td>
-                          <td className="py-2 px-2.5">
-                            <span className="font-bold text-blue-700">{r.opCode}</span>
-                            <span className="font-sans text-[10px] text-slate-600 block">{r.opTitle}</span>
+                          <td className="font-sans">
+                            <span className="font-semibold text-[#333333] block truncate max-w-[130px]">{r.partName}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDrillDownContext(null);
+                                router.traceDocument(r.partCode, 'INVENTORY_LEDGER');
+                              }}
+                              className="sap-doc-link text-[10px] font-mono cursor-pointer"
+                            >
+                              {r.partCode}
+                            </button>{' '}
+                            <span className="text-[10px] text-[#666666] font-mono">({r.carModel})</span>
                           </td>
-                          <td className="py-2 px-2.5 font-sans">
-                            <span className="font-bold text-slate-800 block">{r.machineName}</span>
-                            <span className="text-[10px] text-slate-500">{r.stationHall}</span>
+                          <td>
+                            <span className="font-semibold text-[#007cc0]">{r.opCode}</span>
+                            <span className="font-sans text-[10px] text-[#666666] block">{r.opTitle}</span>
                           </td>
-                          <td className="py-2 px-2.5 text-slate-600">{r.dieCode}</td>
-                          <td className="py-2 px-2.5 font-sans">
+                          <td className="font-sans">
+                            <span className="font-semibold text-[#333333] block">{r.machineName}</span>
+                            <span className="text-[10px] text-[#666666]">{r.stationHall}</span>
+                          </td>
+                          <td className="text-[#666666]">{r.dieCode}</td>
+                          <td className="font-sans">
                             <span>{r.shiftName}</span>
-                            <span className="block text-[10px] text-slate-500">{r.dayName}</span>
+                            <span className="block text-[10px] text-[#666666]">{r.dayName}</span>
                           </td>
-                          <td className="py-2 px-2.5 font-bold text-slate-900">{formatNumber(r.targetQty)}</td>
-                          <td className="py-2 px-2.5 font-bold text-emerald-700">{formatNumber(r.completedGoodQty)}</td>
-                          <td className="py-2 px-2.5 font-bold text-indigo-700">{formatNumber(r.wipQty)}</td>
-                          <td className="py-2 px-2.5 font-bold text-rose-700">{formatNumber(r.scrapQty)}</td>
-                          <td className="py-2 px-2.5 font-sans">
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          <td className="font-semibold text-[#333333]">{formatNumber(r.targetQty)}</td>
+                          <td className="font-semibold text-[#107e3e]">{formatNumber(r.completedGoodQty)}</td>
+                          <td className="font-semibold text-[#007cc0]">{formatNumber(r.wipQty)}</td>
+                          <td className="font-semibold text-[#bb0000]">{formatNumber(r.scrapQty)}</td>
+                          <td className="font-sans">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
                               r.status === 'COMPLETED'
-                                ? 'bg-emerald-100 text-emerald-800'
+                                ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
                                 : r.status === 'ROLLED_FORWARD'
-                                ? 'bg-amber-100 text-amber-800'
+                                ? 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
                                 : r.status === 'IN_PROGRESS'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-slate-100 text-slate-700'
+                                ? 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]'
+                                : 'bg-[#f5f5f5] text-[#666666] border-[#d9d9d9]'
                             }`}>
                               {r.status === 'COMPLETED' ? 'تکمیل‌شده' : r.status === 'ROLLED_FORWARD' ? 'انتقال‌یافته' : r.status === 'IN_PROGRESS' ? 'در جریان' : 'برنامه‌ریزی'}
                             </span>
@@ -3988,14 +4053,14 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-              <span className="text-slate-500 text-[11px]">
+            <div className="p-3 bg-[#f7f7f7] border-t border-[#d9d9d9] flex justify-between items-center">
+              <span className="text-[#666666] text-[11px]">
                 پایان رهگیری رکوردهای ERP • داده‌های زنده منطبق با خطوط تولید و کارگاه
               </span>
               <button
                 type="button"
                 onClick={() => setDrillDownContext(null)}
-                className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold cursor-pointer"
+                className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
               >
                 بستن کشو
               </button>
@@ -4008,14 +4073,24 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* MODAL 1: LOG OP PRODUCTION, ROLL FORWARD & AUTO WAREHOUSE RECEIPT    */}
       {/* ==================================================================== */}
       {activeLogContext && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 text-right text-xs">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-lg w-full p-5 shadow-md space-y-3.5 text-right text-xs">
+            <div className="border-b border-[#e8e8e8] pb-3 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
-                  {activeLogContext.partItem.orderCode} • {activeLogContext.opStep.opCode}
-                </span>
-                <h4 className="font-bold text-sm text-slate-900 mt-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(activeLogContext.partItem.orderCode, 'WIP_TRACEABILITY')}
+                    className="sap-doc-link text-[10px] font-mono font-semibold px-2 py-0.5 rounded-sm bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]"
+                    title="رهگیری دستور ساخت در جریان ساخت (WIP)"
+                  >
+                    {activeLogContext.partItem.orderCode}
+                  </button>
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-sm bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9]">
+                    {activeLogContext.opStep.opCode}
+                  </span>
+                </div>
+                <h4 className="font-semibold text-sm text-[#333333] mt-1.5">
                   ثبت کارکرد مرحله «{activeLogContext.opStep.opTitle}» —{' '}
                   {activeLogContext.partItem.partName}
                 </h4>
@@ -4023,20 +4098,20 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               <button
                 type="button"
                 onClick={() => setActiveLogContext(null)}
-                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 hover:bg-[#f0f0f0] rounded-sm text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {activeLogContext.opStep.isFinalOp && (
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-start gap-2">
-                <PackageCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="p-2.5 rounded-sm bg-[#ebf5ec] border border-[#b7dfbf] text-[#107e3e] flex items-start gap-2">
+                <PackageCheck className="w-4 h-4 text-[#107e3e] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold">
                     این عملیات «مرحله آخر (Final OP)» مسیر تولید قطعه است!
                   </strong>
-                  <span>
+                  <span className="text-[#333333]">
                     به محض ثبت تولید سالم در این مرحله، سیستم به صورت خودکار سند رسمی «رسید محصول نهایی در انبار (`RECEIPT_FINISHED_GOODS`)» را صادر و موجودی انبار را افزایش می‌دهد.
                   </span>
                 </div>
@@ -4058,69 +4133,66 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               const newRemaining = Math.max(0, opStep.effectiveTargetQty - computedTotalGood);
 
               return (
-                <div className="space-y-3.5">
-                  {/* Table Synchronized Status Banner - دقیقاً سینک با ۳ ستون اصلی سطر جدول برنامه روزانه */}
-                  <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-blue-50/70 border border-blue-200 text-center">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2 p-2.5 rounded-sm bg-[#e5f3fa] border border-[#b3ddf2] text-center">
                     <div>
-                      <span className="text-slate-500 block text-[10px]">۱. هدف کل مرحله (جدول)</span>
-                      <strong className="font-mono text-slate-900 font-bold text-xs">
+                      <span className="text-[#666666] block text-[10px]">۱. هدف کل مرحله (جدول)</span>
+                      <strong className="font-mono text-[#333333] font-bold text-xs tabular-nums">
                         {formatNumber(opStep.effectiveTargetQty)} عدد
                       </strong>
                     </div>
                     <div>
-                      <span className="text-emerald-700 block text-[10px] font-bold">۲. تولید سالم در جدول</span>
-                      <strong className="font-mono text-emerald-800 font-bold text-xs">
+                      <span className="text-[#107e3e] block text-[10px] font-bold">۲. تولید سالم در جدول</span>
+                      <strong className="font-mono text-[#107e3e] font-bold text-xs tabular-nums">
                         {formatNumber(opStep.completedGoodQty)} عدد
                       </strong>
                     </div>
                     <div>
-                      <span className="text-amber-800 block text-[10px] font-bold">۳. مانده مرحله در جدول</span>
-                      <strong className="font-mono text-amber-900 font-bold text-xs">
+                      <span className="text-[#e9730c] block text-[10px] font-bold">۳. مانده مرحله در جدول</span>
+                      <strong className="font-mono text-[#e9730c] font-bold text-xs tabular-nums">
                         {formatNumber(currentRemInTable)} عدد
                       </strong>
                     </div>
                   </div>
 
-                  {/* Computed Input WIP Buffer */}
-                  <div className="px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-xl text-[11px] text-indigo-950 flex items-center justify-between">
+                  <div className="px-3 py-2 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm text-[11px] text-[#333333] flex items-center justify-between">
                     <span className="flex items-center gap-1.5 font-medium">
-                      <Layers className="w-3.5 h-3.5 text-indigo-600 inline" />
+                      <Layers className="w-3.5 h-3.5 text-[#007cc0] inline" />
                       <span>بافر ورودی آماده (تولید سالم مرحله قبل - مصرف این OP):</span>
                     </span>
-                    <strong className="font-mono font-bold text-indigo-800">
+                    <strong className="font-mono font-bold text-[#007cc0] tabular-nums">
                       {formatNumber(availableWip)} عدد
                       {prevOp && (
-                        <span className="text-[10px] text-slate-500 font-normal mr-1">
+                        <span className="text-[10px] text-[#666666] font-normal mr-1">
                           (از خروجی {prevOp.opCode})
                         </span>
                       )}
                     </strong>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <div className="grid grid-cols-2 gap-3 bg-[#f7f7f7] p-2.5 rounded-sm border border-[#d9d9d9]">
                     <div>
-                      <span className="text-slate-500 block text-[10px]">دستگاه و قالب:</span>
-                      <strong className="text-slate-900 text-xs">
+                      <span className="text-[#666666] block text-[10px]">دستگاه و قالب:</span>
+                      <strong className="text-[#333333] text-xs">
                         {opStep.machineName} ({opStep.dieCode})
                       </strong>
                     </div>
                     <div>
-                      <span className="text-slate-500 block text-[10px]">سالن و شیفت:</span>
-                      <strong className="text-slate-900 text-xs">
+                      <span className="text-[#666666] block text-[10px]">سالن و شیفت:</span>
+                      <strong className="text-[#333333] text-xs">
                         {opStep.stationHall} • {opStep.shiftName}
                       </strong>
                     </div>
                   </div>
 
-                  {/* Input Mode Selector Toggle */}
-                  <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                  <div className="flex rounded-sm bg-[#f5f5f5] p-0.5 border border-[#d9d9d9]">
                     <button
                       type="button"
                       onClick={() => setLogInputMode('SHIFT_PRODUCTION')}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`flex-1 py-1.5 rounded-sm text-xs font-bold transition cursor-pointer ${
                         logInputMode === 'SHIFT_PRODUCTION'
-                          ? 'bg-white text-slate-900 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-[#ffffff] text-[#007cc0] border border-[#b3ddf2]'
+                          : 'text-[#666666] hover:text-[#333333]'
                       }`}
                     >
                       ثبت تولید این شیفت (تولید سالم امروز)
@@ -4128,28 +4200,28 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     <button
                       type="button"
                       onClick={() => setLogInputMode('CUMULATIVE_TOTAL')}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`flex-1 py-1.5 rounded-sm text-xs font-bold transition cursor-pointer ${
                         logInputMode === 'CUMULATIVE_TOTAL'
-                          ? 'bg-white text-slate-900 shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-[#ffffff] text-[#007cc0] border border-[#b3ddf2]'
+                          : 'text-[#666666] hover:text-[#333333]'
                       }`}
                     >
                       ویرایش مستقیم مجموع کل تولید سالم
                     </button>
                   </div>
 
-                  <form onSubmit={handleConfirmOpExecution} className="space-y-3.5">
+                  <form onSubmit={handleConfirmOpExecution} className="space-y-3">
                     {logInputMode === 'SHIFT_PRODUCTION' ? (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <label className="block font-bold text-slate-700">
+                          <label className="block font-bold text-[#333333]">
                             تعداد تولید سالم جدید در این شیفت کاری *
                           </label>
                           <div className="flex gap-1">
                             <button
                               type="button"
                               onClick={() => setLogShiftGoodInput(String(currentRemInTable))}
-                              className="px-2 py-0.5 rounded text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer font-sans font-bold"
+                              className="sap-btn-standard px-2 py-0.5 text-[10px]"
                               title="تکمیل کل مانده سهمیه"
                             >
                               تکمیل کل مانده ({formatNumber(currentRemInTable)})
@@ -4158,7 +4230,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                               <button
                                 type="button"
                                 onClick={() => setLogShiftGoodInput(String(Math.min(currentRemInTable, availableWip)))}
-                                className="px-2 py-0.5 rounded text-[10px] bg-indigo-100 hover:bg-indigo-200 text-indigo-800 cursor-pointer font-sans font-bold"
+                                className="px-2 py-0.5 rounded-sm text-[10px] bg-[#e5f3fa] hover:bg-[#d0e9f7] text-[#007cc0] border border-[#b3ddf2] cursor-pointer font-sans font-bold"
                                 title="تولید به اندازه کل بافر ورودی موجود"
                               >
                                 مصرف بافر ({formatNumber(Math.min(currentRemInTable, availableWip))})
@@ -4172,13 +4244,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                           required
                           value={logShiftGoodInput}
                           onChange={e => setLogShiftGoodInput(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-sm text-emerald-800 focus:outline-none focus:bg-white"
+                          className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-sm text-[#107e3e] focus:outline-none focus:border-[#007cc0]"
                         />
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-0.5">
+                        <div className="flex items-center justify-between text-[11px] text-[#666666] px-1 pt-0.5">
                           <span>
-                            تولید سالم قبلی: <strong>{formatNumber(opStep.completedGoodQty)}</strong>
+                            تولید سالم قبلی: <strong className="tabular-nums">{formatNumber(opStep.completedGoodQty)}</strong>
                           </span>
-                          <span className="text-emerald-700 font-bold">
+                          <span className="text-[#107e3e] font-bold tabular-nums">
                             مجموع پس از ثبت: {formatNumber(computedTotalGood)} عدد
                           </span>
                         </div>
@@ -4186,13 +4258,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     ) : (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <label className="block font-bold text-slate-700">
+                          <label className="block font-bold text-[#333333]">
                             مجموع نهایی تولید سالم این مرحله (سینک با ستون تولید سالم جدول) *
                           </label>
                           <button
                             type="button"
                             onClick={() => setLogGoodInput(String(opStep.effectiveTargetQty))}
-                            className="px-2 py-0.5 rounded text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer font-sans font-bold"
+                            className="sap-btn-standard px-2 py-0.5 text-[10px]"
                           >
                             رسیدن به هدف ۱۰۰٪ ({formatNumber(opStep.effectiveTargetQty)})
                           </button>
@@ -4203,40 +4275,39 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                           required
                           value={logGoodInput}
                           onChange={e => setLogGoodInput(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-sm text-emerald-800 focus:outline-none focus:bg-white"
+                          className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-sm text-[#107e3e] focus:outline-none focus:border-[#007cc0]"
                         />
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block font-bold text-slate-700 mb-1">تعداد ضایعات این شیفت</label>
+                        <label className="block font-bold text-[#333333] mb-1">تعداد ضایعات این شیفت</label>
                         <input
                           type="number"
                           min={0}
                           value={logScrapInput}
                           onChange={e => setLogScrapInput(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-sm text-rose-700 focus:outline-none focus:bg-white"
+                          className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-sm text-[#bb0000] focus:outline-none focus:border-[#007cc0]"
                         />
                       </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-center">
-                        <span className="text-slate-500 block text-[10px]">مانده مرحله در جدول پس از ثبت:</span>
-                        <strong className="font-mono text-sm font-bold text-amber-900">
+                      <div className="p-2 rounded-sm bg-[#f7f7f7] border border-[#d9d9d9] flex flex-col justify-center">
+                        <span className="text-[#666666] block text-[10px]">مانده مرحله در جدول پس از ثبت:</span>
+                        <strong className="font-mono text-sm font-bold text-[#e9730c] tabular-nums">
                           {formatNumber(newRemaining)} عدد
                         </strong>
                       </div>
                     </div>
 
-                    {/* Roll-Forward Day Selector */}
                     {newRemaining > 0 && (
-                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2">
-                        <span className="text-amber-900 font-bold">
+                      <div className="p-2.5 rounded-sm bg-[#fff4e5] border border-[#f5cba7] flex items-center justify-between gap-2">
+                        <span className="text-[#e9730c] font-bold">
                           انتقال مانده ({formatNumber(newRemaining)} عدد) به روز:
                         </span>
                         <select
                           value={rollForwardToDay}
                           onChange={e => setRollForwardToDay(Number(e.target.value))}
-                          className="bg-white border border-amber-300 rounded-lg px-2.5 py-1 font-bold text-slate-900 cursor-pointer"
+                          className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1 font-bold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
                         >
                           {WORK_DAYS.map(d => (
                             <option key={d.index} value={d.index}>
@@ -4247,18 +4318,18 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                       </div>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                       <button
                         type="button"
                         onClick={() => setActiveLogContext(null)}
-                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                        className="sap-btn-standard px-4 py-1.5"
                       >
                         انصراف
                       </button>
                       <button
                         type="submit"
                         disabled={isPostingReceipt}
-                        className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold cursor-pointer"
+                        className="sap-btn-emphasized px-5 py-1.5"
                       >
                         {isPostingReceipt
                           ? 'در حال ثبت...'
@@ -4282,10 +4353,10 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* MODAL 2: ADD NEW PART WITH STAGGERED MULTI-OP SCHEDULE               */}
       {/* ==================================================================== */}
       {isAddPartModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 text-right text-xs max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h4 className="font-bold text-sm text-slate-900">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-lg w-full p-5 shadow-md space-y-3.5 text-right text-xs max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
+              <h4 className="font-bold text-sm text-[#333333]">
                 افزودن قطعه جدید به برنامه تولید (بر اساس مسیر تولید و توالی عملیات)
               </h4>
               <button
@@ -4294,15 +4365,15 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   setIsAddPartModalOpen(false);
                   router.closeModal();
                 }}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 hover:bg-[#f0f0f0] rounded-sm text-[#666666] hover:text-[#333333] cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleAddNewScheduledPart} className="space-y-3.5">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">انتخاب قطعه از کاتالوگ *</label>
+                <label className="block font-bold text-[#333333] mb-1">انتخاب قطعه از کاتالوگ *</label>
                 <SearchableSelect
                   value={newPartCode}
                   onChange={val => {
@@ -4321,44 +4392,43 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">تیراژ هدف دستور کار *</label>
+                <label className="block font-bold text-[#333333] mb-1">تیراژ هدف دستور کار *</label>
                 <input
                   type="number"
                   min={50}
                   value={newPartTargetQty}
                   onChange={e => setNewPartTargetQty(Number(e.target.value) || 1000)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              {/* Dynamic Operations from Part's Defined Routing or Default Sequential Steps */}
               {selectedPartRouting && selectedPartRouting.operations && selectedPartRouting.operations.length > 0 ? (
-                <div className="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
+                <div className="bg-[#ebf5ec] p-3 rounded-sm border border-[#b7dfbf] space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <div className="font-bold text-[#107e3e] flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#107e3e]"></span>
                       <span>مراحل عملیاتی استخراج‌شده از مسیر تولید ({selectedPartRouting.operations.length} مرحله):</span>
                     </div>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-mono">
+                    <span className="text-[10px] bg-[#ffffff] text-[#107e3e] px-2 py-0.5 rounded-sm border border-[#b7dfbf] font-mono">
                       Routing v{selectedPartRouting.version || '1.0'}
                     </span>
                   </div>
-                  <p className="text-[10px] text-emerald-800">
+                  <p className="text-[10px] text-[#333333]">
                     توالی عملیات، پرس و قالب مستقیماً از مسیر تولید تعریف‌شده خوانده شد. روز اجرای هر مرحله را در زیر تعیین کنید:
                   </p>
                   <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                     {selectedPartRouting.operations.map((op, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-emerald-150 text-[11px] shadow-2xs">
+                      <div key={idx} className="flex items-center justify-between bg-[#ffffff] p-2 rounded-sm border border-[#d9d9d9] text-[11px]">
                         <div className="flex-1 ml-2">
-                          <div className="font-bold text-slate-900">
+                          <div className="font-bold text-[#333333]">
                             {op.stepCode || `OP${op.stepNumber || (idx + 1) * 10}`}: {op.stepName}
                           </div>
-                          <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                          <div className="text-[10px] text-[#666666] flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                             <span>پرس: {op.machineName || 'پرس ۲۵۰ تن'}</span>
                             <span>•</span>
                             <span>قالب: {op.dieMoldName || 'قالب اختصاصی'}</span>
                             {op.isSharedOperation && (
-                              <span className="text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                              <span className="text-[#e9730c] font-bold bg-[#fff4e5] px-1.5 py-0.5 rounded-sm border border-[#f5cba7]">
                                 خروجی مشترک با {op.sharedPartName || 'قطعه جفت'}
                               </span>
                             )}
@@ -4367,7 +4437,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                         <select
                           value={customStepDays[idx] || (idx < 2 ? 1 : idx < 4 ? 2 : 3)}
                           onChange={e => setCustomStepDays(prev => ({ ...prev, [idx]: Number(e.target.value) }))}
-                          className="bg-emerald-50 border border-emerald-300 rounded-lg px-2.5 py-1 font-bold text-slate-900 text-xs"
+                          className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1 font-bold text-[#333333] text-xs focus:outline-none focus:border-[#007cc0]"
                         >
                           {WORK_DAYS.map(d => (
                             <option key={d.index} value={d.index}>
@@ -4380,14 +4450,14 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
-                  <div className="font-bold text-slate-800 flex items-center justify-between">
+                <div className="bg-[#f7f7f7] p-3 rounded-sm border border-[#d9d9d9] space-y-2.5">
+                  <div className="font-bold text-[#333333] flex items-center justify-between">
                     <span>تعیین روز اجرای هر عملیات:</span>
-                    <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    <span className="text-[10px] text-[#e9730c] bg-[#fff4e5] px-2 py-0.5 rounded-sm border border-[#f5cba7]">
                       فاقد مسیر اختصاصی (توالی پیش‌فرض ۴ مرحله‌ای)
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[10px] text-[#666666]">
                     برای این قطعه هنوز مسیر تولید اختصاصی ثبت نشده؛ می‌توانید از توالی استاندارد زیر استفاده کنید یا در منوی «اطلاعات پایه › مسیر تولید» برای آن فرآیند دقیق تعریف نمایید.
                   </p>
                   {[
@@ -4397,11 +4467,11 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                     { label: 'OP40: پرس‌جوش / مرحله آخر (رسید انبار)', val: newPartOp4Day, set: setNewPartOp4Day },
                   ].map((st, idx) => (
                     <div key={idx} className="flex items-center justify-between">
-                      <span className="text-slate-700">{st.label}</span>
+                      <span className="text-[#333333]">{st.label}</span>
                       <select
                         value={st.val}
                         onChange={e => st.set(Number(e.target.value))}
-                        className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 font-bold text-slate-900 text-xs"
+                        className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1 font-bold text-[#333333] text-xs focus:outline-none focus:border-[#007cc0]"
                       >
                         {WORK_DAYS.map(d => (
                           <option key={d.index} value={d.index}>
@@ -4414,20 +4484,20 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => {
                     setIsAddPartModalOpen(false);
                     router.closeModal();
                   }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold cursor-pointer flex items-center gap-1.5"
+                  className="sap-btn-emphasized px-5 py-1.5 flex items-center gap-1.5"
                 >
                   <span>افزودن و ارزیابی پیش‌نیازها</span>
                 </button>
@@ -4457,39 +4527,47 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* MODAL 3: EDIT SCHEDULED PLAN ITEM (استاندارد ERPNext / Odoo mrp.production) */}
       {/* ==================================================================== */}
       {editingPlanItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-xl space-y-4 text-right text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-md w-full p-5 shadow-md space-y-3.5 text-right text-xs">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                <div className="p-1.5 rounded-sm bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                   <Edit3 className="w-4 h-4" />
                 </div>
-                <h4 className="font-bold text-sm text-slate-900">
+                <h4 className="font-bold text-sm text-[#333333]">
                   ویرایش برنامه تولید قطعه
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingPlanItem(null)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 hover:bg-[#f0f0f0] rounded-sm text-[#666666] hover:text-[#333333] cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveEditScheduleItem} className="space-y-3.5">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-500 block text-[11px]">نام و کد قطعه:</span>
-                <strong className="text-slate-900 text-sm block mt-0.5">
+              <div className="p-3 rounded-sm bg-[#f7f7f7] border border-[#d9d9d9]">
+                <span className="text-[#666666] block text-[11px]">نام و کد قطعه:</span>
+                <strong className="text-[#333333] text-sm block mt-0.5">
                   {editingPlanItem.partName}
                 </strong>
-                <span className="font-mono text-slate-600 text-[11px]">
-                  {editingPlanItem.partCode} ({editingPlanItem.carModel})
-                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(editingPlanItem.partCode, 'INVENTORY_LEDGER')}
+                    className="sap-doc-link font-mono text-[11px]"
+                    title="رهگیری در انبار و کاردکس"
+                  >
+                    {editingPlanItem.partCode}
+                  </button>
+                  <span className="text-[#666666] text-[11px]">({editingPlanItem.carModel})</span>
+                </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   شماره دستور ساخت / دستور کار (MO) *
                 </label>
                 <input
@@ -4497,12 +4575,12 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   required
                   value={editPartOrderCode}
                   onChange={e => setEditPartOrderCode(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   تیراژ هفتگی هدف (عدد) *
                 </label>
                 <input
@@ -4511,24 +4589,24 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   min={1}
                   value={editPartTargetQty}
                   onChange={e => setEditPartTargetQty(Number(e.target.value) || 0)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
-                <span className="text-[10px] text-slate-500 mt-1 block">
+                <span className="text-[10px] text-[#666666] mt-1 block">
                   با تغییر تیراژ، برنامه تمامی {editingPlanItem.ops.length} مرحله عملیاتی متناسب با هدف جدید بازتراز خواهد شد.
                 </span>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setEditingPlanItem(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold cursor-pointer shadow-xs"
+                  className="sap-btn-emphasized px-5 py-1.5"
                 >
                   ذخیره تغییرات برنامه
                 </button>
@@ -4542,18 +4620,18 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* MODAL: MANDATORY HOLD / PAUSE WORK ORDER OPERATION                   */}
       {/* ==================================================================== */}
       {holdModalContext && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-right text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-md w-full p-5 shadow-md space-y-3.5 text-right text-xs">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                <div className="p-1.5 rounded-sm bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7]">
                   <Pause className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">
+                  <h4 className="font-bold text-sm text-[#333333]">
                     توقف موقت کارگاه و فریز دستور کار (Hold)
                   </h4>
-                  <span className="text-[10px] text-slate-500 font-mono">
+                  <span className="text-[10px] text-[#666666] font-mono">
                     {holdModalContext.op.opCode} • {holdModalContext.partItem.partName}
                   </span>
                 </div>
@@ -4561,18 +4639,18 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               <button
                 type="button"
                 onClick={() => setHoldModalContext(null)}
-                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 hover:bg-[#f0f0f0] rounded-sm text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1">
-              <div className="flex items-center justify-between font-bold text-slate-900">
+            <div className="p-2.5 bg-[#fff4e5] border border-[#f5cba7] rounded-sm space-y-1">
+              <div className="flex items-center justify-between font-bold text-[#333333]">
                 <span>دستگاه متوقف‌شونده:</span>
-                <span className="font-mono text-amber-900">{holdModalContext.op.machineName}</span>
+                <span className="font-mono text-[#e9730c]">{holdModalContext.op.machineName}</span>
               </div>
-              <div className="text-[11px] text-amber-800">
+              <div className="text-[11px] text-[#333333]">
                 ثبت توقف موقت بلافاصله وضعیت این مرحله را فریز کرده و زمان توقف را به صورت لحظه‌ای در موتور محاسبه OEE تجهیز ثبت می‌نماید.
               </div>
             </div>
@@ -4598,7 +4676,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               />
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   تخمین مدت توقف (دقیقه) *
                 </label>
                 <input
@@ -4608,12 +4686,12 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   required
                   value={holdEstimatedMinutes}
                   onChange={e => setHoldEstimatedMinutes(Number(e.target.value) || 0)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-xs text-rose-700 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-xs text-[#bb0000] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   توضیحات تکمیلی و شرح ریشه عیب (اختیاری)
                 </label>
                 <textarea
@@ -4621,21 +4699,21 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   placeholder="مثلاً: شکستگی پین سنبه در سوراخ سوم، نیاز به تعویض قطعه یدکی قالب..."
                   value={holdDescription}
                   onChange={e => setHoldDescription(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setHoldModalContext(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold cursor-pointer flex items-center gap-1.5 shadow-xs"
+                  className="px-5 py-1.5 bg-[#e9730c] hover:bg-[#cc6208] text-white rounded-sm font-bold cursor-pointer flex items-center gap-1.5 border border-[#c05b06]"
                 >
                   <Pause className="w-3.5 h-3.5" />
                   <span>تایید و فریز خط (Hold)</span>
@@ -4650,49 +4728,57 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
       {/* MODAL: ROLL-FORWARD REMAINING QUOTA TO NEXT SHIFT / DAY              */}
       {/* ==================================================================== */}
       {rollForwardModalContext && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-right text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-md w-full p-5 shadow-md space-y-3.5 text-right text-xs">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
+                <div className="p-1.5 rounded-sm bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                   <FastForward className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">
+                  <h4 className="font-bold text-sm text-[#333333]">
                     انتقال مانده تیراژ به شیفت / روز آینده (Roll-Forward)
                   </h4>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    {rollForwardModalContext.op.opCode} • {rollForwardModalContext.partItem.orderCode}
-                  </span>
+                  <div className="flex items-center gap-1.5 text-[10px] text-[#666666] font-mono mt-0.5">
+                    <span>{rollForwardModalContext.op.opCode}</span>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => router.traceDocument(rollForwardModalContext.partItem.orderCode, 'WIP_TRACEABILITY')}
+                      className="sap-doc-link"
+                    >
+                      {rollForwardModalContext.partItem.orderCode}
+                    </button>
+                  </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setRollForwardModalContext(null)}
-                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 hover:bg-[#f0f0f0] rounded-sm text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl space-y-1.5">
-              <div className="font-bold text-slate-900">{rollForwardModalContext.partItem.partName}</div>
+            <div className="p-3 bg-[#e5f3fa] border border-[#b3ddf2] rounded-sm space-y-1.5">
+              <div className="font-bold text-[#333333]">{rollForwardModalContext.partItem.partName}</div>
               <div className="grid grid-cols-3 gap-2 text-center pt-1 font-mono">
-                <div className="bg-white/80 p-1.5 rounded-lg border border-blue-100">
-                  <span className="text-[9px] text-slate-500 block">هدف شیفت جاری</span>
-                  <strong className="text-slate-900 text-xs">
+                <div className="bg-[#ffffff] p-1.5 rounded-sm border border-[#d9d9d9]">
+                  <span className="text-[9px] text-[#666666] block">هدف شیفت جاری</span>
+                  <strong className="text-[#333333] text-xs tabular-nums">
                     {formatNumber(rollForwardModalContext.op.effectiveTargetQty)}
                   </strong>
                 </div>
-                <div className="bg-white/80 p-1.5 rounded-lg border border-emerald-100">
-                  <span className="text-[9px] text-slate-500 block">تولید سالم</span>
-                  <strong className="text-emerald-700 text-xs">
+                <div className="bg-[#ffffff] p-1.5 rounded-sm border border-[#b7dfbf]">
+                  <span className="text-[9px] text-[#666666] block">تولید سالم</span>
+                  <strong className="text-[#107e3e] text-xs tabular-nums">
                     {formatNumber(rollForwardModalContext.op.completedGoodQty)}
                   </strong>
                 </div>
-                <div className="bg-white/80 p-1.5 rounded-lg border border-amber-100">
-                  <span className="text-[9px] text-slate-500 block">مانده قابل انتقال</span>
-                  <strong className="text-amber-700 text-xs">
+                <div className="bg-[#ffffff] p-1.5 rounded-sm border border-[#f5cba7]">
+                  <span className="text-[9px] text-[#666666] block">مانده قابل انتقال</span>
+                  <strong className="text-[#e9730c] text-xs tabular-nums">
                     {formatNumber(rollForwardModalContext.remainingQty)}
                   </strong>
                 </div>
@@ -4708,13 +4794,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">
+                  <label className="block font-bold text-[#333333] mb-1">
                     روز کاری مقصد *
                   </label>
                   <select
                     value={rfTargetDay}
                     onChange={e => setRfTargetDay(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 font-bold text-xs text-slate-900 focus:outline-none focus:bg-white cursor-pointer"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1.5 font-bold text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
                   >
                     {WORK_DAYS.map(d => (
                       <option key={d.index} value={d.index}>
@@ -4724,13 +4810,13 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   </select>
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">
+                  <label className="block font-bold text-[#333333] mb-1">
                     شیفت کاری مقصد *
                   </label>
                   <select
                     value={rfTargetShift}
                     onChange={e => setRfTargetShift(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 font-bold text-xs text-slate-900 focus:outline-none focus:bg-white cursor-pointer"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1.5 font-bold text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
                   >
                     <option value="شیفت صبح">شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)</option>
                     <option value="شیفت عصر">شیفت عصر (۱۵:۰۰ - ۲۳:۰۰)</option>
@@ -4740,7 +4826,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   تیراژ انتقالی به برنامه شیفت بعد (عدد) *
                 </label>
                 <input
@@ -4750,18 +4836,18 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   required
                   value={rfQuantity}
                   onChange={e => setRfQuantity(Number(e.target.value) || 0)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-xs text-blue-700 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-xs text-[#007cc0] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   علت انتقال به شیفت بعد *
                 </label>
                 <select
                   value={rfReason}
                   onChange={e => setRfReason(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:bg-white cursor-pointer"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs font-bold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
                 >
                   <option value="پایان ساعت کار شیفت و تکمیل نشدن تیراژ">پایان ساعت کار شیفت و تکمیل نشدن تیراژ</option>
                   <option value="توقف موقت پرس / عیب سنبه یا قالب">توقف موقت پرس / عیب سنبه یا قالب</option>
@@ -4771,7 +4857,7 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   یادداشت شیفت و توضیحات سرپرست
                 </label>
                 <input
@@ -4779,21 +4865,21 @@ export const ErpProductionWorkbenchView: React.FC<ErpProductionWorkbenchViewProp
                   placeholder="مثلاً: هماهنگ با سرپرست شیفت عصر جهت تکمیل سقف پالت..."
                   value={rfNotes}
                   onChange={e => setRfNotes(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setRollForwardModalContext(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold cursor-pointer flex items-center gap-1.5 shadow-xs"
+                  className="sap-btn-emphasized px-5 py-1.5 flex items-center gap-1.5"
                 >
                   <FastForward className="w-3.5 h-3.5" />
                   <span>ثبت انتقال و تراز برنامه</span>

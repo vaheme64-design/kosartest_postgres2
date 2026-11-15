@@ -103,10 +103,10 @@ export const FormulaTooltip: React.FC<FormulaTooltipProps> = ({
           updatePosition();
           setIsOpen(!isOpen);
         }}
-        className={`p-1 rounded-md transition-colors focus:outline-none ${
+        className={`p-1 rounded transition-colors focus:outline-none cursor-pointer ${
           variant === 'dark'
-            ? 'text-slate-400 hover:text-indigo-300 hover:bg-slate-800'
-            : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+            ? 'text-[#666666] hover:text-[#007cc0] hover:bg-[#e5f3fa]'
+            : 'text-[#666666] hover:text-[#007cc0] hover:bg-[#e5f3fa]'
         }`}
         aria-label={`فرمول محاسبه: ${title}`}
       >
@@ -130,37 +130,37 @@ export const FormulaTooltip: React.FC<FormulaTooltipProps> = ({
               maxWidth: 'calc(100vw - 24px)',
               zIndex: 9999,
             }}
-            className="p-3.5 bg-slate-900 text-white rounded-xl shadow-2xl border border-slate-700 text-right animate-in fade-in duration-150 font-sans"
+            className="p-3.5 bg-white text-[#333333] rounded-md shadow-xl border border-[#d9d9d9] text-right animate-in fade-in duration-150 font-sans"
             dir="rtl"
           >
-            <div className="flex items-center gap-1.5 text-indigo-300 font-bold text-xs mb-2 pb-1.5 border-b border-slate-800">
+            <div className="flex items-center gap-1.5 text-[#007cc0] font-bold text-xs mb-2 pb-1.5 border-b border-[#e8e8e8]">
               <Calculator className="w-3.5 h-3.5 shrink-0" />
               <span>منطق محاسبه: {title}</span>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-lg p-2 mb-2.5 font-mono text-[11px] text-amber-300 text-center leading-relaxed" dir="ltr">
+            <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-2 mb-2.5 font-mono text-[11px] text-[#333333] text-center leading-relaxed" dir="ltr">
               {formula}
             </div>
 
             {description && (
-              <div className="text-[11px] text-slate-300 leading-relaxed mb-2">
+              <div className="text-[11px] text-[#666666] leading-relaxed mb-2">
                 {description}
               </div>
             )}
 
             {variables && variables.length > 0 && (
               <div className="space-y-1.5 mb-2">
-                <div className="text-[10px] font-bold text-slate-400">اجزای فرمول:</div>
+                <div className="text-[10px] font-bold text-[#666666]">اجزای فرمول:</div>
                 {variables.map((v, idx) => (
-                  <div key={idx} className="flex items-start justify-between gap-2 text-[11px] bg-slate-800/60 px-2 py-1 rounded">
+                  <div key={idx} className="flex items-start justify-between gap-2 text-[11px] bg-[#f7f7f7] border border-[#e8e8e8] px-2 py-1 rounded">
                     <div>
-                      <span className="font-mono font-bold text-indigo-300 ml-1">
+                      <span className="font-mono font-bold text-[#007cc0] ml-1">
                         {v.name || v.symbol}:
                       </span>
-                      <span className="text-slate-300">{v.description || v.meaning}</span>
+                      <span className="text-[#333333]">{v.description || v.meaning}</span>
                     </div>
                     {v.value !== undefined && (
-                      <span className="font-mono font-bold text-emerald-400 shrink-0">{v.value}</span>
+                      <span className="font-mono font-bold text-[#107e3e] shrink-0">{v.value}</span>
                     )}
                   </div>
                 ))}
@@ -168,7 +168,7 @@ export const FormulaTooltip: React.FC<FormulaTooltipProps> = ({
             )}
 
             {(interpretation || note) && (
-              <div className="text-[10px] text-slate-400 leading-relaxed pt-1.5 border-t border-slate-800">
+              <div className="text-[10px] text-[#666666] leading-relaxed pt-1.5 border-t border-[#e8e8e8]">
                 {interpretation || note}
               </div>
             )}

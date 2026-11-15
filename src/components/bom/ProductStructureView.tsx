@@ -18,6 +18,7 @@ import {
 import { Part } from '../../types/inventory';
 import { toPersianDigits } from '../../utils/formatters';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { useErpRouter } from '../../context/RouterContext';
 
 export interface SubComponentNode {
   id: string;
@@ -116,6 +117,7 @@ interface ProductStructureViewProps {
 const STORAGE_KEY_PRODUCT_STRUCTURES = 'kpims_product_structures_v3';
 
 export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ parts }) => {
+  const { traceDocument } = useErpRouter();
   const [structures, setStructures] = useState<ProductStructureData[]>(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY_PRODUCT_STRUCTURES);
@@ -383,55 +385,62 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
     return (
       <React.Fragment key={node.id}>
-        <tr className="hover:bg-slate-50/80 transition-colors">
-          <td className="py-2.5 px-4">
+        <tr className="hover:bg-[#f5f5f5] transition-colors">
+          <td className="py-2 px-3">
             <div
               className="flex items-center gap-2"
-              style={{ paddingRight: `${(depth - 1) * 24}px` }}
+              style={{ paddingRight: `${(depth - 1) * 20}px` }}
             >
               {hasChildren ? (
                 <button
                   type="button"
                   onClick={() => toggleExpand(node.id)}
-                  className="w-5 h-5 rounded border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer shrink-0"
+                  className="w-5 h-5 rounded-sm border border-[#d9d9d9] bg-[#ffffff] flex items-center justify-center text-[#666666] hover:text-[#333333] cursor-pointer shrink-0"
                 >
                   {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 </button>
               ) : (
-                <span className="w-5 h-5 flex items-center justify-center text-slate-300 shrink-0">
+                <span className="w-5 h-5 flex items-center justify-center text-[#bfbfbf] shrink-0">
                   └
                 </span>
               )}
-              <span className="font-semibold text-xs text-slate-900">{node.partName}</span>
+              <span className="font-semibold text-xs text-[#333333]">{node.partName}</span>
             </div>
           </td>
-          <td className="py-2.5 px-3 font-mono text-xs text-slate-700 whitespace-nowrap">
-            {node.partCode}
+          <td className="py-2 px-3 font-mono text-xs whitespace-nowrap">
+            <button
+              type="button"
+              onClick={() => traceDocument(node.partCode, 'INVENTORY_LEDGER')}
+              className="sap-doc-link font-mono"
+              title="رهگیری موجودی و کاردکس قطعه"
+            >
+              {node.partCode}
+            </button>
           </td>
-          <td className="py-2.5 px-3 whitespace-nowrap">
+          <td className="py-2 px-3 whitespace-nowrap">
             <span
-              className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${
+              className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-sm border ${
                 depth === 1
-                  ? 'bg-slate-100 text-slate-800 border-slate-200'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'
+                  ? 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]'
+                  : 'bg-[#f5f5f5] text-[#666666] border-[#d9d9d9]'
               }`}
             >
               سطح {toPersianDigits(depth)}
             </span>
           </td>
-          <td className="py-2.5 px-3 font-mono font-bold text-xs text-slate-900 tabular-nums whitespace-nowrap">
+          <td className="py-2 px-3 font-mono font-bold text-xs text-[#333333] tabular-nums whitespace-nowrap">
             {toPersianDigits(node.quantity)}{' '}
-            <span className="text-[11px] font-sans font-normal text-slate-500">{node.unit}</span>
+            <span className="text-[11px] font-sans font-normal text-[#666666]">{node.unit}</span>
           </td>
-          <td className="py-2.5 px-3 text-[11px] text-slate-500">
+          <td className="py-2 px-3 text-[11px] text-[#666666]">
             {node.notes || '—'}
           </td>
-          <td className="py-2.5 px-3 text-left whitespace-nowrap">
+          <td className="py-2 px-3 text-left whitespace-nowrap">
             <div className="inline-flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => handleOpenAddSubComponent(node.id)}
-                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-[11px] font-medium inline-flex items-center gap-1 transition cursor-pointer"
+                className="sap-btn-standard px-2 py-0.5 text-[11px] inline-flex items-center gap-1"
                 title="افزودن جزء فرعی زیر این ردیف"
               >
                 <Plus className="w-3 h-3" />
@@ -440,7 +449,7 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
               <button
                 type="button"
                 onClick={() => handleOpenEditSubComponent(node)}
-                className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition cursor-pointer"
+                className="p-1 text-[#666666] hover:text-[#007cc0] hover:bg-[#e5f3fa] rounded-sm transition cursor-pointer"
                 title="ویرایش"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -448,7 +457,7 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
               <button
                 type="button"
                 onClick={() => handleDeleteNode(node.id)}
-                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                className="p-1 text-[#666666] hover:text-[#bb0000] hover:bg-[#ffecec] rounded-sm transition cursor-pointer"
                 title="حذف"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -464,34 +473,33 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
   };
 
   return (
-    <div className="space-y-4 text-right font-sans">
-      {/* Save Notification Toast */}
+    <div className="space-y-3.5 text-right font-sans">
       {saveMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl px-4 py-2.5 text-xs font-semibold flex items-center justify-between">
+        <div className="bg-[#ebf5ec] border border-[#b7dfbf] text-[#107e3e] rounded-sm px-4 py-2 text-xs font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
             <span>{saveMessage}</span>
           </div>
-          <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-mono bg-[#ffffff] text-[#107e3e] border border-[#b7dfbf] px-2 py-0.5 rounded-sm">
             همگام با MRP
           </span>
         </div>
       )}
 
-      {/* Unified Compact Header & Structure Selector */}
-      <div className="bg-white border border-slate-200/60 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      {/* SAP Fiori Dynamic Header & Structure Selector */}
+      <div className="sap-card p-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <FolderTree className="w-4 h-4 text-slate-600" />
-            <h3 className="text-sm font-medium text-slate-800">ساختار درختی محصول (BOM چندسطحی)</h3>
+            <FolderTree className="w-4 h-4 text-[#007cc0]" />
+            <h3 className="text-sm font-semibold text-[#333333]">ساختار درختی محصول (SAP BOM چندسطحی)</h3>
           </div>
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="h-4 w-px bg-[#d9d9d9] hidden sm:block" />
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">محصول:</span>
+            <span className="text-xs text-[#666666]">محصول:</span>
             <select
               value={selectedStructureId}
               onChange={e => setSelectedStructureId(e.target.value)}
-              className="bg-slate-50 border border-slate-200/70 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-slate-400 cursor-pointer"
+              className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs font-medium text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
             >
               {structures.map(s => (
                 <option key={s.id} value={s.id}>
@@ -506,18 +514,18 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
           <button
             type="button"
             onClick={() => handleOpenAddSubComponent(null)}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/70 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 text-xs whitespace-nowrap"
+            className="sap-btn-standard px-3 py-1.5 flex items-center gap-1 text-xs cursor-pointer whitespace-nowrap"
           >
-            <Plus className="w-3.5 h-3.5 text-slate-500" />
+            <Plus className="w-3.5 h-3.5" />
             <span>افزودن زیرمجموعه سطح ۱</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsNewAssemblyModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/80 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap"
+            className="sap-btn-standard px-3 py-1.5 flex items-center gap-1.5 text-xs cursor-pointer whitespace-nowrap"
           >
-            <Plus className="w-3.5 h-3.5 text-slate-600" />
+            <Plus className="w-3.5 h-3.5" />
             <span>محصول جدید</span>
           </button>
 
@@ -530,7 +538,7 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
                 'ساختار درختی محصول در سرور و ماژول برنامه‌ریزی تولید (MRP) ذخیره شد.'
               )
             }
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{isSyncing ? 'در حال ذخیره...' : 'ذخیره در MRP'}</span>
@@ -538,28 +546,32 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
         </div>
       </div>
 
-      {/* Clean Hierarchical Tree Table */}
+      {/* SAP Fiori Hierarchical BOM Tree Table */}
       {activeStructure && (
-        <div className="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
-          {/* Subtle Root Summary Bar */}
-          <div className="px-4 py-2.5 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div className="sap-card overflow-hidden">
+          <div className="px-4 py-2.5 bg-[#f7f7f7] border-b border-[#d9d9d9] flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-mono font-medium bg-slate-100 text-slate-800 border border-slate-200/70 px-2 py-0.5 rounded">
+              <button
+                type="button"
+                onClick={() => traceDocument(activeStructure.rootPartCode, 'INVENTORY_LEDGER')}
+                className="sap-doc-link text-[11px] font-mono font-semibold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] px-2 py-0.5 rounded-sm"
+                title="رهگیری محصول در انبار و کاردکس"
+              >
                 {activeStructure.rootPartCode}
-              </span>
-              <span className="text-xs font-medium text-slate-800">
+              </button>
+              <span className="text-xs font-semibold text-[#333333]">
                 {activeStructure.rootPartName}
               </span>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-[#666666]">
                 ({activeStructure.carModel})
               </span>
               {activeStructure.notes && (
-                <span className="text-[11px] text-slate-400">— {activeStructure.notes}</span>
+                <span className="text-[11px] text-[#666666]">— {activeStructure.notes}</span>
               )}
             </div>
-            <span className="text-[11px] text-slate-500 tabular-nums">
+            <span className="text-[11px] text-[#666666] tabular-nums">
               زیرمجموعه‌های سطح اول:{' '}
-              <strong className="font-mono text-slate-800">
+              <strong className="font-mono text-[#007cc0]">
                 {toPersianDigits(activeStructure.subComponents.length)}
               </strong>{' '}
               ردیف
@@ -567,23 +579,23 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
           </div>
 
           {activeStructure.subComponents.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-xs">
+            <div className="p-8 text-center text-[#666666] text-xs">
               هنوز هیچ زیرمجموعه‌ای برای این ساختار محصول تعریف نشده است. از دکمه «افزودن زیرمجموعه سطح ۱» استفاده کنید.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50/60 border-b border-slate-200 text-slate-500 font-semibold">
+              <table className="sap-table-compact w-full text-right text-xs">
+                <thead className="bg-[#f5f5f5] border-b border-[#d9d9d9] text-[#666666] font-semibold">
                   <tr>
-                    <th className="py-2.5 px-4">نام قطعه / زیرمجموعه (ساختار درختی)</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">کد فنی</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">سطح</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">ضریب مصرف</th>
-                    <th className="py-2.5 px-3">توضیحات فرآیند</th>
-                    <th className="py-2.5 px-3 text-left whitespace-nowrap">عملیات</th>
+                    <th>نام قطعه / زیرمجموعه (ساختار درختی)</th>
+                    <th className="whitespace-nowrap">کد فنی</th>
+                    <th className="whitespace-nowrap">سطح</th>
+                    <th className="whitespace-nowrap">ضریب مصرف</th>
+                    <th>توضیحات فرآیند</th>
+                    <th className="text-left whitespace-nowrap">عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#e8e8e8]">
                   {activeStructure.subComponents.map(node => renderTreeNode(node, 1))}
                 </tbody>
               </table>
@@ -594,11 +606,11 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
       {/* Modal 1: Add / Edit Recursive SubComponent */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <FolderTree className="w-4 h-4 text-amber-600" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-lg w-full p-5 shadow-md space-y-3.5 text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <h4 className="font-bold text-sm text-[#333333] flex items-center gap-2">
+                <FolderTree className="w-4 h-4 text-[#007cc0]" />
                 <span>
                   {editingNodeId
                     ? 'ویرایش جزء متشکله'
@@ -610,7 +622,7 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -618,7 +630,7 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
             <form onSubmit={handleSaveSubComponent} className="space-y-3 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 mb-1">
+                <label className="block font-medium text-[#333333] mb-1">
                   انتخاب قطعه یا ماده اولیه از کاتالوگ *
                 </label>
                 <SearchableSelect
@@ -645,30 +657,30 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">کد قطعه *</label>
+                  <label className="block font-medium text-[#333333] mb-1">کد قطعه *</label>
                   <input
                     type="text"
                     required
                     value={formPartCode}
                     onChange={e => setFormPartCode(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">عنوان کامل قطعه *</label>
+                  <label className="block font-medium text-[#333333] mb-1">عنوان کامل قطعه *</label>
                   <input
                     type="text"
                     required
                     value={formPartName}
                     onChange={e => setFormPartName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none font-medium"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">ضریب مصرف (مقدار) *</label>
+                  <label className="block font-medium text-[#333333] mb-1">ضریب مصرف (مقدار) *</label>
                   <input
                     type="number"
                     step="any"
@@ -676,15 +688,15 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
                     min={0.001}
                     value={formQty}
                     onChange={e => setFormQty(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">واحد سنجش</label>
+                  <label className="block font-medium text-[#333333] mb-1">واحد سنجش</label>
                   <select
                     value={formUnit}
                     onChange={e => setFormUnit(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none font-medium"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                   >
                     <option value="عدد">عدد</option>
                     <option value="کیلوگرم">کیلوگرم</option>
@@ -695,27 +707,27 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">توضیحات و فرآیند اتصال</label>
+                <label className="block font-medium text-[#333333] mb-1">توضیحات و فرآیند اتصال</label>
                 <textarea
                   rows={2}
                   value={formNotes}
                   onChange={e => setFormNotes(e.target.value)}
                   placeholder="نکات جوشکاری، برش ورق، تلرانس ابعادی..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm p-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 text-xs"
                 >
                   {editingNodeId ? 'ثبت تغییرات' : 'افزودن به ساختار درختی'}
                 </button>
@@ -727,17 +739,17 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
       {/* Modal 2: Create New Root Assembly Structure */}
       {isNewAssemblyModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <Plus className="w-4 h-4 text-amber-600" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-lg w-full p-5 shadow-md space-y-3.5 text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <h4 className="font-bold text-sm text-[#333333] flex items-center gap-2">
+                <Plus className="w-4 h-4 text-[#007cc0]" />
                 <span>تعریف ساختار درختی جدید برای محصول نهایی</span>
               </h4>
               <button
                 type="button"
                 onClick={() => setIsNewAssemblyModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -745,7 +757,7 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
             <form onSubmit={handleCreateNewAssembly} className="space-y-3 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 mb-1">انتخاب محصول نهایی ریشه *</label>
+                <label className="block font-medium text-[#333333] mb-1">انتخاب محصول نهایی ریشه *</label>
                 <SearchableSelect
                   value={newRootPartId}
                   onChange={val => setNewRootPartId(val)}
@@ -762,38 +774,38 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">مدل خودرو</label>
+                <label className="block font-medium text-[#333333] mb-1">مدل خودرو</label>
                 <input
                   type="text"
                   value={newCarModel}
                   onChange={e => setNewCarModel(e.target.value)}
                   placeholder="پژو ۲۰۶، تارا، دنا"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none font-medium"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">توضیحات کلی مجموعه</label>
+                <label className="block font-medium text-[#333333] mb-1">توضیحات کلی مجموعه</label>
                 <textarea
                   rows={2}
                   value={newAssemblyNotes}
                   onChange={e => setNewAssemblyNotes(e.target.value)}
                   placeholder="توضیحات و الزامات تحویل به خودروساز..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm p-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsNewAssemblyModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 text-xs"
                 >
                   ایجاد ساختار محصول
                 </button>

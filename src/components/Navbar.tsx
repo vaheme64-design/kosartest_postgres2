@@ -187,16 +187,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     icon: React.ComponentType<{ className?: string }>;
     color: string;
   }[] = [
-    { tab: 'dashboard', label: 'داشبورد', icon: LayoutDashboard, color: 'bg-emerald-600' },
-    { tab: 'master_data', label: 'اطلاعات پایه', icon: ScrollText, color: 'bg-blue-600' },
-    { tab: 'inventory', label: 'انبار و موجودی', icon: Boxes, color: 'bg-teal-600' },
-    { tab: 'production', label: 'تولید روزانه', icon: Hammer, color: 'bg-amber-600' },
-    { tab: 'wip', label: 'کار در جریان (WIP)', icon: GitCommit, color: 'bg-purple-600' },
-    { tab: 'planning', label: 'برنامه‌ریزی (MRP)', icon: CalendarDays, color: 'bg-indigo-600' },
-    { tab: 'machines', label: 'ماشین‌آلات و ظرفیت', icon: Cpu, color: 'bg-cyan-600' },
-    { tab: 'sapco', label: 'مواد SAPCO', icon: Layers, color: 'bg-rose-600' },
-    { tab: 'reports', label: 'گزارش‌ها', icon: FileSpreadsheet, color: 'bg-slate-700' },
-    { tab: 'settings', label: 'کاربران و تنظیمات', icon: Settings, color: 'bg-slate-800' },
+    { tab: 'dashboard', label: 'داشبورد', icon: LayoutDashboard, color: 'bg-[#007cc0]' },
+    { tab: 'master_data', label: 'اطلاعات پایه', icon: ScrollText, color: 'bg-[#007cc0]' },
+    { tab: 'inventory', label: 'انبار و موجودی', icon: Boxes, color: 'bg-[#007cc0]' },
+    { tab: 'production', label: 'تولید روزانه', icon: Hammer, color: 'bg-[#e9730c]' },
+    { tab: 'wip', label: 'کار در جریان (WIP)', icon: GitCommit, color: 'bg-[#007cc0]' },
+    { tab: 'planning', label: 'برنامه‌ریزی (MRP)', icon: CalendarDays, color: 'bg-[#007cc0]' },
+    { tab: 'machines', label: 'ماشین‌آلات و ظرفیت', icon: Cpu, color: 'bg-[#007cc0]' },
+    { tab: 'sapco', label: 'مواد SAPCO', icon: Layers, color: 'bg-[#bb0000]' },
+    { tab: 'reports', label: 'گزارش‌ها', icon: FileSpreadsheet, color: 'bg-[#333333]' },
+    { tab: 'settings', label: 'کاربران و تنظیمات', icon: Settings, color: 'bg-[#333333]' },
   ];
 
   const quickActions = [
@@ -241,219 +241,228 @@ export const Navbar: React.FC<NavbarProps> = ({
   const jalaliNumeric = formatToJalali(now);
 
   return (
-    <header className="bg-white/95 backdrop-blur-xs text-slate-800 border-b border-slate-200/60 sticky top-0 z-40 px-4 lg:px-6 py-2 transition-colors">
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-2.5">
-        {/* RIGHT SIDE: App Matrix + Brand / Active Page Title */}
-        <div className="flex items-center justify-between w-full lg:w-auto gap-2.5">
-          <div className="flex items-center gap-2.5">
-            {/* Minimal App Switcher */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowAppMatrix(!showAppMatrix)}
-                title="دسترسی سریع ماژول‌ها"
-                className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200/60 transition-colors cursor-pointer"
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-
-              {showAppMatrix && (
-                <div className="absolute right-0 top-full mt-2 w-76 bg-white text-slate-800 border border-slate-200/80 rounded-xl shadow-lg p-3.5 z-50">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
-                    <span className="text-xs font-medium text-slate-700">
-                      ماژول‌های سامانه
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowAppMatrix(false)}
-                      className="text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {appMatrixItems.map(item => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.tab}
-                          type="button"
-                          onClick={() => {
-                            if (onNavigate) onNavigate(item.tab);
-                            setShowAppMatrix(false);
-                          }}
-                          className={`flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-slate-50 border transition-all cursor-pointer ${
-                            activeTab === item.tab
-                              ? 'border-slate-300 bg-slate-50/80'
-                              : 'border-transparent'
-                          }`}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <span className="text-[11px] font-medium text-slate-700 text-center leading-tight">
-                            {item.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200/70 flex items-center justify-center text-slate-700 shrink-0">
-                <Factory className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-800">
-                  {TAB_TITLES[activeTab]}
-                </span>
-                <span className="text-slate-200 hidden sm:inline">|</span>
-                <span className="text-[11px] text-slate-400 hidden sm:inline">
-                  سامانه تولید و موجودی کوثر
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER: Universal Global Search Bar */}
-        <div className="relative w-full lg:max-w-sm flex items-center gap-2">
-          <div
-            onClick={() => setIsSearchPaletteOpen(true)}
-            className="flex-1 relative flex items-center rounded-lg pr-8 pl-12 py-1.5 text-xs cursor-pointer transition-colors select-none bg-slate-50/80 hover:bg-slate-100/70 border border-slate-200/60 text-slate-500"
+    <header className="bg-white text-[#333333] border-b border-[#d9d9d9] sticky top-0 z-40 px-4 lg:px-5 h-12 flex items-center justify-between gap-4 shadow-2xs">
+      {/* RIGHT SIDE (RTL): App Finder + SAP Emblem + App Title */}
+      <div className="flex items-center gap-3 min-w-0">
+        {/* SAP App Finder / Launchpad Tiles Menu */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowAppMatrix(!showAppMatrix)}
+            title="منوی برنامه‌ها (SAP Fiori App Finder)"
+            className="p-1.5 rounded bg-[#f5f5f5] hover:bg-[#e5f3fa] hover:text-[#007cc0] text-[#555555] border border-[#d9d9d9] transition-colors cursor-pointer flex items-center justify-center"
           >
-            <Search className="w-3.5 h-3.5 absolute right-2.5 top-2 pointer-events-none text-slate-400" />
-            <span className="truncate text-slate-400 text-[11px]">
-              جستجوی قطعات، دستور کار، کویل و اسناد…
-            </span>
-            <kbd className="absolute left-2 top-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-white border border-slate-200/60 pointer-events-none">
-              Ctrl+K
-            </kbd>
-          </div>
-        </div>
+            <Grid className="w-4 h-4" />
+          </button>
 
-        {/* LEFT SIDE: Minimal Executive Controls */}
-        <div className="flex items-center gap-2 shrink-0">
-          <PWAInstallButton />
-          {reorderAlertsCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                if (onNavigate) onNavigate('inventory', 'ALERTS');
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer bg-amber-50/60 hover:bg-amber-50 text-amber-700 border-amber-200/60"
-              title="مشاهده فهرست اقلام زیر نقطه سفارش"
-            >
-              <BellRing className="w-3 h-3" />
-              <span>{toPersianDigits(reorderAlertsCount)} کسری موجودی</span>
-            </button>
-          )}
-
-          {/* Operational Notifications Popover */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-1.5 rounded-lg border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-500 transition-colors cursor-pointer relative"
-              title="اعلان‌های خط تولید و انبار"
-            >
-              <Bell className="w-3.5 h-3.5" />
-              {reorderAlertsCount > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 absolute top-1.5 right-1.5" />
-              )}
-            </button>
-
-            {showNotifications && (
-              <div className="absolute left-0 top-full mt-2 w-80 bg-white text-slate-800 border border-slate-200/80 rounded-xl shadow-lg p-3 z-50 text-xs space-y-2">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="font-medium text-slate-800">اعلان‌ها و رویدادهای کارخانه</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowNotifications(false)}
-                    className="text-slate-400 hover:text-slate-700 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="space-y-1.5">
-                  {reorderAlertsCount > 0 && (
+          {showAppMatrix && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white text-[#333333] border border-[#d9d9d9] rounded-md shadow-xl p-3.5 z-50">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2 mb-2.5">
+                <span className="text-xs font-semibold text-[#333333]">
+                  کاتالوگ ماژول‌های SAP HANA
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAppMatrix(false)}
+                  className="text-[#666666] hover:text-[#333333] text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {appMatrixItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.tab;
+                  return (
                     <button
+                      key={item.tab}
                       type="button"
                       onClick={() => {
-                        if (onNavigate) onNavigate('inventory', 'ALERTS');
-                        setShowNotifications(false);
+                        if (onNavigate) onNavigate(item.tab);
+                        setShowAppMatrix(false);
                       }}
-                      className="w-full text-right p-2.5 bg-rose-50/40 hover:bg-rose-50/70 rounded-lg border border-rose-200/60 cursor-pointer block"
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded border transition-all cursor-pointer ${
+                        isActive
+                          ? 'border-[#007cc0] bg-[#e5f3fa] text-[#007cc0]'
+                          : 'border-[#e8e8e8] hover:bg-[#f5f5f5] text-[#333333]'
+                      }`}
                     >
-                      <div className="font-medium text-rose-800">
-                        هشدار کسری نقطه سفارش ({toPersianDigits(reorderAlertsCount)} قلم کالا)
+                      <div className={`w-7 h-7 rounded flex items-center justify-center ${isActive ? 'bg-[#007cc0] text-white' : 'bg-[#f0f0f0] text-[#007cc0]'}`}>
+                        <Icon className="w-3.5 h-3.5" />
                       </div>
-                      <div className="text-[11px] text-rose-600 mt-0.5">
-                        بررسی جدول کسری‌ها و صدور دستور خرید یا تولید جبرانی ←
-                      </div>
+                      <span className="text-[11px] font-medium text-center leading-tight">
+                        {item.label}
+                      </span>
                     </button>
-                  )}
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
+        {/* SAP Geometric Mark + Shell Context */}
+        <button
+          type="button"
+          onClick={() => onNavigate?.('dashboard')}
+          className="flex items-center gap-2.5 cursor-pointer shrink-0 group"
+        >
+          <div className="px-2 py-0.5 rounded bg-[#007cc0] text-white font-mono text-[11px] font-semibold tracking-normal flex items-center gap-1">
+            <span>SAP</span>
+            <span className="text-white/90 font-normal">| کوثر</span>
+          </div>
+          <span className="text-[#d9d9d9] hidden sm:inline">|</span>
+          <span className="text-xs font-semibold text-[#333333] truncate max-w-[240px] md:max-w-none group-hover:text-[#007cc0]">
+            {TAB_TITLES[activeTab]}
+          </span>
+        </button>
+      </div>
+
+      {/* CENTER: SAP Enterprise Global Search Field */}
+      <div className="relative flex-1 max-w-md hidden md:flex items-center">
+        <div
+          onClick={() => setIsSearchPaletteOpen(true)}
+          className="w-full relative flex items-center rounded pr-8 pl-14 py-1.5 text-xs cursor-pointer transition-colors select-none bg-[#f5f5f5] hover:bg-[#eeeeee] border border-[#cccccc] text-[#333333]"
+        >
+          <Search className="w-3.5 h-3.5 absolute right-2.5 top-1.5 pointer-events-none text-[#007cc0]" />
+          <span className="truncate text-[#666666] text-[11px]">
+            جستجو در دستورات ساخت، کالاها، قراردادها و اسناد...
+          </span>
+          <kbd className="absolute left-2 top-1 px-1.5 py-0.2 rounded text-[10px] font-mono text-[#555555] bg-white border border-[#d9d9d9] pointer-events-none">
+            Ctrl+K
+          </kbd>
+        </div>
+      </div>
+
+      {/* LEFT SIDE (RTL): Shell Actions & User Profile */}
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => setIsSearchPaletteOpen(true)}
+          className="md:hidden p-1.5 rounded bg-[#f5f5f5] hover:bg-[#e5f3fa] text-[#333333] border border-[#d9d9d9] cursor-pointer"
+          title="جستجوی سراسری"
+        >
+          <Search className="w-4 h-4 text-[#007cc0]" />
+        </button>
+
+        <PWAInstallButton />
+
+        {reorderAlertsCount > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigate) onNavigate('inventory', 'ALERTS');
+            }}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer bg-[#fff4e5] hover:bg-[#ffe8cc] text-[#b45309] border border-[#f5cba7]"
+            title="مشاهده فهرست اقلام زیر نقطه سفارش"
+          >
+            <BellRing className="w-3 h-3 text-[#e9730c]" />
+            <span>{toPersianDigits(reorderAlertsCount)} کسری نقطه سفارش</span>
+          </button>
+        )}
+
+        {/* Operational Notifications Popover */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="p-1.5 rounded bg-[#f5f5f5] hover:bg-[#e5f3fa] hover:text-[#007cc0] text-[#555555] border border-[#d9d9d9] transition-colors cursor-pointer relative"
+            title="اعلان‌های کارخانه"
+          >
+            <Bell className="w-4 h-4" />
+            {reorderAlertsCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-[#e9730c] border border-white absolute top-1 right-1" />
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="absolute left-0 top-full mt-2 w-80 bg-white text-[#333333] border border-[#d9d9d9] rounded-md shadow-xl p-3 z-50 text-xs space-y-2">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+                <span className="font-semibold text-[#333333]">مرکز اعلان‌های SAP HANA</span>
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(false)}
+                  className="text-[#666666] hover:text-[#333333] cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                {reorderAlertsCount > 0 && (
                   <button
                     type="button"
                     onClick={() => {
-                      if (onNavigate) onNavigate('inventory', 'COILS');
+                      if (onNavigate) onNavigate('inventory', 'ALERTS');
                       setShowNotifications(false);
                     }}
-                    className="w-full text-right p-2.5 bg-slate-50/70 hover:bg-slate-100/70 rounded-lg border border-slate-100 cursor-pointer block"
+                    className="w-full text-right p-2.5 bg-[#fff4e5] hover:bg-[#ffe8cc] rounded border border-[#f5cba7] cursor-pointer block"
                   >
-                    <div className="font-medium text-slate-700">موجودی کلاف‌های ورق در انبار</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      {toPersianDigits(coilsCount)} رول فیزیکی با برچسب و کویل‌پک آماده برش در سالن است.
+                    <div className="font-medium text-[#b45309]">
+                      هشدار کسری نقطه سفارش ({toPersianDigits(reorderAlertsCount)} قلم کالا)
+                    </div>
+                    <div className="text-[11px] text-[#7d3c0a] mt-0.5">
+                      بررسی جدول کسری‌ها و صدور دستور خرید یا تولید جبرانی ←
                     </div>
                   </button>
-                </div>
-              </div>
-            )}
-          </div>
+                )}
 
-          {/* User Profile & System Menu */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 pl-2.5 pr-1.5 py-1 rounded-lg border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
-            >
-              <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 border border-slate-200/70 flex items-center justify-center font-medium text-[11px]">
-                {currentUser.displayName ? currentUser.displayName[0] : 'ک'}
-              </div>
-              <div className="hidden md:block text-right leading-tight">
-                <div className="text-[11px] font-medium text-slate-700 truncate max-w-[120px]">
-                  {currentUser.displayName || 'مدیر تولید'}
-                </div>
-                <div className="text-[10px] text-slate-400 truncate max-w-[120px]">
-                  {roleLabels[currentUser.role] || 'مدیر سیستم'}
-                </div>
-              </div>
-            </button>
-
-            {showUserMenu && (
-              <div
-                className="absolute left-0 top-full mt-2 w-72 bg-white text-slate-900 border border-slate-200 rounded-xl shadow-xl p-3 z-50 text-xs space-y-3 animate-in fade-in"
-                onClick={e => e.stopPropagation()}
-              >
-                {/* User Info Header */}
-                <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-slate-900">{currentUser.displayName || 'مدیر کارخانه کوثر'}</div>
-                    <div className="text-[11px] text-slate-500">{roleLabels[currentUser.role]}</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onNavigate) onNavigate('inventory', 'COILS');
+                    setShowNotifications(false);
+                  }}
+                  className="w-full text-right p-2.5 bg-[#f7f7f7] hover:bg-[#e5f3fa] rounded border border-[#e8e8e8] cursor-pointer block"
+                >
+                  <div className="font-medium text-[#333333]">موجودی کلاف‌های ورق در انبار</div>
+                  <div className="text-[11px] text-[#666666] mt-0.5">
+                    {toPersianDigits(coilsCount)} رول فیزیکی با برچسب و کویل‌پک آماده برش در سالن است.
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono tabular-nums">
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* User Profile & System Menu */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 pl-2 pr-1 py-1 rounded hover:bg-[#f5f5f5] text-[#333333] transition-colors cursor-pointer"
+          >
+            <div className="w-7 h-7 rounded-full bg-[#007cc0] text-white flex items-center justify-center font-medium text-xs shrink-0">
+              {currentUser.displayName ? currentUser.displayName[0] : 'ک'}
+            </div>
+            <div className="hidden lg:block text-right leading-tight">
+              <div className="text-[11px] font-semibold text-[#333333] truncate max-w-[110px]">
+                {currentUser.displayName || 'مدیر تولید'}
+              </div>
+              <div className="text-[10px] text-[#666666] truncate max-w-[110px]">
+                {roleLabels[currentUser.role] || 'مدیر سیستم'}
+              </div>
+            </div>
+          </button>
+
+          {showUserMenu && (
+            <div
+              className="absolute left-0 top-full mt-2 w-72 bg-white text-[#333333] border border-[#d9d9d9] rounded-md shadow-xl p-3 z-50 text-xs space-y-3"
+              onClick={e => e.stopPropagation()}
+            >
+                {/* User Info Header */}
+                <div className="border-b border-[#e8e8e8] pb-2 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-[#333333]">{currentUser.displayName || 'مدیر کارخانه کوثر'}</div>
+                    <div className="text-[11px] text-[#666666]">{roleLabels[currentUser.role]}</div>
+                  </div>
+                  <div className="text-[10px] text-[#666666] font-mono tabular-nums">
                     {timeStr} · {jalaliNumeric}
                   </div>
                 </div>
 
                 {/* Role Switcher */}
                 <div>
-                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                  <label className="text-[11px] font-bold text-[#666666] block mb-1">
                     تغییر نقش کاربری (دسترسی):
                   </label>
                   <select
@@ -462,7 +471,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       onRoleChange(e.target.value as UserRoleProfile['role']);
                       setShowUserMenu(false);
                     }}
-                    className="w-full p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                    className="w-full p-1.5 rounded bg-[#ffffff] border border-[#d9d9d9] text-xs font-semibold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
                   >
                     {Object.entries(roleLabels).map(([roleKey, label]) => (
                       <option key={roleKey} value={roleKey}>
@@ -473,20 +482,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* System & Database Quick Links */}
-                <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                <div className="pt-2 border-t border-[#e8e8e8] space-y-1">
                   <button
                     type="button"
                     onClick={() => {
                       setShowUserMenu(false);
                       onOpenErpModal();
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 cursor-pointer"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-[#e5f3fa] text-[#333333] cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
-                      <Database className="w-3.5 h-3.5 text-slate-500" />
+                      <Database className="w-3.5 h-3.5 text-[#007cc0]" />
                       <span>وضعیت پایگاه داده (PostgreSQL)</span>
                     </div>
-                    <span className="text-[10px] text-emerald-600 font-bold">متصل</span>
+                    <span className="text-[10px] text-[#107e3e] font-bold">متصل</span>
                   </button>
 
                   <button
@@ -496,9 +505,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setShowUserMenu(false);
                     }}
                     disabled={loading}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 cursor-pointer disabled:opacity-50"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[#e5f3fa] text-[#333333] cursor-pointer disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 text-blue-500 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-3.5 h-3.5 text-[#007cc0] ${loading ? 'animate-spin' : ''}`} />
                     <span>بازنشانی داده‌های نمونه کارخانه</span>
                   </button>
 
@@ -507,14 +516,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       type="button"
                       onClick={() => setShowConfirmClean(true)}
                       disabled={loading}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-rose-600 cursor-pointer"
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[#fdf3f3] text-[#bb0000] cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>پاکسازی داده‌های نمونه</span>
                     </button>
                   ) : (
-                    <div className="flex items-center justify-between bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs">
-                      <span className="text-rose-700 text-[11px] font-bold">تأیید پاکسازی داده‌ها؟</span>
+                    <div className="flex items-center justify-between bg-[#fdf3f3] border border-[#e5b3b3] px-2.5 py-1.5 rounded text-xs">
+                      <span className="text-[#bb0000] text-[11px] font-bold">تأیید پاکسازی داده‌ها؟</span>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -523,14 +532,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setShowConfirmClean(false);
                             setShowUserMenu(false);
                           }}
-                          className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-0.5 rounded text-[10px] cursor-pointer"
+                          className="bg-[#bb0000] hover:bg-[#990000] text-white font-bold px-2 py-0.5 rounded text-[10px] cursor-pointer"
                         >
                           بله، حذف
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowConfirmClean(false)}
-                          className="text-slate-600 hover:text-slate-900 px-1.5 py-0.5 text-[10px] cursor-pointer"
+                          className="text-[#666666] hover:text-[#333333] px-1.5 py-0.5 text-[10px] cursor-pointer"
                         >
                           انصراف
                         </button>
@@ -539,12 +548,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="pt-2 border-t border-[#e8e8e8] flex items-center justify-between text-[11px] text-[#666666]">
                   <span>سامانه صنعتی کوثر · ویرایش سازمانی</span>
                   <button
                     type="button"
                     onClick={() => setShowUserMenu(false)}
-                    className="text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
+                    className="text-[#007cc0] hover:underline font-semibold cursor-pointer"
                   >
                     بستن
                   </button>
@@ -552,7 +561,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
           </div>
-        </div>
       </div>
 
       {/* Unified Global Command Palette Modal (Ctrl+K) */}

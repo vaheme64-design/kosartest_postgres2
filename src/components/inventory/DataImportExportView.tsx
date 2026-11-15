@@ -362,25 +362,25 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
   };
 
   return (
-    <div className="space-y-5 text-right" dir="rtl">
+    <div className="space-y-4 text-right" dir="rtl">
       {/* Header & Mode Switcher */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+      <div className="sap-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-base font-bold text-[#333333] flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5 text-[#107e3e]" />
             <span>مرکز ورود اطلاعات از اکسل (.xlsx / .csv) و دریافت خروجی‌های کارخانه‌ای</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[#666666] mt-1">
             ورود گروهی رول‌ها، کالاها (ورق، پیچ و مهره، لاستیک)، انبارها و قراردادها همراه با پشتیبانی مستقیم از فایل‌های اکسل Excel
           </p>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+        <div className="flex items-center gap-1 bg-[#f5f5f5] p-1 rounded-sm border border-[#d9d9d9]">
           <button
             type="button"
             onClick={() => setActiveMode('IMPORT')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-              activeMode === 'IMPORT' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition-colors cursor-pointer ${
+              activeMode === 'IMPORT' ? 'bg-[#007cc0] text-white' : 'text-[#333333] hover:bg-[#e5f3fa]'
             }`}
           >
             <Upload className="w-3.5 h-3.5" />
@@ -389,8 +389,8 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
           <button
             type="button"
             onClick={() => setActiveMode('EXPORT')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-              activeMode === 'EXPORT' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition-colors cursor-pointer ${
+              activeMode === 'EXPORT' ? 'bg-[#007cc0] text-white' : 'text-[#333333] hover:bg-[#e5f3fa]'
             }`}
           >
             <Download className="w-3.5 h-3.5" />
@@ -401,17 +401,17 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
 
       {notification && (
         <div
-          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+          className={`p-3 rounded-sm border flex items-center justify-between text-xs ${
             notification.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
+              ? 'bg-[#ebf7ef] border-[#a9dfbf] text-[#107e3e]'
+              : 'bg-[#ffecec] border-[#f5b7b1] text-[#bb0000]'
           }`}
         >
           <div className="flex items-center gap-2">
             {notification.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <AlertTriangle className="w-4 h-4 shrink-0" />
             )}
             <span>{notification.message}</span>
           </div>
@@ -422,24 +422,24 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
       )}
 
       {activeMode === 'IMPORT' ? (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* Step 1 & 2: Choose Type & Download Template */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="sap-card p-4 space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
               <div>
-                <h3 className="text-xs font-bold text-slate-900">
+                <h3 className="text-xs font-bold text-[#333333]">
                   گام اول: نوع اطلاعاتی که می‌خواهید وارد کنید را انتخاب نمایید
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-[#666666] mt-0.5">
                   پس از انتخاب نوع اطلاعات، فایل نمونه اکسل را دانلود کرده و طبق راهنمای ستون‌ها تکمیل کنید.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleDownloadSampleCsv}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs shrink-0"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 text-[#107e3e]" />
                 <span>دانلود فایل نمونه اکسل (CSV/Excel)</span>
               </button>
             </div>
@@ -457,10 +457,10 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                   key={t.id}
                   type="button"
                   onClick={() => setTemplateType(t.id)}
-                  className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  className={`p-2.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer ${
                     templateType === t.id
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0]'
+                      : 'bg-[#f5f5f5] text-[#333333] border-[#d9d9d9] hover:bg-[#e8e8e8]'
                   }`}
                 >
                   {t.label}
@@ -471,35 +471,35 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
 
           {/* Step 3: Persian Column Guide Table */}
           {templateData && (
-            <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3 shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                <Info className="w-4 h-4 text-blue-600" />
+            <div className="sap-card p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#333333]">
+                <Info className="w-4 h-4 text-[#007cc0]" />
                 <span>گام دوم: راهنمای ستون‌های فایل اکسل «{templateData.title}»</span>
               </div>
 
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+              <div className="overflow-x-auto rounded-sm border border-[#d9d9d9]">
+                <table className="w-full text-right text-xs sap-table-compact">
+                  <thead className="bg-[#ffffff] text-[#333333] border-b border-[#d9d9d9]">
                     <tr>
-                      <th className="py-2.5 px-3">عنوان ستون</th>
-                      <th className="py-2.5 px-3">نام لاتین ستون (کلید)</th>
-                      <th className="py-2.5 px-3">وضعیت الزامی</th>
-                      <th className="py-2.5 px-3">نمونه مقدار معتبر</th>
+                      <th>عنوان ستون</th>
+                      <th>نام لاتین ستون (کلید)</th>
+                      <th>وضعیت الزامی</th>
+                      <th>نمونه مقدار معتبر</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#e8e8e8]">
                     {(templateData.columns || []).map((col: any) => (
-                      <tr key={col.key} className="hover:bg-slate-50/70">
-                        <td className="py-2.5 px-3 font-bold text-slate-900">{col.titlePersian || col.label || col.key}</td>
-                        <td className="py-2.5 px-3 font-mono text-blue-700">{col.key}</td>
-                        <td className="py-2.5 px-3">
+                      <tr key={col.key} className="hover:bg-[#e5f3fa]">
+                        <td className="font-bold text-[#333333]">{col.titlePersian || col.label || col.key}</td>
+                        <td className="font-mono text-[#007cc0]">{col.key}</td>
+                        <td>
                           {col.required ? (
-                            <span className="text-rose-600 font-semibold">الزامی (*)</span>
+                            <span className="text-[#bb0000] font-semibold">الزامی (*)</span>
                           ) : (
-                            <span className="text-slate-500">اختیاری</span>
+                            <span className="text-[#666666]">اختیاری</span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-emerald-700">{String(col.example ?? '—')}</td>
+                        <td className="font-mono text-[#107e3e]">{String(col.example ?? '—')}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -509,20 +509,20 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
           )}
 
           {/* Step 4 & 5: File Upload + Visual Table Preview */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4 shadow-2xs">
+          <div className="sap-card p-4 space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-xs font-bold text-slate-900">
+                <h3 className="text-xs font-bold text-[#333333]">
                   گام سوم: بارگذاری فایل اکسل (.xlsx / .csv) و پیش‌نمایش
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-[#666666] mt-0.5">
                   فایل اکسل خود را انتخاب فرمایید. سیستم به صورت اتوماتیک ستون‌ها را اعتبارسنجی می‌کند.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold cursor-pointer transition-colors">
-                  <FileUp className="w-4 h-4 text-emerald-600" />
+                <label className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs">
+                  <FileUp className="w-4 h-4 text-[#107e3e]" />
                   <span>انتخاب فایل اکسل (.xlsx / .csv)</span>
                   <input type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleExcelFileUpload} className="hidden" />
                 </label>
@@ -531,7 +531,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                   type="button"
                   onClick={handleValidate}
                   disabled={isValidating || previewRows.length === 0}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{isValidating ? 'در حال اعتبارسنجی...' : 'بررسی و اعتبارسنجی ردیف‌ها'}</span>
@@ -541,26 +541,26 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
 
             {/* Visual Table Preview */}
             {previewRows.length > 0 && templateData && (
-              <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-80">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 sticky top-0">
+              <div className="overflow-x-auto rounded-sm border border-[#d9d9d9] max-h-80">
+                <table className="w-full text-right text-xs sap-table-compact">
+                  <thead className="bg-[#ffffff] text-[#333333] border-b border-[#d9d9d9] sticky top-0">
                     <tr>
-                      <th className="py-2 px-3 w-12">ردیف</th>
+                      <th className="w-12">ردیف</th>
                       {(templateData.columns || []).map((c: any) => (
-                        <th key={c.key} className="py-2 px-3">
+                        <th key={c.key}>
                           {c.titlePersian || c.label || c.key}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#e8e8e8]">
                     {previewRows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="py-2 px-3 font-mono text-slate-400">{toPersianDigits(idx + 1)}</td>
+                      <tr key={idx} className="hover:bg-[#e5f3fa]">
+                        <td className="font-mono text-[#666666]">{toPersianDigits(idx + 1)}</td>
                         {(templateData.columns || []).map((c: any) => {
                           const val = row[c.key] ?? row[c.titlePersian] ?? row[c.label] ?? '';
                           return (
-                            <td key={c.key} className="py-2 px-3 font-mono text-slate-800">
+                            <td key={c.key} className="font-mono text-[#333333]">
                               <input
                                 type="text"
                                 value={val}
@@ -569,7 +569,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                                   next[idx] = { ...next[idx], [c.key]: e.target.value };
                                   setPreviewRows(next);
                                 }}
-                                className="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:bg-white px-1 py-0.5 rounded focus:outline-none"
+                                className="w-full bg-transparent border-b border-transparent focus:border-[#007cc0] focus:bg-[#ffffff] px-1 py-0.5 rounded-sm focus:outline-none"
                               />
                             </td>
                           );
@@ -583,18 +583,18 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
 
             {/* Step 6 & 7: Validation Results & Confirm Import */}
             {validationResult && (
-              <div className="pt-3 border-t border-slate-200 space-y-3">
+              <div className="pt-3 border-t border-[#e8e8e8] space-y-3">
                 {/* Missing Master Data Auto-Addition Prompt Section */}
                 {validationResult.missingMasterData && validationResult.missingMasterData.hasMissingMasterData && (
-                  <div className="bg-amber-50 border border-amber-300 p-4 rounded-xl space-y-3 shadow-xs">
+                  <div className="bg-[#fff4e5] border border-[#f9d6a7] p-3.5 rounded-sm space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-start gap-2.5">
-                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-[#e9730c] shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-xs font-bold text-amber-950">
+                          <h4 className="text-xs font-bold text-[#333333]">
                             شناسایی اطلاعات پایه جدید (واحدهای سنجش، دسته‌بندی‌ها، انبارها، قطعات یا مشتریان غیرموجود)
                           </h4>
-                          <p className="text-[11px] text-amber-800 mt-0.5">
+                          <p className="text-[11px] text-[#666666] mt-0.5">
                             در این فایل اکسل، مواردی یافت شد که هنوز در اطلاعات پایه نرم‌افزار ثبت نشده‌اند. نیازی به اصلاح فایل اکسل نیست؛ با کلیک دکمه زیر، این موارد خودکار به اطلاعات پایه افزوده شده و اعتبارسنجی تکمیل می‌شود.
                           </p>
                         </div>
@@ -604,7 +604,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                         type="button"
                         onClick={handleCreateMissingMasterData}
                         disabled={isCreatingMasterData}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs"
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#e9730c] hover:bg-[#d06408] text-white rounded-sm text-xs font-bold transition-colors cursor-pointer shrink-0"
                       >
                         <Plus className="w-4 h-4" />
                         <span>
@@ -615,45 +615,45 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-amber-200/80 text-[11px]">
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-[#f9d6a7] text-[11px]">
                       {validationResult.missingMasterData.units?.map((u: any, idx: number) => (
-                        <span key={`u-${idx}`} className="bg-white border border-amber-300 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                          <span className="font-semibold text-amber-800">واحد سنجش:</span> <span className="font-mono font-bold">{u.symbol}</span> ({toPersianDigits(u.count)} ردیف)
+                        <span key={`u-${idx}`} className="bg-[#ffffff] border border-[#f9d6a7] text-[#333333] px-2.5 py-1 rounded-sm flex items-center gap-1">
+                          <span className="font-semibold text-[#e9730c]">واحد سنجش:</span> <span className="font-mono font-bold">{u.symbol}</span> ({toPersianDigits(u.count)} ردیف)
                         </span>
                       ))}
                       {validationResult.missingMasterData.categories?.map((c: any, idx: number) => (
-                        <span key={`cat-${idx}`} className="bg-white border border-amber-300 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                          <span className="font-semibold text-amber-800">دسته کالا:</span> {c.name} ({toPersianDigits(c.count)} ردیف)
+                        <span key={`cat-${idx}`} className="bg-[#ffffff] border border-[#f9d6a7] text-[#333333] px-2.5 py-1 rounded-sm flex items-center gap-1">
+                          <span className="font-semibold text-[#e9730c]">دسته کالا:</span> {c.name} ({toPersianDigits(c.count)} ردیف)
                         </span>
                       ))}
                       {validationResult.missingMasterData.parts?.map((p: any, idx: number) => (
-                        <span key={`p-${idx}`} className="bg-white border border-amber-300 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                          <span className="font-semibold text-amber-800">کالا/ورق:</span> <span className="font-mono font-bold">{p.code}</span> ({p.name})
+                        <span key={`p-${idx}`} className="bg-[#ffffff] border border-[#f9d6a7] text-[#333333] px-2.5 py-1 rounded-sm flex items-center gap-1">
+                          <span className="font-semibold text-[#e9730c]">کالا/ورق:</span> <span className="font-mono font-bold">{p.code}</span> ({p.name})
                         </span>
                       ))}
                       {validationResult.missingMasterData.warehouses?.map((w: any, idx: number) => (
-                        <span key={`wh-${idx}`} className="bg-white border border-amber-300 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                          <span className="font-semibold text-amber-800">انبار:</span> <span className="font-mono font-bold">{w.code}</span> ({w.name})
+                        <span key={`wh-${idx}`} className="bg-[#ffffff] border border-[#f9d6a7] text-[#333333] px-2.5 py-1 rounded-sm flex items-center gap-1">
+                          <span className="font-semibold text-[#e9730c]">انبار:</span> <span className="font-mono font-bold">{w.code}</span> ({w.name})
                         </span>
                       ))}
                       {validationResult.missingMasterData.customers?.map((cust: any, idx: number) => (
-                        <span key={`cust-${idx}`} className="bg-white border border-amber-300 text-amber-950 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                          <span className="font-semibold text-amber-800">مشتری:</span> {cust.name}
+                        <span key={`cust-${idx}`} className="bg-[#ffffff] border border-[#f9d6a7] text-[#333333] px-2.5 py-1 rounded-sm flex items-center gap-1">
+                          <span className="font-semibold text-[#e9730c]">مشتری:</span> {cust.name}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#f7f7f7] p-3 rounded-sm border border-[#d9d9d9]">
                   <div className="flex items-center gap-4 text-xs">
                     <span>
                       کل ردیف‌های خوانده‌شده: <strong className="font-mono">{formatNumber(validationResult.totalRows)}</strong>
                     </span>
-                    <span className="text-emerald-700 font-bold">
+                    <span className="text-[#107e3e] font-bold">
                       معتبر و قابل ثبت: <strong className="font-mono">{formatNumber(validationResult.validRowsCount)}</strong>
                     </span>
-                    <span className="text-rose-600 font-bold">
+                    <span className="text-[#bb0000] font-bold">
                       دارای خطا: <strong className="font-mono">{formatNumber(validationResult.invalidRowsCount)}</strong>
                     </span>
                   </div>
@@ -663,7 +663,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                       type="button"
                       onClick={handleConfirmImport}
                       disabled={isConfirming}
-                      className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-sm"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#107e3e] hover:bg-[#0d6832] text-white rounded-sm text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Check className="w-4 h-4" />
                       <span>
@@ -680,7 +680,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                     {validationResult.errors.map((err: any, idx: number) => (
                       <div
                         key={idx}
-                        className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center justify-between"
+                        className="p-2 bg-[#ffecec] border border-[#f5b7b1] rounded-sm text-xs text-[#bb0000] flex items-center justify-between"
                       >
                         <span className="font-bold">ردیف شماره {toPersianDigits(err.rowNumber)}:</span>
                         <span>{err.errorMessage}</span>
@@ -694,11 +694,11 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
         </div>
       ) : (
         /* TAB 2: Export Builder */
-        <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4 shadow-2xs text-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="sap-card p-4 space-y-4 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
             <div>
-              <h3 className="font-bold text-slate-900 text-sm">دریافت خروجی اکسل (CSV / XLSX فارسی)</h3>
-              <p className="text-slate-500 mt-0.5">
+              <h3 className="font-bold text-[#333333] text-sm">دریافت خروجی اکسل (CSV / XLSX فارسی)</h3>
+              <p className="text-[#666666] mt-0.5">
                 گزارش مورد نظر خود را انتخاب کرده، پیش‌نمایش را مشاهده کنید و فایل اکسل را دانلود نمایید.
               </p>
             </div>
@@ -706,7 +706,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
             <button
               type="button"
               onClick={handleExecuteExport}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold cursor-pointer"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-4 py-1.5"
             >
               <Download className="w-4 h-4" />
               <span>دانلود فایل اکسل (CSV)</span>
@@ -723,22 +723,22 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
                 key={item.id}
                 type="button"
                 onClick={() => setExportDataset(item.id as any)}
-                className={`p-3.5 rounded-xl border text-right transition-all cursor-pointer ${
+                className={`p-3.5 rounded-sm border text-right transition-all cursor-pointer ${
                   exportDataset === item.id
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                    ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0]'
+                    : 'bg-[#f5f5f5] text-[#333333] border-[#d9d9d9] hover:bg-[#e8e8e8]'
                 }`}
               >
                 <div className="font-bold">{item.title}</div>
-                <div className={`text-[11px] mt-1 ${exportDataset === item.id ? 'text-slate-300' : 'text-slate-500'}`}>
+                <div className={`text-[11px] mt-1 ${exportDataset === item.id ? 'text-[#006299]' : 'text-[#666666]'}`}>
                   {item.desc}
                 </div>
               </button>
             ))}
           </div>
 
-          <div className="pt-2 text-slate-500">
-            تعداد رکوردهای آماده خروجی: <strong className="text-slate-900 font-mono">{formatNumber(exportPreviewList.length)}</strong> ردیف
+          <div className="pt-2 text-[#666666]">
+            تعداد رکوردهای آماده خروجی: <strong className="text-[#333333] font-mono">{formatNumber(exportPreviewList.length)}</strong> ردیف
             {exportLoading && <span className="mr-2">(در حال بارگذاری...)</span>}
           </div>
         </div>

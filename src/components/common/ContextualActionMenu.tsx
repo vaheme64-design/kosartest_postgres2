@@ -336,26 +336,26 @@ export const ContextualActionMenu: React.FC<ContextualActionMenuProps> = ({
       dir="rtl"
     >
       {isOpen && (
-        <div className="mb-2.5 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 space-y-1 animate-in fade-in slide-in-from-bottom-2">
-          <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+        <div className="mb-2.5 w-80 bg-white border border-[#D9DFE5] rounded-md shadow-xl p-2 space-y-1 animate-in fade-in slide-in-from-bottom-2">
+          <div className="px-3 py-2 border-b border-[#EAECEF] flex items-center justify-between">
             <div>
-              <div className="text-xs font-bold text-slate-900">
+              <div className="text-xs font-semibold text-[#1D2D3E]">
                 اقدامات سریع: {TAB_CONTEXT_LABELS[activeTab]}
               </div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-[10px] text-[#556B82]">
                 میان‌برهای هوشمند متناسب با صفحه فعلی
               </div>
             </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+              className="p-1 rounded text-[#556B82] hover:text-[#1D2D3E] hover:bg-[#F5F6F7] cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-[#EAECEF]">
             {shortcuts.map(item => {
               const Icon = item.icon;
               return (
@@ -366,16 +366,16 @@ export const ContextualActionMenu: React.FC<ContextualActionMenuProps> = ({
                     item.onClick();
                     setIsOpen(false);
                   }}
-                  className="w-full p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-2.5 text-right cursor-pointer group"
+                  className="w-full p-2.5 rounded hover:bg-[#EBF5FF] transition-colors flex items-start gap-2.5 text-right cursor-pointer group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-slate-900 group-hover:text-white text-slate-700 flex items-center justify-center shrink-0 transition-colors mt-0.5">
+                  <div className="w-8 h-8 rounded bg-[#EBF5FF] border border-[#D1E8FF] group-hover:bg-[#0070F2] group-hover:text-white group-hover:border-[#0070F2] text-[#0064D9] flex items-center justify-center shrink-0 transition-colors mt-0.5">
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-900 group-hover:text-slate-950">
+                    <div className="text-xs font-semibold text-[#1D2D3E] group-hover:text-[#0064D9]">
                       {item.label}
                     </div>
-                    <div className="text-[11px] text-slate-500 leading-snug mt-0.5">
+                    <div className="text-[11px] text-[#556B82] leading-snug mt-0.5">
                       {item.subtitle}
                     </div>
                   </div>
@@ -389,19 +389,19 @@ export const ContextualActionMenu: React.FC<ContextualActionMenuProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg border transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-2 rounded-md shadow-md border transition-all cursor-pointer ${
           isOpen
-            ? 'bg-slate-800 text-white border-slate-700'
-            : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-800'
+            ? 'bg-[#354A5F] text-white border-[#354A5F]'
+            : 'bg-[#0070F2] hover:bg-[#005FD1] text-white border-[#005FD1]'
         }`}
         title="منوی اقدامات سریع متناسب با صفحه فعلی (Contextual Actions)"
       >
         {isOpen ? (
           <X className="w-4 h-4" />
         ) : (
-          <Plus className="w-4 h-4 text-emerald-400" />
+          <Plus className="w-4 h-4" />
         )}
-        <span className="text-xs font-bold">
+        <span className="text-xs font-semibold">
           اقدام سریع ({TAB_CONTEXT_LABELS[activeTab]})
         </span>
       </button>

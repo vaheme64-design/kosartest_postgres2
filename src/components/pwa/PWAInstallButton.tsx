@@ -12,9 +12,9 @@ export const PWAInstallButton: React.FC = () => {
       {!isOnline && (
         <span
           title="حالت آفلاین کارگاه فعال است — داده‌ها از حافظه محلی و سرویس‌ورکر خوانده می‌شوند"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#fff5eb] border border-[#f5d0a9] text-[#e9730c] text-[11px] font-semibold"
         >
-          <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+          <WifiOff className="w-3.5 h-3.5 text-[#e9730c]" />
           <span>آفلاین (کارگاه)</span>
         </span>
       )}
@@ -23,10 +23,10 @@ export const PWAInstallButton: React.FC = () => {
         <button
           type="button"
           onClick={install}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+          className="sap-btn-standard inline-flex items-center gap-1.5 !py-1 text-xs"
           title="نصب اپلیکیشن کارگاه برای استفاده آفلاین"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-3.5 h-3.5 text-[#007cc0]" />
           <span className="hidden sm:inline">نصب نسخه آفلاین</span>
         </button>
       )}
@@ -35,18 +35,18 @@ export const PWAInstallButton: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowIOSGuide(true)}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer"
+          className="sap-btn-standard inline-flex items-center gap-1.5 !py-1 text-xs"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-3.5 h-3.5 text-[#007cc0]" />
           <span className="hidden sm:inline">نصب در iOS</span>
         </button>
       )}
 
       {showIOSGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl border border-slate-200 text-right space-y-3">
-            <h3 className="text-sm font-bold text-slate-900">نصب نسخه آفلاین کارگاه روی آیفون / آیپد</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#333333]/40 backdrop-blur-[1px] p-4" dir="rtl">
+          <div className="w-full max-w-sm rounded-md bg-white p-5 shadow-lg border border-[#d9d9d9] text-right space-y-3">
+            <h3 className="text-sm font-bold text-[#333333]">نصب نسخه آفلاین کارگاه روی آیفون / آیپد</h3>
+            <p className="text-xs text-[#666666] leading-relaxed">
               ۱. دکمه <strong>Share</strong> در نوار پایین مرورگر Safari را لمس کنید.
               <br />
               ۲. گزینه <strong>Add to Home Screen</strong> را انتخاب نمایید تا برنامه در حالت آفلاین کارگاه نصب شود.
@@ -54,7 +54,7 @@ export const PWAInstallButton: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowIOSGuide(false)}
-              className="w-full rounded-lg bg-slate-900 py-2 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+              className="sap-btn-emphasized w-full text-xs"
             >
               متوجه شدم
             </button>
@@ -73,16 +73,16 @@ export const OfflineIndicator: React.FC<{ pendingSyncCount?: number }> = ({
   if (isOnline && pendingSyncCount === 0) return null;
 
   return (
-    <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-xl bg-slate-900/95 border border-slate-700 px-3.5 py-2 text-xs font-medium text-white shadow-lg">
+    <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-md bg-white border border-[#d9d9d9] px-3.5 py-2 text-xs font-medium text-[#333333] shadow-md">
       {!isOnline ? (
         <>
-          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-          <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+          <span className="h-2 w-2 rounded-full bg-[#e9730c] animate-pulse" />
+          <WifiOff className="w-3.5 h-3.5 text-[#e9730c]" />
           <span>حالت آفلاین کارگاه فعال است — ثبت اسناد و تولید بدون اینترنت ادامه دارد</span>
         </>
       ) : (
         <>
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#107e3e]" />
           <span>آنلاین — همگام‌سازی خودکار داده‌های کارگاه انجام شد</span>
         </>
       )}

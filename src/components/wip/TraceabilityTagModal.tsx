@@ -60,6 +60,7 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
   const [generatedTag, setGeneratedTag] = useState<TraceabilityTagData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const selectedPart = parts.find(p => p.code === selectedPartCode) || parts[0];
 
@@ -107,8 +108,9 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
 
       setGeneratedTag(data.data);
       setSuccessMsg(`کارت شناسایی سری ساخت ${data.data.lotNumber} با موفقیت صادر گردید.`);
+      setErrorMsg(null);
     } catch (err: any) {
-      alert(err.message || 'خطا در ارتباط با سرور');
+      setErrorMsg(err.message || 'خطا در ارتباط با سرور');
     } finally {
       setIsSubmitting(false);
     }
@@ -119,52 +121,59 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto font-sans text-right">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto font-sans text-right">
+      <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-4xl w-full shadow-md overflow-hidden my-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-slate-900 p-5 flex items-start justify-between gap-4">
+        <div className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] p-4 flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-purple-500/20 border border-purple-400/30 rounded-2xl text-purple-700">
-              <Tag className="w-6 h-6" />
+            <div className="p-2 bg-[#e5f3fa] border border-[#b3ddf2] rounded-sm text-[#007cc0]">
+              <Tag className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                <span>صدور کارت شناسایی و ردیابی فرآیند (Lot & Batch Tag Generator)</span>
-                <span className="text-[11px] bg-purple-500/30 text-purple-200 px-2.5 py-0.5 rounded-full font-mono">
+              <h3 className="text-base font-bold flex items-center gap-2 flex-wrap">
+                <span>صدور کارت شناسایی و ردیابی فرآیند (Lot &amp; Batch Tag Generator)</span>
+                <span className="text-[11px] bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] px-2 py-0.5 rounded-sm font-mono">
                   استاندارد ساپکو / ایران‌خودرو
                 </span>
               </h3>
-              <p className="text-xs text-purple-200 mt-1">
+              <p className="text-xs text-[#666666] mt-0.5">
                 تفکیک و کدگذاری سری‌های ساخت، ثبت مشخصات دستگاه و قالب، و صدور لیبل بارکددار پالت و سبد خط تولید
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-white/10 transition cursor-pointer"
+            className="p-1.5 rounded-sm text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5 sm:p-7 space-y-6 max-h-[75vh] overflow-y-auto">
+        <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
+          {errorMsg && (
+            <div className="p-3 bg-[#ffecec] border border-[#f5b7b1] rounded-sm text-xs text-[#bb0000] flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
           {successMsg && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-3 bg-[#ebf7ef] border border-[#a9dfbf] rounded-sm text-xs text-[#107e3e] flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
             {/* Part Selection */}
-            <div className="space-y-1.5 md:col-span-2">
-              <label className="font-bold text-slate-700">قطعه خودرویی تحت تولید:</label>
+            <div className="space-y-1 md:col-span-2">
+              <label className="font-bold text-[#333333]">قطعه خودرویی تحت تولید:</label>
               <select
                 value={selectedPartCode}
                 onChange={e => setSelectedPartCode(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-purple-600"
+                className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
               >
                 {parts.map(p => (
                   <option key={p.id} value={p.code}>
@@ -175,34 +184,34 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
             </div>
 
             {/* MO Number */}
-            <div className="space-y-1.5">
-              <label className="font-bold text-slate-700">شماره دستور ساخت (MO):</label>
+            <div className="space-y-1">
+              <label className="font-bold text-[#333333]">شماره دستور ساخت (MO):</label>
               <input
                 type="text"
                 value={moNumber}
                 onChange={e => setMoNumber(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-purple-600"
+                className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 placeholder="MO-1403-1082"
                 required
               />
             </div>
 
             {/* Operation Step */}
-            <div className="space-y-1.5">
-              <label className="font-bold text-slate-700">مرحله و عنوان عملیات:</label>
+            <div className="space-y-1">
+              <label className="font-bold text-[#333333]">مرحله و عنوان عملیات:</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={stepCode}
                   onChange={e => setStepCode(e.target.value)}
-                  className="w-28 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none"
+                  className="w-28 bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1.5 text-xs font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   placeholder="OP20_FORM"
                 />
                 <input
                   type="text"
                   value={stepName}
                   onChange={e => setStepName(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 text-xs text-slate-800 focus:outline-none"
+                  className="flex-1 bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-2.5 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   placeholder="عنوان عملیات"
                 />
               </div>
@@ -313,9 +322,9 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-md shadow-purple-600/20"
+                className="sap-btn-emphasized px-5 py-2 text-xs flex items-center gap-1.5"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span>صدور کارت شناسایی سری ساخت</span>
               </button>
             </div>
@@ -323,16 +332,16 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
 
           {/* Printable Label Preview */}
           {generatedTag && (
-            <div className="space-y-3 pt-4 border-t border-slate-200">
+            <div className="space-y-3 pt-4 border-t border-[#d9d9d9]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Printer className="w-4 h-4 text-purple-600" />
+                <span className="text-xs font-bold text-[#333333] flex items-center gap-1.5">
+                  <Printer className="w-4 h-4 text-[#007cc0]" />
                   پیش‌نمایش لیبل فیزیکی سبد / پالت (قابل چاپ مستقیم):
                 </span>
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="px-4 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="sap-btn-standard px-4 py-1.5 text-xs flex items-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>چاپ کارت ردیابی (Print Tag)</span>
@@ -342,101 +351,100 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
               {/* Tag Physical Frame */}
               <div
                 id="printable-tag"
-                className="bg-white border-2 border-slate-900 rounded-xl p-5 shadow-lg space-y-3 font-mono text-slate-900 printable-area"
+                className="bg-[#ffffff] border-2 border-[#333333] rounded-sm p-4 space-y-3 font-mono text-[#333333] printable-area"
               >
                 {/* Tag Top Header */}
-                <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3">
+                <div className="flex items-start justify-between border-b-2 border-[#333333] pb-2.5">
                   <div className="text-right">
-                    <span className="text-[11px] font-bold text-slate-600 block font-sans">
+                    <span className="text-[11px] font-bold text-[#666666] block font-sans">
                       سیستم مدیریت تولید و زنجیره تامین قطعات ساپکو (KPIMS)
                     </span>
-                    <h2 className="text-base font-extrabold text-slate-950 font-sans mt-0.5">
+                    <h2 className="text-base font-bold text-[#333333] font-sans mt-0.5">
                       کارت شناسایی و رهگیری فرآیند قطعات پای خط
                     </h2>
-                    <span className="text-xs font-bold text-purple-800">
+                    <span className="text-xs font-bold text-[#007cc0]">
                       شماره بچ / لات: {generatedTag.lotNumber}
                     </span>
                   </div>
-                  <div className="text-left bg-slate-100 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg">
-                    <span className="text-[10px] block text-slate-500">شماره کارت رهگیری</span>
+                  <div className="text-left bg-[#f5f5f5] border border-[#d9d9d9] text-[#333333] px-3 py-1.5 rounded-sm">
+                    <span className="text-[10px] block text-[#666666]">شماره کارت رهگیری</span>
                     <span className="text-xs font-bold font-mono">{generatedTag.tagNumber}</span>
                   </div>
                 </div>
 
                 {/* Main Table Info */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-sans">
-                  <div className="p-2 border border-slate-300 rounded-lg bg-slate-50">
-                    <span className="text-[10px] text-slate-500 block">کد فنی قطعه:</span>
-                    <span className="font-bold text-slate-900 font-mono text-sm">{generatedTag.partCode}</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm bg-[#f7f7f7]">
+                    <span className="text-[10px] text-[#666666] block">کد فنی قطعه:</span>
+                    <span className="font-bold text-[#333333] font-mono text-sm">{generatedTag.partCode}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg bg-slate-50 col-span-2">
-                    <span className="text-[10px] text-slate-500 block">نام قطعه و خودرو:</span>
-                    <span className="font-bold text-slate-900">{generatedTag.partName} ({generatedTag.carModel})</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm bg-[#f7f7f7] col-span-2">
+                    <span className="text-[10px] text-[#666666] block">نام قطعه و خودرو:</span>
+                    <span className="font-bold text-[#333333]">{generatedTag.partName} ({generatedTag.carModel})</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg bg-emerald-50 border-emerald-300 text-emerald-900">
-                    <span className="text-[10px] text-emerald-700 block">تعداد در بسته:</span>
-                    <span className="font-extrabold text-base font-mono">{toPersianDigits(generatedTag.quantity)} {generatedTag.unit}</span>
+                  <div className="p-2 border border-[#a9dfbf] rounded-sm bg-[#ebf7ef] text-[#107e3e]">
+                    <span className="text-[10px] text-[#107e3e] block">تعداد در بسته:</span>
+                    <span className="font-bold text-base font-mono">{toPersianDigits(generatedTag.quantity)} {generatedTag.unit}</span>
                   </div>
 
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">دستور ساخت (MO):</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">دستور ساخت (MO):</span>
                     <span className="font-bold font-mono">{generatedTag.manufacturingOrderNumber}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">مرحله و ایستگاه:</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">مرحله و ایستگاه:</span>
                     <span className="font-bold font-mono">{generatedTag.stepCode} - {generatedTag.stepName}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">دستگاه پرس / قالب:</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">دستگاه پرس / قالب:</span>
                     <span className="font-bold font-mono">{generatedTag.machineCode} / {generatedTag.dieMoldCode}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">شیفت و تاریخ:</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">شیفت و تاریخ:</span>
                     <span className="font-bold">{generatedTag.shift === 'MORNING' ? 'صبح' : generatedTag.shift === 'EVENING' ? 'عصر' : 'شب'} - {generatedTag.productionDate}</span>
                   </div>
 
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">شماره کلاف ورق:</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">شماره کلاف ورق:</span>
                     <span className="font-bold font-mono">{generatedTag.sourceCoilPackNumber}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">اپراتور تولید:</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">اپراتور تولید:</span>
                     <span className="font-bold">{generatedTag.operatorName}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] text-slate-500 block">سرپرست خط:</span>
+                  <div className="p-2 border border-[#d9d9d9] rounded-sm">
+                    <span className="text-[10px] text-[#666666] block">سرپرست خط:</span>
                     <span className="font-bold">{generatedTag.supervisorName}</span>
                   </div>
-                  <div className="p-2 border border-slate-300 rounded-lg bg-purple-50 text-purple-900 border-purple-200">
-                    <span className="text-[10px] text-purple-700 block">وضعیت کیفی QC:</span>
+                  <div className="p-2 border border-[#b3ddf2] rounded-sm bg-[#e5f3fa] text-[#007cc0]">
+                    <span className="text-[10px] text-[#007cc0] block">وضعیت کیفی QC:</span>
                     <span className="font-bold flex items-center gap-1 mt-0.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-700" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#007cc0]" />
                       <span>{generatedTag.qualityStatus === 'APPROVED' ? 'تایید کیفی ۱۰۰٪' : 'مشروط'}</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Barcode & Scan Block */}
-                <div className="p-3 bg-white border border-slate-400 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
+                <div className="p-3 bg-[#ffffff] border border-[#bfbfbf] rounded-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
                   <div className="space-y-1">
-                    <div className="tracking-widest font-mono text-xs font-bold text-slate-900">
+                    <div className="tracking-widest font-mono text-xs font-bold text-[#333333]">
                       {generatedTag.barcodeValue}
                     </div>
-                    {/* High-Contrast 1D Barcode Pattern (Real Dark Bars) */}
-                    <div className="h-9 flex items-center justify-center sm:justify-start gap-1 overflow-hidden bg-white p-1 rounded">
+                    <div className="h-9 flex items-center justify-center sm:justify-start gap-1 overflow-hidden bg-[#ffffff] p-1">
                       {[2,1,3,1,1,2,4,1,2,1,3,2,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1,3,1,2].map((w, i) => (
                         <span
                           key={i}
-                          className="h-full bg-slate-950 inline-block"
+                          className="h-full bg-[#333333] inline-block"
                           style={{ width: `${w * 2.2}px` }}
                         />
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-300 shrink-0">
-                    <QrCode className="w-8 h-8 text-slate-950" />
-                    <span className="text-[10px] text-slate-700 font-sans font-medium text-right">
+                  <div className="flex items-center gap-2 bg-[#f5f5f5] px-3 py-1.5 rounded-sm border border-[#d9d9d9] shrink-0">
+                    <QrCode className="w-8 h-8 text-[#333333]" />
+                    <span className="text-[10px] text-[#333333] font-sans font-medium text-right">
                       اسکن بارکد رهگیری<br />سامانه ردیابی پای خط ساپکو
                     </span>
                   </div>
@@ -447,11 +455,11 @@ export const TraceabilityTagModal: React.FC<TraceabilityTagModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
+        <div className="p-3.5 bg-[#f7f7f7] border-t border-[#e8e8e8] flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-slate-100 hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition cursor-pointer"
+            className="sap-btn-standard px-5 py-1.5 text-xs font-bold"
           >
             بستن پنجره
           </button>

@@ -193,27 +193,27 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 text-right font-sans" dir="rtl">
+    <div className="space-y-4 text-right font-sans" dir="rtl">
       {/* ==================================================================== */}
       {/* HEADER                                                               */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center shrink-0 shadow-xs">
-              <GitBranch className="w-6 h-6" />
+      <div className="sap-card p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-sm bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] flex items-center justify-center shrink-0">
+              <GitBranch className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                <h2 className="text-base font-bold text-[#333333]">
                   مستند فنی و نمودار جریان کار (Workflow) سیستم برنامه‌ریزی تولید بر اساس استانداردهای جهانی (SAP PP / MES)
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-900 border border-indigo-200">
+                <span className="px-2 py-0.5 rounded-sm text-[11px] font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                   انطباق کامل با الگوهای SAP PP، Odoo MRP و IATF 16949
                 </span>
               </div>
-              <p className="text-xs text-slate-600 mt-1">
-                توصیف چرخه کامل بسته تولید در صنایع قطعه‌سازی خودرو: از دریافت سفارش مشتری $\leftarrow$ انفجار مواد درختی (BOM) $\leftarrow$ زمان‌بندی پله‌ای عملیات (Routing) $\leftarrow$ رهگیری برخط موجودی نیمه‌ساخته (WIP) $\leftarrow$ صدور خودکار رسید محصول نهایی در انبار.
+              <p className="text-xs text-[#666666] mt-0.5">
+                توصیف چرخه کامل بسته تولید در صنایع قطعه‌سازی خودرو: از دریافت سفارش مشتری ← انفجار مواد درختی (BOM) ← زمان‌بندی پله‌ای عملیات (Routing) ← رهگیری برخط موجودی نیمه‌ساخته (WIP) ← صدور خودکار رسید محصول نهایی در انبار.
               </p>
             </div>
           </div>
@@ -222,9 +222,9 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
             <button
               type="button"
               onClick={handlePrintDoc}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs"
             >
-              <Printer className="w-4 h-4 text-amber-400" />
+              <Printer className="w-3.5 h-3.5" />
               <span>چاپ رسمی مستند فنی (A4)</span>
             </button>
           </div>
@@ -241,10 +241,10 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
               key={tab.id}
               type="button"
               onClick={() => setActiveStandardTab(tab.id)}
-              className={`p-3 rounded-xl border text-center font-bold transition cursor-pointer ${
+              className={`p-2.5 rounded-sm border text-center font-bold transition cursor-pointer ${
                 activeStandardTab === tab.id
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  ? 'bg-[#007cc0] text-white border-[#007cc0]'
+                  : 'bg-[#f5f5f5] text-[#333333] border-[#d9d9d9] hover:bg-[#e8e8e8]'
               }`}
             >
               {tab.label}
@@ -257,43 +257,43 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
       {/* TAB 1: INTERACTIVE 6-STEP WORKFLOW DIAGRAM                            */}
       {/* ==================================================================== */}
       {activeStandardTab === 'WORKFLOW' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Visual Step-by-Step Pipeline (Horizontal cards with arrows) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-amber-600" />
+          <div className="sap-card p-4 space-y-3">
+            <h3 className="text-sm font-bold text-[#333333] flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#007cc0]" />
               <span>دیاگرام جریان داده و اسناد در زنجیره بسته برنامه‌ریزی و اجرای تولید</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 items-stretch">
-              {workflowPhases.map((phase, idx) => {
+              {workflowPhases.map(phase => {
                 const isSelected = selectedPhaseId === phase.id;
                 return (
                   <button
                     key={phase.id}
                     type="button"
                     onClick={() => setSelectedPhaseId(phase.id)}
-                    className={`p-3 rounded-xl border text-right transition-all flex flex-col justify-between cursor-pointer ${
+                    className={`p-3 rounded-sm border text-right transition-all flex flex-col justify-between cursor-pointer ${
                       isSelected
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-amber-400'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                        ? 'bg-[#e5f3fa] text-[#333333] border-[#007cc0] ring-1 ring-[#007cc0]'
+                        : 'bg-[#f7f7f7] hover:bg-[#f0f0f0] text-[#333333] border-[#d9d9d9]'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span
-                          className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${
-                            isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'
+                          className={`font-mono font-bold text-xs px-1.5 py-0.5 rounded-sm ${
+                            isSelected ? 'bg-[#007cc0] text-white' : 'bg-[#e8e8e8] text-[#333333]'
                           }`}
                         >
                           گام {phase.stepNumber}
                         </span>
-                        <span className="text-[10px] font-mono opacity-80">{phase.code}</span>
+                        <span className="text-[10px] font-mono text-[#666666]">{phase.code}</span>
                       </div>
                       <div className="font-bold text-xs leading-snug">{phase.title}</div>
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-slate-200/50 text-[10px] opacity-80 font-mono">
+                    <div className="mt-3 pt-2 border-t border-[#d9d9d9] text-[10px] text-[#666666] font-mono">
                       {phase.sapEquivalent.split('/')[0]}
                     </div>
                   </button>
@@ -303,56 +303,56 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
           </div>
 
           {/* Deep-Dive Inspection Card for the Selected Phase */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="sap-card p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
               <div>
-                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-slate-900 text-amber-400 ml-2">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-sm bg-[#007cc0] text-white ml-2">
                   گام {selectedPhase.stepNumber} • {selectedPhase.code}
                 </span>
-                <h3 className="text-base font-bold text-slate-900 inline-block mt-1">{selectedPhase.title}</h3>
-                <div className="text-xs font-mono text-indigo-700 font-bold mt-1">
+                <h3 className="text-base font-bold text-[#333333] inline-block mt-1">{selectedPhase.title}</h3>
+                <div className="text-xs font-mono text-[#007cc0] font-bold mt-1">
                   معادل استاندارد در SAP: {selectedPhase.sapEquivalent}
                 </div>
               </div>
 
-              <div className="text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl">
+              <div className="text-xs text-[#333333] bg-[#f5f5f5] border border-[#d9d9d9] px-3 py-1.5 rounded-sm">
                 <strong>واحد سازمانی مجری:</strong> {selectedPhase.actor}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {/* Inputs */}
-              <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50 space-y-2">
-                <span className="font-bold text-blue-900 flex items-center gap-1.5">
-                  <Database className="w-4 h-4 text-blue-700" />
+              <div className="p-3.5 rounded-sm border border-[#b3ddf2] bg-[#e5f3fa]/50 space-y-1.5">
+                <span className="font-bold text-[#007cc0] flex items-center gap-1.5">
+                  <Database className="w-4 h-4 text-[#007cc0]" />
                   <span>ورودی‌های فرآیند (Process Inputs):</span>
                 </span>
-                <p className="text-blue-950 leading-relaxed">{selectedPhase.inputs}</p>
+                <p className="text-[#333333] leading-relaxed">{selectedPhase.inputs}</p>
               </div>
 
               {/* Outputs */}
-              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2">
-                <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <div className="p-3.5 rounded-sm border border-[#a9dfbf] bg-[#ebf7ef]/60 space-y-1.5">
+                <span className="font-bold text-[#107e3e] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#107e3e]" />
                   <span>خروجی‌های فرآیند (Process Deliverables / Outputs):</span>
                 </span>
-                <p className="text-emerald-950 leading-relaxed">{selectedPhase.outputs}</p>
+                <p className="text-[#333333] leading-relaxed">{selectedPhase.outputs}</p>
               </div>
             </div>
 
             {/* Core Description */}
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2 text-xs">
-              <span className="font-bold text-slate-900 block">شرح تفصیلی عملیات و منطق محاسباتی:</span>
-              <p className="text-slate-700 leading-relaxed text-sm">{selectedPhase.processDescription}</p>
+            <div className="p-3.5 rounded-sm border border-[#d9d9d9] bg-[#f7f7f7] space-y-1.5 text-xs">
+              <span className="font-bold text-[#333333] block">شرح تفصیلی عملیات و منطق محاسباتی:</span>
+              <p className="text-[#333333] leading-relaxed text-sm">{selectedPhase.processDescription}</p>
             </div>
 
             {/* KPIs */}
-            <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/60 flex items-center justify-between text-xs text-amber-950 flex-wrap gap-2">
-              <span className="font-bold flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-amber-700" />
+            <div className="p-3 rounded-sm border border-[#f9d6a7] bg-[#fff4e5] flex items-center justify-between text-xs text-[#333333] flex-wrap gap-2">
+              <span className="font-bold text-[#e9730c] flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#e9730c]" />
                 <span>شاخص‌های کلیدی عملکرد این گام (KPIs):</span>
               </span>
-              <span className="font-mono font-bold text-slate-900">{selectedPhase.kpi}</span>
+              <span className="font-mono font-bold text-[#333333]">{selectedPhase.kpi}</span>
             </div>
           </div>
         </div>
@@ -362,76 +362,76 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
       {/* TAB 2: SAP PP / ERP TRANSFORMATION COMPARISON TABLE                  */}
       {/* ==================================================================== */}
       {activeStandardTab === 'SAP_PP_COMPARISON' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900">
+        <div className="sap-card p-4 space-y-4">
+          <div className="border-b border-[#e8e8e8] pb-3">
+            <h3 className="text-sm font-bold text-[#333333]">
               جدول تطبیقی فرآیندهای برنامه‌ریزی تولید کوثر با کدهای ترانزکشن و استانداردهای SAP S/4HANA PP
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#666666] mt-0.5">
               نگاشت دقیق اجزای نرم‌افزار به ماژول‌های Production Planning (PP)، Material Requirements Planning (MRP) و Shop Floor Control (SFC)
             </p>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
+          <div className="overflow-x-auto border border-[#d9d9d9] rounded-sm">
+            <table className="sap-table-compact w-full text-right text-xs">
+              <thead>
                 <tr>
-                  <th className="py-3 px-3">گام فرآیند</th>
-                  <th className="py-3 px-3">عنوان عملیات در صنعت</th>
-                  <th className="py-3 px-3 font-mono">کد ترانزکشن در SAP PP</th>
-                  <th className="py-3 px-3">عملکرد معادل در سیستم کوثر</th>
-                  <th className="py-3 px-3">اسناد و کدهای پایگاه داده</th>
+                  <th>گام فرآیند</th>
+                  <th>عنوان عملیات در صنعت</th>
+                  <th className="font-mono">کد ترانزکشن در SAP PP</th>
+                  <th>عملکرد معادل در سیستم کوثر</th>
+                  <th>اسناد و کدهای پایگاه داده</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۱</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">دریافت و تحلیل تقاضای ساپکو</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">VA01 / MD61 (PIR)</td>
-                  <td className="py-3 px-3 text-slate-700">ماژول ثبت سفارش مشتری و پیش‌بینی تقاضای ساپکو بر اساس کد قرارداد</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">CustomerOrder (SO-1404-...)</td>
+              <tbody className="divide-y divide-[#e8e8e8]">
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۱</td>
+                  <td className="font-bold text-[#333333]">دریافت و تحلیل تقاضای ساپکو</td>
+                  <td className="font-mono text-[#007cc0] font-bold">VA01 / MD61 (PIR)</td>
+                  <td className="text-[#333333]">ماژول ثبت سفارش مشتری و پیش‌بینی تقاضای ساپکو بر اساس کد قرارداد</td>
+                  <td className="font-mono text-[11px] text-[#666666]">CustomerOrder (SO-1404-...)</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۲</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">انفجار درخت محصول (BOM)</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">CS01 / CS03 (BOM Explosion)</td>
-                  <td className="py-3 px-3 text-slate-700">ساختار سلسله‌مراتبی بازگشتی (Recursive Tree) قطعات اصلی و زیرمجموعه‌ها</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">ProductStructure / BOM Nodes</td>
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۲</td>
+                  <td className="font-bold text-[#333333]">انفجار درخت محصول (BOM)</td>
+                  <td className="font-mono text-[#007cc0] font-bold">CS01 / CS03 (BOM Explosion)</td>
+                  <td className="text-[#333333]">ساختار سلسله‌مراتبی بازگشتی (Recursive Tree) قطعات اصلی و زیرمجموعه‌ها</td>
+                  <td className="font-mono text-[11px] text-[#666666]">ProductStructure / BOM Nodes</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۳</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">محاسبه نیاز خالص مواد (MRP)</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">MD01N / MD04 (Stock/Req)</td>
-                  <td className="py-3 px-3 text-slate-700">موازنه موجودی فیزیکی و امانی رول ورق و پیش‌بینی کسری بر حسب کیلوگرم</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">NetRequirements / PlannedOrder</td>
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۳</td>
+                  <td className="font-bold text-[#333333]">محاسبه نیاز خالص مواد (MRP)</td>
+                  <td className="font-mono text-[#007cc0] font-bold">MD01N / MD04 (Stock/Req)</td>
+                  <td className="text-[#333333]">موازنه موجودی فیزیکی و امانی رول ورق و پیش‌بینی کسری بر حسب کیلوگرم</td>
+                  <td className="font-mono text-[11px] text-[#666666]">NetRequirements / PlannedOrder</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۴</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">زمان‌بندی پله‌ای عملیات (Routing)</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">CA01 / CM01 (Capacity CRP)</td>
-                  <td className="py-3 px-3 text-slate-700">ماتریس زمان‌بندی روزهای مختلف هر OP (برش، بلنک، خم، جوش) و قالب‌های مشترک</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">ScheduledOpStep (OP10..OP50)</td>
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۴</td>
+                  <td className="font-bold text-[#333333]">زمان‌بندی پله‌ای عملیات (Routing)</td>
+                  <td className="font-mono text-[#007cc0] font-bold">CA01 / CM01 (Capacity CRP)</td>
+                  <td className="text-[#333333]">ماتریس زمان‌بندی روزهای مختلف هر OP (برش، بلنک، خم، جوش) و قالب‌های مشترک</td>
+                  <td className="font-mono text-[11px] text-[#666666]">ScheduledOpStep (OP10..OP50)</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۵</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">صدور حواله ورق به خط تولید</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">MIGO 261 (Goods Issue)</td>
-                  <td className="py-3 px-3 text-slate-700">تخصیص کلاف ورق از انبار به مرحله اول (OP10) همراه با ثبت وزن و لات‌نامبر</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">ISSUE_RAW_MATERIAL</td>
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۵</td>
+                  <td className="font-bold text-[#333333]">صدور حواله ورق به خط تولید</td>
+                  <td className="font-mono text-[#007cc0] font-bold">MIGO 261 (Goods Issue)</td>
+                  <td className="text-[#333333]">تخصیص کلاف ورق از انبار به مرحله اول (OP10) همراه با ثبت وزن و لات‌نامبر</td>
+                  <td className="font-mono text-[11px] text-[#666666]">ISSUE_RAW_MATERIAL</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۶</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">ثبت کارکرد خط و رهگیری WIP</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">CO11N (Order Confirmation)</td>
-                  <td className="py-3 px-3 text-slate-700">محاسبه برخط بافر بین مراحل، انتقال مانده کار روزانه به روز بعد (Roll-Forward)</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">wipBufferAfterOp / ROLLED_FORWARD</td>
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۶</td>
+                  <td className="font-bold text-[#333333]">ثبت کارکرد خط و رهگیری WIP</td>
+                  <td className="font-mono text-[#007cc0] font-bold">CO11N (Order Confirmation)</td>
+                  <td className="text-[#333333]">محاسبه برخط بافر بین مراحل، انتقال مانده کار روزانه به روز بعد (Roll-Forward)</td>
+                  <td className="font-mono text-[11px] text-[#666666]">wipBufferAfterOp / ROLLED_FORWARD</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-3 font-mono font-bold">۰۷</td>
-                  <td className="py-3 px-3 font-bold text-slate-900">رسید خودکار انبار محصول نهایی</td>
-                  <td className="py-3 px-3 font-mono text-blue-700 font-bold">MIGO 101 (Auto Goods Receipt)</td>
-                  <td className="py-3 px-3 text-slate-700">با تکمیل آخرین مرحله (Final OP)، سند رسید انبار به صورت اتوماتیک صادر می‌شود</td>
-                  <td className="py-3 px-3 font-mono text-[11px] text-slate-500">RECEIPT_FINISHED_GOODS (RCV-FG-...)</td>
+                <tr className="hover:bg-[#f5f5f5]">
+                  <td className="font-mono font-bold">۰۷</td>
+                  <td className="font-bold text-[#333333]">رسید خودکار انبار محصول نهایی</td>
+                  <td className="font-mono text-[#007cc0] font-bold">MIGO 101 (Auto Goods Receipt)</td>
+                  <td className="text-[#333333]">با تکمیل آخرین مرحله (Final OP)، سند رسید انبار به صورت اتوماتیک صادر می‌شود</td>
+                  <td className="font-mono text-[11px] text-[#666666]">RECEIPT_FINISHED_GOODS (RCV-FG-...)</td>
                 </tr>
               </tbody>
             </table>
@@ -443,22 +443,22 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
       {/* TAB 3: STANDARD OPERATING PROCEDURE (SOP) & CHECKLIST                */}
       {/* ==================================================================== */}
       {activeStandardTab === 'DOCUMENTATION_SPEC' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-5 text-xs">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900">
+        <div className="sap-card p-5 space-y-4 text-xs">
+          <div className="border-b border-[#e8e8e8] pb-3">
+            <h3 className="text-sm font-bold text-[#333333]">
               دستورالعمل استاندارد کاری (Standard Operating Procedure - SOP): مدیریت فرآیند برنامه‌ریزی و اجرای تولید
             </h3>
-            <p className="text-slate-500 mt-0.5">
+            <p className="text-[#666666] mt-0.5">
               چک‌لیست الزامی تضمین کیفیت IATF 16949 جهت جلوگیری از ایجاد گلوگاه‌های خط و کاهش پرتی مواد اولیه
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 leading-relaxed text-slate-700">
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2.5">
-              <span className="font-bold text-slate-900 block text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 leading-relaxed text-[#333333]">
+            <div className="p-4 rounded-sm border border-[#d9d9d9] bg-[#f7f7f7] space-y-2">
+              <span className="font-bold text-[#333333] block text-sm">
                 ۱. قوانین انفجار مواد (BOM) و موازنه کلاف ساپکو:
               </span>
-              <ul className="list-disc list-inside space-y-1 text-slate-600">
+              <ul className="list-disc list-inside space-y-1 text-[#666666]">
                 <li>ثبت ضریب مصرف استاندارد قطعه بر حسب کیلوگرم به ازای هر ضرب با در نظر گرفتن پرتی اسکلت بلنک.</li>
                 <li>تطابق گرید متریال (DC01A, DC04, ST12, ST37) با شناسنامه فنی نقشه ساپکو.</li>
                 <li>اولویت تخصیص کلاف‌های امانی با موعد سررسید قرارداد نزدیک‌تر جهت جلوگیری از دیرکرد سهمیه.</li>
@@ -466,11 +466,11 @@ export const ProductionWorkflowDocumentationView: React.FC = () => {
               </ul>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2.5">
-              <span className="font-bold text-slate-900 block text-sm">
+            <div className="p-4 rounded-sm border border-[#d9d9d9] bg-[#f7f7f7] space-y-2">
+              <span className="font-bold text-[#333333] block text-sm">
                 ۲. قوانین زمان‌بندی عملیات و مانده کار (Roll-Forward):
               </span>
-              <ul className="list-disc list-inside space-y-1 text-slate-600">
+              <ul className="list-disc list-inside space-y-1 text-[#666666]">
                 <li>عدم زمان‌بندی مرحله بعدی قبل از تکمیل تیراژ بافر حداقل در مرحله قبلی (Buffer Min Limit).</li>
                 <li>در صورت توقف اضطراری بیش از ۶۰ دقیقه، انتقال خودکار باقیمانده کار به شیفت یا روز بعدی.</li>
                 <li>تطابق برنامه روزانه خط با تقویم سرویس و نگهداری پیشگیرانه (PM) ماشین‌آلات.</li>

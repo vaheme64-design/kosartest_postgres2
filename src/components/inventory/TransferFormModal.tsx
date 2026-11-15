@@ -155,19 +155,19 @@ export const TransferFormModal: React.FC<TransferFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-white backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white border border-[#d9d9d9] w-full max-w-2xl rounded-md shadow-xl overflow-hidden my-6">
         {/* Header */}
-        <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-5 py-3.5 bg-[#ffffff] border-b border-[#d9d9d9] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-purple-600 text-white rounded-xl">
-              <ArrowRightLeft className="w-5 h-5" />
+            <span className="p-2 bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] rounded">
+              <ArrowRightLeft className="w-4 h-4" />
             </span>
             <div>
-              <h3 className="text-sm lg:text-base font-bold text-slate-900">
+              <h3 className="text-sm font-semibold text-[#333333]">
                 انتقال کالا و رول بین انبارها (Warehouse Transfer)
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] text-[#666666] mt-0.5">
                 جابجایی فیزیکی رول ورق یا قطعات از انبار مبدا به انبار مقصد با حفظ مالکیت و شماره کویل‌پک
               </p>
             </div>
@@ -393,19 +393,19 @@ export const TransferFormModal: React.FC<TransferFormModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+          <div className="pt-4 border-t border-[#d9d9d9] flex items-center justify-between">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium cursor-pointer"
+              className="sap-btn-standard px-4 py-1.5 cursor-pointer"
             >
               انصراف
             </button>
             <button
               type="submit"
               disabled={loading || isOverdraft || requestedQty <= 0}
-              className="px-5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="sap-btn-emphasized px-5 py-1.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{loading ? 'در حال ثبت انتقال...' : 'ثبت قطعی انتقال بین انبارها'}</span>

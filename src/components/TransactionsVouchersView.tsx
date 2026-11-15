@@ -49,7 +49,7 @@ interface TransactionsVouchersViewProps {
   initialPartId?: string;
   initialStageId?: string;
   onSubmitVoucher: (payload: any) => Promise<{ success: boolean; message?: string; error?: string }>;
-  onTrackVoucher?: () => void;
+  onTrackVoucher?: (docQuery?: string) => void;
   onCancel?: () => void;
 }
 
@@ -108,6 +108,7 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [lastSubmittedDocQuery, setLastSubmittedDocQuery] = useState<string>('');
 
   // Auto-configure category default based on voucher type
   useEffect(() => {
@@ -292,6 +293,8 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
 
       const result = await onSubmitVoucher(payload);
       if (result.success) {
+        const trackedKey = (referenceDoc || contractNumber || selectedPart?.code || '').trim();
+        setLastSubmittedDocQuery(trackedKey);
         setSuccessMessage(result.message || 'سند با موفقیت صادر و در دفاتر کل ثبت گردید.');
         setQuantity('');
         setNotes('');
@@ -339,28 +342,28 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
       id: 'WIP_TRANSFER_DISPATCH',
       label: '۵. ارسال بین مراحل (کانبان خروجی ایستگاه)',
       shortLabel: 'ارسال بین مراحل',
-      icon: <ArrowRightLeft className="w-4 h-4 text-purple-600" />,
+      icon: <ArrowRightLeft className="w-4 h-4 text-[#007cc0]" />,
       desc: 'ارسال قطعات نیمه‌ساخته از یک ایستگاه به ایستگاه بعدی با کانبان',
     },
     {
       id: 'WIP_TRANSFER_RECEIPT',
       label: '۶. تأیید دریافت در مقصد (وصول ایستگاه)',
       shortLabel: 'تأیید دریافت مقصد',
-      icon: <Check className="w-4 h-4 text-indigo-600" />,
+      icon: <Check className="w-4 h-4 text-[#007cc0]" />,
       desc: 'وصول قطعات ارسال‌شده در مرحله مقصد بدون ایجاد موجودی مضاعف',
     },
     {
       id: 'OPENING_BALANCE',
       label: '۷. موجودی اول دوره و کالیبراسیون انبارگردانی',
       shortLabel: 'موجودی اول دوره',
-      icon: <Calendar className="w-4 h-4 text-blue-600" />,
+      icon: <Calendar className="w-4 h-4 text-[#007cc0]" />,
       desc: 'سند انبارگردانی و تعیین موجودی ابتدای دوره یا کالیبراسیون',
     },
     {
       id: 'CUSTOMER_DELIVERY',
       label: '۸. تحویل بار به مشتری (خروج محصول نهایی)',
       shortLabel: 'تحویل بار به مشتری',
-      icon: <Truck className="w-4 h-4 text-indigo-600" />,
+      icon: <Truck className="w-4 h-4 text-[#007cc0]" />,
       desc: 'حواله خروج و تحویل محصول نهایی به ساپکو، سایپا و سایر مشتریان با کسر از انبار نهایی',
     },
   ];
@@ -368,42 +371,42 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
   const currentVoucherMeta = voucherTypesList.find(v => v.id === voucherType) || voucherTypesList[0];
 
   return (
-    <div className="space-y-5">
-      {/* Unified Light Header & Dropdown List Selector */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-600 shrink-0">
-              <FilePlus2 className="w-5 h-5" />
+    <div className="space-y-4">
+      {/* SAP HANA Fiori Header & Dropdown Selector */}
+      <div className="bg-white p-4 rounded-md border border-[#d9d9d9] shadow-2xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-md bg-[#e5f3fa] border border-[#b3ddf2] flex items-center justify-center text-[#007cc0] shrink-0">
+              <FilePlus2 className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-base lg:text-lg font-bold text-slate-900">
+              <h2 className="text-base font-bold text-[#333333]">
                 مرکز صدور و ثبت اسناد تولید و انبار
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-[#666666] mt-0.5">
                 فرم‌های تفکیک‌شده و هوشمند بر اساس نوع سند با فیلتر خودکار ورق‌ها، قطعات نیمه‌ساخته WIP، قالب‌های متصل و تحویل بار به مشتری
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200/80">
+          <div className="flex items-center gap-2 text-xs text-[#666666] bg-[#f5f5f5] px-3 py-1.5 rounded border border-[#d9d9d9]">
             <span>وضعیت دفتر کل:</span>
-            <span className="font-bold text-emerald-700">ثبت آنی و کنترل موجودی فعال</span>
+            <span className="font-bold text-[#107e3e]">ثبت آنی و کنترل موجودی فعال</span>
           </div>
         </div>
 
         {/* Unified Dropdown List Selector + Quick Filter Chips */}
-        <div className="pt-3.5 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2.5 flex-1">
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-lg px-3 py-1.5">
-              <FilePlus2 className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
+        <div className="pt-3 border-t border-[#e5e5e5] flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
+            <div className="flex items-center gap-2 bg-[#f5f5f5] border border-[#d9d9d9] rounded px-2.5 py-1">
+              <FilePlus2 className="w-3.5 h-3.5 text-[#007cc0] shrink-0" />
+              <span className="text-[11px] font-semibold text-[#666666] whitespace-nowrap">
                 انتخاب نوع سند تولید / انبار:
               </span>
               <select
                 value={voucherType}
                 onChange={e => setVoucherType(e.target.value as VoucherType)}
-                className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-1 pl-4 py-0.5"
+                className="bg-transparent text-xs font-bold text-[#333333] focus:outline-none cursor-pointer pr-1 pl-4 py-0.5"
               >
                 {voucherTypesList.map(item => (
                   <option key={item.id} value={item.id}>
@@ -413,17 +416,16 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
               </select>
             </div>
 
-            {/* Compact Quick Filter Chips */}
             <div className="hidden xl:flex items-center gap-1.5 flex-wrap">
               {voucherTypesList.slice(0, 6).map(item => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setVoucherType(item.id)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
                     voucherType === item.id
-                      ? 'bg-orange-50 text-orange-700 border border-orange-200/90'
-                      : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                      ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#007cc0]'
+                      : 'bg-white text-[#333333] border border-[#d9d9d9] hover:bg-[#f5f5f5]'
                   }`}
                 >
                   {item.shortLabel}
@@ -432,7 +434,7 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+          <div className="text-[11px] text-[#666666] flex items-center gap-1.5">
             {currentVoucherMeta.icon}
             <span>{currentVoucherMeta.desc}</span>
           </div>
@@ -440,23 +442,23 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
       </div>
 
       {/* Main Voucher Form */}
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <form onSubmit={handleSubmit} className="bg-white p-5 rounded-md border border-[#d9d9d9] shadow-2xs space-y-5">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#e5e5e5]">
           <div className="flex items-center gap-2">
             {currentVoucherMeta.icon}
-            <span className="text-sm font-bold text-slate-900">
+            <span className="text-sm font-bold text-[#333333]">
               فرم صدور: {currentVoucherMeta.label}
             </span>
           </div>
-          <span className="text-xs text-slate-500">
-            سیستم ثبت: <span className="font-mono text-emerald-700 font-bold">دفتر کل معتبر و بلادرنگ</span>
+          <span className="text-xs text-[#666666]">
+            سیستم ثبت: <span className="font-mono text-[#107e3e] font-bold">دفتر کل معتبر و بلادرنگ</span>
           </span>
         </div>
 
         {/* Feedback Messages */}
         {errorMessage && (
-          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 animate-in fade-in">
-            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="p-3 rounded-md bg-[#fff0f0] border border-[#f2b8b5] text-[#bb0000] text-xs flex items-start gap-2 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0 mt-0.5" />
             <div>
               <p className="font-bold">خطا در اعتبارسنجی سند:</p>
               <p className="mt-0.5 leading-relaxed">{errorMessage}</p>
@@ -465,9 +467,9 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
         )}
 
         {successMessage && (
-          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in">
+          <div className="p-3 rounded-md bg-[#f1f8f3] border border-[#b7dfc4] text-[#107e3e] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in">
             <div className="flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold">ثبت موفق سند:</p>
                 <p className="mt-0.5 leading-relaxed">{successMessage}</p>
@@ -476,8 +478,8 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
             {onTrackVoucher && (
               <button
                 type="button"
-                onClick={onTrackVoucher}
-                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer shrink-0 self-end sm:self-center"
+                onClick={() => onTrackVoucher(lastSubmittedDocQuery || undefined)}
+                className="sap-btn-emphasized text-xs font-semibold cursor-pointer shrink-0 self-end sm:self-center"
               >
                 پیگیری سند در کاردکس / خط ⟵
               </button>
@@ -486,32 +488,32 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
         )}
 
         {/* SECTION 1: SMART PART SELECTOR WITH CATEGORY TABS & SEARCH */}
-        <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/90 space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+        <div className="p-4 rounded-md bg-[#f5f5f5] border border-[#d9d9d9] space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-2 border-b border-[#d9d9d9]">
             <div className="flex items-center gap-3">
-              <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-orange-600" />
+              <label className="text-xs font-bold text-[#333333] flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-[#007cc0]" />
                 <span>انتخاب قطعه یا ماده اولیه هدف سند *</span>
               </label>
               <button
                 type="button"
                 onClick={() => setActiveQuickModal('PART')}
-                className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded bg-[#f1f8f3] hover:bg-[#e1f2e6] border border-[#b7dfc4] text-[#107e3e] text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <Plus className="w-3 h-3" />
-                <span>+ تعریف سریع کالا / ورق جدید</span>
+                <span>تعریف سریع کالا / ورق جدید</span>
               </button>
             </div>
 
             {/* Category Filter Tabs */}
-            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-[11px]">
+            <div className="flex items-center gap-1 bg-white p-1 rounded border border-[#d9d9d9] text-[11px]">
               <button
                 type="button"
                 onClick={() => setCategoryFilter('RAW_MATERIAL')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer ${
                   categoryFilter === 'RAW_MATERIAL'
-                    ? 'bg-orange-50 text-orange-700 border border-orange-200 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#007cc0] font-bold'
+                    : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 ورق و مواد اولیه ({localParts.filter(p => p.category === 'RAW_MATERIAL').length})
@@ -519,10 +521,10 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
               <button
                 type="button"
                 onClick={() => setCategoryFilter('WIP_PART')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer ${
                   categoryFilter === 'WIP_PART'
-                    ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#007cc0] font-bold'
+                    : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 نیمه‌ساخته WIP ({localParts.filter(p => p.category === 'WIP_PART').length})
@@ -530,10 +532,10 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
               <button
                 type="button"
                 onClick={() => setCategoryFilter('FINISHED_GOOD')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer ${
                   categoryFilter === 'FINISHED_GOOD'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#f1f8f3] text-[#107e3e] border border-[#107e3e] font-bold'
+                    : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 محصولات نهایی ({localParts.filter(p => p.category === 'FINISHED_GOOD').length})
@@ -541,10 +543,10 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
               <button
                 type="button"
                 onClick={() => setCategoryFilter('ALL')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded font-medium transition-all cursor-pointer ${
                   categoryFilter === 'ALL'
-                    ? 'bg-slate-900 text-white font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#007cc0] text-white font-bold'
+                    : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 همه ({localParts.length})
@@ -555,13 +557,13 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
           {/* Quick Search & Car Model Filter */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-[#666666] absolute right-3 top-2" />
               <input
                 type="text"
                 value={partSearch}
                 onChange={e => setPartSearch(e.target.value)}
                 placeholder="جستجوی سریع در نام قطعه، کد کاتالوگ (مثلاً: ST14, DC04, ۲۰۶, تارا, سپر)..."
-                className="w-full bg-white border border-slate-200 rounded-xl pr-9 pl-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                className="w-full bg-white border border-[#d9d9d9] rounded pr-9 pl-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
               />
             </div>
 
@@ -569,7 +571,7 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
               <select
                 value={carModelFilter}
                 onChange={e => setCarModelFilter(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-slate-400"
+                className="bg-white border border-[#d9d9d9] rounded px-2.5 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
               >
                 <option value="ALL">همه خودروها</option>
                 {carModelsList.map(m => (
@@ -581,12 +583,11 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
             )}
           </div>
 
-          {/* Filtered Dropdown or Cards */}
           <div className="space-y-1">
             <select
               value={selectedPartId}
               onChange={e => setSelectedPartId(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
+              className="w-full bg-white border border-[#d9d9d9] rounded px-3 py-2 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
               required
             >
               <option value="">-- انتخاب از میان {toPersianDigits(eligibleParts.length)} قلم منطبق با فیلتر --</option>
@@ -598,21 +599,20 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
             </select>
           </div>
 
-          {/* Selected Part Details Card */}
           {selectedPart && (
-            <div className="p-3 rounded-xl bg-white border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="p-2.5 rounded bg-white border border-[#d9d9d9] flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-orange-700 font-mono bg-orange-50 px-2 py-0.5 rounded border border-orange-200">{selectedPart.code}</span>
-                <span className="text-slate-900 font-semibold">{selectedPart.name}</span>
+                <span className="font-bold text-[#007cc0] font-mono bg-[#e5f3fa] px-2 py-0.5 rounded border border-[#b3ddf2]">{selectedPart.code}</span>
+                <span className="text-[#333333] font-semibold">{selectedPart.name}</span>
               </div>
-              <div className="flex items-center gap-4 text-[11px] text-slate-500">
-                <span>واحد سنجش: <strong className="text-slate-900">{selectedPart.unit}</strong></span>
-                <span>وزن واحد: <strong className="text-slate-900">{selectedPart.weightPerUnitKg} کیلوگرم</strong></span>
+              <div className="flex items-center gap-4 text-[11px] text-[#666666]">
+                <span>واحد سنجش: <strong className="text-[#333333]">{selectedPart.unit}</strong></span>
+                <span>وزن واحد: <strong className="text-[#333333]">{selectedPart.weightPerUnitKg} کیلوگرم</strong></span>
                 {selectedPart.materialGrade && (
-                  <span>گرید فولاد: <strong className="text-cyan-700">{selectedPart.materialGrade}</strong></span>
+                  <span>گرید فولاد: <strong className="text-[#007cc0]">{selectedPart.materialGrade}</strong></span>
                 )}
                 {selectedPart.sapcoCode && (
-                  <span>کد ساپکو: <strong className="text-slate-700 font-mono">{selectedPart.sapcoCode}</strong></span>
+                  <span>کد ساپکو: <strong className="text-[#333333] font-mono">{selectedPart.sapcoCode}</strong></span>
                 )}
               </div>
             </div>
@@ -621,13 +621,13 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
 
         {/* CUSTOMER DELIVERY DEDICATED BANNER & FIELDS */}
         {voucherType === 'CUSTOMER_DELIVERY' && (
-          <div className="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-indigo-200/70 pb-2.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-900">
-                <Truck className="w-4 h-4 text-indigo-600" />
+          <div className="p-4 rounded-md bg-[#e5f3fa]/50 border border-[#b3ddf2] space-y-3.5">
+            <div className="flex items-center justify-between border-b border-[#b3ddf2] pb-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#005a8f]">
+                <Truck className="w-4 h-4 text-[#007cc0]" />
                 <span>اطلاعات تحویل بار و خروج محصول نهایی به مشتری (ساپکو، سایپا و...)</span>
               </div>
-              <span className="text-[11px] text-indigo-700 bg-white border border-indigo-200 px-2.5 py-0.5 rounded-md font-semibold">
+              <span className="text-[11px] text-[#007cc0] bg-white border border-[#b3ddf2] px-2.5 py-0.5 rounded font-semibold">
                 کسر مستقیم از انبار قطعات و محصولات نهایی
               </span>
             </div>
@@ -635,21 +635,21 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700">مشتری تحویل‌گیرنده بار *</label>
+                  <label className="text-xs font-semibold text-[#333333]">مشتری تحویل‌گیرنده بار *</label>
                   <button
                     type="button"
                     onClick={() => setActiveQuickModal('CUSTOMER')}
-                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5 cursor-pointer"
+                    className="text-[11px] font-semibold text-[#107e3e] hover:text-[#0d6832] flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>+ مشتری جدید</span>
+                    <span>مشتری جدید</span>
                   </button>
                 </div>
                 {localCustomers.length > 0 ? (
                   <select
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[#d9d9d9] rounded px-3 py-2 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value={customerName}>{customerName}</option>
                     {localCustomers.map(c => (
@@ -664,27 +664,27 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
                     placeholder="شرکت ساپکو / سازه‌گستر سایپا..."
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[#d9d9d9] rounded px-3 py-2 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 )}
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700">شماره قرارداد تحویل (اختیاری)</label>
+                  <label className="text-xs font-semibold text-[#333333]">شماره قرارداد تحویل (اختیاری)</label>
                   <button
                     type="button"
                     onClick={() => setActiveQuickModal('CONTRACT')}
-                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5 cursor-pointer"
+                    className="text-[11px] font-semibold text-[#107e3e] hover:text-[#0d6832] flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>+ قرارداد جدید</span>
+                    <span>قرارداد جدید</span>
                   </button>
                 </div>
                 <select
                   value={contractNumber}
                   onChange={e => setContractNumber(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-white border border-[#d9d9d9] rounded px-3 py-2 text-xs text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                 >
                   <option value="">-- بدون الصاق به قرارداد مشخص --</option>
                   {localContracts.map(cnt => (
@@ -699,10 +699,10 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
         )}
 
         {/* SECTION 2: TRANSACTION PARAMETERS & STAGES */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Source Stage / Store */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">
+            <label className="text-xs font-semibold text-[#333333]">
               {voucherType === 'WIP_TRANSFER_DISPATCH'
                 ? 'ایستگاه مبدا (ارسال‌کننده) *'
                 : voucherType === 'CUSTOMER_DELIVERY'
@@ -712,7 +712,7 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
             <select
               value={selectedStageId}
               onChange={e => setSelectedStageId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+              className="w-full bg-[#f5f5f5] border border-[#d9d9d9] rounded px-3 py-2 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
               required
             >
               {FACTORY_STAGES.map(st => (
@@ -722,11 +722,10 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
               ))}
             </select>
 
-            {/* Live Stock Status Indicator */}
             {selectedPart && (
               <div className="text-[11px] pt-1 flex items-center justify-between">
-                <span className="text-slate-500">موجودی آزاد در این مرحله:</span>
-                <span className={`font-bold font-mono ${availableUsableQty > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
+                <span className="text-[#666666]">موجودی آزاد در این مرحله:</span>
+                <span className={`font-bold font-mono tabular-nums ${availableUsableQty > 0 ? 'text-[#107e3e]' : 'text-[#666666]'}`}>
                   {formatNumber(availableUsableQty)} {selectedPart.unit}
                 </span>
               </div>
@@ -736,13 +735,13 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
           {/* Target Stage (For Transfers and Issues) */}
           {(voucherType === 'WIP_TRANSFER_DISPATCH' || voucherType === 'ISSUE') && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-[#333333]">
                 ایستگاه مقصد (دریافت‌کننده) *
               </label>
               <select
                 value={targetStageId}
                 onChange={e => setTargetStageId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                className="w-full bg-[#f5f5f5] border border-[#d9d9d9] rounded px-3 py-2 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 required
               >
                 {FACTORY_STAGES.filter(st => st.id !== selectedStageId).map(st => (
@@ -751,7 +750,7 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
                   </option>
                 ))}
               </select>
-              <p className="text-[11px] text-purple-700 pt-1">
+              <p className="text-[11px] text-[#007cc0] pt-1">
                 ارسال به وضعیت «در راه» در مرحله مقصد می‌رود تا پس از تأیید وصول ثبت نهایی شود.
               </p>
             </div>
@@ -935,7 +934,7 @@ export const TransactionsVouchersView: React.FC<TransactionsVouchersViewProps> =
           <button
             type="submit"
             disabled={loading || isExceedingStock}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition-all shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="sap-btn-emphasized w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <Send className="w-4 h-4" />
             <span>{loading ? 'در حال ثبت در سرور و دفاتر...' : 'تأیید و صدور نهایی سند'}</span>

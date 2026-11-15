@@ -35,45 +35,45 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-[1px] p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#333333]/40 backdrop-blur-[1px] p-4"
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white border border-slate-200 rounded-xl shadow-lg max-w-sm w-full p-4 text-right space-y-2.5 text-xs"
+            className="bg-white border border-[#d9d9d9] rounded-md shadow-xl max-w-sm w-full p-4 text-right space-y-2.5 text-xs"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-1.5 font-bold text-slate-900">
-                <Info className="w-4 h-4 text-blue-600 shrink-0" />
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+              <div className="flex items-center gap-1.5 font-bold text-[#333333]">
+                <Info className="w-4 h-4 text-[#007cc0] shrink-0" />
                 <span>{title}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-slate-600 leading-relaxed">{description}</p>
+            <p className="text-[#333333] leading-relaxed">{description}</p>
 
             {whyNeeded && (
-              <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/70 text-slate-600">
-                <span className="font-semibold text-slate-800 block mb-0.5">چرا این اطلاعات لازم است؟</span>
+              <div className="bg-[#f7f7f7] p-2.5 rounded border border-[#d9d9d9] text-[#666666]">
+                <span className="font-semibold text-[#333333] block mb-0.5">چرا این اطلاعات لازم است؟</span>
                 {whyNeeded}
               </div>
             )}
 
             <div className="flex items-center justify-between pt-1 text-[11px]">
               {example ? (
-                <span className="text-slate-500">
-                  نمونه معتبر: <code className="font-mono font-semibold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">{example}</code>
+                <span className="text-[#666666]">
+                  نمونه معتبر: <code className="font-mono font-semibold text-[#333333] bg-[#f0f0f0] px-1.5 py-0.5 rounded">{example}</code>
                 </span>
               ) : (
                 <span />
               )}
-              <span className={`font-semibold ${mandatory ? 'text-rose-600' : 'text-slate-500'}`}>
+              <span className={`font-semibold ${mandatory ? 'text-[#bb0000]' : 'text-[#666666]'}`}>
                 {mandatory ? 'الزامی (*)' : 'اختیاری'}
               </span>
             </div>
@@ -152,13 +152,13 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ role, onQuic
   const currentGuide = roleGuide[role] || roleGuide.ADMIN;
 
   return (
-    <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div className="bg-[#e5f3fa] border border-[#b3ddf2] rounded-md p-3.5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
       <div className="space-y-1.5">
-        <div className="flex items-center gap-2 text-xs font-bold text-blue-950">
-          <Lightbulb className="w-4 h-4 text-blue-600 shrink-0" />
+        <div className="flex items-center gap-2 text-xs font-bold text-[#333333]">
+          <Lightbulb className="w-4 h-4 text-[#007cc0] shrink-0" />
           <span>{currentGuide.title}</span>
         </div>
-        <div className="space-y-1 text-xs text-slate-700 pr-6">
+        <div className="space-y-1 text-xs text-[#333333] pr-6">
           {currentGuide.steps.map((s, idx) => (
             <div key={idx}>{s}</div>
           ))}
@@ -169,14 +169,14 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ role, onQuic
         <button
           type="button"
           onClick={() => onQuickAction('inventory_receipt')}
-          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+          className="sap-btn-emphasized px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
         >
           شروع با ثبت رسید کالا
         </button>
         <button
           type="button"
           onClick={handleDismiss}
-          className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+          className="sap-btn-standard px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
         >
           متوجه شدم، دیگر نمایش نده
         </button>

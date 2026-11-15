@@ -217,61 +217,62 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-white border border-slate-200 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-3 sm:p-5 overflow-y-auto" dir="rtl">
+      <div className="bg-white border border-[#d9d9d9] w-full max-w-3xl rounded-md shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
+        <div className="px-5 py-3.5 bg-white border-b border-[#d9d9d9] text-[#333333] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-emerald-400 flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded bg-[#e5f3fa] border border-[#b3ddf2] flex items-center justify-center text-[#007cc0]">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-sm lg:text-base">دستیار فرمان صوتی و متنی کارخانه (KPIMS ERP)</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/40">
+                <h3 className="font-bold text-sm text-[#333333]">دستیار فرمان صوتی و متنی کارخانه (KPIMS ERP)</h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                   {activePageContext.badge}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b2dfc4] flex items-center gap-1">
                   <Cpu className="w-3 h-3" />
                   موتور پردازشگر فارسی کارخانه
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 صدور سریع اسناد انبار، دستورات تولید (MO) و ناوبری هوشمند با میانبر Ctrl + Space
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded text-[#666666] hover:text-[#333333] hover:bg-[#f5f5f5] transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto flex-1 space-y-5 text-xs">
+        <div className="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
           <div className="space-y-4">
             {/* CONTEXT-AWARE INTELLIGENCE PANEL */}
-            <div className="p-3.5 rounded-xl bg-slate-900 text-white border border-slate-800 space-y-3">
+            <div className="p-3.5 rounded bg-[#f7f7f7] text-[#333333] border border-[#d9d9d9] space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Compass className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-bold text-xs text-white">{activePageContext.title}</span>
+                  <Compass className="w-4 h-4 text-[#007cc0] shrink-0" />
+                  <span className="font-bold text-xs text-[#333333]">{activePageContext.title}</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded bg-[#eef8f2] text-[#107e3e] border border-[#b2dfc4] text-[10px] font-bold">
                   اتصال زنده به ERP
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
+              <p className="text-[11px] text-[#666666] leading-relaxed">
                 {activePageContext.subtitle}
               </p>
 
               {hardShortageMaterials.length > 0 && (
-                <div className="bg-slate-800/90 border border-rose-500/30 rounded-lg p-2.5 space-y-2">
+                <div className="bg-white border border-[#e5b3b3] rounded p-2.5 space-y-2">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-rose-300 flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="font-bold text-[#bb0000] flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-[#bb0000]" />
                       <span>کسری‌های قطعی مواد اولیه در MRP:</span>
                     </span>
                     <button
@@ -285,7 +286,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                         });
                         onClose();
                       }}
-                      className="text-emerald-300 hover:underline font-semibold cursor-pointer"
+                      className="text-[#007cc0] hover:underline font-semibold cursor-pointer"
                     >
                       مشاهده در MRP ←
                     </button>
@@ -296,13 +297,13 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                       return (
                         <div
                           key={m.materialCode}
-                          className="p-2 rounded bg-slate-900/90 border border-slate-700 flex items-center justify-between gap-2 text-[11px]"
+                          className="p-2 rounded bg-[#fdf3f3] border border-[#e5b3b3] flex items-center justify-between gap-2 text-[11px]"
                         >
                           <div className="truncate">
-                            <div className="font-bold text-slate-100 truncate">{m.materialName}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">
+                            <div className="font-bold text-[#333333] truncate">{m.materialName}</div>
+                            <div className="text-[10px] text-[#666666] font-mono">
                               ATP: {formatNumber(m.netAvailable)} | کسری:{' '}
-                              <span className="text-rose-400 font-bold">{formatNumber(shortageVal)}</span>
+                              <span className="text-[#bb0000] font-bold">{formatNumber(shortageVal)}</span>
                             </div>
                           </div>
                           <button
@@ -321,7 +322,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                               });
                               onClose();
                             }}
-                            className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold shrink-0 cursor-pointer"
+                            className="px-2 py-1 rounded bg-[#bb0000] hover:bg-[#990000] text-white text-[10px] font-bold shrink-0 cursor-pointer"
                           >
                             رسید فوری
                           </button>
@@ -333,7 +334,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
               )}
 
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] text-slate-400 font-semibold">پیشنهادهای صفحه فعلی:</span>
+                <span className="text-[10px] text-[#666666] font-semibold">پیشنهادهای صفحه فعلی:</span>
                 {activePageContext.quickPrompts.map((qp, i) => (
                   <button
                     key={i}
@@ -342,7 +343,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                       setPrompt(qp);
                       handleSubmitCommand(qp);
                     }}
-                    className="px-2 py-1 rounded-md bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-[10px] border border-slate-700 transition-colors cursor-pointer"
+                    className="px-2 py-1 rounded bg-white hover:bg-[#e5f3fa] text-[#333333] hover:text-[#007cc0] hover:border-[#b3ddf2] text-[10px] border border-[#d9d9d9] transition-colors cursor-pointer"
                   >
                     {qp}
                   </button>
@@ -363,7 +364,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                   }
                 }}
                 placeholder="دستور خود را بنویسید یا دکمه میکروفن را بزنید... مثلاً: «ورق روغنی DC01A با وزن ۳۲۰۰ کیلو و کویل‌پک CP-101 رسید انبار ساپکو شد»"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 pr-4 pl-24 text-slate-900 text-xs focus:outline-none focus:bg-white focus:border-indigo-600 transition-all shadow-inner resize-none leading-relaxed"
+                className="w-full bg-white border border-[#bfbfbf] rounded p-3 pr-4 pl-24 text-[#333333] text-xs focus:outline-none focus:border-[#007cc0] transition-all resize-none leading-relaxed"
               />
 
               <div className="absolute left-2.5 bottom-2.5 flex items-center gap-1.5">
@@ -371,10 +372,10 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                   type="button"
                   onClick={toggleSpeechRecognition}
                   title="گفتار به متن صوتی فارسی"
-                  className={`p-2 rounded-lg cursor-pointer transition-all ${
+                  className={`p-2 rounded cursor-pointer transition-all ${
                     isListening
-                      ? 'bg-rose-500 text-white animate-pulse shadow-md'
-                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                      ? 'bg-[#bb0000] text-white animate-pulse'
+                      : 'bg-[#f5f5f5] border border-[#d9d9d9] text-[#333333] hover:bg-[#e8e8e8]'
                   }`}
                 >
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -384,7 +385,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                   type="button"
                   disabled={loading || !prompt.trim()}
                   onClick={() => handleSubmitCommand()}
-                  className="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
+                  className="sap-btn-emphasized !p-2 disabled:opacity-50"
                 >
                   {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
@@ -392,16 +393,16 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
             </div>
 
             {isListening && (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-rose-700">
-                <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              <div className="p-2.5 bg-[#fdf3f3] border border-[#e5b3b3] rounded flex items-center gap-2 text-[#bb0000]">
+                <div className="w-2 h-2 rounded-full bg-[#bb0000] animate-ping" />
                 <span className="font-semibold">در حال شنیدن گفتار شما به زبان فارسی... لطفاً صحبت کنید.</span>
               </div>
             )}
 
             {/* Sample Quick Commands */}
             <div>
-              <p className="text-[11px] text-slate-500 font-semibold mb-2 flex items-center gap-1.5">
-                <Bot className="w-3.5 h-3.5 text-indigo-500" />
+              <p className="text-[11px] text-[#666666] font-semibold mb-2 flex items-center gap-1.5">
+                <Bot className="w-3.5 h-3.5 text-[#007cc0]" />
                 فرمان‌های نمونه کارخانه (کلیک برای اجرای فوری):
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -413,7 +414,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                       setPrompt(s);
                       handleSubmitCommand(s);
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] border border-slate-200 transition-all text-right cursor-pointer"
+                    className="px-2.5 py-1.5 rounded bg-[#f7f7f7] hover:bg-[#e5f3fa] hover:text-[#007cc0] hover:border-[#b3ddf2] text-[#333333] text-[11px] border border-[#d9d9d9] transition-all text-right cursor-pointer"
                   >
                     {s}
                   </button>
@@ -422,61 +423,61 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
             </div>
 
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl flex items-center gap-2">
+              <div className="p-3 bg-[#fdf3f3] border border-[#e5b3b3] text-[#bb0000] rounded flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {lastResult && (
-              <div className="mt-4 p-4 rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50/70 to-white shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b border-indigo-100 pb-2.5">
-                  <div className="flex items-center gap-2 text-indigo-900 font-bold text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <div className="mt-4 p-4 rounded border border-[#b3ddf2] bg-[#e5f3fa]/30 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#b3ddf2] pb-2.5">
+                  <div className="flex items-center gap-2 text-[#333333] font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-[#107e3e]" />
                     <span>دستور با موفقیت تحلیل شد</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] font-bold text-[10px]">
                     {lastResult.actionType}
                   </span>
                 </div>
 
-                <p className="text-slate-800 text-xs font-medium leading-relaxed">
+                <p className="text-[#333333] text-xs font-medium leading-relaxed">
                   {lastResult.message}
                 </p>
 
                 {lastResult.prefillReceipt && (
-                  <div className="bg-white rounded-lg p-3 border border-slate-200 space-y-1.5 text-[11px]">
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs text-indigo-700">
+                  <div className="bg-white rounded p-3 border border-[#d9d9d9] space-y-1.5 text-[11px]">
+                    <div className="font-bold flex items-center gap-1.5 text-xs text-[#007cc0]">
                       <FileCheck className="w-3.5 h-3.5" />
                       <span>اقلام شناسایی‌شده برای فرم رسید کالا:</span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-slate-700">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[#333333]">
                       <div>
-                        <span className="text-slate-400">کالا / ورق:</span>{' '}
-                        <strong className="text-slate-900">
+                        <span className="text-[#666666]">کالا / ورق:</span>{' '}
+                        <strong className="text-[#333333]">
                           {lastResult.prefillReceipt.partName || lastResult.prefillReceipt.partCode || 'انتخابی'}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">مقدار / وزن:</span>{' '}
-                        <strong className="text-emerald-700">
+                        <span className="text-[#666666]">مقدار / وزن:</span>{' '}
+                        <strong className="text-[#107e3e]">
                           {lastResult.prefillReceipt.quantity
                             ? `${lastResult.prefillReceipt.quantity.toLocaleString('fa-IR')} ${lastResult.prefillReceipt.unit || 'کیلوگرم'}`
                             : 'مشخص‌نشده'}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">شماره کویل‌پک:</span>{' '}
-                        <strong className="font-mono text-indigo-700">
+                        <span className="text-[#666666]">شماره کویل‌پک:</span>{' '}
+                        <strong className="font-mono text-[#007cc0]">
                           {lastResult.prefillReceipt.coilPackNumber || 'ندارد'}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">شماره ذوب (Heat):</span>{' '}
+                        <span className="text-[#666666]">شماره ذوب (Heat):</span>{' '}
                         <strong className="font-mono">{lastResult.prefillReceipt.heatNumber || 'ندارد'}</strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">مالکیت:</span>{' '}
+                        <span className="text-[#666666]">مالکیت:</span>{' '}
                         <strong>
                           {lastResult.prefillReceipt.ownership === 'SAPCO_SUPPLIER_OWNED'
                             ? 'امانی ساپکو'
@@ -484,7 +485,7 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">انبار مقصد:</span>{' '}
+                        <span className="text-[#666666]">انبار مقصد:</span>{' '}
                         <strong>انبار ورق و مواد اولیه (WH-RAW)</strong>
                       </div>
                     </div>
@@ -492,28 +493,28 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                 )}
 
                 {lastResult.prefillIssue && (
-                  <div className="bg-white rounded-lg p-3 border border-slate-200 space-y-1.5 text-[11px]">
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs text-amber-700">
+                  <div className="bg-white rounded p-3 border border-[#d9d9d9] space-y-1.5 text-[11px]">
+                    <div className="font-bold flex items-center gap-1.5 text-xs text-[#e9730c]">
                       <Package className="w-3.5 h-3.5" />
                       <span>اقلام شناسایی‌شده برای فرم حواله خروج:</span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-slate-700">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[#333333]">
                       <div>
-                        <span className="text-slate-400">کالا:</span>{' '}
-                        <strong className="text-slate-900">
+                        <span className="text-[#666666]">کالا:</span>{' '}
+                        <strong className="text-[#333333]">
                           {lastResult.prefillIssue.partName || lastResult.prefillIssue.partCode || 'انتخابی'}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">مقدار خروج:</span>{' '}
-                        <strong className="text-amber-700">
+                        <span className="text-[#666666]">مقدار خروج:</span>{' '}
+                        <strong className="text-[#e9730c]">
                           {lastResult.prefillIssue.quantity
                             ? `${lastResult.prefillIssue.quantity.toLocaleString('fa-IR')} ${lastResult.prefillIssue.unit || 'کیلوگرم'}`
                             : 'مشخص‌نشده'}
                         </strong>
                       </div>
                       <div>
-                        <span className="text-slate-400">انبار مقصد:</span>{' '}
+                        <span className="text-[#666666]">انبار مقصد:</span>{' '}
                         <strong>سالن پرس و خط تولید (WH-WIP-STAMP)</strong>
                       </div>
                     </div>
@@ -524,17 +525,17 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setLastResult(null)}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                    className="sap-btn-standard text-xs"
                   >
                     انصراف
                   </button>
                   <button
                     type="button"
                     onClick={handleApplyAction}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold flex items-center gap-2 shadow-sm cursor-pointer transition-all"
+                    className="sap-btn-emphasized text-xs flex items-center gap-1.5"
                   >
                     <span>تایید و انتقال به فرم مربوطه جهت ثبت نهایی</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -543,17 +544,17 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="px-5 py-3 bg-[#f7f7f7] border-t border-[#d9d9d9] flex items-center justify-between text-xs text-[#666666]">
           <div className="flex items-center gap-2">
             <span>کلید میانبر باز کردن دستیار:</span>
-            <kbd className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-mono text-[11px] font-bold">
+            <kbd className="px-2 py-0.5 rounded bg-white border border-[#bfbfbf] text-[#333333] font-mono text-[11px] font-bold">
               Ctrl + Space
             </kbd>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold cursor-pointer transition-colors"
+            className="sap-btn-standard text-xs"
           >
             بستن
           </button>

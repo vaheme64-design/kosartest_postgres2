@@ -149,20 +149,20 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   if (compact) {
     return (
       <div
-        className={`flex flex-col items-center justify-center p-6 text-center text-slate-500 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 ${className}`}
+        className={`flex flex-col items-center justify-center p-5 text-center text-[#666666] rounded border border-dashed border-[#bfbfbf] bg-[#f7f7f7] ${className}`}
       >
-        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
-          <FinalIcon className="w-5 h-5 stroke-[1.6]" />
+        <div className="w-9 h-9 rounded bg-[#e5f3fa] border border-[#b3ddf2] flex items-center justify-center text-[#007cc0] mb-2">
+          <FinalIcon className="w-4 h-4 stroke-[1.6]" />
         </div>
-        <h4 className="font-bold text-xs text-slate-800">{finalTitle}</h4>
-        <p className="text-[11px] text-slate-500 max-w-sm mt-1 leading-relaxed">
+        <h4 className="font-bold text-xs text-[#333333]">{finalTitle}</h4>
+        <p className="text-[11px] text-[#666666] max-w-sm mt-1 leading-relaxed">
           {finalDescription}
         </p>
         {finalActionLabel && onAction && (
           <button
             type="button"
             onClick={onAction}
-            className="mt-3 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer"
+            className="sap-btn-emphasized mt-3 px-3 py-1.5 text-xs cursor-pointer"
           >
             {finalActionLabel}
           </button>
@@ -173,35 +173,35 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-2xl border border-dashed border-slate-300 bg-linear-to-b from-slate-50/70 to-white shadow-2xs ${className}`}
+      className={`flex flex-col items-center justify-center p-6 md:p-10 text-center rounded-md border border-dashed border-[#bfbfbf] bg-white ${className}`}
     >
-      {/* Icon with elegant layered backdrop */}
-      <div className="relative mb-4">
-        <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-700 shadow-2xs">
-          <FinalIcon className="w-8 h-8 stroke-[1.5]" />
+      {/* Icon with layered backdrop */}
+      <div className="relative mb-3">
+        <div className="w-14 h-14 rounded-md bg-[#e5f3fa] border border-[#b3ddf2] flex items-center justify-center text-[#007cc0]">
+          <FinalIcon className="w-7 h-7 stroke-[1.5]" />
         </div>
-        <div className="absolute -bottom-1 -left-1 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-mono font-bold shadow-xs">
+        <div className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-[#007cc0] text-white flex items-center justify-center text-[10px] font-mono font-bold">
           0
         </div>
       </div>
 
       {/* Title & Description */}
-      <h3 className="font-bold text-sm md:text-base text-slate-900 mb-1.5">{finalTitle}</h3>
-      <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed mb-4">
+      <h3 className="font-bold text-sm md:text-base text-[#333333] mb-1">{finalTitle}</h3>
+      <p className="text-xs text-[#666666] max-w-md mx-auto leading-relaxed mb-4">
         {finalDescription}
       </p>
 
-      {/* Enterprise Instructional Steps (گام‌های راهنما برای شروع) */}
+      {/* Enterprise Instructional Steps */}
       {finalSteps && finalSteps.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-3 max-w-md w-full text-right text-xs mb-5 shadow-2xs">
-          <div className="text-[11px] font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
+        <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 max-w-md w-full text-right text-xs mb-4">
+          <div className="text-[11px] font-bold text-[#333333] mb-1.5 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#007cc0]" />
             <span>راهنمای گام‌به‌گام برای شروع:</span>
           </div>
-          <ul className="space-y-1.5 text-slate-600 text-[11px]">
+          <ul className="space-y-1 text-[#666666] text-[11px]">
             {finalSteps.map((step, sIdx) => (
               <li key={sIdx} className="flex items-start gap-2">
-                <span className="font-mono text-[10px] font-bold text-amber-600 shrink-0 mt-0.5">
+                <span className="font-mono text-[10px] font-bold text-[#007cc0] shrink-0 mt-0.5">
                   ●
                 </span>
                 <span>{step}</span>
@@ -212,14 +212,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
 
       {/* Call To Actions */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {finalActionLabel && onAction && (
           <button
             type="button"
             onClick={onAction}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-4 py-1.5 text-xs cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-amber-400" />
+            <Plus className="w-3.5 h-3.5" />
             <span>{finalActionLabel}</span>
           </button>
         )}
@@ -228,9 +228,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           <button
             type="button"
             onClick={onSecondaryAction}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            className="sap-btn-standard flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+            <RefreshCw className="w-3.5 h-3.5 text-[#007cc0]" />
             <span>{finalSecondaryLabel}</span>
           </button>
         )}

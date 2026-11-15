@@ -239,10 +239,10 @@ export const MetricTooltip: React.FC<MetricTooltipProps> = ({
           setIsOpen(true);
         }}
         onMouseLeave={() => setIsOpen(false)}
-        className={`inline-flex items-center gap-1 rounded-md transition-colors focus:outline-none ${
+        className={`inline-flex items-center gap-1 rounded transition-colors focus:outline-none cursor-pointer ${
           showBadgeText
-            ? 'px-1.5 py-0.5 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 border border-slate-200/80 text-[10px] font-bold'
-            : 'p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/80 rounded-full'
+            ? 'px-1.5 py-0.5 bg-[#f7f7f7] hover:bg-[#e5f3fa] text-[#333333] hover:text-[#007cc0] border border-[#d9d9d9] text-[10px] font-bold'
+            : 'p-0.5 text-[#666666] hover:text-[#007cc0] hover:bg-[#e5f3fa] rounded-full'
         }`}
         title={`راهنمای شاخص ${metric.abbr} (${metric.persianTitle})`}
         aria-label={`راهنمای شاخص ${metric.persianTitle}`}
@@ -268,50 +268,50 @@ export const MetricTooltip: React.FC<MetricTooltipProps> = ({
               maxWidth: 'calc(100vw - 24px)',
               zIndex: 9999,
             }}
-            className="bg-slate-900 text-white rounded-xl shadow-2xl border border-slate-700/90 p-3.5 text-right font-sans animate-in fade-in duration-150"
+            className="bg-white text-[#333333] rounded-md shadow-xl border border-[#d9d9d9] p-3.5 text-right font-sans animate-in fade-in duration-150"
             dir="rtl"
           >
             {/* Header */}
-            <div className="flex items-start justify-between gap-2 pb-2 mb-2 border-b border-slate-800">
+            <div className="flex items-start justify-between gap-2 pb-2 mb-2 border-b border-[#e8e8e8]">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded text-[10px] font-black font-mono">
+                  <span className="px-1.5 py-0.5 bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] rounded text-[10px] font-bold font-mono">
                     {metric.abbr}
                   </span>
-                  <span className="text-xs font-black text-white">{metric.persianTitle}</span>
+                  <span className="text-xs font-bold text-[#333333]">{metric.persianTitle}</span>
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">{metric.englishTitle}</div>
+                <div className="text-[10px] text-[#666666] font-mono mt-0.5">{metric.englishTitle}</div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-white p-0.5 rounded"
+                className="text-[#666666] hover:text-[#333333] p-0.5 rounded cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {/* Summary */}
-            <p className="text-[11px] text-slate-200 leading-relaxed mb-2.5 flex items-start gap-1.5">
-              <Info className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-[#333333] leading-relaxed mb-2.5 flex items-start gap-1.5">
+              <Info className="w-3.5 h-3.5 text-[#007cc0] shrink-0 mt-0.5" />
               <span>{metric.simpleSummary}</span>
             </p>
 
             {/* Formula */}
             {metric.formula && (
-              <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-2 mb-2">
-                <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-300 mb-1">
+              <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-2 mb-2">
+                <div className="flex items-center gap-1 text-[10px] font-bold text-[#007cc0] mb-1">
                   <Calculator className="w-3 h-3" />
                   <span>فرمول و منطق محاسبه در سیستم:</span>
                 </div>
-                <div className="text-[10px] text-slate-300 font-mono leading-relaxed">{metric.formula}</div>
+                <div className="text-[10px] text-[#333333] font-mono leading-relaxed">{metric.formula}</div>
               </div>
             )}
 
             {/* Example */}
             {metric.example && (
-              <div className="text-[10px] text-slate-300 bg-slate-800/60 rounded-lg p-2 mb-2 leading-relaxed">
-                <span className="font-bold text-amber-300">مثال کاربردی: </span>
+              <div className="text-[10px] text-[#333333] bg-[#e5f3fa]/50 border border-[#b3ddf2] rounded p-2 mb-2 leading-relaxed">
+                <span className="font-bold text-[#007cc0]">مثال کاربردی: </span>
                 {metric.example}
               </div>
             )}
@@ -319,19 +319,19 @@ export const MetricTooltip: React.FC<MetricTooltipProps> = ({
             {/* Benchmarks */}
             <div className="grid grid-cols-1 gap-1.5 pt-1 text-[10px]">
               {metric.healthyBenchmark && (
-                <div className="flex items-start gap-1.5 text-emerald-300">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-400" />
+                <div className="flex items-start gap-1.5 text-[#107e3e]">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#107e3e]" />
                   <span>
-                    <strong className="text-emerald-200">وضعیت مطلوب: </strong>
+                    <strong className="text-[#107e3e]">وضعیت مطلوب: </strong>
                     {metric.healthyBenchmark}
                   </span>
                 </div>
               )}
               {metric.warningSign && (
-                <div className="flex items-start gap-1.5 text-rose-300">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400" />
+                <div className="flex items-start gap-1.5 text-[#bb0000]">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#bb0000]" />
                   <span>
-                    <strong className="text-rose-200">هشدار عملیاتی: </strong>
+                    <strong className="text-[#bb0000]">هشدار عملیاتی: </strong>
                     {metric.warningSign}
                   </span>
                 </div>

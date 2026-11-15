@@ -27,8 +27,10 @@ import {
 import { exportToCsv } from '../../utils/csvExport';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { ReportModuleSkeleton } from '../common/Skeleton';
+import { useErpRouter } from '../../context/RouterContext';
 
 export const ConsumablesForecastView: React.FC = () => {
+  const { traceDocument } = useErpRouter();
   const [data, setData] = useState<ConsumablesForecastSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [horizonDays, setHorizonDays] = useState<number>(30);
@@ -192,23 +194,23 @@ export const ConsumablesForecastView: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 text-slate-900 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 no-print">
+      <div className="sap-card p-4 text-[#333333] flex flex-col lg:flex-row lg:items-center justify-between gap-3 no-print">
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shrink-0">
-            <Flame className="w-6 h-6" />
+          <div className="p-2 rounded-sm bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] shrink-0">
+            <Flame className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base lg:text-lg font-bold text-slate-900">
-                ماژول پیش‌بینی مواد مصرفی و ملزومات کارگاهی (Consumables & Supplies Forecasting)
+              <h2 className="text-base font-bold text-[#333333]">
+                ماژول پیش‌بینی مواد مصرفی و ملزومات کارگاهی (Consumables &amp; Supplies Forecasting)
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-700 border border-cyan-500/30">
-                ROP & Burn-Rate Engine
+              <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
+                ROP &amp; Burn-Rate Engine
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#666666] mt-0.5">
               پیش‌بینی هوشمند مصرف سیم جوش CO2، الکترود نقطه‌جوش، روغن کشش ورق، سنبه‌های قالب، رنگ ED و ملزومات بسته‌بندی بر اساس ضرب پرس و تیراژ دستور کارها
             </p>
           </div>
@@ -219,9 +221,9 @@ export const ConsumablesForecastView: React.FC = () => {
             type="button"
             onClick={() => handleIssueRequisition()}
             disabled={creatingPr}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
-            <ShoppingCart className="w-4 h-4" />
+            <ShoppingCart className="w-3.5 h-3.5" />
             <span>صدور خودکار درخواست خرید کسری‌ها (PR)</span>
           </button>
 
@@ -229,36 +231,36 @@ export const ConsumablesForecastView: React.FC = () => {
             type="button"
             onClick={loadForecast}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-semibold transition cursor-pointer"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007cc0]' : 'text-[#666666]'}`} />
             <span>محاسبه مجدد</span>
           </button>
 
           <button
             type="button"
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-semibold transition cursor-pointer"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <Download className="w-3.5 h-3.5 text-[#107e3e]" />
             <span>خروجی اکسل</span>
           </button>
 
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-semibold transition cursor-pointer"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
-            <Printer className="w-3.5 h-3.5 text-slate-400" />
+            <Printer className="w-3.5 h-3.5 text-[#666666]" />
             <span>چاپ</span>
           </button>
         </div>
       </div>
 
       {notice && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-700 text-xs flex items-center justify-between">
+        <div className="p-3 rounded-sm bg-[#ebf7ef] border border-[#a9dfbf] text-[#107e3e] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <CheckCircle2 className="w-4 h-4 text-[#107e3e]" />
             <span>{notice}</span>
           </div>
           <button onClick={() => setNotice(null)} className="text-xs underline cursor-pointer">بستن</button>
@@ -266,10 +268,10 @@ export const ConsumablesForecastView: React.FC = () => {
       )}
 
       {/* Horizon & Demand Growth Controls */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-xs">
+      <div className="sap-card p-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-slate-400 font-medium flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-[#666666] font-medium flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-[#007cc0]" />
             افق زمانی پیش‌بینی:
           </span>
           {[
@@ -282,10 +284,10 @@ export const ConsumablesForecastView: React.FC = () => {
               key={h.days}
               type="button"
               onClick={() => setHorizonDays(h.days)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-sm font-medium transition cursor-pointer ${
                 horizonDays === h.days
-                  ? 'bg-cyan-600 text-white font-bold'
-                  : 'bg-slate-50 text-slate-400 hover:text-slate-900 border border-slate-200'
+                  ? 'bg-[#007cc0] text-white font-bold border border-[#007cc0]'
+                  : 'bg-[#f5f5f5] text-[#666666] hover:text-[#333333] border border-[#d9d9d9]'
               }`}
             >
               {h.label}
@@ -293,21 +295,21 @@ export const ConsumablesForecastView: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-slate-400 flex items-center gap-1">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+        <div className="flex items-center gap-2.5">
+          <span className="text-[#666666] flex items-center gap-1">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-[#e9730c]" />
             ضریب تغییر تیراژ برنامه تولید:
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {[-10, 0, 15, 30, 50].map(g => (
               <button
                 key={g}
                 type="button"
                 onClick={() => setGrowthPercent(g)}
-                className={`px-2.5 py-1 rounded-lg font-mono text-[11px] cursor-pointer transition tabular-nums ${
+                className={`px-2 py-1 rounded-sm font-mono text-[11px] cursor-pointer transition tabular-nums ${
                   growthPercent === g
-                    ? 'bg-amber-500 text-slate-950 font-black'
-                    : 'bg-slate-50 text-slate-400 hover:text-slate-900 border border-slate-200'
+                    ? 'bg-[#e9730c] text-white font-bold border border-[#e9730c]'
+                    : 'bg-[#f5f5f5] text-[#666666] hover:text-[#333333] border border-[#d9d9d9]'
                 }`}
               >
                 {g > 0 ? `+${toPersianDigits(g)}٪` : `${toPersianDigits(g)}٪`}
@@ -325,82 +327,82 @@ export const ConsumablesForecastView: React.FC = () => {
       {/* 5 KPI Summary Cards */}
       {data && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="bg-white border border-rose-500/40 rounded-xl p-3.5 text-right">
-            <span className="text-[11px] text-rose-400 font-bold flex items-center gap-1">
+          <div className="sap-card border-r-4 border-r-[#bb0000] p-3 text-right">
+            <span className="text-[11px] text-[#bb0000] font-bold flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5" />
               اقلام بحرانی (نیاز به خرید فوری)
             </span>
-            <div className="text-2xl font-black text-rose-400 font-mono tabular-nums mt-1">
-              {toPersianDigits(data.criticalShortageCount)} <span className="text-xs font-sans font-normal text-slate-400">قلم</span>
+            <div className="text-xl font-bold text-[#bb0000] font-mono tabular-nums mt-1">
+              {toPersianDigits(data.criticalShortageCount)} <span className="text-xs font-sans font-normal text-[#666666]">قلم</span>
             </div>
-            <span className="text-[10px] text-rose-400/80 mt-1 block">پوشش کمتر از Lead-Time تامین‌کننده</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">پوشش کمتر از Lead-Time تامین‌کننده</span>
           </div>
 
-          <div className="bg-white border border-amber-500/40 rounded-xl p-3.5 text-right">
-            <span className="text-[11px] text-amber-400 font-bold block">رسیده به نقطه سفارش (ROP)</span>
-            <div className="text-2xl font-black text-amber-400 font-mono tabular-nums mt-1">
-              {toPersianDigits(data.belowReorderPointCount)} <span className="text-xs font-sans font-normal text-slate-400">قلم</span>
+          <div className="sap-card border-r-4 border-r-[#e9730c] p-3 text-right">
+            <span className="text-[11px] text-[#e9730c] font-bold block">رسیده به نقطه سفارش (ROP)</span>
+            <div className="text-xl font-bold text-[#e9730c] font-mono tabular-nums mt-1">
+              {toPersianDigits(data.belowReorderPointCount)} <span className="text-xs font-sans font-normal text-[#666666]">قلم</span>
             </div>
-            <span className="text-[10px] text-slate-400 mt-1 block">نیازمند ثبت سفارش شارژ مجدد</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">نیازمند ثبت سفارش شارژ مجدد</span>
           </div>
 
-          <div className="bg-white border border-emerald-500/30 rounded-xl p-3.5 text-right">
-            <span className="text-[11px] text-emerald-400 font-bold block">موجودی کافی و ایمن</span>
-            <div className="text-2xl font-black text-emerald-400 font-mono tabular-nums mt-1">
-              {toPersianDigits(data.adequateStockCount)} <span className="text-xs font-sans font-normal text-slate-400">قلم</span>
+          <div className="sap-card border-r-4 border-r-[#107e3e] p-3 text-right">
+            <span className="text-[11px] text-[#107e3e] font-bold block">موجودی کافی و ایمن</span>
+            <div className="text-xl font-bold text-[#107e3e] font-mono tabular-nums mt-1">
+              {toPersianDigits(data.adequateStockCount)} <span className="text-xs font-sans font-normal text-[#666666]">قلم</span>
             </div>
-            <span className="text-[10px] text-slate-400 mt-1 block">پوشش کامل افق {toPersianDigits(data.horizonDays)} روزه</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">پوشش کامل افق {toPersianDigits(data.horizonDays)} روزه</span>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-3.5 text-right">
-            <span className="text-[11px] text-cyan-400 font-bold block">کمترین روز پوشش موجودی</span>
-            <div className="text-xl font-black text-slate-900 font-mono tabular-nums mt-1">
+          <div className="sap-card border-r-4 border-r-[#007cc0] p-3 text-right">
+            <span className="text-[11px] text-[#007cc0] font-bold block">کمترین روز پوشش موجودی</span>
+            <div className="text-xl font-bold text-[#333333] font-mono tabular-nums mt-1">
               {data.lowestDaysOfSupplyItem ? `${toPersianDigits(data.lowestDaysOfSupplyItem.daysRemaining)} روز` : '-'}
             </div>
-            <span className="text-[10px] text-slate-400 mt-1 block truncate" title={data.lowestDaysOfSupplyItem?.name}>
+            <span className="text-[10px] text-[#666666] mt-0.5 block truncate" title={data.lowestDaysOfSupplyItem?.name}>
               {data.lowestDaysOfSupplyItem?.name || '-'}
             </span>
           </div>
 
-          <div className="bg-white border border-indigo-500/30 rounded-xl p-3.5 text-right">
-            <span className="text-[11px] text-indigo-400 font-bold block">برآورد بودجه خرید پیشنهادی</span>
-            <div className="text-lg font-black text-indigo-700 font-mono tabular-nums mt-1">
-              {formatNumber(Math.round(data.totalSuggestedProcurementBudgetRials / 1000000))} <span className="text-[10px] font-sans font-normal text-slate-400">میلیون ریال</span>
+          <div className="sap-card p-3 text-right">
+            <span className="text-[11px] text-[#007cc0] font-bold block">برآورد بودجه خرید پیشنهادی</span>
+            <div className="text-lg font-bold text-[#333333] font-mono tabular-nums mt-1">
+              {formatNumber(Math.round(data.totalSuggestedProcurementBudgetRials / 1000000))} <span className="text-[10px] font-sans font-normal text-[#666666]">میلیون ریال</span>
             </div>
-            <span className="text-[10px] text-slate-400 mt-1 block">برای پوشش کسری و نقطه سفارش</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">برای پوشش کسری و نقطه سفارش</span>
           </div>
         </div>
       )}
 
       {/* Sub-navigation: Forecast Table vs Purchase Requisitions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-2 no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#d9d9d9] pb-2 no-print">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setActiveSubView('forecast_table')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 rounded-sm text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border ${
               activeSubView === 'forecast_table'
-                ? 'bg-cyan-600 text-white'
-                : 'bg-white text-slate-400 hover:text-slate-900 border border-slate-200'
+                ? 'bg-[#007cc0] text-white border-[#007cc0]'
+                : 'bg-[#ffffff] text-[#666666] hover:text-[#333333] border-[#d9d9d9]'
             }`}
           >
-            <Flame className="w-4 h-4" />
+            <Flame className="w-3.5 h-3.5" />
             <span>ماتریس پیش‌بینی مصرف و نقطه سفارش (ROP)</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSubView('requisitions')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 rounded-sm text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border ${
               activeSubView === 'requisitions'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-white text-slate-400 hover:text-slate-900 border border-slate-200'
+                ? 'bg-[#107e3e] text-white border-[#107e3e]'
+                : 'bg-[#ffffff] text-[#666666] hover:text-[#333333] border-[#d9d9d9]'
             }`}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5" />
             <span>درخواست‌های خرید تدارکات صادره (PR)</span>
             {data && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-black/20 text-slate-900 tabular-nums">
+              <span className={`px-1.5 py-0.2 rounded-sm text-[10px] font-mono tabular-nums ${activeSubView === 'requisitions' ? 'bg-white/20 text-white' : 'bg-[#f0f0f0] text-[#333333]'}`}>
                 {toPersianDigits(data.activeRequisitions.length)}
               </span>
             )}
@@ -409,13 +411,13 @@ export const ConsumablesForecastView: React.FC = () => {
 
         {activeSubView === 'forecast_table' && (
           <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-[#666666] absolute right-2.5 top-2" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="جستجو در نام یا کد کالای مصرفی..."
-              className="w-full bg-white border border-slate-200 rounded-xl pr-8 pl-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm pr-8 pl-3 py-1 text-xs text-[#333333] placeholder:text-[#888888] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
         )}
@@ -430,10 +432,10 @@ export const ConsumablesForecastView: React.FC = () => {
                 key={cat.id}
                 type="button"
                 onClick={() => setCategoryFilter(cat.id)}
-                className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition cursor-pointer ${
+                className={`px-2.5 py-1 rounded-sm font-medium whitespace-nowrap transition cursor-pointer border ${
                   categoryFilter === cat.id
-                    ? 'bg-slate-100 text-cyan-700 border border-cyan-500/40 font-bold'
-                    : 'bg-white text-slate-400 hover:text-slate-900 border border-slate-200'
+                    ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0] font-bold'
+                    : 'bg-[#ffffff] text-[#666666] hover:text-[#333333] border-[#d9d9d9]'
                 }`}
               >
                 {cat.label}
@@ -442,113 +444,122 @@ export const ConsumablesForecastView: React.FC = () => {
           </div>
 
           {/* Consumables Forecast Table */}
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm printable-area">
+          <div className="sap-card overflow-hidden printable-area">
             {/* Print Header shown only during print */}
-            <div className="hidden print:block p-4 border-b border-slate-300 text-center">
-              <span className="text-xs text-slate-600 block">شرکت تولیدی قطعات خودرو (زنجیره تامین ساپکو)</span>
-              <h2 className="text-base font-bold text-slate-900 mt-1">گزارش رسمی پیش‌بینی مواد مصرفی و ملزومات کارگاهی (Consumables ROP)</h2>
-              <span className="text-[10px] text-slate-500 font-mono">افق پیش‌بینی: {toPersianDigits(horizonDays)} روز کاری</span>
+            <div className="hidden print:block p-4 border-b border-[#d9d9d9] text-center">
+              <span className="text-xs text-[#666666] block">شرکت تولیدی قطعات خودرو (زنجیره تامین ساپکو)</span>
+              <h2 className="text-base font-bold text-[#333333] mt-1">گزارش رسمی پیش‌بینی مواد مصرفی و ملزومات کارگاهی (Consumables ROP)</h2>
+              <span className="text-[10px] text-[#666666] font-mono">افق پیش‌بینی: {toPersianDigits(horizonDays)} روز کاری</span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 font-bold text-xs">
+              <table className="sap-table-compact w-full text-right text-xs">
+                <thead>
                   <tr>
-                    <th className="py-3 px-3">کد و شرح کالای مصرفی</th>
-                    <th className="py-3 px-3">مبنای مهندسی مصرف</th>
-                    <th className="py-3 px-3 text-center">مصرف روزانه</th>
-                    <th className="py-3 px-3 text-center text-cyan-700 font-bold">
+                    <th>کد و شرح کالای مصرفی</th>
+                    <th>مبنای مهندسی مصرف</th>
+                    <th className="text-center">مصرف روزانه</th>
+                    <th className="text-center text-[#007cc0] font-bold">
                       نیاز {toPersianDigits(horizonDays)} روزه
                     </th>
-                    <th className="py-3 px-3 text-center text-slate-900 font-bold">موجودی فعلی</th>
-                    <th className="py-3 px-3 text-center text-slate-800">نقطه سفارش (ROP)</th>
-                    <th className="py-3 px-3 text-center font-bold text-slate-800">پوشش موجودی (روز)</th>
-                    <th className="py-3 px-3 text-center text-slate-800">تاریخ اتمام</th>
-                    <th className="py-3 px-3 text-center text-amber-700 font-black">پیشنهاد خرید</th>
-                    <th className="py-3 px-3 text-center text-slate-800">وضعیت</th>
-                    <th className="py-3 px-3 text-center text-slate-800 no-print">عملیات</th>
+                    <th className="text-center text-[#333333] font-bold">موجودی فعلی</th>
+                    <th className="text-center">نقطه سفارش (ROP)</th>
+                    <th className="text-center font-bold">پوشش موجودی (روز)</th>
+                    <th className="text-center">تاریخ اتمام</th>
+                    <th className="text-center text-[#e9730c] font-bold">پیشنهاد خرید</th>
+                    <th className="text-center">وضعیت</th>
+                    <th className="text-center no-print">عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-mono tabular-nums">
+                <tbody className="divide-y divide-[#e8e8e8] font-mono tabular-nums">
                   {filteredItems.map(item => (
-                    <tr key={item.id} className="hover:bg-slate-100 transition">
-                      <td className="py-3 px-3 font-sans">
-                        <div className="font-bold text-slate-900">{item.name}</div>
-                        <div className="text-[11px] text-slate-400 font-mono">
-                          {item.code} • <span className="font-sans text-cyan-400">{item.categoryLabelFa}</span>
+                    <tr key={item.id} className="hover:bg-[#f5f5f5] transition">
+                      <td className="font-sans">
+                        <div className="font-bold text-[#333333]">{item.name}</div>
+                        <div className="text-[11px] text-[#666666] font-mono flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => traceDocument(item.code, 'INVENTORY_LEDGER')}
+                            className="sap-doc-link font-mono"
+                            title="رهگیری در کاردکس انبار"
+                          >
+                            {item.code}
+                          </button>
+                          <span>•</span>
+                          <span className="font-sans text-[#007cc0]">{item.categoryLabelFa}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-3 font-sans">
-                        <div className="text-[11px] text-slate-700">{item.consumptionDriverLabelFa}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">
+                      <td className="font-sans">
+                        <div className="text-[11px] text-[#333333]">{item.consumptionDriverLabelFa}</div>
+                        <div className="text-[10px] text-[#666666] font-mono">
                           ضریب: {toPersianDigits(item.standardRatePerDriverUnit)} {item.unit} (پرت: {toPersianDigits(item.wasteAllowancePercent)}٪)
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-center text-slate-700">
-                        {toPersianDigits(item.dailyBurnRate)} <span className="text-[10px] text-slate-500">{item.unit}</span>
+                      <td className="text-center text-[#333333]">
+                        {toPersianDigits(item.dailyBurnRate)} <span className="text-[10px] text-[#666666]">{item.unit}</span>
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-cyan-400 text-sm">
+                      <td className="text-center font-bold text-[#007cc0] text-xs">
                         {formatNumber(item.forecastedGrossRequirement)} <span className="text-[10px] font-normal">{item.unit}</span>
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-slate-900">
-                        {formatNumber(item.currentStock)} <span className="text-[10px] font-normal text-slate-400">{item.unit}</span>
+                      <td className="text-center font-bold text-[#333333]">
+                        {formatNumber(item.currentStock)} <span className="text-[10px] font-normal text-[#666666]">{item.unit}</span>
                       </td>
-                      <td className="py-3 px-3 text-center text-slate-700">
+                      <td className="text-center text-[#333333]">
                         {formatNumber(item.reorderPoint)}
-                        <span className="block text-[10px] text-slate-500">اطمینان: {formatNumber(item.minSafetyStock)}</span>
+                        <span className="block text-[10px] text-[#666666]">اطمینان: {formatNumber(item.minSafetyStock)}</span>
                       </td>
-                      <td className="py-3 px-3 text-center font-black">
+                      <td className="text-center font-bold">
                         <span
-                          className={`px-2 py-0.5 rounded ${
+                          className={`px-1.5 py-0.5 rounded-sm text-[11px] border ${
                             item.daysOfSupplyRemaining <= item.supplierLeadTimeDays
-                              ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                              ? 'bg-[#ffecec] text-[#bb0000] border-[#f5b7b1]'
                               : item.daysOfSupplyRemaining <= 20
-                              ? 'bg-amber-500/15 text-amber-800 border border-amber-500/30'
-                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              ? 'bg-[#fff4e5] text-[#e9730c] border-[#f9d6a7]'
+                              : 'bg-[#ebf7ef] text-[#107e3e] border-[#a9dfbf]'
                           }`}
                         >
                           {toPersianDigits(item.daysOfSupplyRemaining)} روز
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-center text-[11px] text-slate-700">
+                      <td className="text-center text-[11px] text-[#333333]">
                         {item.estimatedRunOutDateFa}
                       </td>
-                      <td className="py-3 px-3 text-center font-black text-amber-400 text-sm">
+                      <td className="text-center font-bold text-[#e9730c] text-xs">
                         {item.suggestedOrderQty > 0 ? (
                           <div>
                             <span>{formatNumber(item.suggestedOrderQty)} {item.unit}</span>
-                            <span className="block text-[10px] text-slate-400 font-normal">
+                            <span className="block text-[10px] text-[#666666] font-normal">
                               {formatNumber(Math.round(item.estimatedTotalOrderCostRials / 1000000))} م.ریال
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-600">-</span>
+                          <span className="text-[#888888]">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-center font-sans">
+                      <td className="text-center font-sans">
                         {item.status === 'CRITICAL_SHORTAGE' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-700 border border-rose-500/30">
+                          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1]">
                             کسری فوری
                           </span>
                         )}
                         {item.status === 'BELOW_ROP' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-800 border border-amber-500/30">
+                          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#fff4e5] text-[#e9730c] border border-[#f9d6a7]">
                             نقطه سفارش
                           </span>
                         )}
                         {item.status === 'ADEQUATE' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
+                          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#ebf7ef] text-[#107e3e] border border-[#a9dfbf]">
                             موجودی کافی
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-center font-sans">
-                        <div className="flex items-center justify-center gap-1.5">
+                      <td className="text-center font-sans no-print">
+                        <div className="flex items-center justify-center gap-1">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(item)}
                             title="تنظیم موجودی یا ضریب مصرف"
-                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-700 cursor-pointer"
+                            className="sap-btn-standard p-1"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -557,7 +568,7 @@ export const ConsumablesForecastView: React.FC = () => {
                               type="button"
                               onClick={() => handleIssueRequisition([item.code])}
                               title="صدور درخواست خرید برای این قلم"
-                              className="px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-700 hover:text-slate-900 border border-emerald-500/30 text-[10px] font-bold cursor-pointer transition"
+                              className="px-2 py-0.5 rounded-sm bg-[#ebf7ef] hover:bg-[#107e3e] text-[#107e3e] hover:text-white border border-[#a9dfbf] text-[10px] font-bold cursor-pointer transition"
                             >
                               خرید
                             </button>
@@ -575,52 +586,60 @@ export const ConsumablesForecastView: React.FC = () => {
         /* Active Purchase Requisitions View */
         <div className="space-y-4">
           {data?.activeRequisitions.map(pr => (
-            <div key={pr.id} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+            <div key={pr.id} className="sap-card p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e8e8e8] pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-black text-emerald-400">{pr.prNumber}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
+                    <span className="font-mono text-sm font-bold text-[#007cc0]">{pr.prNumber}</span>
+                    <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#ebf7ef] text-[#107e3e] border border-[#a9dfbf]">
                       {pr.status === 'APPROVED_BY_PLANT_MGR' ? 'تأیید مدیریت کارخانه' : 'در انتظار تأیید تدارکات'}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs text-[#666666] mt-1">
                     درخواست‌کننده: {pr.requestedBy} • تاریخ صدور: <span className="font-mono">{pr.createdAtFa}</span>
                   </div>
                 </div>
                 <div className="text-left font-mono tabular-nums">
-                  <span className="text-[11px] text-slate-400 block font-sans">جمع برآورد مالی سفارش:</span>
-                  <span className="text-base font-black text-amber-400">
+                  <span className="text-[11px] text-[#666666] block font-sans">جمع برآورد مالی سفارش:</span>
+                  <span className="text-base font-bold text-[#e9730c]">
                     {formatNumber(pr.totalEstimatedCostRials)} ریال
                   </span>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-400 font-mono text-[11px]">
+              <div className="overflow-x-auto border border-[#d9d9d9] rounded-sm">
+                <table className="sap-table-compact w-full text-right text-xs">
+                  <thead>
                     <tr>
-                      <th className="py-2 px-3">کد کالا</th>
-                      <th className="py-2 px-3">شرح کالای مصرفی</th>
-                      <th className="py-2 px-3 text-center">موجودی فعلی</th>
-                      <th className="py-2 px-3 text-center text-emerald-400">مقدار سفارش</th>
-                      <th className="py-2 px-3">تأمین‌کننده منتخب</th>
-                      <th className="py-2 px-3 text-left">برآورد مبلغ (ریال)</th>
+                      <th>کد کالا</th>
+                      <th>شرح کالای مصرفی</th>
+                      <th className="text-center">موجودی فعلی</th>
+                      <th className="text-center text-[#107e3e]">مقدار سفارش</th>
+                      <th>تأمین‌کننده منتخب</th>
+                      <th className="text-left">برآورد مبلغ (ریال)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono tabular-nums">
+                  <tbody className="divide-y divide-[#e8e8e8] font-mono tabular-nums">
                     {pr.lines.map((line, idx) => (
-                      <tr key={idx}>
-                        <td className="py-2 px-3 text-cyan-400 font-bold">{line.consumableCode}</td>
-                        <td className="py-2 px-3 font-sans text-slate-900">{line.consumableName}</td>
-                        <td className="py-2 px-3 text-center text-slate-400">
+                      <tr key={idx} className="hover:bg-[#f5f5f5]">
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => traceDocument(line.consumableCode, 'INVENTORY_LEDGER')}
+                            className="sap-doc-link font-mono font-bold"
+                          >
+                            {line.consumableCode}
+                          </button>
+                        </td>
+                        <td className="font-sans text-[#333333]">{line.consumableName}</td>
+                        <td className="text-center text-[#666666]">
                           {formatNumber(line.currentStock)} {line.unit}
                         </td>
-                        <td className="py-2 px-3 text-center font-bold text-emerald-400">
+                        <td className="text-center font-bold text-[#107e3e]">
                           {formatNumber(line.orderQuantity)} {line.unit}
                         </td>
-                        <td className="py-2 px-3 font-sans text-slate-700">{line.supplierName}</td>
-                        <td className="py-2 px-3 text-left text-slate-900 font-bold">
+                        <td className="font-sans text-[#333333]">{line.supplierName}</td>
+                        <td className="text-left text-[#333333] font-bold">
                           {formatNumber(line.estimatedCostRials)}
                         </td>
                       </tr>
@@ -630,7 +649,7 @@ export const ConsumablesForecastView: React.FC = () => {
               </div>
 
               {pr.notes && (
-                <div className="text-[11px] text-slate-400 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <div className="text-[11px] text-[#666666] bg-[#f5f5f5] p-2.5 rounded-sm border border-[#e8e8e8]">
                   توضیحات: {pr.notes}
                 </div>
               )}
@@ -641,21 +660,21 @@ export const ConsumablesForecastView: React.FC = () => {
 
       {/* Edit Consumable Stock / Rate Modal */}
       {editingItem && (
-        <div className="fixed inset-0 z-50 bg-slate-50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm w-full max-w-md p-5 shadow-md space-y-4">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">تنظیم موجودی و ضریب مصرف مهندسی</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{editingItem.name}</p>
+                <h3 className="text-sm font-bold text-[#333333]">تنظیم موجودی و ضریب مصرف مهندسی</h3>
+                <p className="text-xs text-[#666666] mt-0.5">{editingItem.name}</p>
               </div>
-              <button onClick={() => setEditingItem(null)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+              <button onClick={() => setEditingItem(null)} className="text-[#666666] hover:text-[#333333] cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveEdit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-700 font-medium mb-1">
+                <label className="block text-[#333333] font-medium mb-1">
                   موجودی آزاد فعلی در انبار ({editingItem.unit}):
                 </label>
                 <input
@@ -663,12 +682,12 @@ export const ConsumablesForecastView: React.FC = () => {
                   step="0.1"
                   value={editStockVal}
                   onChange={e => setEditStockVal(Number(e.target.value))}
-                  className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">
+                <label className="block text-[#333333] font-medium mb-1">
                   ضریب مصرف استاندارد ({editingItem.consumptionDriverLabelFa}):
                 </label>
                 <input
@@ -676,12 +695,12 @@ export const ConsumablesForecastView: React.FC = () => {
                   step="0.01"
                   value={editRateVal}
                   onChange={e => setEditRateVal(Number(e.target.value))}
-                  className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">
+                <label className="block text-[#333333] font-medium mb-1">
                   حداقل موجودی اطمینان (Safety Stock - {editingItem.unit}):
                 </label>
                 <input
@@ -689,22 +708,22 @@ export const ConsumablesForecastView: React.FC = () => {
                   step="1"
                   value={editSafetyVal}
                   onChange={e => setEditSafetyVal(Number(e.target.value))}
-                  className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={savingEdit}
-                  className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5"
                 >
                   {savingEdit ? 'در حال ذخیره...' : 'ذخیره و بازمحاسبه پیش‌بینی'}
                 </button>

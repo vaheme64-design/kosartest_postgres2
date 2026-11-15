@@ -96,32 +96,32 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-[1px] transition-opacity animate-in fade-in duration-200"
       dir="rtl"
     >
       <div
-        className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col text-right text-xs"
+        className="bg-white border border-[#d9d9d9] rounded-md max-w-lg w-full shadow-xl overflow-hidden flex flex-col text-right text-xs"
         role="dialog"
         aria-modal="true"
         aria-labelledby="audit-modal-title"
       >
         {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-[#ffffff] text-[#333333] px-5 py-3.5 flex items-center justify-between border-b border-[#d9d9d9]">
           <div className="flex items-center gap-2.5">
             <div
-              className={`p-2 rounded-xl flex items-center justify-center ${
+              className={`p-2 rounded flex items-center justify-center border ${
                 isDestructive
-                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  ? 'bg-[#fde8e8] text-[#bb0000] border-[#f5b7b7]'
+                  : 'bg-[#fff5eb] text-[#e9730c] border-[#f5d0a9]'
               }`}
             >
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h3 id="audit-modal-title" className="font-bold text-sm text-white">
+              <h3 id="audit-modal-title" className="font-bold text-sm text-[#333333]">
                 {title}
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-[#666666] mt-0.5">
                 ثبت سند ممیزی تغییرات حساس (Enterprise Audit Trail)
               </p>
             </div>
@@ -130,7 +130,7 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer disabled:opacity-50"
+            className="p-1 rounded text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] transition cursor-pointer disabled:opacity-50"
             title="بستن"
           >
             <X className="w-4 h-4" />
@@ -140,35 +140,35 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
         {/* Content Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Action Summary Card */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl space-y-2">
+          <div className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-700 flex items-center gap-1.5 text-[11px]">
-                <FileText className="w-3.5 h-3.5 text-slate-500" />
+              <span className="font-semibold text-[#333333] flex items-center gap-1.5 text-[11px]">
+                <FileText className="w-3.5 h-3.5 text-[#007cc0]" />
                 <span>شرح عملیات درخواستی:</span>
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-bold">
                 AUDIT-MANDATORY
               </span>
             </div>
-            <p className="text-slate-900 font-medium leading-relaxed text-xs">
+            <p className="text-[#333333] font-medium leading-relaxed text-xs">
               {actionSummary}
             </p>
 
             {(entityName || entityId || actionType) && (
-              <div className="pt-2 border-t border-slate-200/70 flex flex-wrap gap-2 text-[10px] font-mono text-slate-600">
+              <div className="pt-2 border-t border-[#e8e8e8] flex flex-wrap gap-2 text-[10px] font-mono text-[#666666]">
                 {entityName && (
-                  <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
-                    موجودیت: <strong className="text-slate-800">{entityName}</strong>
+                  <span className="bg-white px-2 py-0.5 rounded border border-[#d9d9d9]">
+                    موجودیت: <strong className="text-[#333333]">{entityName}</strong>
                   </span>
                 )}
                 {entityId && (
-                  <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
-                    شناسه: <strong className="text-slate-800">{entityId}</strong>
+                  <span className="bg-white px-2 py-0.5 rounded border border-[#d9d9d9]">
+                    شناسه: <strong className="text-[#333333]">{entityId}</strong>
                   </span>
                 )}
                 {actionType && (
-                  <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
-                    نوع عملیات: <strong className="text-indigo-700">{actionType}</strong>
+                  <span className="bg-white px-2 py-0.5 rounded border border-[#d9d9d9]">
+                    نوع عملیات: <strong className="text-[#007cc0]">{actionType}</strong>
                   </span>
                 )}
               </div>
@@ -180,31 +180,31 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
             <div className="flex items-center justify-between">
               <label
                 htmlFor="audit-reason-input"
-                className="font-bold text-slate-800 flex items-center gap-1.5"
+                className="font-bold text-[#333333] flex items-center gap-1.5"
               >
                 <span>دلیل تغییرات / تایید عملیات</span>
-                <span className="text-rose-500">*</span>
-                <span className="text-[10px] font-normal text-slate-500">
+                <span className="text-[#bb0000]">*</span>
+                <span className="text-[10px] font-normal text-[#666666]">
                   (حداقل ۱۰ کاراکتر الزامی)
                 </span>
               </label>
 
               {/* Character Counter Badge */}
               <div
-                className={`text-[10px] font-mono px-2 py-0.5 rounded-full flex items-center gap-1 font-bold ${
+                className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1 font-bold border ${
                   isReasonValid
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-800 border border-amber-200'
+                    ? 'bg-[#eef8f2] text-[#107e3e] border-[#b5e0c6]'
+                    : 'bg-[#fff5eb] text-[#e9730c] border-[#f5d0a9]'
                 }`}
               >
                 {isReasonValid ? (
                   <>
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <CheckCircle2 className="w-3 h-3 text-[#107e3e]" />
                     <span>{charCount} کاراکتر (معتبر)</span>
                   </>
                 ) : (
                   <>
-                    <Clock className="w-3 h-3 text-amber-600" />
+                    <Clock className="w-3 h-3 text-[#e9730c]" />
                     <span>{charCount} / ۱۰ ({charsRemaining} کاراکتر باقی‌مانده)</span>
                   </>
                 )}
@@ -220,12 +220,12 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
                 setHasInteracted(true);
               }}
               placeholder="لطفاً دلیل فنی، مدیریتی یا عملیاتی این اقدام را به صورت مستند بنویسید (مثلاً: تغییر شیفت و فوریت سفارش ساپکو)..."
-              className={`w-full p-3 rounded-xl border text-xs leading-relaxed focus:outline-none transition resize-none ${
+              className={`w-full p-2.5 rounded border text-xs text-[#333333] leading-relaxed focus:outline-none transition resize-none ${
                 hasInteracted && !isReasonValid
-                  ? 'border-amber-400 bg-amber-50/20 focus:border-amber-500 focus:ring-1 focus:ring-amber-500'
+                  ? 'border-[#e9730c] bg-[#fff5eb]/30 focus:border-[#e9730c]'
                   : isReasonValid
-                  ? 'border-emerald-300 bg-emerald-50/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
-                  : 'border-slate-300 bg-white focus:border-slate-500 focus:ring-1 focus:ring-slate-500'
+                  ? 'border-[#107e3e] bg-[#eef8f2]/20 focus:border-[#107e3e]'
+                  : 'border-[#bfbfbf] bg-white focus:border-[#007cc0]'
               }`}
               disabled={isSubmitting}
               autoFocus
@@ -233,8 +233,8 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
 
             {/* Quick Reason Suggestions */}
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                <HelpCircle className="w-3 h-3 text-slate-400" />
+              <span className="text-[10px] text-[#666666] flex items-center gap-1">
+                <HelpCircle className="w-3 h-3 text-[#007cc0]" />
                 <span>دلایل پرتکرار پیشنهادی:</span>
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -244,7 +244,7 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
                     type="button"
                     onClick={() => handleSelectQuickReason(qr)}
                     disabled={isSubmitting}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer disabled:opacity-50"
+                    className="text-[10px] px-2 py-0.5 rounded bg-[#f7f7f7] hover:bg-[#e5f3fa] text-[#333333] border border-[#d9d9d9] transition cursor-pointer disabled:opacity-50"
                   >
                     + {qr}
                   </button>
@@ -253,7 +253,7 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
             </div>
 
             {hasInteracted && !isReasonValid && (
-              <p className="text-[11px] text-amber-700 flex items-center gap-1 mt-1">
+              <p className="text-[11px] text-[#e9730c] flex items-center gap-1 mt-1">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   متن واردشده کمتر از ۱۰ کاراکتر است. ثبت دلیل مستند برای تضمین جامعیت ممیزی الزامی است.
@@ -263,9 +263,9 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-            <span className="text-[10px] text-slate-400">
-              کلید <kbd className="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 text-slate-600 font-mono">ESC</kbd> برای انصراف
+          <div className="flex items-center justify-between pt-3 border-t border-[#d9d9d9]">
+            <span className="text-[10px] text-[#666666]">
+              کلید <kbd className="px-1.5 py-0.5 bg-[#f7f7f7] rounded border border-[#d9d9d9] text-[#333333] font-mono">ESC</kbd> برای انصراف
             </span>
 
             <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
                 type="button"
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition cursor-pointer disabled:opacity-50"
+                className="sap-btn-standard px-4 py-1.5 cursor-pointer disabled:opacity-50"
               >
                 {cancelButtonText}
               </button>
@@ -281,12 +281,12 @@ export const AuditConfirmationModal: React.FC<AuditConfirmationModalProps> = ({
               <button
                 type="submit"
                 disabled={!isReasonValid || isSubmitting}
-                className={`px-4 py-2 rounded-xl text-white font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                className={`px-4 py-1.5 rounded text-white font-semibold transition flex items-center gap-1.5 cursor-pointer ${
                   !isReasonValid || isSubmitting
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                    ? 'bg-[#d9d9d9] text-[#888888] cursor-not-allowed'
                     : isDestructive
-                    ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
-                    : 'bg-slate-900 hover:bg-slate-800 active:bg-slate-950'
+                    ? 'bg-[#bb0000] hover:bg-[#990000]'
+                    : 'sap-btn-emphasized'
                 }`}
                 title={!isReasonValid ? 'برای تایید ابتدا حداقل ۱۰ کاراکتر دلیل بنویسید' : confirmButtonText}
               >

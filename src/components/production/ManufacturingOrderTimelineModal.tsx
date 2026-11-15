@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { MultiPartScheduleItem, ScheduledOpStep, WORK_DAYS } from './ErpProductionWorkbenchView';
 import { formatNumber, toPersianDigits, exportToCsv } from '../../utils/formatters';
+import { useErpRouter } from '../../context/RouterContext';
 
 interface ManufacturingOrderTimelineModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
   onSelectOrder,
   onOpenLogModal,
 }) => {
+  const { traceDocument } = useErpRouter();
   const [selectedOrderId, setSelectedOrderId] = useState<string>(order?.id || '');
   const [filterType, setFilterType] = useState<'ALL' | 'OPS_ONLY' | 'COMPLETED' | 'IN_PROGRESS'>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -418,25 +420,46 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
   if (!isOpen || !activeOrder) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-5xl max-h-[92vh] rounded-2xl shadow-2xl flex flex-col border border-slate-200 overflow-hidden text-right font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#333333]/40 backdrop-blur-[1px] animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-5xl max-h-[92vh] rounded-md shadow-xl flex flex-col border border-[#d9d9d9] overflow-hidden text-right font-sans">
         {/* Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between gap-4 border-b border-slate-800">
+        <div className="px-5 py-3.5 bg-[#ffffff] text-[#333333] flex items-center justify-between gap-4 border-b border-[#d9d9d9]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-inner">
+            <div className="w-9 h-9 rounded bg-[#e5f3fa] border border-[#b3ddf2] flex items-center justify-center text-[#007cc0]">
               <Clock className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-bold border border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    traceDocument(activeOrder.orderCode, 'WIP_TRACEABILITY');
+                    onClose();
+                  }}
+                  className="sap-doc-link font-mono text-xs px-2 py-0.5 rounded bg-[#e5f3fa] border border-[#b3ddf2] cursor-pointer"
+                  title="ردیابی دستور ساخت در WIP"
+                >
                   {activeOrder.orderCode}
-                </span>
-                <h2 className="text-base font-bold text-white tracking-tight">
+                </button>
+                <h2 className="text-sm font-bold text-[#333333] tracking-tight">
                   تاریخچه وضعیت و تایم‌لاین دستور ساخت (MO Lifecycle)
                 </h2>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
-                {activeOrder.partName} ({activeOrder.partCode}) — {activeOrder.carModel}
+              <p className="text-xs text-[#666666] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <span>{activeOrder.partName}</span>
+                <span>(</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    traceDocument(activeOrder.partCode, 'INVENTORY_LEDGER');
+                    onClose();
+                  }}
+                  className="sap-doc-link font-mono cursor-pointer"
+                  title="مشاهده کاردکس قطعه"
+                >
+                  {activeOrder.partCode}
+                </button>
+                <span>) — {activeOrder.carModel}</span>
               </p>
             </div>
           </div>
@@ -451,7 +474,7 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
                   const sel = allOrders.find(o => o.id === e.target.value);
                   if (sel && onSelectOrder) onSelectOrder(sel);
                 }}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                className="bg-white hover:bg-[#f7f7f7] text-[#333333] text-xs rounded px-3 py-1.5 border border-[#bfbfbf] focus:outline-none focus:border-[#007cc0] cursor-pointer"
               >
                 {allOrders.map(o => (
                   <option key={o.id} value={o.id}>
@@ -464,23 +487,23 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
             <button
               type="button"
               onClick={handlePrintTimeline}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
+              className="sap-btn-standard p-1.5 cursor-pointer"
               title="چاپ شناسنامه رهگیری"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-4 h-4 text-[#007cc0]" />
             </button>
             <button
               type="button"
               onClick={handleExportTimelineCsv}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
+              className="sap-btn-standard p-1.5 cursor-pointer"
               title="خروجی فایل اکسل (CSV)"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-[#107e3e]" />
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
+              className="p-1.5 text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] rounded transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -489,66 +512,66 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
 
         {/* Quick KPI Strip */}
         {metrics && (
-          <div className="bg-slate-50 border-b border-slate-200 px-6 py-3.5 grid grid-cols-2 sm:grid-cols-6 gap-3">
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-medium block">تیراژ مصوب سفارش</span>
-              <div className="text-sm font-bold text-slate-900 mt-0.5">
+          <div className="bg-[#f0f0f0] border-b border-[#d9d9d9] px-5 py-3 grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+            <div className="bg-white p-2.5 rounded border border-[#d9d9d9]">
+              <span className="text-[10px] text-[#666666] font-medium block">تیراژ مصوب سفارش</span>
+              <div className="text-sm font-bold text-[#333333] font-mono mt-0.5">
                 {formatNumber(activeOrder.weeklyTargetQty)}{' '}
-                <span className="text-[10px] font-normal text-slate-500">عدد</span>
+                <span className="text-[10px] font-normal text-[#666666]">عدد</span>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-medium block">تحویل قطعی به انبار</span>
-              <div className="text-sm font-bold text-emerald-700 mt-0.5 flex items-center justify-between">
+            <div className="bg-white p-2.5 rounded border border-[#d9d9d9]">
+              <span className="text-[10px] text-[#666666] font-medium block">تحویل قطعی به انبار</span>
+              <div className="text-sm font-bold text-[#107e3e] font-mono mt-0.5 flex items-center justify-between">
                 <span>{formatNumber(metrics.finalReceived)}</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#eef8f2] text-[#107e3e]">
                   {toPersianDigits(metrics.completionPercentage)}٪
                 </span>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-medium block">تعداد مراحل عملیاتی</span>
-              <div className="text-sm font-bold text-slate-800 mt-0.5">
+            <div className="bg-white p-2.5 rounded border border-[#d9d9d9]">
+              <span className="text-[10px] text-[#666666] font-medium block">تعداد مراحل عملیاتی</span>
+              <div className="text-sm font-bold text-[#333333] font-mono mt-0.5">
                 {toPersianDigits(metrics.completedOps)} از {toPersianDigits(metrics.totalOps)}{' '}
-                <span className="text-[10px] text-slate-500 font-normal">OP تکمیل</span>
+                <span className="text-[10px] text-[#666666] font-normal">OP تکمیل</span>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-medium block">کل ضایعات فرایندی</span>
-              <div className="text-sm font-bold text-rose-700 mt-0.5 flex items-center justify-between">
+            <div className="bg-white p-2.5 rounded border border-[#d9d9d9]">
+              <span className="text-[10px] text-[#666666] font-medium block">کل ضایعات فرایندی</span>
+              <div className="text-sm font-bold text-[#bb0000] font-mono mt-0.5 flex items-center justify-between">
                 <span>{formatNumber(metrics.totalScrap)} عدد</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-100 text-rose-800">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#fde8e8] text-[#bb0000]">
                   {toPersianDigits(metrics.scrapRate)}٪
                 </span>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-medium block">ورق مصرفی / بازده وزنی</span>
-              <div className="text-sm font-bold text-indigo-700 mt-0.5 flex items-center justify-between">
+            <div className="bg-white p-2.5 rounded border border-[#d9d9d9]">
+              <span className="text-[10px] text-[#666666] font-medium block">ورق مصرفی / بازده وزنی</span>
+              <div className="text-sm font-bold text-[#007cc0] font-mono mt-0.5 flex items-center justify-between">
                 <span>{formatNumber(activeOrder.rawMaterialIssuedKg)} kg</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0]">
                   {toPersianDigits(metrics.rawMaterialYield)}٪
                 </span>
               </div>
             </div>
 
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-medium block">وضعیت فعلی سفارش</span>
+            <div className="bg-white p-2.5 rounded border border-[#d9d9d9]">
+              <span className="text-[10px] text-[#666666] font-medium block">وضعیت فعلی سفارش</span>
               <div className="text-xs font-bold mt-1">
                 {metrics.completionPercentage === 100 ? (
-                  <span className="text-emerald-700 flex items-center gap-1">
+                  <span className="text-[#107e3e] flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 inline" /> خاتمه‌یافته
                   </span>
                 ) : metrics.inProgressOps > 0 ? (
-                  <span className="text-amber-700 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block"></span> در جریان ساخت
+                  <span className="text-[#e9730c] flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#e9730c] animate-ping inline-block"></span> در جریان ساخت
                   </span>
                 ) : (
-                  <span className="text-blue-700 flex items-center gap-1">
+                  <span className="text-[#007cc0] flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 inline" /> در برنامه تولید
                   </span>
                 )}
@@ -558,17 +581,17 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
         )}
 
         {/* Filter Toolbar */}
-        <div className="px-6 py-2.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="px-5 py-2.5 bg-white border-b border-[#d9d9d9] flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 font-medium flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> فیلتر رویدادها:
+            <span className="text-[#666666] font-medium flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5 text-[#007cc0]" /> فیلتر رویدادها:
             </span>
-            <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+            <div className="inline-flex rounded border border-[#d9d9d9] p-0.5 bg-[#f7f7f7]">
               <button
                 type="button"
                 onClick={() => setFilterType('ALL')}
-                className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
-                  filterType === 'ALL' ? 'bg-white shadow-2xs font-bold text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  filterType === 'ALL' ? 'bg-[#e5f3fa] font-bold text-[#007cc0]' : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 تمام رویدادها ({toPersianDigits(timelineEvents.length)})
@@ -576,8 +599,8 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
               <button
                 type="button"
                 onClick={() => setFilterType('OPS_ONLY')}
-                className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
-                  filterType === 'OPS_ONLY' ? 'bg-white shadow-2xs font-bold text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  filterType === 'OPS_ONLY' ? 'bg-[#e5f3fa] font-bold text-[#007cc0]' : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 فقط ایستگاه‌های OP ({toPersianDigits(activeOrder.ops.length)})
@@ -585,8 +608,8 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
               <button
                 type="button"
                 onClick={() => setFilterType('COMPLETED')}
-                className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
-                  filterType === 'COMPLETED' ? 'bg-white shadow-2xs font-bold text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  filterType === 'COMPLETED' ? 'bg-[#e5f3fa] font-bold text-[#007cc0]' : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 تکمیل‌شده
@@ -594,8 +617,8 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
               <button
                 type="button"
                 onClick={() => setFilterType('IN_PROGRESS')}
-                className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
-                  filterType === 'IN_PROGRESS' ? 'bg-white shadow-2xs font-bold text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                  filterType === 'IN_PROGRESS' ? 'bg-[#e5f3fa] font-bold text-[#007cc0]' : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 در حال اقدام
@@ -604,38 +627,36 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
           </div>
 
           <div className="relative w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#666666] absolute right-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="جستجو در مراحل، ماشین‌ها، اسناد..."
-              className="w-full pl-3 pr-8 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+              className="w-full pl-3 pr-8 py-1 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
         </div>
 
         {/* Scrollable Timeline Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          <div className="relative border-r-2 border-slate-200 pr-6 mr-3 space-y-8">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 bg-[#f7f7f7]">
+          <div className="relative border-r-2 border-[#d9d9d9] pr-6 mr-3 space-y-6">
             {filteredEvents.map((event, idx) => {
-              const isLast = idx === filteredEvents.length - 1;
-
               // Node badge styling
-              let nodeBg = 'bg-slate-100 text-slate-500 border-slate-300';
+              let nodeBg = 'bg-[#f0f0f0] text-[#666666] border-[#bfbfbf]';
               if (event.status === 'DONE') {
-                nodeBg = 'bg-emerald-500 text-white border-emerald-600 ring-4 ring-emerald-100';
+                nodeBg = 'bg-[#107e3e] text-white border-[#107e3e] ring-4 ring-[#eef8f2]';
               } else if (event.status === 'ACTIVE') {
-                nodeBg = 'bg-amber-500 text-white border-amber-600 ring-4 ring-amber-100 animate-pulse';
+                nodeBg = 'bg-[#e9730c] text-white border-[#e9730c] ring-4 ring-[#fff5eb] animate-pulse';
               } else if (event.status === 'WARNING') {
-                nodeBg = 'bg-rose-500 text-white border-rose-600 ring-4 ring-rose-100';
+                nodeBg = 'bg-[#bb0000] text-white border-[#bb0000] ring-4 ring-[#fde8e8]';
               }
 
               return (
                 <div key={event.id} className="relative group">
                   {/* Timeline Node Bullet */}
                   <div
-                    className={`absolute -right-[35px] top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-transform shadow-xs ${nodeBg}`}
+                    className={`absolute -right-[35px] top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-transform ${nodeBg}`}
                   >
                     {event.status === 'DONE' ? (
                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -649,88 +670,88 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
                   </div>
 
                   {/* Card Container */}
-                  <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:shadow-md transition">
+                  <div className="bg-white rounded-md border border-[#d9d9d9] p-3.5 hover:border-[#007cc0] transition">
                     {/* Header Row */}
-                    <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#e8e8e8] pb-2.5">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-slate-900">{event.title}</h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-xs text-[#333333]">{event.title}</h4>
                           {event.stepType === 'RELEASE' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] font-semibold border border-[#b3ddf2]">
                               شروع گردش کار
                             </span>
                           )}
                           {event.stepType === 'RAW_MATERIAL' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] font-semibold border border-[#b3ddf2]">
                               تغذیه کلاف
                             </span>
                           )}
                           {event.stepType === 'QC_INSPECTION' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#fff5eb] text-[#e9730c] font-semibold border border-[#f5d0a9]">
                               تاییدیه CMM / بازرسی
                             </span>
                           )}
                           {event.stepType === 'WAREHOUSE_RECEIPT' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#eef8f2] text-[#107e3e] font-semibold border border-[#b5e0c6]">
                               رسید دائم انبار
                             </span>
                           )}
                           {event.status === 'DONE' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#eef8f2] text-[#107e3e] font-semibold border border-[#b5e0c6]">
                               تکمیل شده
                             </span>
                           )}
                           {event.status === 'ACTIVE' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#fff5eb] text-[#e9730c] font-semibold border border-[#f5d0a9]">
                               در حال تولید
                             </span>
                           )}
                           {event.status === 'WARNING' && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-semibold border border-rose-200">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#fde8e8] text-[#bb0000] font-semibold border border-[#f5b7b7]">
                               انتقال مانده به روز بعد
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{event.subTitle}</p>
+                        <p className="text-xs text-[#666666] mt-0.5">{event.subTitle}</p>
                       </div>
 
                       {/* Date & Time Badge */}
-                      <div className="text-left font-mono text-[11px] text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80">
+                      <div className="text-left font-mono text-[11px] text-[#333333] bg-[#f7f7f7] px-2.5 py-1 rounded border border-[#d9d9d9]">
                         <span>{event.dateLabel}</span>
-                        <span className="mx-1 text-slate-300">|</span>
+                        <span className="mx-1 text-[#bfbfbf]">|</span>
                         <span>{event.timeLabel}</span>
                       </div>
                     </div>
 
                     {/* Body Details Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5 text-xs">
                       {event.details.machine && (
-                        <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                          <span className="text-[10px] text-slate-500 block">ایستگاه و ماشین:</span>
-                          <span className="font-bold text-slate-800">{event.details.machine}</span>
+                        <div className="bg-[#f7f7f7] p-2 rounded border border-[#e8e8e8]">
+                          <span className="text-[10px] text-[#666666] block">ایستگاه و ماشین:</span>
+                          <span className="font-bold text-[#333333]">{event.details.machine}</span>
                           {event.details.machineCode && (
-                            <span className="text-[10px] text-slate-500 font-mono block">({event.details.machineCode})</span>
+                            <span className="text-[10px] text-[#666666] font-mono block">({event.details.machineCode})</span>
                           )}
                         </div>
                       )}
 
                       {event.details.dieCode && (
-                        <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                          <span className="text-[10px] text-slate-500 block">کد قالب تخصیص‌یافته:</span>
-                          <span className="font-bold font-mono text-slate-800">{event.details.dieCode}</span>
-                          <span className="text-[10px] text-slate-500 block">{event.details.shift}</span>
+                        <div className="bg-[#f7f7f7] p-2 rounded border border-[#e8e8e8]">
+                          <span className="text-[10px] text-[#666666] block">کد قالب تخصیص‌یافته:</span>
+                          <span className="font-bold font-mono text-[#333333]">{event.details.dieCode}</span>
+                          <span className="text-[10px] text-[#666666] block">{event.details.shift}</span>
                         </div>
                       )}
 
                       {event.details.targetQty !== undefined && (
-                        <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                          <span className="text-[10px] text-slate-500 block">تیراژ هدف / تولید سالم:</span>
-                          <div className="font-bold text-slate-800">
+                        <div className="bg-[#f7f7f7] p-2 rounded border border-[#e8e8e8]">
+                          <span className="text-[10px] text-[#666666] block">تیراژ هدف / تولید سالم:</span>
+                          <div className="font-bold text-[#333333]">
                             {formatNumber(event.details.goodQty || 0)}{' '}
-                            <span className="text-slate-400 font-normal">/ {formatNumber(event.details.targetQty)}</span>
+                            <span className="text-[#666666] font-normal">/ {formatNumber(event.details.targetQty)}</span>
                           </div>
                           {event.details.efficiency !== undefined && (
-                            <span className="text-[10px] text-emerald-700 font-semibold block">
+                            <span className="text-[10px] text-[#107e3e] font-semibold block">
                               راندمان: {toPersianDigits(event.details.efficiency)}٪
                             </span>
                           )}
@@ -738,11 +759,11 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
                       )}
 
                       {event.details.scrapQty !== undefined && event.details.scrapQty > 0 && (
-                        <div className="bg-rose-50/60 p-2 rounded-lg border border-rose-100">
-                          <span className="text-[10px] text-rose-600 block">ضایعات ثبت‌شده:</span>
-                          <span className="font-bold text-rose-800">{formatNumber(event.details.scrapQty)} عدد</span>
+                        <div className="bg-[#fde8e8] p-2 rounded border border-[#f5b7b7]">
+                          <span className="text-[10px] text-[#bb0000] block">ضایعات ثبت‌شده:</span>
+                          <span className="font-bold text-[#bb0000]">{formatNumber(event.details.scrapQty)} عدد</span>
                           {event.details.wipNext !== undefined && (
-                            <span className="text-[10px] text-slate-500 block">
+                            <span className="text-[10px] text-[#666666] block">
                               بافر بعد از OP: {formatNumber(event.details.wipNext)} عدد
                             </span>
                           )}
@@ -750,30 +771,56 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
                       )}
 
                       {event.details.weightKg !== undefined && (
-                        <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                          <span className="text-[10px] text-slate-500 block">وزن ناخالص ورق:</span>
-                          <span className="font-bold text-indigo-700">{formatNumber(event.details.weightKg)} کیلوگرم</span>
-                          <span className="text-[10px] text-slate-500 block">{event.details.spec}</span>
+                        <div className="bg-[#f7f7f7] p-2 rounded border border-[#e8e8e8]">
+                          <span className="text-[10px] text-[#666666] block">وزن ناخالص ورق:</span>
+                          <span className="font-bold text-[#007cc0]">{formatNumber(event.details.weightKg)} کیلوگرم</span>
+                          {event.details.spec && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                traceDocument(event.details.spec!, 'INVENTORY_LEDGER');
+                                onClose();
+                              }}
+                              className="sap-doc-link text-[10px] font-mono block cursor-pointer"
+                              title="مشاهده موجودی ماده در انبار"
+                            >
+                              {event.details.spec}
+                            </button>
+                          )}
                         </div>
                       )}
 
                       {event.details.docNumber && (
-                        <div className="bg-slate-50/70 p-2 rounded-lg border border-slate-100">
-                          <span className="text-[10px] text-slate-500 block">شماره سند / ردیابی:</span>
-                          <span className="font-bold font-mono text-slate-800 text-[11px]">{event.details.docNumber}</span>
-                          <span className="text-[10px] text-slate-500 block">{event.details.operator}</span>
+                        <div className="bg-[#f7f7f7] p-2 rounded border border-[#e8e8e8]">
+                          <span className="text-[10px] text-[#666666] block">شماره سند / ردیابی:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const target =
+                                event.stepType === 'RELEASE'
+                                  ? 'WIP_TRACEABILITY'
+                                  : 'INVENTORY_LEDGER';
+                              traceDocument(event.details.docNumber!, target);
+                              onClose();
+                            }}
+                            className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                            title="ردیابی سند در ماژول مرجع"
+                          >
+                            {event.details.docNumber}
+                          </button>
+                          <span className="text-[10px] text-[#666666] block">{event.details.operator}</span>
                         </div>
                       )}
                     </div>
 
                     {/* Action Bar for Operation */}
                     {event.opRef && (
-                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                      <div className="mt-2.5 pt-2 border-t border-[#e8e8e8] flex items-center justify-between text-xs">
+                        <div className="text-[11px] text-[#666666] flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#007cc0]"></span>
                           <span>استاندارد ساعتی: {toPersianDigits(event.opRef.standardRatePerHour)} ضرب در ساعت</span>
                           {event.opRef.isFinalOp && (
-                            <span className="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            <span className="text-[#107e3e] font-semibold bg-[#eef8f2] px-1.5 py-0.5 rounded border border-[#b5e0c6]">
                               مرحله نهایی (اتمام خط)
                             </span>
                           )}
@@ -787,9 +834,9 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
                                 onOpenLogModal(activeOrder, event.opRef);
                               }
                             }}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1"
+                            className="sap-btn-standard px-2.5 py-1 text-xs flex items-center gap-1 cursor-pointer"
                           >
-                            <Wrench className="w-3 h-3 text-slate-600" />
+                            <Wrench className="w-3 h-3 text-[#007cc0]" />
                             <span>ثبت کارکرد / ویرایش عملکرد</span>
                           </button>
                         )}
@@ -803,15 +850,15 @@ export const ManufacturingOrderTimelineModal: React.FC<ManufacturingOrderTimelin
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+        <div className="px-5 py-3 bg-[#ffffff] border-t border-[#d9d9d9] flex items-center justify-between text-xs text-[#666666]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span className="w-2 h-2 rounded-full bg-[#107e3e]"></span>
             <span>کل رویدادهای ردیابی‌شده: {toPersianDigits(timelineEvents.length)} مرحله</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+            className="sap-btn-emphasized px-4 py-1.5 text-xs cursor-pointer"
           >
             بستن پنجره
           </button>

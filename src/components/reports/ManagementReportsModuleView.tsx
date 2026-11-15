@@ -57,6 +57,7 @@ import { ProductionWorkflowDocumentationView } from '../planning/ProductionWorkf
 import { PlantMaintenanceModuleView } from '../maintenance/PlantMaintenanceModuleView';
 import { CustomReportsView } from '../inventory/CustomReportsView';
 import { TableSkeleton, KpiCardsSkeleton, ChartSkeleton } from '../ui/Skeleton';
+import { useErpRouter } from '../../context/RouterContext';
 
 export type ReportTypeKey =
   | 'plan_vs_actual'
@@ -95,6 +96,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
   machines,
   initialReportType = 'plan_vs_actual',
 }) => {
+  const { traceDocument } = useErpRouter();
   const [activeReport, setActiveReport] = useState<ReportTypeKey>(initialReportType);
   const [filters, setFilters] = useState<ReportFilterParams>({});
   const [loading, setLoading] = useState(false);
@@ -615,19 +617,19 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
   const currentDef = reportDefinitions.find(r => r.id === activeReport);
 
   return (
-    <div className="space-y-6">
-      {/* Grafana-Inspired Header & Single Unified Report Filter Bar */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200/70 text-orange-600 flex items-center justify-center shrink-0">
-              <FileSpreadsheet className="w-5 h-5" />
+    <div className="space-y-4">
+      {/* SAP HANA Fiori Header & Single Unified Report Filter Bar */}
+      <div className="sap-card p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base lg:text-lg font-bold text-slate-900 tracking-tight">
+              <h2 className="text-sm lg:text-base font-semibold text-[#333333] tracking-tight">
                 مرکز گزارش‌های مدیریتی، بهره‌وری ماشین، پیش‌بینی مواد و OEE
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 {currentDef
                   ? currentDef.description
                   : `${toPersianDigits(reportDefinitions.length)} گزارش و ماژول تحلیلی: تأخیرات تولید، OEE، بهره ماشین، پیش‌بینی مواد مصرفی و MRP`}
@@ -638,9 +640,9 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
           <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-500" />
+              <Printer className="w-3.5 h-3.5 text-[#666666]" />
               <span>چاپ رسمی</span>
             </button>
 
@@ -648,26 +650,25 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
               <button
                 onClick={fetchActiveReport}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+                className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs disabled:opacity-50 cursor-pointer"
               >
-                <RefreshCw className={`w-3.5 h-3.5 text-orange-400 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                 <span>بروزرسانی</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Single Unified Filter & Module Selector Bar (Grafana Reference Style) */}
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        {/* Single Unified Filter & Module Selector Bar */}
+        <div className="pt-2.5 border-t border-[#e8e8e8] flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Report / Module Selector Dropdown */}
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <Filter className="w-3.5 h-3.5 text-orange-600" />
-              <span className="text-slate-500 font-medium">انتخاب گزارش / ماژول:</span>
+            <div className="inline-flex items-center gap-2 bg-[#f7f7f7] border border-[#bfbfbf] rounded px-2.5 py-1">
+              <Filter className="w-3.5 h-3.5 text-[#007cc0]" />
+              <span className="text-[#666666] font-medium">انتخاب گزارش / ماژول:</span>
               <select
                 value={activeReport}
                 onChange={e => setActiveReport(e.target.value as ReportTypeKey)}
-                className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer max-w-xs sm:max-w-md truncate"
+                className="bg-transparent font-semibold text-[#333333] focus:outline-none cursor-pointer max-w-xs sm:max-w-md truncate"
               >
                 {filteredReports.map(r => (
                   <option key={r.id} value={r.id}>
@@ -677,8 +678,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
               </select>
             </div>
 
-            {/* Category Filter Dropdown */}
-            <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700">
+            <div className="inline-flex items-center gap-1.5 bg-white border border-[#bfbfbf] rounded px-2.5 py-1 text-[#333333]">
               <select
                 value={selectedCategory}
                 onChange={e => {
@@ -691,7 +691,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                     setActiveReport(firstInCat.id);
                   }
                 }}
-                className="bg-transparent text-xs font-medium text-slate-700 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-medium text-[#333333] focus:outline-none cursor-pointer"
               >
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>
@@ -701,8 +701,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
               </select>
             </div>
 
-            {/* Featured Quick Tags (Compact Grafana Tag Pills) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto">
+            <div className="flex items-center gap-1 overflow-x-auto">
               {[
                 { id: 'custom_builder', label: '★ گزارش‌ساز پویا و سفارشی' },
                 { id: 'comprehensive_production', label: 'گزارش جامع OEE و توقفات' },
@@ -720,10 +719,10 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                     setSelectedCategory('ALL');
                     setActiveReport(item.id as ReportTypeKey);
                   }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
+                  className={`px-2 py-1 rounded text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
                     activeReport === item.id
-                      ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
-                      : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/80'
+                      ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0] font-semibold'
+                      : 'bg-white hover:bg-[#f5f5f5] text-[#666666] border-[#d9d9d9]'
                   }`}
                 >
                   {item.label}
@@ -732,7 +731,6 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
             </div>
           </div>
 
-          {/* Quick Period Selector */}
           <div className="flex items-center gap-1">
             {[
               { id: 'TODAY', label: 'امروز' },
@@ -743,7 +741,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
               <button
                 key={p.id}
                 onClick={() => applyQuickPeriod(p.id as any)}
-                className="px-2 py-1 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 text-[11px] transition-colors cursor-pointer"
+                className="px-2 py-1 rounded border border-[#d9d9d9] bg-[#f7f7f7] hover:bg-[#e5f3fa] hover:text-[#007cc0] text-[#333333] text-[11px] transition-colors cursor-pointer"
               >
                 {p.label}
               </button>
@@ -789,40 +787,40 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
       {/* Main Report Table Container */}
       {!isStandaloneModule && !loading && (
-      <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-xs">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xs font-bold text-slate-800">
+      <div className="sap-card overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-[#e8e8e8] flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#ffffff]">
+          <div className="flex items-center gap-2.5">
+            <h3 className="text-xs font-semibold text-[#333333]">
               {reportDefinitions.find(r => r.id === activeReport)?.title}
             </h3>
             {reportMeta && (
-              <span className="text-[11px] text-slate-500 font-mono">
+              <span className="text-[11px] text-[#666666] font-mono">
                 ({toPersianDigits(reportMeta.totalRecordsCount)} سطر)
               </span>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+          <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-[#666666]">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-[#666666] absolute right-2.5 top-1.5 pointer-events-none" />
               <input
                 type="text"
                 value={tableSearchQuery}
                 onChange={e => setTableSearchQuery(e.target.value)}
                 placeholder="فیلتر سریع در سطرهای جدول..."
-                className="bg-slate-50 border border-slate-200 rounded-lg pr-8 pl-2.5 py-1 text-[11px] text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400 w-48 sm:w-56"
+                className="bg-[#f7f7f7] border border-[#bfbfbf] rounded pr-8 pl-2.5 py-1 text-[11px] text-[#333333] placeholder-[#666666] focus:outline-none focus:bg-white focus:border-[#007cc0] w-48 sm:w-56"
               />
             </div>
             <span className="flex items-center gap-1">
-              <span className="text-emerald-600">●</span> مقادیر قطعی
+              <span className="text-[#107e3e]">●</span> مقادیر قطعی
             </span>
-            <span className="text-slate-300">·</span>
+            <span className="text-[#d9d9d9]">·</span>
             <span className="flex items-center gap-1">
-              <span className="text-amber-600">▲</span> مقادیر تخمینی
+              <span className="text-[#e9730c]">▲</span> مقادیر تخمینی
             </span>
             {reportMeta && (
               <>
-                <span className="text-slate-300">·</span>
-                <span className="text-slate-500 font-mono text-[10px]">
+                <span className="text-[#d9d9d9]">·</span>
+                <span className="text-[#666666] font-mono text-[10px]">
                   {formatToJalali(reportMeta.generatedAt)}
                 </span>
               </>
@@ -833,22 +831,22 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
         <div className="overflow-x-auto">
           {/* 1. Plan vs Actual */}
           {activeReport === 'plan_vs_actual' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره برنامه و نسخه</th>
-                  <th className="py-3 px-3">کد و نام قطعه</th>
-                  <th className="py-3 px-3 text-center">تیراژ مصوب</th>
-                  <th className="py-3 px-3 text-center text-emerald-700">تولید واقعی سالم</th>
-                  <th className="py-3 px-3 text-center text-rose-600">ضایعات</th>
-                  <th className="py-3 px-3 text-center font-bold">درصد تحقق</th>
-                  <th className="py-3 px-3 text-center">انحراف</th>
-                  <th className="py-3 px-3 text-center">نوع داده</th>
-                  <th className="py-3 px-3 text-center">موعد تحویل</th>
-                  <th className="py-3 px-3 text-center">جزئیات</th>
+                  <th className="py-2 px-3">شماره برنامه و نسخه</th>
+                  <th className="py-2 px-3">کد و نام قطعه</th>
+                  <th className="py-2 px-3 text-center">تیراژ مصوب</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e]">تولید واقعی سالم</th>
+                  <th className="py-2 px-3 text-center text-[#bb0000]">ضایعات</th>
+                  <th className="py-2 px-3 text-center font-bold">درصد تحقق</th>
+                  <th className="py-2 px-3 text-center">انحراف</th>
+                  <th className="py-2 px-3 text-center">نوع داده</th>
+                  <th className="py-2 px-3 text-center">موعد تحویل</th>
+                  <th className="py-2 px-3 text-center">جزئیات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(planVsActualData).map(r => (
                   <tr
                     key={r.planId}
@@ -873,53 +871,71 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                         ],
                       })
                     }
-                    className="hover:bg-slate-50/80 cursor-pointer transition"
+                    className="hover:bg-[#e5f3fa] cursor-pointer transition"
                   >
-                    <td className="py-3 px-3">
-                      <span className="font-bold text-slate-900">{r.planNumber}</span>{' '}
-                      <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">
+                    <td className="py-1.5 px-3">
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          traceDocument(r.planNumber, 'WIP_TRACEABILITY');
+                        }}
+                        className="sap-doc-link font-bold"
+                      >
+                        {r.planNumber}
+                      </button>{' '}
+                      <span className="text-[10px] text-[#e9730c] bg-[#fff5eb] border border-[#f5d0a9] px-1.5 py-0.5 rounded font-semibold">
                         {r.planVersion}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          traceDocument(r.partCode, 'INVENTORY_LEDGER');
+                        }}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">
                       {formatNumber(r.plannedQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-emerald-700">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#107e3e]">
                       {formatNumber(r.actualProducedQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center text-rose-600 font-semibold">
+                    <td className="py-1.5 px-3 text-center text-[#bb0000] font-semibold">
                       {formatNumber(r.actualScrapQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-slate-900">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">
                       {toPersianDigits(r.achievementRatePercent)}%
                     </td>
                     <td
-                      className={`py-3 px-3 text-center font-bold ${
-                        r.varianceQuantity < 0 ? 'text-rose-600' : 'text-emerald-700'
+                      className={`py-1.5 px-3 text-center font-bold ${
+                        r.varianceQuantity < 0 ? 'text-[#bb0000]' : 'text-[#107e3e]'
                       }`}
                     >
                       {formatNumber(r.varianceQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-3 text-center font-sans">
                       {r.isEstimate ? (
-                        <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">
+                        <span className="text-[10px] text-[#e9730c] bg-[#fff5eb] border border-[#f5d0a9] px-1.5 py-0.5 rounded font-semibold">
                           ▲ برآوردی
                         </span>
                       ) : (
-                        <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold">
+                        <span className="text-[10px] text-[#107e3e] bg-[#eef8f2] border border-[#b7e1c9] px-1.5 py-0.5 rounded font-semibold">
                           ● قطعی واقعی
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-600">
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">
                       {formatToJalali(r.targetDueDate)}
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <Eye className="w-4 h-4 text-orange-600 mx-auto" />
+                    <td className="py-1.5 px-3 text-center">
+                      <Eye className="w-4 h-4 text-[#007cc0] mx-auto" />
                     </td>
                   </tr>
                 ))}
@@ -929,44 +945,64 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 2. Customer Order Fulfillment */}
           {activeReport === 'fulfillment' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره سفارش و قرارداد</th>
-                  <th className="py-3 px-3">مشتری</th>
-                  <th className="py-3 px-3">قطعه</th>
-                  <th className="py-3 px-3 text-center">تعهد سفارش</th>
-                  <th className="py-3 px-3 text-center text-emerald-700">تحویل شده</th>
-                  <th className="py-3 px-3 text-center text-amber-700">باقیمانده</th>
-                  <th className="py-3 px-3 text-center font-bold">درصد تحقق</th>
-                  <th className="py-3 px-3 text-center">موعد تحویل</th>
-                  <th className="py-3 px-3 text-center">وضعیت</th>
+                  <th className="py-2 px-3">شماره سفارش و قرارداد</th>
+                  <th className="py-2 px-3">مشتری</th>
+                  <th className="py-2 px-3">قطعه</th>
+                  <th className="py-2 px-3 text-center">تعهد سفارش</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e]">تحویل شده</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">باقیمانده</th>
+                  <th className="py-2 px-3 text-center font-bold">درصد تحقق</th>
+                  <th className="py-2 px-3 text-center">موعد تحویل</th>
+                  <th className="py-2 px-3 text-center">وضعیت</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(fulfillmentData).map(r => (
-                  <tr key={r.orderLineId} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3">
-                      <span className="font-bold text-slate-900">{r.orderNumber}</span>
-                      <div className="text-[11px] text-slate-500">{r.contractNumber}</div>
+                  <tr key={r.orderLineId} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.orderNumber, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link font-bold"
+                      >
+                        {r.orderNumber}
+                      </button>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.contractNumber, 'CONTRACTS')}
+                          className="sap-doc-link text-[11px]"
+                        >
+                          {r.contractNumber}
+                        </button>
+                      </div>
                     </td>
-                    <td className="py-3 px-3 font-sans font-bold text-slate-800">{r.customerName}</td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                    <td className="py-1.5 px-3 font-sans font-semibold text-[#333333]">{r.customerName}</td>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">{formatNumber(r.orderedQuantity)}</td>
-                    <td className="py-3 px-3 text-center text-emerald-700 font-bold">{formatNumber(r.deliveredQuantity)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-black">{formatNumber(r.remainingQuantity)}</td>
-                    <td className="py-3 px-3 text-center font-black text-slate-900">{toPersianDigits(r.fulfillmentPercent)}%</td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-600">{formatToJalali(r.dueDate)}</td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">{formatNumber(r.orderedQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#107e3e] font-bold">{formatNumber(r.deliveredQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-bold">{formatNumber(r.remainingQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">{toPersianDigits(r.fulfillmentPercent)}%</td>
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">{formatToJalali(r.dueDate)}</td>
+                    <td className="py-1.5 px-3 text-center font-sans">
                       {r.isDelayed ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fde8e8] text-[#bb0000] border border-[#f5b7b1]">
                           {toPersianDigits(r.daysOverdue)} روز تأخیر
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b7e1c9]">
                           مطابق برنامه
                         </span>
                       )}
@@ -979,43 +1015,57 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 3. Production Backlog */}
           {activeReport === 'backlog' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره سفارش</th>
-                  <th className="py-3 px-3">مشتری و خودرو</th>
-                  <th className="py-3 px-3">قطعه</th>
-                  <th className="py-3 px-3 text-center text-amber-700 font-bold">تعداد معوق (Backlog)</th>
-                  <th className="py-3 px-3 text-center">ورق مورد نیاز (kg)</th>
-                  <th className="py-3 px-3 text-center text-rose-600">روزهای گذشته از موعد</th>
-                  <th className="py-3 px-3 text-center">سطح فوریت</th>
+                  <th className="py-2 px-3">شماره سفارش</th>
+                  <th className="py-2 px-3">مشتری و خودرو</th>
+                  <th className="py-2 px-3">قطعه</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c] font-bold">تعداد معوق (Backlog)</th>
+                  <th className="py-2 px-3 text-center">ورق مورد نیاز (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#bb0000]">روزهای گذشته از موعد</th>
+                  <th className="py-2 px-3 text-center">سطح فوریت</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(backlogData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-bold text-slate-900">{r.orderNumber}</td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-800">{r.customerName}</div>
-                      <div className="text-[11px] text-slate-500">{r.carModel || '-'}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.orderNumber, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link"
+                      >
+                        {r.orderNumber}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.customerName}</div>
+                      <div className="text-[11px] text-[#666666]">{r.carModel || '-'}</div>
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-amber-700 text-sm">
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
+                    </td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#e9730c] text-sm">
                       {formatNumber(r.backlogQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center text-slate-700">{formatNumber(r.requiredRawMaterialKg)} kg</td>
-                    <td className="py-3 px-3 text-center text-rose-600 font-bold">
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{formatNumber(r.requiredRawMaterialKg)} kg</td>
+                    <td className="py-1.5 px-3 text-center text-[#bb0000] font-bold">
                       {toPersianDigits(r.daysOverdue)} روز
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-3 text-center font-sans">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           r.urgencyLevel === 'CRITICAL'
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                            : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            ? 'bg-[#fde8e8] text-[#bb0000] border border-[#f5b7b1]'
+                            : 'bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9]'
                         }`}
                       >
                         {r.urgencyLevel === 'CRITICAL' ? 'بحرانی' : 'اولویت بالا'}
@@ -1029,36 +1079,50 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 4. WIP by Part & Operation */}
           {activeReport === 'wip_operation' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره MO</th>
-                  <th className="py-3 px-3">قطعه</th>
-                  <th className="py-3 px-3">مرحله و فرایند</th>
-                  <th className="py-3 px-3">موقعیت انبارش</th>
-                  <th className="py-3 px-3 text-center">در صف ورودی</th>
-                  <th className="py-3 px-3 text-center text-amber-700">پای دستگاه</th>
-                  <th className="py-3 px-3 text-center text-cyan-700">آماده انتقال</th>
-                  <th className="py-3 px-3 text-center font-black text-purple-700">کل WIP فعال</th>
+                  <th className="py-2 px-3">شماره MO</th>
+                  <th className="py-2 px-3">قطعه</th>
+                  <th className="py-2 px-3">مرحله و فرایند</th>
+                  <th className="py-2 px-3">موقعیت انبارش</th>
+                  <th className="py-2 px-3 text-center">در صف ورودی</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">پای دستگاه</th>
+                  <th className="py-2 px-3 text-center text-[#007cc0]">آماده انتقال</th>
+                  <th className="py-2 px-3 text-center font-bold text-[#007cc0]">کل WIP فعال</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(wipOpData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-bold text-slate-900">{r.moNumber}</td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.moNumber, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link"
+                      >
+                        {r.moNumber}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 font-sans text-slate-800">
-                      <span className="font-bold text-orange-600 font-mono">OP{r.stepNumber}</span> - {r.stepName}
-                      <span className="block text-[10px] text-slate-500 font-mono">{r.processType}</span>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-slate-600">{r.warehouseLocation}</td>
-                    <td className="py-3 px-3 text-center text-slate-700">{formatNumber(r.waitingInputQty)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-bold">{formatNumber(r.inProgressQty)}</td>
-                    <td className="py-3 px-3 text-center text-cyan-700 font-bold">{formatNumber(r.readyForTransferQty)}</td>
-                    <td className="py-3 px-3 text-center font-black text-purple-700 text-sm bg-purple-50/60">
+                    <td className="py-1.5 px-3 font-sans text-[#333333]">
+                      <span className="font-bold text-[#007cc0] font-mono">OP{r.stepNumber}</span> - {r.stepName}
+                      <span className="block text-[10px] text-[#666666] font-mono">{r.processType}</span>
+                    </td>
+                    <td className="py-1.5 px-3 text-[#666666]">{r.warehouseLocation}</td>
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{formatNumber(r.waitingInputQty)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-bold">{formatNumber(r.inProgressQty)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#007cc0] font-bold">{formatNumber(r.readyForTransferQty)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#007cc0] text-sm bg-[#e5f3fa]/60">
                       {formatNumber(r.totalActiveWipQty)}
                     </td>
                   </tr>
@@ -1069,48 +1133,62 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 5. WIP Aging */}
           {activeReport === 'wip_aging' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره MO</th>
-                  <th className="py-3 px-3">قطعه</th>
-                  <th className="py-3 px-3">مرحله کارگاهی</th>
-                  <th className="py-3 px-3">موقعیت انبارش</th>
-                  <th className="py-3 px-3 text-center">موجودی در ایستگاه</th>
-                  <th className="py-3 px-3 text-center text-amber-700">مدت توقف (روز)</th>
-                  <th className="py-3 px-3 text-center">رده سنی</th>
-                  <th className="py-3 px-3 text-center">وضعیت انباشت</th>
+                  <th className="py-2 px-3">شماره MO</th>
+                  <th className="py-2 px-3">قطعه</th>
+                  <th className="py-2 px-3">مرحله کارگاهی</th>
+                  <th className="py-2 px-3">موقعیت انبارش</th>
+                  <th className="py-2 px-3 text-center">موجودی در ایستگاه</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">مدت توقف (روز)</th>
+                  <th className="py-2 px-3 text-center">رده سنی</th>
+                  <th className="py-2 px-3 text-center">وضعیت انباشت</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(wipAgingData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-bold text-slate-900">{r.moNumber}</td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.moNumber, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link"
+                      >
+                        {r.moNumber}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 font-sans font-medium text-slate-800">{r.stepName}</td>
-                    <td className="py-3 px-3 text-slate-600">{r.warehouseLocation}</td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">{formatNumber(r.quantityInStation)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-black text-sm">
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
+                    </td>
+                    <td className="py-1.5 px-3 font-sans font-medium text-[#333333]">{r.stepName}</td>
+                    <td className="py-1.5 px-3 text-[#666666]">{r.warehouseLocation}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">{formatNumber(r.quantityInStation)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-bold text-sm">
                       {toPersianDigits(r.idleDays)} روز
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-600">
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">
                       {r.ageCategory === 'OVER_7_DAYS_STAGNANT'
                         ? 'بیش از ۷ روز (راکد)'
                         : r.ageCategory === '3_TO_7_DAYS'
                         ? '۳ تا ۷ روز'
                         : 'کمتر از ۳ روز'}
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-3 text-center font-sans">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           r.statusSeverity === 'CRITICAL'
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-[#fde8e8] text-[#bb0000] border border-[#f5b7b1]'
                             : r.statusSeverity === 'ATTENTION'
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            ? 'bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9]'
+                            : 'bg-[#eef8f2] text-[#107e3e] border border-[#b7e1c9]'
                         }`}
                       >
                         {r.statusSeverity === 'CRITICAL' ? 'ایستگاه بحرانی' : r.statusSeverity === 'ATTENTION' ? 'نیازمند تسریع' : 'عادی'}
@@ -1125,53 +1203,98 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
           {/* 6. Actual Material Consumption */}
           {activeReport === 'consumption' && (
             <>
-              <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <div className="m-3 rounded border border-[#f5d0a9] bg-[#fff5eb] px-3 py-2 text-xs text-[#333333]">
                 این گزارش فقط مقادیر ثبت‌شده در کاردکس و گزارش عملکرد واقعی تولید را نمایش می‌دهد. مقایسه با BOM تا اتصال نسخه تأییدشده BOM به مصرف واقعی غیرفعال است؛ ماشین و اپراتور نیز فقط از گزارش عملکرد ثبت‌شده خوانده می‌شوند.
               </div>
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+              <table className="w-full text-right text-xs sap-table-compact">
+                <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                   <tr>
-                    <th className="py-3 px-3">دستور ساخت</th>
-                    <th className="py-3 px-3">محصول</th>
-                    <th className="py-3 px-3">مرحله</th>
-                    <th className="py-3 px-3">ماده مصرفی</th>
-                    <th className="py-3 px-3 text-center text-amber-700">مصرف واقعی (kg)</th>
-                    <th className="py-3 px-3 text-center">تولید سالم</th>
-                    <th className="py-3 px-3 text-center text-rose-600">ضایعات (عدد / kg)</th>
-                    <th className="py-3 px-3">ماشین واقعی</th>
-                    <th className="py-3 px-3">اپراتور</th>
-                    <th className="py-3 px-3">کلاف / قرارداد</th>
+                    <th className="py-2 px-3">دستور ساخت</th>
+                    <th className="py-2 px-3">محصول</th>
+                    <th className="py-2 px-3">مرحله</th>
+                    <th className="py-2 px-3">ماده مصرفی</th>
+                    <th className="py-2 px-3 text-center text-[#e9730c]">مصرف واقعی (kg)</th>
+                    <th className="py-2 px-3 text-center">تولید سالم</th>
+                    <th className="py-2 px-3 text-center text-[#bb0000]">ضایعات (عدد / kg)</th>
+                    <th className="py-2 px-3">ماشین واقعی</th>
+                    <th className="py-2 px-3">اپراتور</th>
+                    <th className="py-2 px-3">کلاف / قرارداد</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                   {filterRows(consumptionData).map((r, i) => (
-                    <tr key={`${r.moId}-${r.operationId}-${r.materialCode}-${i}`} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3 px-3 font-bold text-slate-900">{r.moNumber}</td>
-                      <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900">{r.productPartName}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{r.productPartCode}</div>
+                    <tr key={`${r.moId}-${r.operationId}-${r.materialCode}-${i}`} className="hover:bg-[#e5f3fa] transition">
+                      <td className="py-1.5 px-3 font-bold font-mono">
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.moNumber, 'WIP_TRACEABILITY')}
+                          className="sap-doc-link"
+                        >
+                          {r.moNumber}
+                        </button>
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-1.5 px-3">
+                        <div className="font-semibold text-[#333333]">{r.productPartName}</div>
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.productPartCode, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link text-[10px] font-mono"
+                        >
+                          {r.productPartCode}
+                        </button>
+                      </td>
+                      <td className="py-1.5 px-3">
                         <div>{r.operationName}</div>
-                        <div className="text-[10px] text-slate-500">مرحله {formatNumber(r.operationStep)} · {r.operationCode}</div>
+                        <div className="text-[10px] text-[#666666]">مرحله {formatNumber(r.operationStep)} · {r.operationCode}</div>
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-1.5 px-3">
                         <div className="font-semibold">{r.materialName}</div>
-                        <div className="text-[10px] text-slate-500">{r.materialCode} · {r.materialGrade}</div>
+                        <div className="text-[10px] text-[#666666]">
+                          <button
+                            type="button"
+                            onClick={() => traceDocument(r.materialCode, 'INVENTORY_LEDGER')}
+                            className="sap-doc-link font-mono"
+                          >
+                            {r.materialCode}
+                          </button>{' '}
+                          · {r.materialGrade}
+                        </div>
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-amber-700">{formatNumber(r.actualIssuedMaterialKg)}</td>
-                      <td className="py-3 px-3 text-center">{formatNumber(r.actualProducedGoodQty)}</td>
-                      <td className="py-3 px-3 text-center text-rose-600">{formatNumber(r.actualScrapQty)} / {formatNumber(r.actualScrapWeightKg)} kg</td>
-                      <td className="py-3 px-3">{r.actualMachineNames.length ? r.actualMachineNames.join('، ') : 'ثبت نشده'}</td>
-                      <td className="py-3 px-3">{r.actualOperatorNames.length ? r.actualOperatorNames.join('، ') : 'ثبت نشده'}</td>
-                      <td className="py-3 px-3">
-                        <div>{r.coilNumbers.join('، ') || '—'}</div>
-                        <div className="text-[10px] text-slate-500">{r.contractNumbers.join('، ') || 'بدون قرارداد'}</div>
+                      <td className="py-1.5 px-3 text-center font-bold text-[#e9730c] font-mono">{formatNumber(r.actualIssuedMaterialKg)}</td>
+                      <td className="py-1.5 px-3 text-center font-mono">{formatNumber(r.actualProducedGoodQty)}</td>
+                      <td className="py-1.5 px-3 text-center text-[#bb0000] font-mono">{formatNumber(r.actualScrapQty)} / {formatNumber(r.actualScrapWeightKg)} kg</td>
+                      <td className="py-1.5 px-3">{r.actualMachineNames.length ? r.actualMachineNames.join('، ') : 'ثبت نشده'}</td>
+                      <td className="py-1.5 px-3">{r.actualOperatorNames.length ? r.actualOperatorNames.join('، ') : 'ثبت نشده'}</td>
+                      <td className="py-1.5 px-3">
+                        <div className="flex flex-wrap gap-1">
+                          {r.coilNumbers.length > 0 ? r.coilNumbers.map(c => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => traceDocument(c, 'COILS')}
+                              className="sap-doc-link text-[11px] font-mono"
+                            >
+                              {c}
+                            </button>
+                          )) : '—'}
+                        </div>
+                        <div className="text-[10px] text-[#666666] flex flex-wrap gap-1">
+                          {r.contractNumbers.length > 0 ? r.contractNumbers.map(cnt => (
+                            <button
+                              key={cnt}
+                              type="button"
+                              onClick={() => traceDocument(cnt, 'CONTRACTS')}
+                              className="sap-doc-link font-mono"
+                            >
+                              {cnt}
+                            </button>
+                          )) : 'بدون قرارداد'}
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {consumptionData.length === 0 && (
-                    <tr><td colSpan={10} className="py-8 text-center text-slate-400">برای فیلترهای انتخاب‌شده، حواله مصرف قطعی متصل به دستور ساخت و عملیات تولید یافت نشد.</td></tr>
+                    <tr><td colSpan={10} className="py-8 text-center text-[#666666]">برای فیلترهای انتخاب‌شده، حواله مصرف قطعی متصل به دستور ساخت و عملیات تولید یافت نشد.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1180,41 +1303,47 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 7. SAPCO Material Account */}
           {activeReport === 'sapco_account' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره و عنوان قرارداد ساپکو</th>
-                  <th className="py-3 px-3">گرید ورق</th>
-                  <th className="py-3 px-3 text-center">سهمیه مصوب</th>
-                  <th className="py-3 px-3 text-center">اول دوره (kg)</th>
-                  <th className="py-3 px-3 text-center text-emerald-700">رسید (kg)</th>
-                  <th className="py-3 px-3 text-center text-amber-700">مصرف خطوط (kg)</th>
-                  <th className="py-3 px-3 text-center font-black">مانده دفتری (kg)</th>
-                  <th className="py-3 px-3 text-center text-cyan-700">موجودی فیزیکی کارخانه</th>
-                  <th className="py-3 px-3 text-center">مغایرت انبار</th>
+                  <th className="py-2 px-3">شماره و عنوان قرارداد ساپکو</th>
+                  <th className="py-2 px-3">گرید ورق</th>
+                  <th className="py-2 px-3 text-center">سهمیه مصوب</th>
+                  <th className="py-2 px-3 text-center">اول دوره (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e]">رسید (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">مصرف خطوط (kg)</th>
+                  <th className="py-2 px-3 text-center font-bold">مانده دفتری (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#007cc0]">موجودی فیزیکی کارخانه</th>
+                  <th className="py-2 px-3 text-center">مغایرت انبار</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(sapcoAccountData).map(r => (
-                  <tr key={r.contractId} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3">
-                      <span className="font-bold text-slate-900">{r.contractNumber}</span>
-                      <div className="text-[11px] text-slate-500 font-sans">{r.title}</div>
+                  <tr key={r.contractId} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.contractNumber, 'CONTRACTS')}
+                        className="sap-doc-link font-bold"
+                      >
+                        {r.contractNumber}
+                      </button>
+                      <div className="text-[11px] text-[#666666] font-sans">{r.title}</div>
                     </td>
-                    <td className="py-3 px-3 font-bold text-orange-700">{r.materialGrade}</td>
-                    <td className="py-3 px-3 text-center text-slate-700">{formatNumber(r.allocatedQuotaKg)}</td>
-                    <td className="py-3 px-3 text-center text-slate-700">{formatNumber(r.openingBalanceKg)}</td>
-                    <td className="py-3 px-3 text-center text-emerald-700 font-semibold">{formatNumber(r.totalReceivedKg)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-semibold">{formatNumber(r.totalIssuedKg)}</td>
-                    <td className="py-3 px-3 text-center font-black text-slate-900 bg-slate-50">
+                    <td className="py-1.5 px-3 font-bold text-[#007cc0]">{r.materialGrade}</td>
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{formatNumber(r.allocatedQuotaKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{formatNumber(r.openingBalanceKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#107e3e] font-semibold">{formatNumber(r.totalReceivedKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-semibold">{formatNumber(r.totalIssuedKg)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333] bg-[#f7f7f7]">
                       {formatNumber(r.closingBookBalanceKg)}
                     </td>
-                    <td className="py-3 px-3 text-center text-cyan-700 font-bold">
+                    <td className="py-1.5 px-3 text-center text-[#007cc0] font-bold">
                       {formatNumber(r.physicalStockInPlantKg)}
                     </td>
                     <td
-                      className={`py-3 px-3 text-center font-bold ${
-                        r.discrepancyKg === 0 ? 'text-emerald-700' : 'text-rose-600'
+                      className={`py-1.5 px-3 text-center font-bold ${
+                        r.discrepancyKg === 0 ? 'text-[#107e3e]' : 'text-[#bb0000]'
                       }`}
                     >
                       {formatNumber(r.discrepancyKg)} kg
@@ -1227,25 +1356,25 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 8. Inventory Valuation Quantities */}
           {activeReport === 'valuation_qty' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">طبقه‌بندی</th>
-                  <th className="py-3 px-3">کد و شرح قلم</th>
-                  <th className="py-3 px-3 text-center font-bold">موجودی فیزیکی کل</th>
-                  <th className="py-3 px-3 text-center text-emerald-700">ملکی شرکت</th>
-                  <th className="py-3 px-3 text-center text-cyan-700">امانی ساپکو</th>
-                  <th className="py-3 px-3 text-center text-rose-600">مسدود کیفی</th>
-                  <th className="py-3 px-3 text-center text-amber-700">رزرو سفارش</th>
-                  <th className="py-3 px-3 text-center font-black text-orange-700">موجودی آزاد قابل تخصیص</th>
-                  <th className="py-3 px-3 text-center">وزن فیزیکی کل (kg)</th>
+                  <th className="py-2 px-3">طبقه‌بندی</th>
+                  <th className="py-2 px-3">کد و شرح قلم</th>
+                  <th className="py-2 px-3 text-center font-bold">موجودی فیزیکی کل</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e]">ملکی شرکت</th>
+                  <th className="py-2 px-3 text-center text-[#007cc0]">امانی ساپکو</th>
+                  <th className="py-2 px-3 text-center text-[#bb0000]">مسدود کیفی</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">رزرو سفارش</th>
+                  <th className="py-2 px-3 text-center font-bold text-[#007cc0]">موجودی آزاد قابل تخصیص</th>
+                  <th className="py-2 px-3 text-center">وزن فیزیکی کل (kg)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(valuationData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-sans">
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 border border-slate-200 font-medium">
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-sans">
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] font-medium">
                         {r.category === 'FINISHED_GOODS'
                           ? 'محصول نهایی'
                           : r.category === 'WIP_PARTS'
@@ -1253,21 +1382,27 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                           : 'ورق خام'}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.description}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partOrMaterialCode}</div>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.description}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partOrMaterialCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partOrMaterialCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-900">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">
                       {formatNumber(r.physicalQuantity)} {r.unit}
                     </td>
-                    <td className="py-3 px-3 text-center text-emerald-700 font-semibold">{formatNumber(r.companyOwnedQuantity)}</td>
-                    <td className="py-3 px-3 text-center text-cyan-700 font-semibold">{formatNumber(r.sapcoConsignmentQuantity)}</td>
-                    <td className="py-3 px-3 text-center text-rose-600">{formatNumber(r.qualityBlockedQuantity)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700">{formatNumber(r.reservedQuantity)}</td>
-                    <td className="py-3 px-3 text-center font-black text-orange-700 text-sm bg-orange-50/60">
+                    <td className="py-1.5 px-3 text-center text-[#107e3e] font-semibold">{formatNumber(r.companyOwnedQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#007cc0] font-semibold">{formatNumber(r.sapcoConsignmentQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#bb0000]">{formatNumber(r.qualityBlockedQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c]">{formatNumber(r.reservedQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#007cc0] text-sm bg-[#e5f3fa]/60">
                       {formatNumber(r.availableFreeQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center text-slate-600">{formatNumber(r.totalPhysicalWeightKg)} kg</td>
+                    <td className="py-1.5 px-3 text-center text-[#666666]">{formatNumber(r.totalPhysicalWeightKg)} kg</td>
                   </tr>
                 ))}
               </tbody>
@@ -1276,44 +1411,50 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 9. Scrap by Part & Operation */}
           {activeReport === 'scrap_analysis' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">قطعه</th>
-                  <th className="py-3 px-3">مرحله و فرایند</th>
-                  <th className="py-3 px-3">دستگاه پرس</th>
-                  <th className="py-3 px-3 text-center">کل قطعات ورودی</th>
-                  <th className="py-3 px-3 text-center text-rose-600 font-bold">ضایعات (عدد)</th>
-                  <th className="py-3 px-3 text-center text-rose-600">وزن ضایعات (kg)</th>
-                  <th className="py-3 px-3 text-center">نرم مجاز</th>
-                  <th className="py-3 px-3 text-center font-black">درصد واقعی ضایعات</th>
-                  <th className="py-3 px-3">نقص شایع و علت ریشه‌ای</th>
+                  <th className="py-2 px-3">قطعه</th>
+                  <th className="py-2 px-3">مرحله و فرایند</th>
+                  <th className="py-2 px-3">دستگاه پرس</th>
+                  <th className="py-2 px-3 text-center">کل قطعات ورودی</th>
+                  <th className="py-2 px-3 text-center text-[#bb0000] font-bold">ضایعات (عدد)</th>
+                  <th className="py-2 px-3 text-center text-[#bb0000]">وزن ضایعات (kg)</th>
+                  <th className="py-2 px-3 text-center">نرم مجاز</th>
+                  <th className="py-2 px-3 text-center font-bold">درصد واقعی ضایعات</th>
+                  <th className="py-2 px-3">نقص شایع و علت ریشه‌ای</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(scrapData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 font-sans text-slate-800">
-                      <span className="font-bold text-orange-600 font-mono">OP{r.stepNumber}</span> - {r.stepName}
-                      <span className="block text-[10px] text-slate-500 font-mono">{r.processType}</span>
+                    <td className="py-1.5 px-3 font-sans text-[#333333]">
+                      <span className="font-bold text-[#007cc0] font-mono">OP{r.stepNumber}</span> - {r.stepName}
+                      <span className="block text-[10px] text-[#666666] font-mono">{r.processType}</span>
                     </td>
-                    <td className="py-3 px-3 font-sans text-slate-600">{r.machineName || r.machineCode || '-'}</td>
-                    <td className="py-3 px-3 text-center text-slate-700">{formatNumber(r.totalInputQty)}</td>
-                    <td className="py-3 px-3 text-center text-rose-600 font-bold">{formatNumber(r.scrapPieces)}</td>
-                    <td className="py-3 px-3 text-center text-rose-600">{formatNumber(r.scrapWeightKg)} kg</td>
-                    <td className="py-3 px-3 text-center text-slate-600">{toPersianDigits(r.scrapNormPercent)}%</td>
+                    <td className="py-1.5 px-3 font-sans text-[#666666]">{r.machineName || r.machineCode || '-'}</td>
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{formatNumber(r.totalInputQty)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#bb0000] font-bold">{formatNumber(r.scrapPieces)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#bb0000]">{formatNumber(r.scrapWeightKg)} kg</td>
+                    <td className="py-1.5 px-3 text-center text-[#666666]">{toPersianDigits(r.scrapNormPercent)}%</td>
                     <td
-                      className={`py-3 px-3 text-center font-black text-sm ${
-                        r.isAboveNorm ? 'text-rose-600' : 'text-emerald-700'
+                      className={`py-1.5 px-3 text-center font-bold text-sm ${
+                        r.isAboveNorm ? 'text-[#bb0000]' : 'text-[#107e3e]'
                       }`}
                     >
                       {toPersianDigits(r.actualScrapPercent)}%
                     </td>
-                    <td className="py-3 px-3 font-sans text-slate-600 text-[11px]">{r.commonScrapDefectType}</td>
+                    <td className="py-1.5 px-3 font-sans text-[#666666] text-[11px]">{r.commonScrapDefectType}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1322,43 +1463,43 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 10. Machine Workload & Capacity */}
           {activeReport === 'machine_workload' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">کد و نام ماشین</th>
-                  <th className="py-3 px-3">سالن و فرایند</th>
-                  <th className="py-3 px-3 text-center">تناژ اسمی</th>
-                  <th className="py-3 px-3 text-center">ظرفیت شیفت (ساعت)</th>
-                  <th className="py-3 px-3 text-center text-amber-700">ساعت کار برنامه‌ریزی‌شده</th>
-                  <th className="py-3 px-3 text-center text-emerald-700">ظرفیت آزاد</th>
-                  <th className="py-3 px-3 text-center font-black">درصد بهره‌وری</th>
-                  <th className="py-3 px-3 text-center">وضعیت دستگاه</th>
+                  <th className="py-2 px-3">کد و نام ماشین</th>
+                  <th className="py-2 px-3">سالن و فرایند</th>
+                  <th className="py-2 px-3 text-center">تناژ اسمی</th>
+                  <th className="py-2 px-3 text-center">ظرفیت شیفت (ساعت)</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">ساعت کار برنامه‌ریزی‌شده</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e]">ظرفیت آزاد</th>
+                  <th className="py-2 px-3 text-center font-bold">درصد بهره‌وری</th>
+                  <th className="py-2 px-3 text-center">وضعیت دستگاه</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(machineData).map(r => (
-                  <tr key={r.machineId} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.machineName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.machineCode}</div>
+                  <tr key={r.machineId} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.machineName}</div>
+                      <div className="text-[11px] text-[#666666] font-mono">{r.machineCode}</div>
                     </td>
-                    <td className="py-3 px-3 font-sans text-slate-600">
+                    <td className="py-1.5 px-3 font-sans text-[#666666]">
                       {r.hall} • <span className="font-mono">{r.processType}</span>
                     </td>
-                    <td className="py-3 px-3 text-center text-slate-700">{r.tonnage ? `${formatNumber(r.tonnage)} T` : '-'}</td>
-                    <td className="py-3 px-3 text-center text-slate-700">{toPersianDigits(r.nominalDailyCapacityHours)}h</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-bold">{toPersianDigits(r.scheduledWorkloadHours)}h</td>
-                    <td className="py-3 px-3 text-center text-emerald-700 font-bold">{toPersianDigits(r.availableCapacityHours)}h</td>
-                    <td className="py-3 px-3 text-center font-black text-slate-900 text-sm">
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{r.tonnage ? `${formatNumber(r.tonnage)} T` : '-'}</td>
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{toPersianDigits(r.nominalDailyCapacityHours)}h</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-bold">{toPersianDigits(r.scheduledWorkloadHours)}h</td>
+                    <td className="py-1.5 px-3 text-center text-[#107e3e] font-bold">{toPersianDigits(r.availableCapacityHours)}h</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333] text-sm">
                       {toPersianDigits(r.utilizationRatePercent)}%
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-3 text-center font-sans">
                       {r.machineStatus === 'MAINTENANCE' ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fde8e8] text-[#bb0000] border border-[#f5b7b1]">
                           تعمیرات اضطراری
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b7e1c9]">
                           آماده‌به‌کار
                         </span>
                       )}
@@ -1375,68 +1516,68 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
               {/* Analytic KPI Cards */}
               {delayAnalytics && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right">
-                    <span className="text-[11px] text-slate-500 block font-sans">میانگین روزهای تأخیر</span>
-                    <div className="text-xl font-black text-rose-600 font-mono mt-1">
-                      {toPersianDigits(delayAnalytics.averageDelayDays)} <span className="text-xs font-sans font-normal text-slate-500">روز</span>
+                  <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 text-right">
+                    <span className="text-[11px] text-[#666666] block font-sans">میانگین روزهای تأخیر</span>
+                    <div className="text-xl font-bold text-[#bb0000] font-mono mt-1">
+                      {toPersianDigits(delayAnalytics.averageDelayDays)} <span className="text-xs font-sans font-normal text-[#666666]">روز</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1 block">از سررسید تعهدات</span>
+                    <span className="text-[10px] text-[#666666] mt-1 block">از سررسید تعهدات</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right">
-                    <span className="text-[11px] text-emerald-700 block font-sans">نرخ تحویل به‌موقع (OTIF)</span>
-                    <div className="text-xl font-black text-emerald-700 font-mono mt-1">
+                  <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 text-right">
+                    <span className="text-[11px] text-[#107e3e] block font-sans">نرخ تحویل به‌موقع (OTIF)</span>
+                    <div className="text-xl font-bold text-[#107e3e] font-mono mt-1">
                       {delayAnalytics.onTimeDeliveryRatePercent === null ? 'ثبت نشده' : `${toPersianDigits(delayAnalytics.onTimeDeliveryRatePercent)}٪`}
                     </div>
-                    <span className="text-[10px] text-slate-500 mt-1 block">شاخص کیفی ساپکو</span>
+                    <span className="text-[10px] text-[#666666] mt-1 block">شاخص کیفی ساپکو</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right">
-                    <span className="text-[11px] text-slate-500 block font-sans">کل موارد دارای تأخیر</span>
-                    <div className="text-xl font-black text-slate-900 font-mono mt-1">
+                  <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 text-right">
+                    <span className="text-[11px] text-[#666666] block font-sans">کل موارد دارای تأخیر</span>
+                    <div className="text-xl font-bold text-[#333333] font-mono mt-1">
                       {toPersianDigits(delayAnalytics.totalDelayedItemsCount)}
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1 block">سفارش، MO و عملیات</span>
+                    <span className="text-[10px] text-[#666666] mt-1 block">سفارش، MO و عملیات</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right">
-                    <span className="text-[11px] text-rose-600 block font-sans">بیشترین روز تأخیر</span>
-                    <div className="text-xl font-black text-rose-600 font-mono mt-1">
-                      {toPersianDigits(delayAnalytics.maxDelayDays)} <span className="text-xs font-sans font-normal text-slate-500">روز</span>
+                  <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 text-right">
+                    <span className="text-[11px] text-[#bb0000] block font-sans">بیشترین روز تأخیر</span>
+                    <div className="text-xl font-bold text-[#bb0000] font-mono mt-1">
+                      {toPersianDigits(delayAnalytics.maxDelayDays)} <span className="text-xs font-sans font-normal text-[#666666]">روز</span>
                     </div>
-                    <span className="text-[10px] text-rose-600/80 mt-1 block">اقلام با دیرکرد بالا</span>
+                    <span className="text-[10px] text-[#bb0000] mt-1 block">اقلام با دیرکرد بالا</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right">
-                    <span className="text-[11px] text-amber-700 block font-sans">فوریت بحرانی</span>
-                    <div className="text-xl font-black text-amber-700 font-mono mt-1">
-                      {toPersianDigits(delayAnalytics.criticalUrgencyCount)} <span className="text-xs font-sans font-normal text-slate-500">مورد</span>
+                  <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 text-right">
+                    <span className="text-[11px] text-[#e9730c] block font-sans">فوریت بحرانی</span>
+                    <div className="text-xl font-bold text-[#e9730c] font-mono mt-1">
+                      {toPersianDigits(delayAnalytics.criticalUrgencyCount)} <span className="text-xs font-sans font-normal text-[#666666]">مورد</span>
                     </div>
-                    <span className="text-[10px] text-slate-500 mt-1 block">ریسک توقف خط مشتری</span>
+                    <span className="text-[10px] text-[#666666] mt-1 block">ریسک توقف خط مشتری</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right">
-                    <span className="text-[11px] text-slate-500 block font-sans">برآورد ریسک جریمه ساپکو</span>
-                    <div className="text-lg font-black text-rose-600 font-mono mt-1">
-                      {delayAnalytics.estimatedPenaltyRiskRials === null ? 'ثبت نشده' : formatNumber(Math.round(Number(delayAnalytics.estimatedPenaltyRiskRials) / 1000000))} <span className="text-[11px] font-sans font-normal text-slate-500">م.ریال</span>
+                  <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3 text-right">
+                    <span className="text-[11px] text-[#666666] block font-sans">برآورد ریسک جریمه ساپکو</span>
+                    <div className="text-lg font-bold text-[#bb0000] font-mono mt-1">
+                      {delayAnalytics.estimatedPenaltyRiskRials === null ? 'ثبت نشده' : formatNumber(Math.round(Number(delayAnalytics.estimatedPenaltyRiskRials) / 1000000))} <span className="text-[11px] font-sans font-normal text-[#666666]">م.ریال</span>
                     </div>
-                    <span className="text-[10px] text-rose-600/70 mt-1 block">جریمه تأخیر قرارداد</span>
+                    <span className="text-[10px] text-[#bb0000] mt-1 block">جریمه تأخیر قرارداد</span>
                   </div>
                 </div>
               )}
 
               {/* Root Cause Distribution Bars */}
               {delayAnalytics && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800 font-sans flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span className="text-xs font-semibold text-[#333333] font-sans flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#bb0000]"></span>
                       تفکیک سهم علل ریشه‌ای تأخیرات (Root Cause Breakdown) — روی هر علت جهت فیلتر جدول کلیک کنید:
                     </span>
                     {delayCauseFilter !== 'ALL' && (
                       <button
                         onClick={() => setDelayCauseFilter('ALL')}
-                        className="text-[11px] text-indigo-600 hover:text-indigo-800 font-sans cursor-pointer underline"
+                        className="text-[11px] text-[#007cc0] hover:text-[#006299] font-sans cursor-pointer underline"
                       >
                         حذف فیلتر علت
                       </button>
@@ -1450,25 +1591,25 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                         <button
                           key={cause.causeKey}
                           onClick={() => setDelayCauseFilter(isSelected ? 'ALL' : cause.causeKey)}
-                          className={`p-2.5 rounded-lg border text-right transition cursor-pointer flex flex-col justify-between ${
+                          className={`p-2.5 rounded border text-right transition cursor-pointer flex flex-col justify-between ${
                             isSelected
-                              ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-500/20'
-                              : 'bg-white border-slate-200 hover:bg-slate-50'
+                              ? 'bg-[#e5f3fa] border-[#007cc0]'
+                              : 'bg-white border-[#d9d9d9] hover:bg-[#f5f5f5]'
                           }`}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <span className="text-[11px] font-bold text-slate-800">{cause.causeLabelFa}</span>
-                            <span className="text-xs font-mono font-black text-rose-600">
+                            <span className="text-[11px] font-semibold text-[#333333]">{cause.causeLabelFa}</span>
+                            <span className="text-xs font-mono font-bold text-[#bb0000]">
                               {toPersianDigits(cause.percentage)}٪
                             </span>
                           </div>
-                          <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                          <div className="mt-2 flex items-center justify-between text-[10px] text-[#666666] font-mono">
                             <span>{toPersianDigits(cause.itemsCount)} ردیف</span>
                             <span>{formatNumber(cause.totalDelayedPieces)} عدد</span>
                           </div>
-                          <div className="w-full bg-slate-100 h-1 rounded-full mt-1.5 overflow-hidden">
+                          <div className="w-full bg-[#e8e8e8] h-1 rounded-full mt-1.5 overflow-hidden">
                             <div
-                              className="bg-indigo-600 h-full rounded-full transition-all"
+                              className="bg-[#007cc0] h-full rounded-full transition-all"
                               style={{ width: `${cause.percentage}%` }}
                             />
                           </div>
@@ -1481,7 +1622,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
               {/* Section Filters */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                <span className="text-slate-500 font-sans ml-1 text-[11px]">فیلتر بخش:</span>
+                <span className="text-[#666666] font-sans ml-1 text-[11px]">فیلتر بخش:</span>
                 {[
                   { id: 'ALL', label: 'همه بخش‌ها' },
                   { id: 'CUSTOMER_ORDER', label: 'ردیف سفارشات باز معوق' },
@@ -1492,10 +1633,10 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                   <button
                     key={sec.id}
                     onClick={() => setDelaySectionFilter(sec.id as any)}
-                    className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+                    className={`px-3 py-1 rounded font-medium transition cursor-pointer border ${
                       delaySectionFilter === sec.id
-                        ? 'bg-slate-900 text-white font-bold shadow-xs'
-                        : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                        ? 'bg-[#007cc0] text-white border-[#007cc0] font-semibold'
+                        : 'bg-white text-[#333333] hover:bg-[#f5f5f5] border-[#d9d9d9]'
                     }`}
                   >
                     {sec.label}
@@ -1504,23 +1645,23 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
               </div>
 
               {/* Table */}
-              <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-mono text-[11px] font-semibold">
+              <div className="rounded border border-[#d9d9d9] overflow-hidden bg-white">
+                <table className="w-full text-right text-xs sap-table-compact">
+                  <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-mono text-[11px] font-semibold">
                     <tr>
-                      <th className="py-3 px-3">بخش و شماره مرجع</th>
-                      <th className="py-3 px-3">طرف حساب / ایستگاه</th>
-                      <th className="py-3 px-3">کد و نام قطعه خودرویی</th>
-                      <th className="py-3 px-3 text-center text-slate-800">تیراژ معوق</th>
-                      <th className="py-3 px-3 text-center">موعد مصوب</th>
-                      <th className="py-3 px-3 text-center text-amber-700">تکمیل (تخمینی / واقعی)</th>
-                      <th className="py-3 px-3 text-center text-rose-600 font-black">روزهای تأخیر</th>
-                      <th className="py-3 px-3">علت ریشه‌ای تأخیر</th>
-                      <th className="py-3 px-3 text-center">سطح فوریت</th>
-                      <th className="py-3 px-3 text-center">بررسی</th>
+                      <th className="py-2 px-3">بخش و شماره مرجع</th>
+                      <th className="py-2 px-3">طرف حساب / ایستگاه</th>
+                      <th className="py-2 px-3">کد و نام قطعه خودرویی</th>
+                      <th className="py-2 px-3 text-center text-[#333333]">تیراژ معوق</th>
+                      <th className="py-2 px-3 text-center">موعد مصوب</th>
+                      <th className="py-2 px-3 text-center text-[#e9730c]">تکمیل (تخمینی / واقعی)</th>
+                      <th className="py-2 px-3 text-center text-[#bb0000] font-bold">روزهای تأخیر</th>
+                      <th className="py-2 px-3">علت ریشه‌ای تأخیر</th>
+                      <th className="py-2 px-3 text-center">سطح فوریت</th>
+                      <th className="py-2 px-3 text-center">بررسی</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+                  <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                     {delaysData
                       .filter(r => {
                         if (delaySectionFilter !== 'ALL' && r.section !== delaySectionFilter) return false;
@@ -1528,47 +1669,59 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                         return true;
                       })
                       .map((r, i) => (
-                        <tr key={i} className="hover:bg-slate-50/80 transition">
-                          <td className="py-3 px-3 font-sans">
+                        <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                          <td className="py-1.5 px-3 font-sans">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold block w-fit mb-1 ${
                               r.section === 'CUSTOMER_ORDER'
-                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]'
                                 : r.section === 'OPEN_MO'
-                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                ? 'bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9]'
                                 : r.section === 'COMPLETED_LATE_MO'
-                                ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                                : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                ? 'bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9]'
+                                : 'bg-[#eef8f2] text-[#107e3e] border border-[#b7e1c9]'
                             }`}>
                               {r.sectionLabelFa}
                             </span>
-                            <div className="font-bold text-slate-900 font-mono">{r.referenceNumber}</div>
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(r.referenceNumber, 'WIP_TRACEABILITY')}
+                              className="sap-doc-link font-bold font-mono"
+                            >
+                              {r.referenceNumber}
+                            </button>
                           </td>
-                          <td className="py-3 px-3 font-sans text-slate-700">
+                          <td className="py-1.5 px-3 font-sans text-[#333333]">
                             <div className="font-semibold">{r.customerOrPlan}</div>
                             {r.operationName && (
-                              <div className="text-[10px] text-slate-500">{r.operationName}</div>
+                              <div className="text-[10px] text-[#666666]">{r.operationName}</div>
                             )}
                           </td>
-                          <td className="py-3 px-3 font-sans">
-                            <div className="font-bold text-slate-900">{r.partName}</div>
-                            <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                          <td className="py-1.5 px-3 font-sans">
+                            <div className="font-semibold text-[#333333]">{r.partName}</div>
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link text-[11px] font-mono"
+                            >
+                              {r.partCode}
+                            </button>
                           </td>
-                          <td className="py-3 px-3 text-center font-bold text-sm text-slate-900">
+                          <td className="py-1.5 px-3 text-center font-bold text-sm text-[#333333]">
                             {formatNumber(r.quantity)}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-600">
+                          <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">
                             {formatToJalali(r.plannedDueDate)}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans text-[11px] text-amber-700 font-bold">
+                          <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#e9730c] font-bold">
                             {r.estimatedCompletionDate ? formatToJalali(r.estimatedCompletionDate) : 'ثبت نشده'}
                           </td>
-                          <td className="py-3 px-3 text-center font-black text-sm">
-                            <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                          <td className="py-1.5 px-3 text-center font-bold text-sm">
+                            <span className="px-2 py-0.5 rounded bg-[#fde8e8] text-[#bb0000] border border-[#f5b7b1]">
                               {toPersianDigits(r.delayDays)} روز
                             </span>
                           </td>
-                          <td className="py-3 px-3 font-sans">
-                            <span className="font-bold text-slate-800 block text-[11px]">
+                          <td className="py-1.5 px-3 font-sans">
+                            <span className="font-bold text-[#333333] block text-[11px]">
                               {r.primaryDelayCause === 'RAW_MATERIAL_SHORTAGE' && 'کسری کلاف ساپکو'}
                               {r.primaryDelayCause === 'MACHINE_BREAKDOWN' && 'خرابی پرس و قالب'}
                               {r.primaryDelayCause === 'WIP_BOTTLENECK' && 'گلوگاه کار در جریان'}
@@ -1576,28 +1729,28 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                               {r.primaryDelayCause === 'QUALITY_HOLD' && 'توقف کیفی ابعادی'}
                               {r.primaryDelayCause === 'UNASSESSED' && 'علت بررسی‌نشده'}
                             </span>
-                            <span className="text-[10px] text-slate-500 block mt-0.5 line-clamp-1" title={r.delayDescription}>
+                            <span className="text-[10px] text-[#666666] block mt-0.5 line-clamp-1" title={r.delayDescription}>
                               {r.delayDescription}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-center font-sans">
+                          <td className="py-1.5 px-3 text-center font-sans">
                             {r.urgencyLevel === 'CRITICAL' && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fde8e8] text-[#bb0000] border border-[#f5b7b1]">
                                 بحرانی
                               </span>
                             )}
                             {r.urgencyLevel === 'HIGH' && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9]">
                                 بالا
                               </span>
                             )}
                             {r.urgencyLevel === 'MEDIUM' && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9]">
                                 متوسط
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center">
+                          <td className="py-1.5 px-3 text-center">
                             <button
                               onClick={() => {
                                 setDrillDownItem({
@@ -1620,7 +1773,7 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
                                   ],
                                 });
                               }}
-                              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[10px] font-sans cursor-pointer transition"
+                              className="sap-btn-standard px-2.5 py-1 text-[10px] font-sans cursor-pointer"
                             >
                               جزئیات
                             </button>
@@ -1635,41 +1788,55 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 12. Inventory Movements */}
           {activeReport === 'movements' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره سند</th>
-                  <th className="py-3 px-3">تاریخ سند</th>
-                  <th className="py-3 px-3">نوع سند</th>
-                  <th className="py-3 px-3">قطعه / متریال</th>
-                  <th className="py-3 px-3 text-center">مقدار</th>
-                  <th className="py-3 px-3 text-center">مبدأ → مقصد</th>
-                  <th className="py-3 px-3 text-center">مالکیت</th>
-                  <th className="py-3 px-3 text-center">کاربر ثبت‌کننده</th>
+                  <th className="py-2 px-3">شماره سند</th>
+                  <th className="py-2 px-3">تاریخ سند</th>
+                  <th className="py-2 px-3">نوع سند</th>
+                  <th className="py-2 px-3">قطعه / متریال</th>
+                  <th className="py-2 px-3 text-center">مقدار</th>
+                  <th className="py-2 px-3 text-center">مبدأ → مقصد</th>
+                  <th className="py-2 px-3 text-center">مالکیت</th>
+                  <th className="py-2 px-3 text-center">کاربر ثبت‌کننده</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(movementsData).map(r => (
-                  <tr key={r.transactionId} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-bold text-slate-900">{r.documentNumber}</td>
-                    <td className="py-3 px-3 font-sans text-[11px] text-slate-600">{formatToJalali(r.transactionDate)}</td>
-                    <td className="py-3 px-3 font-sans">
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 border border-slate-200 font-medium">
+                  <tr key={r.transactionId} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.documentNumber, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link"
+                      >
+                        {r.documentNumber}
+                      </button>
+                    </td>
+                    <td className="py-1.5 px-3 font-sans text-[11px] text-[#666666]">{formatToJalali(r.transactionDate)}</td>
+                    <td className="py-1.5 px-3 font-sans">
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] font-medium">
                         {r.documentType}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-900">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">
                       {formatNumber(r.quantity)} {r.unit}
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-600">
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">
                       {r.sourceLocation} → {r.targetLocation}
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-700">{r.ownership}</td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-500">{r.operatorOrUser}</td>
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#333333]">{r.ownership}</td>
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">{r.operatorOrUser}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1678,38 +1845,44 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 13. Inventory Reconciliation */}
           {activeReport === 'reconciliation' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">کد و انبار</th>
-                  <th className="py-3 px-3">قلم کالایی</th>
-                  <th className="py-3 px-3 text-center">موجودی دفتری سیستم</th>
-                  <th className="py-3 px-3 text-center text-emerald-700 font-bold">شمارش عینی انبارگردانی</th>
-                  <th className="py-3 px-3 text-center">مغایرت</th>
-                  <th className="py-3 px-3 text-center">وضعیت موازنه</th>
-                  <th className="py-3 px-3 text-center">تاریخ ممیزی</th>
+                  <th className="py-2 px-3">کد و انبار</th>
+                  <th className="py-2 px-3">قلم کالایی</th>
+                  <th className="py-2 px-3 text-center">موجودی دفتری سیستم</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e] font-bold">شمارش عینی انبارگردانی</th>
+                  <th className="py-2 px-3 text-center">مغایرت</th>
+                  <th className="py-2 px-3 text-center">وضعیت موازنه</th>
+                  <th className="py-2 px-3 text-center">تاریخ ممیزی</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(reconciliationData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.warehouseName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.locationCode}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.warehouseName}</div>
+                      <div className="text-[11px] text-[#666666] font-mono">{r.locationCode}</div>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.partName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{r.partCode}</div>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                      >
+                        {r.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">{formatNumber(r.bookQuantity)}</td>
-                    <td className="py-3 px-3 text-center font-black text-emerald-700">{formatNumber(r.physicalCountQuantity)}</td>
-                    <td className="py-3 px-3 text-center font-bold text-emerald-700">{formatNumber(r.varianceQuantity)}</td>
-                    <td className="py-3 px-3 text-center font-sans">
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">{formatNumber(r.bookQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#107e3e]">{formatNumber(r.physicalCountQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#107e3e]">{formatNumber(r.varianceQuantity)}</td>
+                    <td className="py-1.5 px-3 text-center font-sans">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b7e1c9]">
                         موازنه کامل (بدون مغایرت)
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-[11px] text-slate-500">
+                    <td className="py-1.5 px-3 text-center font-sans text-[11px] text-[#666666]">
                       {formatToJalali(r.lastReconciledAt)}
                     </td>
                   </tr>
@@ -1720,54 +1893,80 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 14. Coil Inventory */}
           {activeReport === 'coil_inventory' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">شماره کویل</th>
-                  <th className="py-3 px-3">مشخصات متریال (گرید و ضخامت)</th>
-                  <th className="py-3 px-3 text-center">ابعاد (mm)</th>
-                  <th className="py-3 px-3 text-center">وزن دریافتی (kg)</th>
-                  <th className="py-3 px-3 text-center text-amber-700">مصرف شده (kg)</th>
-                  <th className="py-3 px-3 text-center text-emerald-700 font-bold">مانده موجودی (kg)</th>
-                  <th className="py-3 px-3 text-center">مالکیت</th>
-                  <th className="py-3 px-3 text-center">وضعیت رول</th>
-                  <th className="py-3 px-3 text-center">موقعیت انبار</th>
+                  <th className="py-2 px-3">شماره کویل</th>
+                  <th className="py-2 px-3">مشخصات متریال (گرید و ضخامت)</th>
+                  <th className="py-2 px-3 text-center">ابعاد (mm)</th>
+                  <th className="py-2 px-3 text-center">وزن دریافتی (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">مصرف شده (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e] font-bold">مانده موجودی (kg)</th>
+                  <th className="py-2 px-3 text-center">مالکیت</th>
+                  <th className="py-2 px-3 text-center">وضعیت رول</th>
+                  <th className="py-2 px-3 text-center">موقعیت انبار</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(coilInventoryData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-bold text-slate-900 font-mono">
-                      <div>{r.coilNumber}</div>
-                      <div className="text-[10px] text-slate-500 font-sans">ذوب: {r.heatNumber}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-bold font-mono">
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.coilNumber, 'COILS')}
+                          className="sap-doc-link"
+                        >
+                          {r.coilNumber}
+                        </button>
+                      </div>
+                      <div className="text-[10px] text-[#666666] font-sans">
+                        ذوب:{' '}
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.heatNumber, 'WIP_TRACEABILITY')}
+                          className="sap-doc-link font-mono"
+                        >
+                          {r.heatNumber}
+                        </button>
+                      </div>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-800">{r.materialGrade}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">قرارداد: {r.contractNumber}</div>
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.materialGrade}</div>
+                      <div className="text-[10px] text-[#666666] font-mono">
+                        قرارداد:{' '}
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.contractNumber, 'CONTRACTS')}
+                          className="sap-doc-link"
+                        >
+                          {r.contractNumber}
+                        </button>
+                      </div>
                     </td>
-                    <td className="py-3 px-3 text-center text-slate-700 font-mono">
+                    <td className="py-1.5 px-3 text-center text-[#333333] font-mono">
                       {r.thicknessMm} × {r.widthMm}
                     </td>
-                    <td className="py-3 px-3 text-center text-slate-700">{formatNumber(r.receivedWeightKg)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-semibold">{formatNumber(r.consumedWeightKg)}</td>
-                    <td className="py-3 px-3 text-center font-bold text-emerald-700">{formatNumber(r.remainingWeightKg)}</td>
-                    <td className="py-3 px-3 text-center font-sans">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${r.ownership === 'SAPCO_CONSIGNMENT' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
+                    <td className="py-1.5 px-3 text-center text-[#333333]">{formatNumber(r.receivedWeightKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-semibold">{formatNumber(r.consumedWeightKg)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#107e3e]">{formatNumber(r.remainingWeightKg)}</td>
+                    <td className="py-1.5 px-3 text-center font-sans">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${r.ownership === 'SAPCO_CONSIGNMENT' ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]' : 'bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9]'}`}>
                         {r.ownership === 'SAPCO_CONSIGNMENT' ? 'امانی ساپکو' : 'ملکی'}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-3 text-center font-sans">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         r.status === 'FULL'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          ? 'bg-[#eef8f2] text-[#107e3e] border border-[#b7e1c9]'
                           : r.status === 'PARTIAL'
-                          ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                          : 'bg-slate-100 text-slate-500 border border-slate-200'
+                          ? 'bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9]'
+                          : 'bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9]'
                       }`}>
                         {r.status === 'FULL' ? 'سالم (کامل)' : r.status === 'PARTIAL' ? 'بازشده (ناقص)' : 'مصرف‌شده'}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-slate-500 text-[11px]">{r.warehouseLocation}</td>
+                    <td className="py-1.5 px-3 text-center font-sans text-[#666666] text-[11px]">{r.warehouseLocation}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1776,47 +1975,83 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 15. Lot Consumption */}
           {activeReport === 'lot_consumption' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">سند و تاریخ حواله</th>
-                  <th className="py-3 px-3">شناسه کویل / ذوب</th>
-                  <th className="py-3 px-3">جنس و ضخامت</th>
-                  <th className="py-3 px-3 text-center">مصرف (kg)</th>
-                  <th className="py-3 px-3 text-center">دستور کار (MO)</th>
-                  <th className="py-3 px-3">قطعه خروجی</th>
-                  <th className="py-3 px-3 text-center">تیراژ تولیدی</th>
-                  <th className="py-3 px-3 text-center text-rose-600">ضایعات پرسی</th>
-                  <th className="py-3 px-3 text-center">اپراتور</th>
+                  <th className="py-2 px-3">سند و تاریخ حواله</th>
+                  <th className="py-2 px-3">شناسه کویل / ذوب</th>
+                  <th className="py-2 px-3">جنس و ضخامت</th>
+                  <th className="py-2 px-3 text-center">مصرف (kg)</th>
+                  <th className="py-2 px-3 text-center">دستور کار (MO)</th>
+                  <th className="py-2 px-3">قطعه خروجی</th>
+                  <th className="py-2 px-3 text-center">تیراژ تولیدی</th>
+                  <th className="py-2 px-3 text-center text-[#bb0000]">ضایعات پرسی</th>
+                  <th className="py-2 px-3 text-center">اپراتور</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(lotConsumptionData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3">
-                      <div className="font-bold text-slate-900 font-mono">{r.issueDocumentNumber}</div>
-                      <div className="text-[10px] text-slate-500 font-sans">{formatToJalali(r.issueDate)}</div>
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.issueDocumentNumber, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link font-bold font-mono"
+                      >
+                        {r.issueDocumentNumber}
+                      </button>
+                      <div className="text-[10px] text-[#666666] font-sans">{formatToJalali(r.issueDate)}</div>
                     </td>
-                    <td className="py-3 px-3 font-mono">
-                      <div className="text-slate-800 font-bold">{r.coilNumber}</div>
-                      <div className="text-[10px] text-slate-500">{r.heatNumber}</div>
+                    <td className="py-1.5 px-3 font-mono">
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.coilNumber, 'COILS')}
+                          className="sap-doc-link font-bold"
+                        >
+                          {r.coilNumber}
+                        </button>
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(r.heatNumber, 'WIP_TRACEABILITY')}
+                          className="sap-doc-link text-[10px]"
+                        >
+                          {r.heatNumber}
+                        </button>
+                      </div>
                     </td>
-                    <td className="py-3 px-3 font-sans">
-                      <span className="text-slate-800 font-semibold">{r.materialGrade}</span>
-                      <span className="text-slate-500 font-mono mr-1">({r.thicknessMm}mm)</span>
+                    <td className="py-1.5 px-3 font-sans">
+                      <span className="text-[#333333] font-semibold">{r.materialGrade}</span>
+                      <span className="text-[#666666] font-mono mr-1">({r.thicknessMm}mm)</span>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-900">{formatNumber(r.consumedKg)}</td>
-                    <td className="py-3 px-3 text-center text-indigo-700 font-semibold font-mono">{r.targetMoNumber}</td>
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900">{r.targetPartName}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">{r.targetPartCode}</div>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333]">{formatNumber(r.consumedKg)}</td>
+                    <td className="py-1.5 px-3 text-center font-semibold font-mono">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.targetMoNumber, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link"
+                      >
+                        {r.targetMoNumber}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-emerald-700">{formatNumber(r.piecesProduced)} عدد</td>
-                    <td className="py-3 px-3 text-center text-rose-600 font-mono">
+                    <td className="py-1.5 px-3 font-sans">
+                      <div className="font-semibold text-[#333333]">{r.targetPartName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(r.targetPartCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[10px] font-mono"
+                      >
+                        {r.targetPartCode}
+                      </button>
+                    </td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#107e3e]">{formatNumber(r.piecesProduced)} عدد</td>
+                    <td className="py-1.5 px-3 text-center text-[#bb0000] font-mono">
                       <div>{formatNumber(r.scrapKg)} kg</div>
-                      <div className="text-[10px] text-slate-500 font-sans">({r.scrapPercent}%)</div>
+                      <div className="text-[10px] text-[#666666] font-sans">({r.scrapPercent}%)</div>
                     </td>
-                    <td className="py-3 px-3 text-center font-sans text-slate-600 text-[11px]">{r.operatorName}</td>
+                    <td className="py-1.5 px-3 text-center font-sans text-[#666666] text-[11px]">{r.operatorName}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1825,33 +2060,33 @@ export const ManagementReportsModuleView: React.FC<ManagementReportsModuleViewPr
 
           {/* 16. Supplier Matrix (Grade x Thickness) */}
           {activeReport === 'supplier_matrix' && (
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+            <table className="w-full text-right text-xs sap-table-compact">
+              <thead className="bg-[#f7f7f7] text-[#333333] border-b border-[#d9d9d9] font-semibold">
                 <tr>
-                  <th className="py-3 px-3">گرید فولاد</th>
-                  <th className="py-3 px-3 text-center">ضخامت ورق (mm)</th>
-                  <th className="py-3 px-3 text-center">اول دوره (kg)</th>
-                  <th className="py-3 px-3 text-center text-blue-700">رسید امانی ساپکو (kg)</th>
-                  <th className="py-3 px-3 text-center text-indigo-700">رسید خرید آزاد / ملکی (kg)</th>
-                  <th className="py-3 px-3 text-center text-amber-700">جمع مصرف مستقیم (kg)</th>
-                  <th className="py-3 px-3 text-center text-slate-600">سایر گردش‌ها (kg)</th>
-                  <th className="py-3 px-3 text-center text-emerald-700 font-bold">مانده پایان دوره (kg)</th>
-                  <th className="py-3 px-3 text-center">تعداد کویل</th>
+                  <th className="py-2 px-3">گرید فولاد</th>
+                  <th className="py-2 px-3 text-center">ضخامت ورق (mm)</th>
+                  <th className="py-2 px-3 text-center">اول دوره (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#007cc0]">رسید امانی ساپکو (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#333333]">رسید خرید آزاد / ملکی (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#e9730c]">جمع مصرف مستقیم (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#666666]">سایر گردش‌ها (kg)</th>
+                  <th className="py-2 px-3 text-center text-[#107e3e] font-bold">مانده پایان دوره (kg)</th>
+                  <th className="py-2 px-3 text-center">تعداد کویل</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-slate-700">
+              <tbody className="divide-y divide-[#e8e8e8] font-mono text-[#333333]">
                 {filterRows(supplierMatrixData).map((r, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-3 font-bold text-slate-900 font-sans">{r.grade}</td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-700 font-mono">{r.thicknessMm} mm</td>
-                    <td className="py-3 px-3 text-center text-slate-600">{formatNumber(r.openingBalanceKg)}</td>
-                    <td className="py-3 px-3 text-center text-blue-700 font-semibold">{formatNumber(r.consignmentReceivedKg)}</td>
-                    <td className="py-3 px-3 text-center text-indigo-700 font-semibold">{formatNumber(r.financialReceivedKg)}</td>
-                    <td className="py-3 px-3 text-center text-amber-700 font-bold">{formatNumber(r.totalConsumptionKg)}</td>
-                    <td className="py-3 px-3 text-center text-slate-600">{formatNumber(r.otherMovementKg)}</td>
-                    <td className="py-3 px-3 text-center font-black text-emerald-700">{formatNumber(r.closingBalanceKg)}</td>
-                    <td className="py-3 px-3 text-center font-sans">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                  <tr key={i} className="hover:bg-[#e5f3fa] transition">
+                    <td className="py-1.5 px-3 font-bold text-[#333333] font-sans">{r.grade}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#333333] font-mono">{r.thicknessMm} mm</td>
+                    <td className="py-1.5 px-3 text-center text-[#666666]">{formatNumber(r.openingBalanceKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#007cc0] font-semibold">{formatNumber(r.consignmentReceivedKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#333333] font-semibold">{formatNumber(r.financialReceivedKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#e9730c] font-bold">{formatNumber(r.totalConsumptionKg)}</td>
+                    <td className="py-1.5 px-3 text-center text-[#666666]">{formatNumber(r.otherMovementKg)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-[#107e3e]">{formatNumber(r.closingBalanceKg)}</td>
+                    <td className="py-1.5 px-3 text-center font-sans">
+                      <span className="px-2 py-0.5 rounded bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] font-bold">
                         {toPersianDigits(r.totalCoilsCount)} کلاف
                       </span>
                     </td>

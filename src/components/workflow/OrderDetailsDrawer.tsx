@@ -31,6 +31,7 @@ import {
 } from './FactoryHighwayWorkbench';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { AuditTrailTabContent, useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 
 export type DrawerTabKey = 'TRACEABILITY' | 'ROUTING' | 'ACTIONS' | 'AUDIT_TRAIL' | 'WIP_INSPECTION';
 
@@ -77,6 +78,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<DrawerTabKey>(initialTab);
   const { openQuickEditDrawer } = useEnterpriseUx();
+  const { traceDocument } = useErpRouter();
 
   React.useEffect(() => {
     if (isOpen && initialTab) {
@@ -109,50 +111,60 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in"
+      className="fixed inset-0 z-50 flex justify-end bg-[#333333]/40 backdrop-blur-[1px] animate-in fade-in"
       dir="rtl"
       onClick={onClose}
     >
-      {/* Slide-Over Panel (Opens from Left in RTL layout so Master Table stays visible on Right) */}
       <div
-        className="relative w-full max-w-2xl bg-white h-full shadow-2xl border-r border-slate-200 flex flex-col justify-between overflow-y-auto"
+        className="relative w-full max-w-2xl bg-[#ffffff] h-full shadow-2xl border-r border-[#d9d9d9] flex flex-col justify-between overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* ================================================================ */}
-        {/* 1. STICKY DRAWER HEADER (SAP Fiori Object Header Style)          */}
-        {/* ================================================================ */}
-        <div className="sticky top-0 z-20 p-5 border-b border-slate-200 bg-white/95 backdrop-blur-xs shadow-2xs space-y-3 shrink-0">
+        <div className="sticky top-0 z-20 p-4 border-b border-[#d9d9d9] bg-[#ffffff] space-y-3 shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-base font-bold text-slate-900 tracking-tight">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    traceDocument(order.orderCode, 'WIP_TRACEABILITY');
+                  }}
+                  className="sap-doc-link font-mono text-sm font-semibold"
+                >
                   {order.orderCode}
-                </span>
+                </button>
 
                 {isCompleted ? (
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded bg-[#f2f8f4] text-[#107e3e] border border-[#b7dfc7] text-[11px] font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>تکمیل و رسید انبار</span>
                   </span>
                 ) : isHalted ? (
-                  <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[11px] font-bold flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded bg-[#fff0f0] text-[#bb0000] border border-[#f5b7b1] text-[11px] font-semibold flex items-center gap-1">
                     <PauseCircle className="w-3.5 h-3.5" />
                     <span>توقف خط (HALTED)</span>
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-bold">
+                  <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] text-[11px] font-semibold">
                     در جریان ({currentOp?.stepCode || 'OP10'})
                   </span>
                 )}
 
                 {order.contractCode && (
-                  <span className="text-[11px] font-mono text-slate-500">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      traceDocument(order.contractCode!, 'CONTRACTS');
+                    }}
+                    className="sap-doc-link text-[11px]"
+                  >
                     · قرارداد: {order.contractCode}
-                  </span>
+                  </button>
                 )}
               </div>
 
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-sm font-semibold text-[#333333]">
                 {order.partName}
               </h2>
               <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -189,96 +201,66 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
             </div>
           </div>
 
-          {/* Compact Progress Summary Strip */}
-          <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
+          <div className="bg-[#f5f5f5] border border-[#d9d9d9] rounded p-2.5 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">
+              <span className="text-[#666666] font-medium">
                 پیشرفت تحویل محصول نهایی به انبار:
               </span>
-              <div className="font-mono font-bold text-slate-900 tabular-nums">
+              <div className="font-mono font-semibold text-[#333333] tabular-nums">
                 {formatNumber(finishedQty)} از {formatNumber(order.orderQty)} عدد (
                 {toPersianDigits(progressPct)}٪)
               </div>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[#e8e8e8] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  isCompleted
-                    ? 'bg-emerald-600'
-                    : isHalted
-                    ? 'bg-rose-500'
-                    : 'bg-slate-900'
+                  isCompleted ? 'bg-[#107e3e]' : isHalted ? 'bg-[#bb0000]' : 'bg-[#007cc0]'
                 }`}
                 style={{ width: `${progressPct}%` }}
               />
             </div>
           </div>
 
-          {/* Segmented 5-Tab Navigation (Includes WIP & Sub-Components and Enterprise Audit Trail) */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-slate-200/75 rounded-xl text-xs">
+          <div className="sap-icon-tab-bar -mx-4 px-4">
             <button
               type="button"
               onClick={() => setActiveTab('TRACEABILITY')}
-              className={`py-2 px-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'TRACEABILITY'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`sap-icon-tab ${activeTab === 'TRACEABILITY' ? 'sap-icon-tab-active' : ''}`}
             >
-              <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="truncate">رهگیری</span>
+              <Tag className="w-3.5 h-3.5 shrink-0" />
+              <span>رهگیری</span>
             </button>
-
             <button
               type="button"
               onClick={() => setActiveTab('ROUTING')}
-              className={`py-2 px-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'ROUTING'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`sap-icon-tab ${activeTab === 'ROUTING' ? 'sap-icon-tab-active' : ''}`}
             >
-              <GitBranch className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span className="truncate">مسیر ({toPersianDigits(order.operations.length)} OP)</span>
+              <GitBranch className="w-3.5 h-3.5 shrink-0" />
+              <span>مسیر ({toPersianDigits(order.operations.length)} OP)</span>
             </button>
-
             <button
               type="button"
               onClick={() => setActiveTab('WIP_INSPECTION')}
-              className={`py-2 px-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'WIP_INSPECTION'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`sap-icon-tab ${activeTab === 'WIP_INSPECTION' ? 'sap-icon-tab-active' : ''}`}
             >
-              <Boxes className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-              <span className="truncate">موجودی بین‌مراحل (WIP)</span>
+              <Boxes className="w-3.5 h-3.5 shrink-0" />
+              <span>موجودی بین‌مراحل (WIP)</span>
             </button>
-
             <button
               type="button"
               onClick={() => setActiveTab('ACTIONS')}
-              className={`py-2 px-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'ACTIONS'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`sap-icon-tab ${activeTab === 'ACTIONS' ? 'sap-icon-tab-active' : ''}`}
             >
-              <Sliders className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-              <span className="truncate">عملیات خط</span>
+              <Sliders className="w-3.5 h-3.5 shrink-0" />
+              <span>عملیات خط</span>
             </button>
-
             <button
               type="button"
               onClick={() => setActiveTab('AUDIT_TRAIL')}
-              className={`py-2 px-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === 'AUDIT_TRAIL'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`sap-icon-tab ${activeTab === 'AUDIT_TRAIL' ? 'sap-icon-tab-active' : ''}`}
             >
-              <History className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span className="truncate">ممیزی (Audit)</span>
+              <History className="w-3.5 h-3.5 shrink-0" />
+              <span>ممیزی (Audit)</span>
             </button>
           </div>
         </div>
@@ -292,76 +274,122 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
           {/* -------------------------------------------------------------- */}
           {activeTab === 'TRACEABILITY' && (
             <div className="space-y-4">
+              {/* 4-Stage End-to-End Document Continuity Strip */}
+              <div className="p-3 rounded bg-[#f5f5f5] border border-[#d9d9d9] space-y-2">
+                <div className="text-[11px] font-semibold text-[#333333]">
+                  زنجیره پیوستگی اسناد از قرارداد تا کاردکس:
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); traceDocument(order.contractCode || order.orderCode, 'CONTRACTS'); }}
+                    className="p-2 rounded bg-white border border-[#d9d9d9] hover:border-[#007cc0] hover:bg-[#e5f3fa] text-right cursor-pointer"
+                  >
+                    <div className="text-[10px] text-[#666666]">۱. قرارداد مرجع</div>
+                    <div className="font-mono font-semibold text-[#007cc0] truncate">{order.contractCode || 'CNT-SAPCO'}</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); traceDocument(order.materialIssuedVoucherNo || order.coilNumber || order.orderCode, 'INVENTORY_LEDGER'); }}
+                    className="p-2 rounded bg-white border border-[#d9d9d9] hover:border-[#007cc0] hover:bg-[#e5f3fa] text-right cursor-pointer"
+                  >
+                    <div className="text-[10px] text-[#666666]">۲. حواله ورق / کاردکس</div>
+                    <div className="font-mono font-semibold text-[#007cc0] truncate">{order.materialIssuedVoucherNo || 'مشاهده اسناد'}</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); traceDocument(order.orderCode, 'WIP_TRACEABILITY'); }}
+                    className="p-2 rounded bg-white border border-[#d9d9d9] hover:border-[#007cc0] hover:bg-[#e5f3fa] text-right cursor-pointer"
+                  >
+                    <div className="text-[10px] text-[#666666]">۳. دستور کار (MO)</div>
+                    <div className="font-mono font-semibold text-[#007cc0] truncate">{order.orderCode}</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); traceDocument(order.coilNumber || order.heatNumber || order.partCode, 'COILS'); }}
+                    className="p-2 rounded bg-white border border-[#d9d9d9] hover:border-[#007cc0] hover:bg-[#e5f3fa] text-right cursor-pointer"
+                  >
+                    <div className="text-[10px] text-[#666666]">۴. رول ورق و ذوب</div>
+                    <div className="font-mono font-semibold text-[#007cc0] truncate">{order.coilNumber || order.heatNumber || 'رول فعال'}</div>
+                  </button>
+                </div>
+              </div>
+
               {/* Primary Traceability Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200 space-y-1">
-                  <div className="flex items-center justify-between text-amber-800">
+                <div className="p-3 rounded bg-[#fff8e6] border border-[#f0cf85] space-y-1">
+                  <div className="flex items-center justify-between text-[#8a5300]">
                     <span className="text-[11px] font-semibold">شماره ذوب (Heat No)</span>
-                    <Flame className="w-4 h-4 text-amber-600" />
+                    <Flame className="w-4 h-4 text-[#e9730c]" />
                   </div>
-                  <div className="font-mono text-sm font-bold text-slate-900">
-                    {order.heatNumber || 'HT-99412-MOB'}
-                  </div>
+                  <div className="font-mono text-sm font-semibold text-[#333333]">{order.heatNumber || 'HT-99412-MOB'}</div>
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
-                      onNavigateToSapco?.();
+                      if (onNavigateToSapco) {
+                        traceDocument(order.heatNumber || order.coilNumber || order.orderCode, 'WIP_TRACEABILITY');
+                      } else {
+                        traceDocument(order.heatNumber || order.coilNumber || order.orderCode, 'WIP_TRACEABILITY');
+                      }
                     }}
-                    className="text-[11px] text-amber-800 hover:underline font-semibold flex items-center gap-1 pt-1 cursor-pointer"
+                    className="sap-doc-link text-[11px] flex items-center gap-1 pt-1"
                   >
                     <span>استعلام شجره‌نامه ذوب</span>
                     <ArrowUpRight className="w-3 h-3" />
                   </button>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="flex items-center justify-between text-slate-500">
+                <div className="p-3 rounded bg-[#f5f5f5] border border-[#d9d9d9] space-y-1">
+                  <div className="flex items-center justify-between text-[#666666]">
                     <span className="text-[11px] font-semibold">شماره بچ تولید</span>
-                    <Layers className="w-4 h-4 text-indigo-600" />
+                    <Layers className="w-4 h-4 text-[#007cc0]" />
                   </div>
-                  <div className="font-mono text-sm font-bold text-indigo-900">
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); traceDocument(order.productionBatchCode, 'WIP_TRACEABILITY'); }}
+                    className="sap-doc-link text-sm font-semibold"
+                  >
                     {order.productionBatchCode}
-                  </div>
-                  <div className="text-[11px] font-mono text-slate-500 pt-1">
-                    بچ ساپکو: {order.sapcoBatchNumber || 'BCH-SAP-1404'}
-                  </div>
+                  </button>
+                  <div className="text-[11px] font-mono text-[#666666] pt-1">بچ ساپکو: {order.sapcoBatchNumber || 'BCH-SAP-1404'}</div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="flex items-center justify-between text-slate-500">
+                <div className="p-3 rounded bg-[#f5f5f5] border border-[#d9d9d9] space-y-1">
+                  <div className="flex items-center justify-between text-[#666666]">
                     <span className="text-[11px] font-semibold">شماره کلاف (Coil No)</span>
-                    <Cpu className="w-4 h-4 text-emerald-600" />
+                    <Cpu className="w-4 h-4 text-[#107e3e]" />
                   </div>
-                  <div className="font-mono text-sm font-bold text-slate-900">
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); traceDocument(order.coilNumber || order.rawMaterialCode, 'COILS'); }}
+                    className="sap-doc-link text-sm font-semibold"
+                  >
                     {order.coilNumber || 'MOB-2025-DC01'}
-                  </div>
-                  <div className="text-[11px] text-slate-500 pt-1 truncate">
-                    {order.rawMaterialCode}
-                  </div>
+                  </button>
+                  <div className="text-[11px] text-[#666666] pt-1 truncate">{order.rawMaterialCode}</div>
                 </div>
               </div>
 
-              {/* Coil & Sheet Specification Card */}
-              <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="p-3.5 rounded bg-white border border-[#d9d9d9] space-y-3">
+                <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-xs">
-                      مشخصات ورق مصرفی و وضعیت تخصیص انبار
-                    </h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {order.rawMaterialName}
-                    </p>
+                    <h3 className="font-semibold text-[#333333] text-xs">مشخصات ورق مصرفی و وضعیت تخصیص انبار</h3>
+                    <p className="text-[11px] text-[#666666] mt-0.5">{order.rawMaterialName}</p>
                   </div>
                   {order.materialIssuedVoucherNo ? (
-                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); traceDocument(order.materialIssuedVoucherNo!, 'INVENTORY_LEDGER'); }}
+                      className="sap-doc-link px-2.5 py-1 rounded bg-[#f2f8f4] text-[#107e3e] border border-[#b7dfc7] text-[11px]"
+                    >
                       حواله: {order.materialIssuedVoucherNo}
-                    </span>
+                    </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => onIssueSheet(order)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[11px] cursor-pointer"
+                      className="sap-btn-emphasized px-3 py-1.5 text-[11px] cursor-pointer"
                     >
                       صدور حواله ورق به خط
                     </button>
@@ -422,22 +450,22 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
           {/* -------------------------------------------------------------- */}
           {activeTab === 'ROUTING' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#e8e8e8]">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-xs">
+                  <h3 className="font-bold text-[#333333] text-xs">
                     تایم‌لاین مسیر تولید (Vertical Routing Timeline)
                   </h3>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 mt-1">
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#666666] mt-1">
                     <span className="inline-flex items-center gap-1">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" />
                       <span>تکمیل‌شده</span>
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 ring-2 ring-indigo-100 inline-block" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#007cc0] ring-2 ring-[#e5f3fa] inline-block" />
                       <span>ایستگاه فعلی</span>
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#cccccc] inline-block" />
                       <span>ایستگاه بعدی</span>
                     </span>
                   </div>
@@ -445,7 +473,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenAddOp(order)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+                  className="sap-btn-emphasized px-3 py-1.5 text-xs flex items-center gap-1 cursor-pointer self-start sm:self-auto"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>افزودن OP</span>
@@ -478,10 +506,10 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-[11px] font-bold transition-all z-10 ${
                             isStepDone
-                              ? 'bg-emerald-600 text-white shadow-xs'
+                              ? 'bg-emerald-600 text-white'
                               : isCurrentActive
-                              ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 shadow-xs'
-                              : 'bg-slate-100 text-slate-500 border-2 border-slate-300'
+                              ? 'bg-[#007cc0] text-white ring-4 ring-[#e5f3fa]'
+                              : 'bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9]'
                           }`}
                           title={
                             isStepDone
@@ -504,8 +532,8 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                               isStepDone
                                 ? 'bg-emerald-500'
                                 : isCurrentActive
-                                ? 'bg-gradient-to-b from-indigo-500 to-slate-200'
-                                : 'bg-slate-200'
+                                ? 'bg-[#007cc0]/50'
+                                : 'bg-[#d9d9d9]'
                             }`}
                           />
                         )}
@@ -514,14 +542,14 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                       {/* Left Timeline Card */}
                       <div className={`flex-1 ${isLastStep ? 'pb-1' : 'pb-4'}`}>
                         <div
-                          className={`p-3.5 rounded-xl border transition-all space-y-2.5 ${
+                          className={`p-3 rounded border transition-all space-y-2 ${
                             isCurrentActive
-                              ? 'bg-indigo-50/35 border-indigo-300 shadow-2xs'
+                              ? 'bg-[#e5f3fa]/50 border-[#b3ddf2]'
                               : isStepDone
-                              ? 'bg-emerald-50/20 border-emerald-200'
+                              ? 'bg-emerald-50/30 border-emerald-200'
                               : isLocked
-                              ? 'bg-slate-50/70 border-slate-200 opacity-80'
-                              : 'bg-white border-slate-200'
+                              ? 'bg-[#f5f5f5] border-[#d9d9d9] opacity-85'
+                              : 'bg-[#ffffff] border-[#d9d9d9]'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -532,33 +560,33 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                                     isStepDone
                                       ? 'bg-emerald-600 text-white'
                                       : isCurrentActive
-                                      ? 'bg-indigo-600 text-white'
-                                      : 'bg-slate-200 text-slate-700'
+                                      ? 'bg-[#007cc0] text-white'
+                                      : 'bg-[#f0f0f0] text-[#333333] border border-[#d9d9d9]'
                                   }`}
                                 >
                                   {op.stepCode}
                                 </span>
-                                <span className="font-bold text-slate-900">{op.stepName}</span>
+                                <span className="font-bold text-[#333333]">{op.stepName}</span>
                                 {isStepDone && (
                                   <span className="text-[10px] font-bold text-emerald-700">
                                     · تکمیل‌شده
                                   </span>
                                 )}
                                 {isCurrentActive && (
-                                  <span className="text-[10px] font-bold text-indigo-700">
+                                  <span className="text-[10px] font-bold text-[#007cc0]">
                                     · ایستگاه فعلی در حال کار
                                   </span>
                                 )}
                                 {!isStepDone && !isCurrentActive && (
-                                  <span className="text-[10px] font-medium text-slate-400">
+                                  <span className="text-[10px] font-medium text-[#666666]">
                                     · ایستگاه بعدی
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-slate-500 mt-1">
+                              <div className="text-[11px] text-[#666666] mt-1">
                                 {op.hall} · دستگاه:{' '}
-                                <strong className="text-slate-700">{op.machineName}</strong> · قالب:{' '}
-                                <span className="font-mono text-slate-700">{op.dieName}</span>
+                                <strong className="text-[#333333]">{op.machineName}</strong> · قالب:{' '}
+                                <span className="font-mono text-[#333333]">{op.dieName}</span>
                               </div>
                             </div>
 
@@ -567,7 +595,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => onOpenStepLogger(order, idx)}
-                                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-500 font-medium flex items-center gap-1 cursor-not-allowed"
+                                  className="sap-btn-standard px-2.5 py-1 text-[#666666] font-medium flex items-center gap-1 cursor-not-allowed"
                                 >
                                   <Lock className="w-3.5 h-3.5" />
                                   <span>قفل ({prevOp?.stepCode})</span>
@@ -576,10 +604,10 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => onOpenStepLogger(order, idx)}
-                                  className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer ${
+                                  className={`px-3 py-1 rounded text-xs font-semibold cursor-pointer ${
                                     isCurrentActive
-                                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                      : 'bg-slate-900 hover:bg-slate-800 text-white'
+                                      ? 'sap-btn-emphasized'
+                                      : 'sap-btn-standard'
                                   }`}
                                 >
                                   ثبت کارکرد
@@ -589,7 +617,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onOpenEditOp(order, idx, op)}
-                                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 cursor-pointer"
+                                className="p-1.5 rounded border border-[#d9d9d9] hover:bg-[#e5f3fa] text-[#666666] hover:text-[#007cc0] cursor-pointer"
                                 title="ویرایش ایستگاه"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
@@ -599,7 +627,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => onDeleteOp(order.id, idx)}
-                                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-slate-400 hover:text-rose-600 cursor-pointer"
+                                  className="p-1.5 rounded border border-[#d9d9d9] hover:bg-rose-50 text-[#666666] hover:text-rose-600 cursor-pointer"
                                   title="حذف مرحله"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -609,12 +637,12 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                           </div>
 
                           {/* Step Progress Bar & Metrics */}
-                          <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                          <div className="pt-2 border-t border-[#e8e8e8] space-y-1.5">
                             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                              <div className="flex items-center gap-3 font-mono">
-                                <span className="text-slate-600">
+                              <div className="flex items-center gap-3 font-mono tabular-nums">
+                                <span className="text-[#666666]">
                                   آماده در بافر:{' '}
-                                  <strong className="text-slate-900">
+                                  <strong className="text-[#333333]">
                                     {formatNumber(availableInBuffer)}
                                   </strong>
                                 </span>
@@ -628,18 +656,18 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <span className="font-mono font-semibold text-slate-600">
+                              <span className="font-mono font-semibold text-[#666666] tabular-nums">
                                 {toPersianDigits(opPct)}٪
                               </span>
                             </div>
-                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-[#e8e8e8] rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${
                                   isStepDone
                                     ? 'bg-emerald-600'
                                     : isCurrentActive
-                                    ? 'bg-indigo-600'
-                                    : 'bg-slate-400'
+                                    ? 'bg-[#007cc0]'
+                                    : 'bg-[#999999]'
                                 }`}
                                 style={{ width: `${opPct}%` }}
                               />
@@ -679,11 +707,11 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => onDispatchFinishedGoods(order)}
-                    className="p-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-right flex items-start justify-between gap-3 transition-colors cursor-pointer shadow-xs"
+                    className="p-3.5 rounded bg-[#007cc0] hover:bg-[#006299] text-white text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
                   >
                     <div>
                       <div className="font-bold text-sm">صدور حواله خروج به ساپکو</div>
-                      <div className="text-[11px] text-indigo-100 mt-1">
+                      <div className="text-[11px] text-white/85 mt-1">
                         بارگیری و کسر موجودی از انبار محصول نهایی برای مشتری
                       </div>
                     </div>
@@ -695,7 +723,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => onToggleLineStop(order)}
-                  className={`p-4 rounded-xl border text-right flex items-start justify-between gap-3 transition-colors cursor-pointer ${
+                  className={`p-3.5 rounded border text-right flex items-start justify-between gap-3 transition-colors cursor-pointer ${
                     isHalted
                       ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-950'
                       : 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-950'
@@ -722,13 +750,13 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenStepLogger(order, currentOpIdx)}
-                  className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
+                  className="p-3.5 rounded bg-[#ffffff] hover:bg-[#e5f3fa]/40 border border-[#d9d9d9] text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
                 >
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">
+                    <div className="font-bold text-[#333333] text-sm">
                       ثبت تولید و ضایعات ایستگاه ({currentOp?.stepCode || 'OP10'})
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-1">
+                    <div className="text-[11px] text-[#666666] mt-1">
                       مجموع ضایعات ثبت‌شده تا این لحظه: {formatNumber(totalScrapQty)} عدد
                     </div>
                   </div>
@@ -739,17 +767,17 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => onIssueSheet(order)}
-                  className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
+                  className="p-3.5 rounded bg-[#ffffff] hover:bg-[#e5f3fa]/40 border border-[#d9d9d9] text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
                 >
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">
+                    <div className="font-bold text-[#333333] text-sm">
                       {order.materialIssuedVoucherNo ? 'صدور مجدد حواله ورق' : 'صدور حواله ورق از انبار'}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-1">
+                    <div className="text-[11px] text-[#666666] mt-1">
                       کلاف {order.coilNumber} · ذوب {order.heatNumber} ({formatNumber(grossRequiredKg)} ک.گ)
                     </div>
                   </div>
-                  <Boxes className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                  <Boxes className="w-5 h-5 text-[#007cc0] shrink-0 mt-0.5" />
                 </button>
 
                 {/* 5. Full End-to-End Tracker */}
@@ -759,13 +787,13 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                     onClose();
                     onOpenTrackModal(order.id);
                   }}
-                  className="p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
+                  className="p-3.5 rounded bg-[#ffffff] hover:bg-[#e5f3fa]/40 border border-[#d9d9d9] text-right flex items-start justify-between gap-3 transition-colors cursor-pointer"
                 >
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">
+                    <div className="font-bold text-[#333333] text-sm">
                       پنجره جامع پیگیری زنجیره دستور
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-1">
+                    <div className="text-[11px] text-[#666666] mt-1">
                       مشاهده دیاگرام ۳ مرحله‌ای از حواله کلاف تا رسید محصول
                     </div>
                   </div>
@@ -773,14 +801,14 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                 </button>
 
                 {/* 6. Edit / Delete Order */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                <div className="p-3.5 rounded bg-[#f5f5f5] border border-[#d9d9d9] flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
                       onOpenEditOrder(order);
                     }}
-                    className="flex-1 py-2 px-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="sap-btn-standard flex-1 py-2 px-3 font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>ویرایش دستور (MO)</span>
@@ -792,7 +820,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                       onClose();
                       onDeleteOrder(order);
                     }}
-                    className="py-2 px-3 rounded-lg bg-white hover:bg-rose-50 border border-slate-200 text-rose-600 font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                    className="py-2 px-3 rounded bg-[#ffffff] hover:bg-rose-50 border border-[#d9d9d9] text-rose-600 font-semibold flex items-center justify-center gap-1 cursor-pointer"
                     title="حذف دستور تولید"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -802,30 +830,38 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
               </div>
 
               {/* Command & Voucher History Log */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 font-bold text-slate-800 flex items-center gap-1.5">
-                  <FileCheck2 className="w-4 h-4 text-slate-500" />
+              <div className="border border-[#d9d9d9] rounded overflow-hidden bg-[#ffffff]">
+                <div className="bg-[#f5f5f5] px-4 py-2 border-b border-[#d9d9d9] font-bold text-[#333333] flex items-center gap-1.5">
+                  <FileCheck2 className="w-4 h-4 text-[#007cc0]" />
                   <span>کارنامه اسناد و دستورات صادرشده ({toPersianDigits((order.commandLogs || []).length)})</span>
                 </div>
-                <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                <div className="divide-y divide-[#e8e8e8] max-h-56 overflow-y-auto">
                   {(order.commandLogs || []).length === 0 ? (
-                    <div className="p-4 text-center text-slate-400">
+                    <div className="p-4 text-center text-[#666666]">
                       هنوز سندی برای این دستور ثبت نشده است.
                     </div>
                   ) : (
                     (order.commandLogs || []).map(log => (
                       <div
                         key={log.id}
-                        className="px-4 py-2.5 flex items-center justify-between gap-2 text-[11px]"
+                        className="px-4 py-2 flex items-center justify-between gap-2 text-[11px] hover:bg-[#e5f3fa]/30"
                       >
                         <div>
-                          <span className="font-mono font-bold text-slate-900 ml-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              traceDocument(log.docNumber, 'INVENTORY_LEDGER');
+                            }}
+                            className="sap-doc-link font-mono font-bold ml-1.5 cursor-pointer"
+                            title="مشاهده و رهگیری این سند در کاردکس انبار"
+                          >
                             [{log.docNumber}]
-                          </span>
-                          <span className="font-semibold text-slate-800">{log.title}</span>
-                          <span className="text-slate-400 mr-1.5">({log.targetStation})</span>
+                          </button>
+                          <span className="font-semibold text-[#333333]">{log.title}</span>
+                          <span className="text-[#666666] mr-1.5">({log.targetStation})</span>
                         </div>
-                        <div className="font-mono text-slate-500 shrink-0">
+                        <div className="font-mono text-[#666666] shrink-0 tabular-nums">
                           {log.qtyOrWeight} · {log.timestamp}
                         </div>
                       </div>
@@ -847,25 +883,33 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
               />
 
               {/* Also display detailed voucher/command logs for this order */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 font-bold text-slate-800 flex items-center gap-1.5">
-                  <FileCheck2 className="w-4 h-4 text-slate-500" />
+              <div className="border border-[#d9d9d9] rounded overflow-hidden bg-[#ffffff]">
+                <div className="bg-[#f5f5f5] px-4 py-2 border-b border-[#d9d9d9] font-bold text-[#333333] flex items-center gap-1.5">
+                  <FileCheck2 className="w-4 h-4 text-[#007cc0]" />
                   <span>اسناد سیستمی و حواله‌های صادرشده این دستور ({toPersianDigits((order.commandLogs || []).length)})</span>
                 </div>
-                <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                <div className="divide-y divide-[#e8e8e8] max-h-60 overflow-y-auto">
                   {(order.commandLogs || []).map(log => (
                     <div
                       key={log.id}
-                      className="px-4 py-2.5 flex items-center justify-between gap-2 text-[11px]"
+                      className="px-4 py-2 flex items-center justify-between gap-2 text-[11px] hover:bg-[#e5f3fa]/30"
                     >
                       <div>
-                        <span className="font-mono font-bold text-slate-900 ml-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            traceDocument(log.docNumber, 'INVENTORY_LEDGER');
+                          }}
+                          className="sap-doc-link font-mono font-bold ml-1.5 cursor-pointer"
+                          title="مشاهده این سند در کاردکس انبار"
+                        >
                           [{log.docNumber}]
-                        </span>
-                        <span className="font-semibold text-slate-800">{log.title}</span>
-                        <span className="text-slate-400 mr-1.5">({log.targetStation})</span>
+                        </button>
+                        <span className="font-semibold text-[#333333]">{log.title}</span>
+                        <span className="text-[#666666] mr-1.5">({log.targetStation})</span>
                       </div>
-                      <div className="font-mono text-slate-500 shrink-0">
+                      <div className="font-mono text-[#666666] shrink-0 tabular-nums">
                         {log.qtyOrWeight} · {log.timestamp}
                       </div>
                     </div>
@@ -880,13 +924,13 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
           {/* -------------------------------------------------------------- */}
           {activeTab === 'WIP_INSPECTION' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+              <div className="p-3.5 rounded bg-[#e5f3fa] border border-[#b3ddf2] text-[#333333] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h4 className="font-bold text-sm flex items-center gap-2">
-                    <Boxes className="w-4 h-4 text-purple-300" />
+                  <h4 className="font-bold text-sm flex items-center gap-2 text-[#333333]">
+                    <Boxes className="w-4 h-4 text-[#007cc0]" />
                     <span>موجودی بین‌مراحل (WIP) و موازنه قطعات پیش‌ساخته / نیمه‌ساخته</span>
                   </h4>
-                  <p className="text-xs text-purple-200 mt-0.5">
+                  <p className="text-xs text-[#666666] mt-0.5">
                     بررسی تفکیکی موجودی انبار نیمه‌ساخته، بافر بین‌ایستگاهی پای پرس و اتصالات
                   </p>
                 </div>
@@ -894,72 +938,94 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenWipInspection(order)}
-                    className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer shrink-0"
+                    className="sap-btn-emphasized px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
                   >
-                    <span>فرم جامع ارزیابی بین‌مراحل 🔍</span>
+                    <span>فرم جامع ارزیابی بین‌مراحل</span>
                   </button>
                 )}
               </div>
 
               {/* Sub-Components Matrix Card */}
-              <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-xs">
-                <div className="font-bold text-slate-900 text-xs flex items-center justify-between">
+              <div className="bg-[#ffffff] rounded border border-[#d9d9d9] p-3.5 space-y-3">
+                <div className="font-bold text-[#333333] text-xs flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-indigo-600" />
+                    <Layers className="w-4 h-4 text-[#007cc0]" />
                     <span>قطعات پیش‌ساخته تشکیل‌دهنده طبق ساختار محصول (BOM):</span>
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-[#666666] font-mono tabular-nums">
                     تیراژ دستور کار: {formatNumber(order.orderQty)} عدد
                   </span>
                 </div>
 
                 <div className="space-y-2.5">
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="p-3 rounded bg-[#f5f5f5] border border-[#d9d9d9] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <div className="font-bold text-slate-900 text-xs">
-                        ۱. صفحه براکت اصلی (WIP-ECU-MAIN-BRK)
+                      <div className="font-bold text-[#333333] text-xs flex items-center gap-1.5 flex-wrap">
+                        <span>۱. صفحه براکت اصلی</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            traceDocument('WIP-ECU-MAIN-BRK', 'WIP_TRACEABILITY');
+                          }}
+                          className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                          title="رهگیری موجودی بین‌مراحل این قطعه"
+                        >
+                          (WIP-ECU-MAIN-BRK)
+                        </button>
                       </div>
-                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                      <div className="text-[11px] text-[#666666] font-mono mt-0.5">
                         ورق DC01A ضخامت 2mm · ۱۵ مهره جوشی M6
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono">
-                      <div className="bg-white p-2 rounded border border-slate-100">
-                        <span className="text-slate-400 block text-[10px]">نیاز بچ</span>
-                        <span className="font-bold text-slate-900">{formatNumber(order.orderQty)}</span>
+                    <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono tabular-nums">
+                      <div className="bg-[#ffffff] p-2 rounded border border-[#e8e8e8]">
+                        <span className="text-[#666666] block text-[10px]">نیاز بچ</span>
+                        <span className="font-bold text-[#333333]">{formatNumber(order.orderQty)}</span>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-100">
-                        <span className="text-slate-400 block text-[10px]">موجودی کل</span>
-                        <span className="font-bold text-indigo-700">{formatNumber(1200 + 1500)}</span>
+                      <div className="bg-[#ffffff] p-2 rounded border border-[#e8e8e8]">
+                        <span className="text-[#666666] block text-[10px]">موجودی کل</span>
+                        <span className="font-bold text-[#007cc0]">{formatNumber(1200 + 1500)}</span>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-100">
-                        <span className="text-slate-400 block text-[10px]">وضعیت</span>
-                        <span className="font-bold text-emerald-700">تکمیل 🟢</span>
+                      <div className="bg-[#ffffff] p-2 rounded border border-[#e8e8e8]">
+                        <span className="text-[#666666] block text-[10px]">وضعیت</span>
+                        <span className="font-bold text-emerald-700">تکمیل</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="p-3 rounded bg-[#f5f5f5] border border-[#d9d9d9] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <div className="font-bold text-slate-900 text-xs">
-                        ۲. مکمل براکت ضدسرقت (WIP-ECU-COMP-BRK)
+                      <div className="font-bold text-[#333333] text-xs flex items-center gap-1.5 flex-wrap">
+                        <span>۲. مکمل براکت ضدسرقت</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            traceDocument('WIP-ECU-COMP-BRK', 'WIP_TRACEABILITY');
+                          }}
+                          className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                          title="رهگیری موجودی بین‌مراحل این قطعه"
+                        >
+                          (WIP-ECU-COMP-BRK)
+                        </button>
                       </div>
-                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                      <div className="text-[11px] text-[#666666] font-mono mt-0.5">
                         ورق DC01A ضخامت 2mm · ۲ پیچ جوشی M6x20
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono">
-                      <div className="bg-white p-2 rounded border border-slate-100">
-                        <span className="text-slate-400 block text-[10px]">نیاز بچ</span>
-                        <span className="font-bold text-slate-900">{formatNumber(order.orderQty)}</span>
+                    <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono tabular-nums">
+                      <div className="bg-[#ffffff] p-2 rounded border border-[#e8e8e8]">
+                        <span className="text-[#666666] block text-[10px]">نیاز بچ</span>
+                        <span className="font-bold text-[#333333]">{formatNumber(order.orderQty)}</span>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-100">
-                        <span className="text-slate-400 block text-[10px]">موجودی کل</span>
-                        <span className="font-bold text-indigo-700">{formatNumber(900 + 800)}</span>
+                      <div className="bg-[#ffffff] p-2 rounded border border-[#e8e8e8]">
+                        <span className="text-[#666666] block text-[10px]">موجودی کل</span>
+                        <span className="font-bold text-[#007cc0]">{formatNumber(900 + 800)}</span>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-100">
-                        <span className="text-slate-400 block text-[10px]">وضعیت</span>
-                        <span className="font-bold text-emerald-700">تکمیل 🟢</span>
+                      <div className="bg-[#ffffff] p-2 rounded border border-[#e8e8e8]">
+                        <span className="text-[#666666] block text-[10px]">وضعیت</span>
+                        <span className="font-bold text-emerald-700">تکمیل</span>
                       </div>
                     </div>
                   </div>
@@ -972,21 +1038,21 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
         {/* ================================================================ */}
         {/* 3. DRAWER FOOTER                                                 */}
         {/* ================================================================ */}
-        <div className="sticky bottom-0 z-20 p-4 border-t border-slate-200 bg-slate-50/95 backdrop-blur-xs flex items-center justify-between shrink-0 text-xs">
+        <div className="sticky bottom-0 z-20 px-4 py-3 border-t border-[#d9d9d9] bg-[#ffffff] flex items-center justify-between shrink-0 text-xs">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onOpenStepLogger(order, currentOpIdx)}
-              className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold flex items-center gap-1.5 cursor-pointer"
+              className="sap-btn-emphasized px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer"
             >
-              <Hammer className="w-3.5 h-3.5 text-emerald-400" />
+              <Hammer className="w-3.5 h-3.5" />
               <span>ثبت سریع کارکرد ({currentOp?.stepCode || 'OP10'})</span>
             </button>
             {!isCompleted && (
               <button
                 type="button"
                 onClick={() => onCompleteProduction(order)}
-                className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 cursor-pointer"
               >
                 <PackageCheck className="w-3.5 h-3.5" />
                 <span>اتمام و رسید انبار</span>
@@ -997,7 +1063,7 @@ export const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+            className="sap-btn-standard px-4 py-1.5 cursor-pointer"
           >
             بستن
           </button>

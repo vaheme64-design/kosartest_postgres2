@@ -12,6 +12,7 @@ import {
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { formatToJalali } from '../../utils/jalali';
 import { JalaliDatePicker } from '../common/JalaliDatePicker';
+import { useErpRouter } from '../../context/RouterContext';
 
 interface DailyScheduleItem {
   id: string;
@@ -36,6 +37,7 @@ interface DailyScheduleItem {
 }
 
 export const DailyProductionScheduleView: React.FC = () => {
+  const { traceDocument } = useErpRouter();
   const [selectedHall, setSelectedHall] = useState<string>('ALL');
   const [selectedShift, setSelectedShift] = useState<string>('ALL');
   const [scheduleDate, setScheduleDate] = useState<string>(() => formatToJalali(new Date()));
@@ -125,17 +127,17 @@ export const DailyProductionScheduleView: React.FC = () => {
 
   return (
     <div className="space-y-5" dir="rtl">
-      <div className="bg-white p-4 lg:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4 no-print">
+      <div className="sap-card p-4 space-y-3.5 no-print">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-600 shrink-0">
-              <Calendar className="w-6 h-6" />
+            <div className="p-2 rounded-sm bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] shrink-0">
+              <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              <h2 className="text-sm sm:text-base font-bold text-[#333333]">
                 برنامه روزانه کارخانه به تفکیک سالن و دستور کار زنده (Live Daily Schedule)
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 متصل به دستور کارهای فعال کارگاه (WIP Orders)، سالن‌های استقرار و آمار لحظه‌ای تولید سالم/ضایعات
               </p>
             </div>
@@ -146,7 +148,7 @@ export const DailyProductionScheduleView: React.FC = () => {
               type="button"
               onClick={loadScheduleFromLiveOrders}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>بروزرسانی زنده</span>
@@ -154,23 +156,23 @@ export const DailyProductionScheduleView: React.FC = () => {
             <button
               type="button"
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs"
             >
-              <Printer className="w-3.5 h-3.5 text-orange-400" />
+              <Printer className="w-3.5 h-3.5" />
               <span>چاپ برنامه روزانه</span>
             </button>
           </div>
         </div>
 
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="pt-3 border-t border-[#e8e8e8] flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <Building className="w-3.5 h-3.5 text-orange-600" />
-              <span className="text-slate-500 font-medium">سالن استقرار:</span>
+            <div className="inline-flex items-center gap-2 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm px-3 py-1">
+              <Building className="w-3.5 h-3.5 text-[#007cc0]" />
+              <span className="text-[#666666] font-medium">سالن استقرار:</span>
               <select
                 value={selectedHall}
                 onChange={e => setSelectedHall(e.target.value)}
-                className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
+                className="bg-transparent font-bold text-[#333333] focus:outline-none cursor-pointer"
               >
                 <option value="ALL">همه سالن‌ها ({toPersianDigits(items.length)} عملیات)</option>
                 {halls.map(h => (
@@ -181,13 +183,13 @@ export const DailyProductionScheduleView: React.FC = () => {
               </select>
             </div>
 
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span className="text-slate-500 font-medium">شیفت:</span>
+            <div className="inline-flex items-center gap-2 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm px-3 py-1">
+              <Clock className="w-3.5 h-3.5 text-[#666666]" />
+              <span className="text-[#666666] font-medium">شیفت:</span>
               <select
                 value={selectedShift}
                 onChange={e => setSelectedShift(e.target.value)}
-                className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
+                className="bg-transparent font-bold text-[#333333] focus:outline-none cursor-pointer"
               >
                 <option value="ALL">همه شیفت‌ها</option>
                 <option value="MORNING">شیفت صبح (۰۷:۰۰ - ۱۵:۰۰)</option>
@@ -201,10 +203,10 @@ export const DailyProductionScheduleView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 text-xs font-mono tabular-nums">
-            <span className="text-slate-600">
-              برنامه: <strong className="text-slate-900">{formatNumber(totalPlanned)}</strong>
+            <span className="text-[#666666]">
+              برنامه: <strong className="text-[#333333]">{formatNumber(totalPlanned)}</strong>
             </span>
-            <span className="text-emerald-700">
+            <span className="text-[#107e3e]">
               تحقق‌یافته: <strong>{formatNumber(totalProduced)}</strong> ({toPersianDigits(achievementRate)}٪)
             </span>
           </div>
@@ -212,78 +214,92 @@ export const DailyProductionScheduleView: React.FC = () => {
       </div>
 
       {/* Live Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+      <div className="sap-card overflow-hidden">
         {loading && items.length === 0 ? (
-          <div className="p-10 text-center text-xs text-slate-500">در حال بارگذاری برنامه زنده سالن‌ها...</div>
+          <div className="p-10 text-center text-xs text-[#666666]">در حال بارگذاری برنامه زنده سالن‌ها...</div>
         ) : filteredItems.length === 0 ? (
-          <div className="p-10 text-center text-xs text-slate-500">
+          <div className="p-10 text-center text-xs text-[#666666]">
             هیچ مرحله عملیاتی فعالی برای نمایش در این فیلتر وجود ندارد.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+            <table className="sap-table-compact w-full text-right text-xs">
+              <thead className="bg-[#f5f5f5] border-b border-[#d9d9d9] text-[#666666] font-bold">
                 <tr>
-                  <th className="py-3 px-3">تاریخ / شیفت</th>
-                  <th className="py-3 px-3">سالن و ماشین</th>
-                  <th className="py-3 px-3">دستور کار / مرحله</th>
-                  <th className="py-3 px-3">قطعه</th>
-                  <th className="py-3 px-3 text-center">هدف برنامه</th>
-                  <th className="py-3 px-3 text-center text-emerald-700">تولید سالم</th>
-                  <th className="py-3 px-3 text-center text-rose-600">ضایعات</th>
-                  <th className="py-3 px-3">اپراتور</th>
-                  <th className="py-3 px-3 text-center">وضعیت</th>
+                  <th>تاریخ / شیفت</th>
+                  <th>سالن و ماشین</th>
+                  <th>دستور کار / مرحله</th>
+                  <th>قطعه</th>
+                  <th className="text-center">هدف برنامه</th>
+                  <th className="text-center text-[#107e3e]">تولید سالم</th>
+                  <th className="text-center text-[#bb0000]">ضایعات</th>
+                  <th>اپراتور</th>
+                  <th className="text-center">وضعیت</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 tabular-nums">
+              <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                 {filteredItems.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3 px-3">
-                      <div className="font-mono font-bold text-slate-800">{scheduleDate}</div>
-                      <div className="text-[11px] text-slate-500">{item.shiftName}</div>
+                  <tr key={item.id} className="hover:bg-[#f5f5f5] transition-colors">
+                    <td>
+                      <div className="font-mono font-bold text-[#333333]">{scheduleDate}</div>
+                      <div className="text-[11px] text-[#666666]">{item.shiftName}</div>
                     </td>
-                    <td className="py-3 px-3">
-                      <div className="font-bold text-slate-900 flex items-center gap-1">
-                        <Cpu className="w-3.5 h-3.5 text-slate-400" />
+                    <td>
+                      <div className="font-bold text-[#333333] flex items-center gap-1">
+                        <Cpu className="w-3.5 h-3.5 text-[#007cc0]" />
                         <span>{item.machineName}</span>
                       </div>
-                      <div className="text-[11px] text-slate-500">{item.hallName}</div>
+                      <div className="text-[11px] text-[#666666]">{item.hallName}</div>
                     </td>
-                    <td className="py-3 px-3">
-                      <div className="font-mono font-bold text-indigo-700">{item.moNumber}</div>
-                      <div className="text-[11px] text-slate-600">
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(item.moNumber, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link font-mono font-bold"
+                        title="رهگیری دستور کار در جریان ساخت"
+                      >
+                        {item.moNumber}
+                      </button>
+                      <div className="text-[11px] text-[#666666]">
                         {item.stepCode} — {item.stepName}
                       </div>
                     </td>
-                    <td className="py-3 px-3">
-                      <div className="font-semibold text-slate-900">{item.partName}</div>
-                      <div className="text-[11px] font-mono text-slate-500">{item.partCode}</div>
+                    <td>
+                      <div className="font-semibold text-[#333333]">{item.partName}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(item.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono"
+                        title="رهگیری قطعه در انبار و کاردکس"
+                      >
+                        {item.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">
+                    <td className="text-center font-mono font-bold text-[#333333]">
                       {formatNumber(item.plannedQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">
+                    <td className="text-center font-mono font-bold text-[#107e3e]">
                       {formatNumber(item.actualProducedQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-center font-mono text-rose-600">
+                    <td className="text-center font-mono text-[#bb0000]">
                       {formatNumber(item.scrapQuantity)}
                     </td>
-                    <td className="py-3 px-3 text-slate-700">
+                    <td className="text-[#333333]">
                       <span className="inline-flex items-center gap-1">
-                        <User className="w-3 h-3 text-slate-400" />
+                        <User className="w-3 h-3 text-[#666666]" />
                         {item.operatorName}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center">
+                    <td className="text-center">
                       {item.status === 'COMPLETED' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#107e3e]">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           تکمیل
                         </span>
                       ) : item.status === 'IN_PROGRESS' ? (
-                        <span className="text-[11px] font-bold text-amber-700">در حال تولید</span>
+                        <span className="text-[11px] font-bold text-[#e9730c]">در حال تولید</span>
                       ) : (
-                        <span className="text-[11px] text-slate-500">برنامه‌ریزی‌شده</span>
+                        <span className="text-[11px] text-[#666666]">برنامه‌ریزی‌شده</span>
                       )}
                     </td>
                   </tr>

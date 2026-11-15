@@ -721,20 +721,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className={`${
-      collapsed ? 'w-full md:w-16' : 'w-full md:w-60 lg:w-64'
-    } bg-white text-slate-700 border-b md:border-b-0 md:border-l border-slate-200/60 p-3 shrink-0 flex flex-col justify-between transition-all select-none`}>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1.5">
+      collapsed ? 'w-full md:w-16' : 'w-full md:w-60'
+    } bg-white text-[#333333] border-b md:border-b-0 md:border-l border-[#d9d9d9] p-2.5 shrink-0 flex flex-col justify-between transition-all select-none`}>
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between px-1.5 pt-0.5">
           {!collapsed && (
-            <span className="text-[11px] font-medium text-slate-400">
-              بخش‌های سامانه
+            <span className="text-[11px] font-medium text-[#666666]">
+              ناوبری ماژول‌ها (SAP HANA)
             </span>
           )}
           <button
             type="button"
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? 'باز کردن منوی کناری' : 'جمع کردن منوی کناری'}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-[#666666] hover:text-[#007cc0] hover:bg-[#e5f3fa] rounded transition-colors cursor-pointer"
           >
             {collapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
           </button>
@@ -743,19 +743,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Instant Module & Sub-Module Search Input */}
         {!collapsed && (
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute right-2.5 top-2 pointer-events-none text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute right-2.5 top-2 pointer-events-none text-[#666666]" />
             <input
               type="text"
               value={moduleSearch}
               onChange={e => setModuleSearch(e.target.value)}
-              placeholder="فیلتر سریع منو..."
-              className="w-full rounded-lg pr-8 pl-6 py-1.5 text-xs focus:outline-none transition-colors bg-slate-50/70 border border-slate-200/60 focus:bg-white focus:border-slate-300 text-slate-700 placeholder:text-slate-400"
+              placeholder="فیلتر ماژول یا تراکنش..."
+              className="w-full rounded pr-8 pl-6 py-1.5 text-xs focus:outline-none transition-colors bg-[#f7f7f7] border border-[#d9d9d9] focus:bg-white focus:border-[#007cc0] text-[#333333] placeholder:text-[#767676]"
             />
             {moduleSearch && (
               <button
                 type="button"
                 onClick={() => setModuleSearch('')}
-                className="absolute left-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute left-2 top-2 text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -763,20 +763,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* AI Assistant Quick Tool (Subtle & Minimal) */}
+        {/* SAP Joule-style Quick Assistant Button */}
         {onOpenAiAssistant && (
           <button
             type="button"
             onClick={onOpenAiAssistant}
             title="دستیار هوشمند کارخانه (Ctrl + Space)"
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50/70 hover:bg-slate-100/80 text-slate-600 border border-slate-200/60 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium bg-[#f7f7f7] hover:bg-[#e5f3fa] text-[#007cc0] border border-[#d9d9d9] transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-              {!collapsed && <span>دستیار هوشمند</span>}
+              <Sparkles className="w-3.5 h-3.5 text-[#007cc0] shrink-0" />
+              {!collapsed && <span>دستیار هوشمند (Copilot)</span>}
             </span>
             {!collapsed && (
-              <span className="px-1.5 py-0.5 rounded bg-white text-[9px] font-mono text-slate-400 border border-slate-200/60">
+              <span className="px-1.5 py-0.2 rounded bg-white text-[9px] font-mono text-[#666666] border border-[#d9d9d9]">
                 Ctrl+Space
               </span>
             )}
@@ -784,10 +784,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* =================================================================
-            FLAT CLEAN NAVIGATION (Minimal Soft-Contrast Style)
+            SAP FIORI SIDE NAVIGATION (tnt:SideNavigation)
            ================================================================= */}
         {isFlatListMode && !searchNormalized ? (
-          <nav className="space-y-0.5">
+          <nav className="space-y-0.5 pt-1">
             {displayNavItems.map(item => {
               const isMainActive = activeTab === item.tab;
               const Icon = item.icon;
@@ -805,22 +805,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     title={collapsed ? item.label : undefined}
                     className={`w-full flex items-center ${
                       collapsed ? 'justify-center px-2' : 'justify-between px-2.5'
-                    } py-2 rounded-lg text-xs transition-colors cursor-pointer text-right ${
+                    } py-2 rounded text-xs transition-colors cursor-pointer text-right ${
                       isMainActive
-                        ? 'bg-slate-100 text-slate-900 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal'
+                        ? 'bg-[#e5f3fa] text-[#007cc0] font-semibold border-r-[3px] border-[#007cc0]'
+                        : 'text-[#333333] hover:bg-[#f5f5f5] font-normal border-r-[3px] border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Icon
                         className={`w-4 h-4 shrink-0 ${
-                          isMainActive ? 'text-slate-800' : 'text-slate-400'
+                          isMainActive ? 'text-[#007cc0]' : 'text-[#666666]'
                         }`}
                       />
                       {!collapsed && <span className="truncate">{item.label}</span>}
                     </div>
                     {!collapsed && item.tab === 'inventory' && reorderAlertsCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums bg-amber-50 text-amber-700 border border-amber-200/60">
+                      <span className="px-1.5 py-0.2 rounded text-[10px] font-medium tabular-nums bg-[#fff4e5] text-[#b45309] border border-[#f5cba7]">
                         {toPersianDigits(reorderAlertsCount)}
                       </span>
                     )}
@@ -828,7 +828,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   {/* Sub-Modules under Active Tab */}
                   {showSubModules && (
-                    <div className="mr-3 pr-2 border-r border-slate-100 space-y-0.5 py-0.5">
+                    <div className="mr-3 pr-2 border-r border-[#d9d9d9] space-y-0.5 py-0.5">
                       {item.subModules?.map(sub => {
                         const isSubActive = isSubItemActive(sub);
                         const SubIcon = sub.icon;
@@ -837,22 +837,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             key={sub.id}
                             type="button"
                             onClick={() => handleTriggerNavigation(sub.tab, sub.navParams || sub.inventorySubTab)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-[11px] transition-colors cursor-pointer text-right ${
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-[11px] transition-colors cursor-pointer text-right ${
                               isSubActive
-                                ? 'bg-slate-100/70 text-slate-900 font-medium border-r-2 border-slate-600'
-                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/70 font-normal'
+                                ? 'bg-[#e5f3fa] text-[#007cc0] font-semibold border-r-2 border-[#007cc0]'
+                                : 'text-[#666666] hover:text-[#333333] hover:bg-[#f5f5f5] font-normal'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-slate-700' : 'text-slate-400'}`} />
+                              <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-[#007cc0]' : 'text-[#767676]'}`} />
                               <span className="truncate">{sub.label}</span>
                             </div>
                             {sub.badge && (
                               <span
-                                className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium tabular-nums ${
+                                className={`px-1.5 py-0.2 rounded text-[10px] font-medium tabular-nums ${
                                   sub.badgeHighlight
-                                    ? 'bg-amber-50 text-amber-700'
-                                    : 'bg-slate-100 text-slate-500'
+                                    ? 'bg-[#fff4e5] text-[#b45309]'
+                                    : 'bg-[#f0f0f0] text-[#666666]'
                                 }`}
                               >
                                 {sub.badge}
@@ -922,8 +922,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         isDarkSidebar
                           ? 'text-slate-400 hover:text-white'
                           : group.collapsible
-                          ? 'text-slate-500 hover:text-slate-800 cursor-pointer rounded-lg hover:bg-slate-50'
-                          : 'text-slate-400 cursor-default'
+                          ? 'text-[#666666] hover:text-[#333333] cursor-pointer rounded hover:bg-[#f5f5f5]'
+                          : 'text-[#666666] cursor-default'
                       }`}
                     >
                       <span>{group.groupTitle}</span>
@@ -958,17 +958,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               title={collapsed ? item.label : undefined}
                               style={
                                 isMainActive
-                                  ? { backgroundColor: themeMeta.primaryHex }
+                                  ? { backgroundColor: themeMeta.primaryHex || '#007cc0' }
                                   : undefined
                               }
                               className={`w-full flex items-center ${
                                 collapsed ? 'justify-center px-2' : 'justify-between px-3'
-                              } py-2 rounded-xl text-xs transition-colors cursor-pointer text-right ${
+                              } py-1.5 rounded text-xs transition-colors cursor-pointer text-right ${
                                 isMainActive
-                                  ? 'text-white font-semibold shadow-2xs'
+                                  ? 'text-white font-semibold'
                                   : isDarkSidebar
                                   ? 'text-slate-300 hover:text-white hover:bg-white/10'
-                                  : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100/80'
+                                  : 'text-[#333333] hover:text-[#007cc0] hover:bg-[#e5f3fa]/60'
                               }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
@@ -978,7 +978,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       ? 'text-white'
                                       : isDarkSidebar
                                       ? 'text-slate-400'
-                                      : 'text-slate-400'
+                                      : 'text-[#666666]'
                                   }`}
                                 />
                                 {!collapsed && <span className="truncate">{item.label}</span>}
@@ -986,7 +986,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               {!collapsed && item.count && (
                                 <span
                                   className={`text-[11px] shrink-0 tabular-nums ${
-                                    isMainActive ? 'text-white/80' : 'text-slate-400'
+                                    isMainActive ? 'text-white/85' : 'text-[#666666]'
                                   }`}
                                 >
                                   {item.count}
@@ -997,7 +997,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {showSubModules && (
                               <div
                                 className={`mr-3.5 pr-2.5 border-r space-y-0.5 py-0.5 ${
-                                  isDarkSidebar ? 'border-slate-700' : 'border-slate-200'
+                                  isDarkSidebar ? 'border-slate-700' : 'border-[#d9d9d9]'
                                 }`}
                               >
                                 {item.matchedSubs.map(sub => {
@@ -1009,14 +1009,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       key={sub.id}
                                       type="button"
                                       onClick={() => handleTriggerNavigation(sub.tab, sub.navParams || sub.inventorySubTab)}
-                                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] transition-colors cursor-pointer text-right ${
+                                      className={`w-full flex items-center justify-between px-2.5 py-1 rounded text-[11px] transition-colors cursor-pointer text-right ${
                                         isSubActive
                                           ? isDarkSidebar
                                             ? 'bg-white/15 text-white font-bold'
-                                            : 'bg-emerald-50 text-emerald-950 font-bold border-r-2 border-emerald-600'
+                                            : 'bg-[#e5f3fa] text-[#007cc0] font-semibold border-r-2 border-[#007cc0]'
                                           : isDarkSidebar
                                           ? 'text-slate-400 hover:text-white hover:bg-white/5'
-                                          : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                                          : 'text-[#666666] hover:text-[#333333] hover:bg-[#f5f5f5]'
                                       }`}
                                     >
                                       <div className="flex items-center gap-2 min-w-0">
@@ -1025,10 +1025,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       </div>
                                       {sub.badge && (
                                         <span
-                                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
+                                          className={`px-1.5 py-0.2 rounded text-[10px] font-bold tabular-nums ${
                                             sub.badgeHighlight
                                               ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                                              : 'bg-slate-100 text-slate-600'
+                                              : 'bg-[#f5f5f5] text-[#666666] border border-[#e8e8e8]'
                                           }`}
                                         >
                                           {sub.badge}
@@ -1051,20 +1051,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Bottom Profile Card (Matches Image 1 Dark Sidebar Footer) or Role Filter */}
+      {/* Bottom Profile Card or Role Filter */}
       <div
         className={`mt-6 pt-3 border-t space-y-2.5 ${
-          isDarkSidebar ? 'border-slate-800' : 'border-slate-100'
+          isDarkSidebar ? 'border-slate-800' : 'border-[#e8e8e8]'
         }`}
       >
         {!collapsed && onOpenTemplateModal && (
           <button
             type="button"
             onClick={onOpenTemplateModal}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+            className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-xs font-semibold border transition-all cursor-pointer ${
               isDarkSidebar
-                ? 'bg-white/5 hover:bg-white/10 text-emerald-300 border-white/10'
-                : 'bg-emerald-50/70 hover:bg-emerald-100/70 text-emerald-800 border-emerald-200'
+                ? 'bg-white/5 hover:bg-white/10 text-[#b3ddf2] border-white/10'
+                : 'bg-[#e5f3fa]/70 hover:bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]'
             }`}
           >
             <span className="flex items-center gap-2">
@@ -1076,7 +1076,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {!collapsed && isDarkSidebar ? (
           <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between gap-2 bg-white/5 border border-white/10 rounded-xl p-2.5">
+            <div className="flex items-center justify-between gap-2 bg-white/5 border border-white/10 rounded p-2.5">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center text-xs font-bold">
                   م
@@ -1086,7 +1086,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="text-[10px] text-slate-400">مدیر سامانه</div>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-lg border border-slate-700 text-[11px] text-slate-300 hover:text-white cursor-pointer">
+              <span className="px-2.5 py-1 rounded border border-slate-700 text-[11px] text-slate-300 hover:text-white cursor-pointer">
                 خروج
               </span>
             </div>
@@ -1101,17 +1101,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAllForRole(!showAllForRole)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-[11px] text-slate-600 border border-slate-200/80 transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded bg-[#f5f5f5] hover:bg-[#e5f3fa] text-[11px] text-[#333333] border border-[#d9d9d9] transition-colors cursor-pointer"
                 >
                   <span className="flex items-center gap-1.5">
-                    <Filter className="w-3 h-3 text-slate-400" />
+                    <Filter className="w-3 h-3 text-[#666666]" />
                     <span>
                       {showAllForRole ? 'نمایش منوی تخصصی نقش من' : 'نمایش همه منوهای سیستم'}
                     </span>
                   </span>
                 </button>
               )}
-              <div className="px-2 text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="px-2 text-[11px] text-[#666666] flex items-center justify-between">
                 <span className="font-semibold text-[10px]">KPIMS ERP</span>
                 <span>تقویم شمسی فعال</span>
               </div>

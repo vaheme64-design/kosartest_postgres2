@@ -1918,12 +1918,12 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
   return (
     <div className="space-y-3.5 font-sans text-right" dir="rtl">
       {/* ==================================================================== */}
-      {/* 1. MINIMALIST TOP BAR (Clean, Soft-Contrast, Single-Row)             */}
+      {/* 1. SAP FIORI FILTER BAR & WORKBENCH HEADER                           */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200/60 rounded-xl px-4 py-3 space-y-2.5">
+      <div className="sap-card px-4 py-3 space-y-2.5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-sm font-semibold text-slate-800">
+            <h1 className="text-sm font-semibold text-[#1D2D3E]">
               پیشخوان دستورهای تولید (MO)، ردیابی ذوب و ایستگاه‌ها (OP)
             </h1>
           </div>
@@ -1933,13 +1933,11 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={handleToggleKpiPanel}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
-                showKpiPanel
-                  ? 'bg-slate-100 text-slate-900 border-slate-300'
-                  : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/60'
+              className={`sap-btn-standard px-2.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer ${
+                showKpiPanel ? 'bg-[#EBF5FF] border-[#0070F2]' : ''
               }`}
             >
-              <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
+              <BarChart3 className="w-3.5 h-3.5 text-[#0064D9]" />
               <span>شاخص‌های عملکرد (KPI)</span>
               {showKpiPanel ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
@@ -1947,13 +1945,11 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => setShowWarehouseTools(!showWarehouseTools)}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
-                showWarehouseTools
-                  ? 'bg-slate-100 text-slate-900 border-slate-300'
-                  : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/60'
+              className={`sap-btn-standard px-2.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer ${
+                showWarehouseTools ? 'bg-[#EBF5FF] border-[#0070F2]' : ''
               }`}
             >
-              <Boxes className="w-3.5 h-3.5 text-slate-500" />
+              <Boxes className="w-3.5 h-3.5 text-[#0064D9]" />
               <span>ابزارهای انبار و ذوب</span>
               {showWarehouseTools ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
@@ -1961,30 +1957,30 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={handleOpenCreateNewOrder}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="sap-btn-emphasized px-3 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-emerald-300" />
+              <Plus className="w-3.5 h-3.5" />
               <span>صدور دستور تولید (MO)</span>
             </button>
           </div>
         </div>
 
         {/* Search & Car Filter Row */}
-        <div className="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+        <div className="pt-2.5 border-t border-[#EAECEF] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-[#556B82] absolute right-3 top-2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="جستجوی نام قطعه، دستور تولید (MO)، شماره ذوب یا کلاف..."
-              className="w-full pr-8 pl-7 py-1.5 rounded-lg bg-slate-50/70 border border-slate-200/60 text-xs text-slate-800 focus:bg-white focus:border-slate-300 focus:outline-none"
+              className="w-full pr-8 pl-7 py-1.5 rounded-md bg-[#F5F6F7] border border-[#D9DFE5] text-xs text-[#1D2D3E] focus:bg-white focus:border-[#0070F2] focus:outline-none"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute left-2.5 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute left-2.5 top-2 text-[#556B82] hover:text-[#1D2D3E] cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -1995,10 +1991,10 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => setCarFilter('ALL')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer whitespace-nowrap border transition-colors ${
                 carFilter === 'ALL'
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                  ? 'bg-[#EBF5FF] text-[#0064D9] border-[#B3D7FF]'
+                  : 'border-transparent text-[#556B82] hover:bg-[#F5F6F7] hover:text-[#1D2D3E]'
               }`}
             >
               همه خودروها ({toPersianDigits(scenarios.length)})
@@ -2008,10 +2004,10 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 key={car}
                 type="button"
                 onClick={() => setCarFilter(car)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer whitespace-nowrap border transition-colors ${
                   carFilter === car
-                    ? 'bg-slate-100 text-slate-900'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    ? 'bg-[#EBF5FF] text-[#0064D9] border-[#B3D7FF]'
+                    : 'border-transparent text-[#556B82] hover:bg-[#F5F6F7] hover:text-[#1D2D3E]'
                 }`}
               >
                 {car}
@@ -2028,7 +2024,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 });
               }}
               title="بازنشانی داده‌های نمونه"
-              className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-50 cursor-pointer"
+              className="p-1.5 rounded text-[#556B82] hover:text-[#0064D9] hover:bg-[#EBF5FF] cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -2040,23 +2036,23 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
       {/* 2. CONFIGURABLE KPI OVERVIEW SECTION                                 */}
       {/* ==================================================================== */}
       {showKpiPanel && (
-        <div className="bg-white border border-slate-200/60 rounded-xl p-4 space-y-3.5 animate-in fade-in">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
-            <div className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
-              <Settings className="w-3.5 h-3.5 text-slate-400" />
+        <div className="sap-card p-3.5 space-y-3 animate-in fade-in">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 border-b border-[#e8e8e8] pb-2.5">
+            <div className="text-xs font-semibold text-[#333333] flex items-center gap-1.5">
+              <Settings className="w-3.5 h-3.5 text-[#007cc0]" />
               <span>پایش شاخص‌های کلیدی عملکرد (KPI)</span>
             </div>
 
             {/* Segmented KPI Mode Switcher */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <div className="inline-flex items-center gap-1 p-1 bg-slate-100/80 rounded-lg text-xs">
+              <div className="inline-flex items-center gap-1 p-1 bg-[#f5f5f5] border border-[#d9d9d9] rounded text-xs">
                 <button
                   type="button"
                   onClick={() => handleSelectKpiMode('OEE')}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer flex items-center gap-1 ${
                     kpiViewMode === 'OEE'
-                      ? 'bg-white text-slate-800 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-[#007cc0] text-[#ffffff]'
+                      : 'text-[#666666] hover:text-[#333333]'
                   }`}
                 >
                   <Gauge className="w-3.5 h-3.5" />
@@ -2065,10 +2061,10 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 <button
                   type="button"
                   onClick={() => handleSelectKpiMode('OUTPUT_VS_TARGET')}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer flex items-center gap-1 ${
                     kpiViewMode === 'OUTPUT_VS_TARGET'
-                      ? 'bg-white text-slate-800 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-[#007cc0] text-[#ffffff]'
+                      : 'text-[#666666] hover:text-[#333333]'
                   }`}
                 >
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -2077,10 +2073,10 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 <button
                   type="button"
                   onClick={() => handleSelectKpiMode('INVENTORY_TURNOVER')}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer flex items-center gap-1 ${
                     kpiViewMode === 'INVENTORY_TURNOVER'
-                      ? 'bg-white text-slate-800 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-[#007cc0] text-[#ffffff]'
+                      : 'text-[#666666] hover:text-[#333333]'
                   }`}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -2089,10 +2085,10 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 <button
                   type="button"
                   onClick={() => handleSelectKpiMode('CUSTOM')}
-                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
                     kpiViewMode === 'CUSTOM'
-                      ? 'bg-white text-slate-800 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-[#007cc0] text-[#ffffff]'
+                      : 'text-[#666666] hover:text-[#333333]'
                   }`}
                 >
                   نمای انتخابی
@@ -2102,7 +2098,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={handleToggleKpiPanel}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-50 text-xs cursor-pointer"
+                className="p-1 rounded text-[#666666] hover:text-[#333333] hover:bg-[#f5f5f5] text-xs cursor-pointer"
                 title="بستن پنل شاخص‌ها"
               >
                 ✕
@@ -2112,14 +2108,14 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
 
           {/* Custom Checkboxes if in CUSTOM mode */}
           {kpiViewMode === 'CUSTOM' && (
-            <div className="flex flex-wrap items-center gap-4 px-3 py-2 rounded-lg bg-slate-50/70 border border-slate-100 text-xs">
-              <span className="font-medium text-slate-600">انتخاب شاخص‌های نمایشی:</span>
+            <div className="flex flex-wrap items-center gap-4 px-3 py-2 rounded bg-[#f7f7f7] border border-[#d9d9d9] text-xs">
+              <span className="font-semibold text-[#333333]">انتخاب شاخص‌های نمایشی:</span>
               <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={kpiCustomSelection.showOee}
                   onChange={() => handleToggleCustomMetric('showOee')}
-                  className="rounded border-slate-300 text-slate-700"
+                  className="rounded border-[#bfbfbf] text-[#007cc0]"
                 />
                 <span>شاخص بهره‌وری (OEE)</span>
               </label>
@@ -2128,7 +2124,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   type="checkbox"
                   checked={kpiCustomSelection.showOutputVsTarget}
                   onChange={() => handleToggleCustomMetric('showOutputVsTarget')}
-                  className="rounded border-slate-300 text-slate-700"
+                  className="rounded border-[#bfbfbf] text-[#007cc0]"
                 />
                 <span>تولید واقعی در برابر هدف</span>
               </label>
@@ -2137,7 +2133,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   type="checkbox"
                   checked={kpiCustomSelection.showInventoryTurnover}
                   onChange={() => handleToggleCustomMetric('showInventoryTurnover')}
-                  className="rounded border-slate-300 text-slate-700"
+                  className="rounded border-[#bfbfbf] text-[#007cc0]"
                 />
                 <span>نرخ گردش موجودی انبار</span>
               </label>
@@ -2146,9 +2142,9 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
 
           {/* VIEW A: OEE (Overall Equipment Effectiveness) */}
           {showOeeSection && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700 inline-flex items-center gap-1.5">
+                <span className="font-semibold text-[#333333] inline-flex items-center gap-1.5">
                   <span>۱. اثربخشی جامع تجهیزات (OEE = دسترس‌پذیری × کارایی × کیفیت)</span>
                   <FormulaTooltip
                     title="فرمول محاسبه اثربخشی جامع تجهیزات (OEE)"
@@ -2173,40 +2169,40 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 <button
                   type="button"
                   onClick={() => onNavigateSubModule?.('reports')}
-                  className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 cursor-pointer"
+                  className="text-[#007cc0] hover:text-[#0058c4] font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <span>تحلیل کامل توقفات و OEE</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">شاخص کل OEE کارخانه</div>
-                  <div className="text-lg font-semibold text-emerald-700 font-mono mt-1 tabular-nums">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">شاخص کل OEE کارخانه</div>
+                  <div className="text-base font-bold text-[#107e3e] font-mono mt-1 tabular-nums">
                     {toPersianDigits(aggregateMetrics.overallOeePct)}٪
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">هدف استاندارد جهانی: ۸۵.۰٪</div>
+                  <div className="text-[10px] text-[#666666] mt-0.5">هدف استاندارد جهانی: ۸۵.۰٪</div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">ضریب دسترس‌پذیری (Availability)</div>
-                  <div className="text-lg font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">ضریب دسترس‌پذیری (Availability)</div>
+                  <div className="text-base font-bold text-[#333333] font-mono mt-1 tabular-nums">
                     {toPersianDigits(aggregateMetrics.availabilityPct)}٪
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">کسر زمان ستاپ قالب و نت</div>
+                  <div className="text-[10px] text-[#666666] mt-0.5">کسر زمان ستاپ قالب و نت</div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">ضریب کارایی سرعت (Performance)</div>
-                  <div className="text-lg font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">ضریب کارایی سرعت (Performance)</div>
+                  <div className="text-base font-bold text-[#333333] font-mono mt-1 tabular-nums">
                     {toPersianDigits(aggregateMetrics.performancePct)}٪
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">نسبت سیکل واقعی به استاندارد</div>
+                  <div className="text-[10px] text-[#666666] mt-0.5">نسبت سیکل واقعی به استاندارد</div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">ضریب کیفیت سالم (Quality Rate)</div>
-                  <div className="text-lg font-semibold text-emerald-700 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">ضریب کیفیت سالم (Quality Rate)</div>
+                  <div className="text-base font-bold text-[#107e3e] font-mono mt-1 tabular-nums">
                     {toPersianDigits(aggregateMetrics.qualityPct)}٪
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">تولید سالم بدون ضایعات پرس</div>
+                  <div className="text-[10px] text-[#666666] mt-0.5">تولید سالم بدون ضایعات پرس</div>
                 </div>
               </div>
             </div>
@@ -2214,31 +2210,31 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
 
           {/* VIEW B: PRODUCTION OUTPUT VS TARGET */}
           {showOutputSection && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
+                <span className="font-semibold text-[#333333]">
                   ۲. عملکرد تولید واقعی در برابر برنامه هدف
                 </span>
-                <span className="font-mono font-medium text-slate-800">
+                <span className="font-mono font-semibold text-[#007cc0] tabular-nums">
                   تحقق کل: {toPersianDigits(aggregateMetrics.outputRealizationPct)}٪
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">مجموع تیراژ برنامه هدف</div>
-                  <div className="text-base font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">مجموع تیراژ برنامه هدف</div>
+                  <div className="text-base font-bold text-[#333333] font-mono mt-1 tabular-nums">
                     {formatNumber(aggregateMetrics.totalOrderQty)} عدد
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">محصول نهایی تحویل‌شده</div>
-                  <div className="text-base font-semibold text-emerald-700 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#ebf5ec] border border-[#b7dfbf]">
+                  <div className="text-[#107e3e]">محصول نهایی تحویل‌شده</div>
+                  <div className="text-base font-bold text-[#107e3e] font-mono mt-1 tabular-nums">
                     {formatNumber(aggregateMetrics.totalFinishedQty)} عدد
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">مانده تعهد در جریان خط</div>
-                  <div className="text-base font-semibold text-amber-700 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#fff4e5] border border-[#f5cba7]">
+                  <div className="text-[#e9730c]">مانده تعهد در جریان خط</div>
+                  <div className="text-base font-bold text-[#e9730c] font-mono mt-1 tabular-nums">
                     {formatNumber(
                       Math.max(0, aggregateMetrics.totalOrderQty - aggregateMetrics.totalFinishedQty)
                     )}{' '}
@@ -2247,7 +2243,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100 space-y-2 text-xs">
+              <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2 text-xs">
                 {scenarios.map(scn => {
                   const lastOp = scn.operations[scn.operations.length - 1];
                   const done = lastOp ? lastOp.completedGood : 0;
@@ -2255,16 +2251,16 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   return (
                     <div key={scn.id} className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-slate-700">
-                          {scn.partName} <span className="font-mono text-slate-400">({scn.orderCode})</span>
+                        <span className="font-medium text-[#333333]">
+                          {scn.partName} <span className="font-mono text-[#666666]">({scn.orderCode})</span>
                         </span>
-                        <span className="font-mono text-slate-600 tabular-nums">
+                        <span className="font-mono text-[#333333] tabular-nums">
                           {formatNumber(done)} از {formatNumber(scn.orderQty)} عدد ({toPersianDigits(pct)}٪)
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-200/70 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-[#d9d9d9] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-slate-600 rounded-full"
+                          className="h-full bg-[#007cc0] rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -2277,52 +2273,52 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
 
           {/* VIEW C: INVENTORY TURNOVER RATES */}
           {showTurnoverSection && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-700">
+                <span className="font-semibold text-[#333333]">
                   ۳. شاخص‌های نرخ گردش موجودی و سرعت جریان مواد
                 </span>
                 <button
                   type="button"
                   onClick={() => onNavigateToTab?.('inventory', 'INQUIRY')}
-                  className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 cursor-pointer"
+                  className="text-[#007cc0] hover:text-[#0058c4] font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <span>مشاهده کاردکس گردش موجودی</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">نرخ گردش موجودی ورق خام</div>
-                  <div className="text-lg font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">نرخ گردش موجودی ورق خام</div>
+                  <div className="text-base font-bold text-[#333333] font-mono mt-1 tabular-nums">
                     {toPersianDigits(aggregateMetrics.sheetTurnoverRate)} بار در سال
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-[#666666] mt-0.5">
                     موجودی فعلی: {formatNumber(aggregateMetrics.totalWarehouseKg)} ک.گ
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">روزهای پوشش موجودی ورق (DOH)</div>
-                  <div className="text-lg font-semibold text-emerald-700 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">روزهای پوشش موجودی ورق (DOH)</div>
+                  <div className="text-base font-bold text-[#107e3e] font-mono mt-1 tabular-nums">
                     {toPersianDigits(aggregateMetrics.daysOfInventorySupply)} روز کاری
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">کفایت ذخیره کلاف‌های ساپکو</div>
+                  <div className="text-[10px] text-[#666666] mt-0.5">کفایت ذخیره کلاف‌های ساپکو</div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">سرعت گردش نیمه‌ساخته (WIP)</div>
-                  <div className="text-lg font-semibold text-amber-700 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">سرعت گردش نیمه‌ساخته (WIP)</div>
+                  <div className="text-base font-bold text-[#e9730c] font-mono mt-1 tabular-nums">
                     {toPersianDigits(14.2)} بار در دوره
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-[#666666] mt-0.5">
                     موجودی پای خط: {formatNumber(aggregateMetrics.totalWipQty)} قطعه
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-50/50 border border-slate-100">
-                  <div className="text-slate-500">نرخ خروج محصول نهایی به ساپکو</div>
-                  <div className="text-lg font-semibold text-slate-800 font-mono mt-1 tabular-nums">
+                <div className="p-2.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                  <div className="text-[#666666]">نرخ خروج محصول نهایی به ساپکو</div>
+                  <div className="text-base font-bold text-[#333333] font-mono mt-1 tabular-nums">
                     {toPersianDigits(11.6)} بار در دوره
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">میانگین توقف در انبار محصول: ۳.۱ روز</div>
+                  <div className="text-[10px] text-[#666666] mt-0.5">میانگین توقف در انبار محصول: ۳.۱ روز</div>
                 </div>
               </div>
             </div>
@@ -2334,15 +2330,15 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
       {/* 3. ON-DEMAND WAREHOUSE & HEAT NUMBER TOOLS                           */}
       {/* ==================================================================== */}
       {showWarehouseTools && (
-        <div className="bg-white border border-slate-200/60 rounded-xl p-4 space-y-3 animate-in fade-in">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="text-xs font-medium text-slate-700">
+        <div className="sap-card p-3.5 space-y-3 animate-in fade-in">
+          <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+            <span className="text-xs font-semibold text-[#333333]">
               دسترسی سریع به ابزارهای انبار، شماره ذوب و گردش ورق
             </span>
             <button
               type="button"
               onClick={() => setShowWarehouseTools(false)}
-              className="text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
+              className="text-[#666666] hover:text-[#333333] text-xs cursor-pointer"
             >
               ✕
             </button>
@@ -2352,39 +2348,39 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => onNavigateToTab?.('sapco')}
-              className="p-2.5 rounded-lg border border-slate-200/60 bg-slate-50/50 hover:bg-slate-100/70 text-right flex items-center justify-between cursor-pointer"
+              className="p-2.5 rounded border border-[#d9d9d9] bg-[#f7f7f7] hover:bg-[#e5f3fa] hover:border-[#007cc0] text-right flex items-center justify-between cursor-pointer transition-colors"
             >
               <div>
-                <div className="font-medium text-slate-800">رسید کلاف و رهگیری شماره ذوب</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">
+                <div className="font-semibold text-[#333333]">رسید کلاف و رهگیری شماره ذوب</div>
+                <div className="text-[10px] text-[#666666] mt-0.5">
                   ثبت شماره ذوب ساپکو و اتصال به بچ تولید
                 </div>
               </div>
-              <Tag className="w-4 h-4 text-slate-400 shrink-0" />
+              <Tag className="w-4 h-4 text-[#007cc0] shrink-0" />
             </button>
 
             <button
               type="button"
               onClick={() => onNavigateSubModule?.('inventory', { inventorySubTab: 'INQUIRY' })}
-              className="p-2.5 rounded-lg border border-slate-200/60 hover:bg-slate-50 text-right flex items-center justify-between cursor-pointer"
+              className="p-2.5 rounded border border-[#d9d9d9] bg-[#f7f7f7] hover:bg-[#e5f3fa] hover:border-[#007cc0] text-right flex items-center justify-between cursor-pointer transition-colors"
             >
               <div>
-                <div className="font-medium text-slate-800">استعلام موجودی و کاردکس کالا</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">گردش ورود، خروج و مانده هر قطعه</div>
+                <div className="font-semibold text-[#333333]">استعلام موجودی و کاردکس کالا</div>
+                <div className="text-[10px] text-[#666666] mt-0.5">گردش ورود، خروج و مانده هر قطعه</div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ArrowUpRight className="w-4 h-4 text-[#007cc0] shrink-0" />
             </button>
 
             <button
               type="button"
               onClick={() => onNavigateSubModule?.('inventory', { inventorySubTab: 'COILS' })}
-              className="p-2.5 rounded-lg border border-slate-200/60 hover:bg-slate-50 text-right flex items-center justify-between cursor-pointer"
+              className="p-2.5 rounded border border-[#d9d9d9] bg-[#f7f7f7] hover:bg-[#e5f3fa] hover:border-[#007cc0] text-right flex items-center justify-between cursor-pointer transition-colors"
             >
               <div>
-                <div className="font-medium text-slate-800">مدیریت رول‌های ورق و کویل‌پک</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">کلاف‌های موجود و ته‌کلاف برگشتی</div>
+                <div className="font-semibold text-[#333333]">مدیریت رول‌های ورق و کویل‌پک</div>
+                <div className="text-[10px] text-[#666666] mt-0.5">کلاف‌های موجود و ته‌کلاف برگشتی</div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0" />
+              <ArrowUpRight className="w-4 h-4 text-[#007cc0] shrink-0" />
             </button>
 
             <button
@@ -2395,13 +2391,13 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   productionModuleTab: 'DAILY_DISPATCH_SHEET',
                 })
               }
-              className="p-2.5 rounded-lg border border-slate-200/60 hover:bg-slate-50 text-right flex items-center justify-between cursor-pointer"
+              className="p-2.5 rounded border border-[#d9d9d9] bg-[#f7f7f7] hover:bg-[#e5f3fa] hover:border-[#007cc0] text-right flex items-center justify-between cursor-pointer transition-colors"
             >
               <div>
-                <div className="font-medium text-slate-800">چاپ برگه کار روزانه شیفت</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">خروجی چاپی برنامه ایستگاه‌ها</div>
+                <div className="font-semibold text-[#333333]">چاپ برگه کار روزانه شیفت</div>
+                <div className="text-[10px] text-[#666666] mt-0.5">خروجی چاپی برنامه ایستگاه‌ها</div>
               </div>
-              <Printer className="w-4 h-4 text-slate-400 shrink-0" />
+              <Printer className="w-4 h-4 text-[#007cc0] shrink-0" />
             </button>
           </div>
         </div>
@@ -2412,23 +2408,23 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
       {/* ==================================================================== */}
       {toastMessage && (
         <div
-          className={`px-4 py-3 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${
+          className={`px-3.5 py-2.5 rounded text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-50/60 text-emerald-900 border-emerald-200/60'
+              ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
               : toastMessage.type === 'warning'
-              ? 'bg-amber-50/60 text-amber-900 border-amber-200/60'
-              : 'bg-slate-50 text-slate-800 border-slate-200/60'
+              ? 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
+              : 'bg-[#e5f3fa] text-[#333333] border-[#b3ddf2]'
           }`}
         >
           <div className="flex items-start gap-2">
             {toastMessage.type === 'warning' ? (
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-[#e9730c] shrink-0 mt-0.5" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0 mt-0.5" />
             )}
             <div>
-              <span className="font-medium">{toastMessage.title}: </span>
-              <span className="text-slate-600">{toastMessage.detail}</span>
+              <span className="font-semibold">{toastMessage.title}: </span>
+              <span className="text-[#333333]">{toastMessage.detail}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
@@ -2436,9 +2432,9 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={() => setTrackingOrderId(toastMessage.trackOrderId!)}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium cursor-pointer flex items-center gap-1"
+                className="sap-btn-emphasized px-2.5 py-1 text-xs cursor-pointer flex items-center gap-1"
               >
-                <Compass className="w-3.5 h-3.5 text-emerald-300" />
+                <Compass className="w-3.5 h-3.5" />
                 <span>پیگیری دستور</span>
               </button>
             )}
@@ -2446,7 +2442,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={toastMessage.navAction.onClick}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium cursor-pointer"
+                className="sap-btn-standard px-2.5 py-1 text-xs cursor-pointer"
               >
                 {toastMessage.navAction.label}
               </button>
@@ -2454,7 +2450,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => setToastMessage(null)}
-              className="px-2 py-1 rounded-lg bg-white/80 border border-slate-200/60 text-slate-500 font-normal cursor-pointer"
+              className="sap-btn-standard px-2 py-1 text-xs cursor-pointer"
             >
               بستن
             </button>
@@ -2463,23 +2459,19 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
       )}
 
       {/* ==================================================================== */}
-      {/* 4. MINIMAL & READABLE WORK ORDERS TABLE                              */}
+      {/* 4. SAP FIORI WORK ORDERS TABLE (ALV / FIORI LIST REPORT)             */}
       {/* ==================================================================== */}
-      <div className="bg-white border border-slate-200/60 rounded-xl overflow-hidden space-y-0">
-        {/* Schedule Filter Tabs Header */}
-        <div className="bg-slate-50/40 border-b border-slate-100 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2.5">
-          <div className="flex items-center gap-1 overflow-x-auto text-xs">
+      <div className="sap-card overflow-hidden space-y-0">
+        {/* SAP IconTabBar Schedule Filter Header */}
+        <div className="bg-white border-b border-[#D9DFE5] px-3 flex flex-wrap items-center justify-between gap-2.5">
+          <div className="sap-icon-tab-bar border-b-0 flex-1">
             <button
               type="button"
               onClick={() => setScheduleTabFilter('ACTIVE')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                scheduleTabFilter === 'ACTIVE'
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-              }`}
+              className={`sap-icon-tab ${scheduleTabFilter === 'ACTIVE' ? 'sap-icon-tab-active' : ''}`}
             >
               <span>برنامه‌های جاری خط تولید</span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] bg-white border border-slate-200/60 text-slate-700 font-mono">
+              <span className="px-1.5 py-0.2 rounded text-[10px] bg-[#EBF5FF] text-[#0064D9] border border-[#B3D7FF] font-mono">
                 {toPersianDigits(activeCount)}
               </span>
             </button>
@@ -2487,15 +2479,11 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => setScheduleTabFilter('COMPLETED')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                scheduleTabFilter === 'COMPLETED'
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-              }`}
+              className={`sap-icon-tab ${scheduleTabFilter === 'COMPLETED' ? 'sap-icon-tab-active' : ''}`}
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#107E3E]" />
               <span>تکمیل‌شده و رسید انبار</span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] bg-white border border-slate-200/60 text-slate-600 font-mono">
+              <span className="px-1.5 py-0.2 rounded text-[10px] bg-[#F2F8F4] text-[#107E3E] border border-[#B7DFC7] font-mono">
                 {toPersianDigits(completedCount)}
               </span>
             </button>
@@ -2503,16 +2491,12 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => setScheduleTabFilter('PINNED')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                scheduleTabFilter === 'PINNED'
-                  ? 'bg-amber-50/80 text-amber-900'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-              }`}
+              className={`sap-icon-tab ${scheduleTabFilter === 'PINNED' ? 'sap-icon-tab-active' : ''}`}
             >
-              <Pin className="w-3 h-3 text-amber-500" />
+              <Pin className="w-3 h-3 text-[#E9730C]" />
               <span>قطعات کلیدی (VIP)</span>
               {pinnedCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-100/70 text-amber-800 font-mono">
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-[#FFF4E5] text-[#B45309] border border-[#F5CBA7] font-mono">
                   {toPersianDigits(pinnedCount)}
                 </span>
               )}
@@ -2521,29 +2505,25 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
             <button
               type="button"
               onClick={() => setScheduleTabFilter('ALL')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
-                scheduleTabFilter === 'ALL'
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-              }`}
+              className={`sap-icon-tab ${scheduleTabFilter === 'ALL' ? 'sap-icon-tab-active' : ''}`}
             >
               همه ({toPersianDigits(scenarios.length)})
             </button>
           </div>
 
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-[#556B82] py-2">
             نمایش: {toPersianDigits(filteredOrders.length)} دستور ساخت
           </div>
         </div>
 
-        {/* Contextual Bulk Action Bar (MO Bulk Actions - Upgrade 4) */}
+        {/* SAP Shell Contextual Bulk Action Bar */}
         {selectedMoIds.length > 0 && (
-          <div className="bg-slate-900 text-white px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
+          <div className="bg-[#354A5F] text-white px-4 py-2.5 border-b border-[#243444] flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
             <div className="flex items-center gap-2.5 text-xs">
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
+              <span className="px-2.5 py-1 rounded bg-[#0070F2] text-white font-semibold font-mono">
                 {toPersianDigits(selectedMoIds.length)} دستور تولید (MO) انتخاب شده
               </span>
-              <span className="text-slate-300 hidden sm:inline">
+              <span className="text-[#D1DCE5] hidden sm:inline">
                 عملیات گروهی همزمان روی دستورات انتخابی خط تولید:
               </span>
             </div>
@@ -2552,7 +2532,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={handleBulkStartMos}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded bg-[#0070F2] hover:bg-[#0058C4] text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>شروع گروهی (Start)</span>
@@ -2561,7 +2541,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={handleBulkPauseMos}
-                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded bg-[#E9730C] hover:bg-[#C85F05] text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Pause className="w-3.5 h-3.5 fill-current" />
                 <span>توقف گروهی (Pause)</span>
@@ -2570,7 +2550,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={handleBulkCompleteMos}
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded bg-[#107E3E] hover:bg-[#0D6832] text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>رسید انبار گروهی (Complete)</span>
@@ -2579,7 +2559,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <button
                 type="button"
                 onClick={() => setSelectedMoIds([])}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-2.5 py-1.5 rounded bg-[#465C72] hover:bg-[#526A82] text-white text-xs font-medium cursor-pointer"
               >
                 لغو انتخاب
               </button>
@@ -2588,10 +2568,10 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-50/90 text-slate-500 border-b border-slate-200">
+          <table className="sap-table-compact w-full text-right text-xs">
+            <thead className="bg-[#ffffff] text-[#333333] border-b border-[#d9d9d9]">
               <tr>
-                <th className="py-3.5 px-4 w-10 text-center">
+                <th className="w-10 text-center">
                   <input
                     type="checkbox"
                     checked={
@@ -2600,32 +2580,32 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                     }
                     onChange={() => handleToggleSelectAllVisible(filteredOrders)}
                     title="انتخاب همه دستورات تولید نمایش‌داده‌شده"
-                    className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded border-[#bfbfbf] text-[#007cc0] focus:ring-[#007cc0] cursor-pointer"
                   />
                 </th>
-                <th className="py-3.5 px-5 font-semibold">
+                <th className="font-semibold">
                   <span className="inline-flex items-center">
                     <span>شماره MO</span>
                     <MetricTooltip metric="MO" />
                   </span>
                 </th>
-                <th className="py-3.5 px-5 font-semibold">
+                <th className="font-semibold">
                   <span className="inline-flex items-center">
                     <span>نام قطعه</span>
                     <MetricTooltip metric="BOM" />
                   </span>
                 </th>
-                <th className="py-3.5 px-5 font-semibold">تیراژ</th>
-                <th className="py-3.5 px-5 font-semibold">
+                <th className="font-semibold">تیراژ</th>
+                <th className="font-semibold">
                   <span className="inline-flex items-center">
                     <span>وضعیت / پیشرفت</span>
                     <MetricTooltip metric="FTT" />
                   </span>
                 </th>
-                <th className="py-3.5 px-5 font-semibold text-left w-24">اکشن سریع</th>
+                <th className="font-semibold text-left w-28">اکشن سریع</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#e8e8e8]">
               {filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 px-4 text-center">
@@ -2684,113 +2664,121 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                       onClick={() => handleOpenOrderDrawer(order.id, 'TRACEABILITY')}
                       className={`group transition-colors cursor-pointer ${
                         isChecked
-                          ? 'bg-indigo-50/70 hover:bg-indigo-50'
+                          ? 'bg-[#e5f3fa]'
                           : isSelected
-                          ? 'bg-emerald-50/50'
+                          ? 'bg-[#ebf5ec]'
                           : isVip
-                          ? 'bg-amber-50/35 hover:bg-amber-50/70'
-                          : 'hover:bg-slate-50/90'
+                          ? 'bg-[#fff4e5]/60 hover:bg-[#fff4e5]'
+                          : 'hover:bg-[#e5f3fa]/50'
                       }`}
                     >
                       {/* 0. Multi-Select Checkbox for Bulk Actions */}
                       <td
-                        className="py-4 px-4 text-center whitespace-nowrap"
+                        className="text-center whitespace-nowrap"
                         onClick={e => e.stopPropagation()}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => handleToggleSelectMo(order.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                          className="w-3.5 h-3.5 rounded border-[#bfbfbf] text-[#007cc0] focus:ring-[#007cc0] cursor-pointer"
                         />
                       </td>
 
-                      {/* 1. MO Number (Clickable Link) */}
-                      <td className="py-4 px-5 whitespace-nowrap">
+                      {/* 1. MO Number (SAP Blue Object Link) */}
+                      <td className="whitespace-nowrap">
                         <button
                           type="button"
                           onClick={e => {
                             e.stopPropagation();
                             handleOpenOrderDrawer(order.id, 'TRACEABILITY');
                           }}
-                          className="font-mono text-xs font-bold text-indigo-700 group-hover:text-indigo-900 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                          className="sap-doc-link font-mono text-xs inline-flex items-center gap-1.5 cursor-pointer"
                         >
                           <span>{order.orderCode}</span>
                           {isVip && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold inline-flex items-center gap-0.5">
-                              <Pin className="w-2.5 h-2.5 text-amber-600 fill-amber-500 shrink-0" />
+                            <span className="px-1.5 py-0.5 rounded bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7] text-[10px] font-semibold inline-flex items-center gap-0.5">
+                              <Pin className="w-2.5 h-2.5 text-[#e9730c] fill-[#e9730c] shrink-0" />
                               <span>VIP</span>
                             </span>
                           )}
                         </button>
                       </td>
 
-                      {/* 2. Part Name (Clean, Without Extra BOM Clutter) */}
-                      <td className="py-4 px-5">
-                        <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      {/* 2. Part Name */}
+                      <td>
+                        <div className="text-xs font-semibold text-[#333333] flex items-center gap-1.5">
                           <span>{order.partName}</span>
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          {order.carModel} · <span className="font-mono">{order.partCode}</span>
+                        <div className="text-[11px] text-[#666666] mt-0.5 flex items-center gap-1 flex-wrap">
+                          <span>{order.carModel} ·</span>
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              router.traceDocument(order.partCode, 'INVENTORY_LEDGER');
+                            }}
+                            className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                          >
+                            {order.partCode}
+                          </button>
                         </div>
                       </td>
 
                       {/* 3. Quantity (تیراژ) */}
-                      <td className="py-4 px-5 font-mono text-xs font-bold text-slate-800 tabular-nums whitespace-nowrap">
+                      <td className="font-mono text-xs font-semibold text-[#333333] tabular-nums whitespace-nowrap">
                         {formatNumber(order.orderQty)}{' '}
-                        <span className="text-[11px] font-normal text-slate-400">عدد</span>
+                        <span className="text-[11px] font-normal text-[#666666]">عدد</span>
                       </td>
 
-                      {/* 4. Status / Progress (Minimal Graphical Progress Bar + Colored Badge) */}
-                      <td className="py-4 px-5 w-64">
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                      {/* 4. Status / Progress */}
+                      <td className="w-64">
+                        <div className="flex items-center justify-between gap-2 mb-1">
                           {isCompleted ? (
-                            <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] text-[10px] font-semibold">
                               تکمیل شده
                             </span>
                           ) : isHalted ? (
-                            <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1] text-[10px] font-semibold">
                               توقف خط
                             </span>
                           ) : isAtFinalStation ? (
-                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold font-mono">
+                            <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] text-[10px] font-semibold font-mono">
                               ایستگاه آخر ({activeStep?.stepCode})
                             </span>
                           ) : progressPct === 0 ? (
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold font-mono">
+                            <span className="px-2 py-0.5 rounded bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9] text-[10px] font-semibold font-mono">
                               آماده شروع ({activeStep?.stepCode || 'OP10'})
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold font-mono">
+                            <span className="px-2 py-0.5 rounded bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7] text-[10px] font-semibold font-mono">
                               {activeStep ? `در جریان (${activeStep.stepCode})` : 'در جریان'}
                             </span>
                           )}
-                          <span className="font-mono text-[11px] font-semibold text-slate-500 tabular-nums">
+                          <span className="font-mono text-[11px] font-semibold text-[#666666] tabular-nums">
                             {toPersianDigits(progressPct)}٪
                           </span>
                         </div>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-[#e8e8e8] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               isCompleted
-                                ? 'bg-emerald-600'
+                                ? 'bg-[#107e3e]'
                                 : isHalted
-                                ? 'bg-rose-500'
-                                : isAtFinalStation
-                                ? 'bg-indigo-600'
-                                : 'bg-slate-900'
+                                ? 'bg-[#bb0000]'
+                                : 'bg-[#007cc0]'
                             }`}
                             style={{ width: `${progressPct}%` }}
                           />
                         </div>
                       </td>
 
-                      {/* 5. Contextual Quick Action + Inline Drawer Edit (Pencil) */}
+                      {/* 5. Contextual Quick Action + Inline Drawer Edit */}
                       <td
-                        className="py-4 px-5 text-left whitespace-nowrap"
+                        className="text-left whitespace-nowrap"
                         onClick={e => e.stopPropagation()}
                       >
-                        <div className="inline-flex items-center justify-end gap-1.5">
+                        <div className="inline-flex items-center justify-end gap-1">
                           <button
                             type="button"
                             onClick={() => {
@@ -2799,7 +2787,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                               setEditingOrder(order);
                             }}
                             title="ویرایش سریع دستور تولید در کشو (Edit MO)"
-                            className="p-2 rounded-lg bg-slate-50 hover:bg-slate-900 text-slate-600 hover:text-white border border-slate-200 hover:border-slate-900 transition-colors cursor-pointer inline-flex items-center justify-center"
+                            className="p-1.5 rounded bg-[#ffffff] hover:bg-[#007cc0] text-[#007cc0] hover:text-[#ffffff] border border-[#bfbfbf] hover:border-[#007cc0] transition-colors cursor-pointer inline-flex items-center justify-center"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -2808,7 +2796,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                             type="button"
                             onClick={() => setInspectingOrderForWip(order)}
                             title="ارزیابی موجودی بین‌مراحل (WIP) و قطعات پیش‌ساخته"
-                            className="p-2 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-indigo-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                            className="p-1.5 rounded bg-[#e5f3fa] hover:bg-[#007cc0] text-[#007cc0] hover:text-[#ffffff] border border-[#b3ddf2] hover:border-[#007cc0] transition-colors cursor-pointer inline-flex items-center justify-center"
                           >
                             <Boxes className="w-3.5 h-3.5" />
                           </button>
@@ -2818,9 +2806,9 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                               type="button"
                               onClick={() => handleDispatchFinishedGoods(order)}
                               title="تکمیل شده — صدور حواله خروج به ساپکو"
-                              className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 hover:border-emerald-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                              className="p-1.5 rounded bg-[#ebf5ec] hover:bg-[#107e3e] text-[#107e3e] hover:text-[#ffffff] border border-[#b7dfbf] hover:border-[#107e3e] transition-colors cursor-pointer inline-flex items-center justify-center"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-3.5 h-3.5" />
                             </button>
                           ) : isZeroOrHalted ? (
                             <button
@@ -2840,27 +2828,27 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                                   ? 'شروع مجدد و رفع توقف خط (Play)'
                                   : `شروع تولید و ثبت کارکرد (${activeStep?.stepCode || 'OP10'})`
                               }
-                              className="p-2 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-indigo-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                              className="p-1.5 rounded bg-[#e5f3fa] hover:bg-[#007cc0] text-[#007cc0] hover:text-[#ffffff] border border-[#b3ddf2] hover:border-[#007cc0] transition-colors cursor-pointer inline-flex items-center justify-center"
                             >
-                              <Play className="w-4 h-4 fill-current" />
+                              <Play className="w-3.5 h-3.5 fill-current" />
                             </button>
                           ) : isAtFinalStation ? (
                             <button
                               type="button"
                               onClick={() => handleCompleteProduction(order)}
                               title="ایستگاه آخر — تایید اتمام و صدور رسید انبار (Check)"
-                              className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 hover:border-emerald-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                              className="p-1.5 rounded bg-[#ebf5ec] hover:bg-[#107e3e] text-[#107e3e] hover:text-[#ffffff] border border-[#b7dfbf] hover:border-[#107e3e] transition-colors cursor-pointer inline-flex items-center justify-center"
                             >
-                              <Check className="w-4 h-4 stroke-[2.5]" />
+                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                             </button>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleToggleLineStop(order)}
                               title="در جریان تولید — توقف موقت خط (Pause)"
-                              className="p-2 rounded-lg bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white border border-amber-200 hover:border-amber-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                              className="p-1.5 rounded bg-[#fff4e5] hover:bg-[#e9730c] text-[#e9730c] hover:text-[#ffffff] border border-[#f5cba7] hover:border-[#e9730c] transition-colors cursor-pointer inline-flex items-center justify-center"
                             >
-                              <Pause className="w-4 h-4 fill-current" />
+                              <Pause className="w-3.5 h-3.5 fill-current" />
                             </button>
                           )}
                         </div>
@@ -2951,42 +2939,42 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
           loggingTarget.opIndex > 0 ? order.operations[loggingTarget.opIndex - 1] : null;
 
         return (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+            <div className="bg-[#ffffff] rounded border border-[#d9d9d9] max-w-md w-full p-5 shadow-lg space-y-4">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">
+                  <h4 className="font-semibold text-sm text-[#333333]">
                     ثبت آمار تولید ایستگاه — {op.stepCode} ({op.stepName})
                   </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#666666] mt-0.5">
                     دستور {order.orderCode} · بچ {order.productionBatchCode} · ذوب {order.heatNumber}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setLoggingTarget(null)}
-                  className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
+                  className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              <form onSubmit={handleSaveStepProduction} className="space-y-4 text-xs">
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1 text-slate-700">
+              <form onSubmit={handleSaveStepProduction} className="space-y-3.5 text-xs">
+                <div className="p-3 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-1 text-[#333333]">
                   <div>
                     دستگاه: <strong>{op.machineName}</strong> · قالب: <strong className="font-mono">{op.dieName}</strong>
                   </div>
                   {prevOp ? (
                     <div>
                       سقف مجاز بر اساس خروجی مرحله قبلی ({prevOp.stepCode}):{' '}
-                      <strong className="font-mono text-slate-900">
+                      <strong className="font-mono text-[#007cc0] tabular-nums">
                         {formatNumber(prevOp.completedGood)} عدد
                       </strong>
                     </div>
                   ) : (
                     <div>
                       ورودی از کلاف برش‌خورده ({order.coilNumber || order.rawMaterialCode}):{' '}
-                      <strong className="font-mono text-slate-900">
+                      <strong className="font-mono text-[#007cc0] tabular-nums">
                         {formatNumber(order.orderQty)} عدد
                       </strong>
                     </div>
@@ -2994,7 +2982,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1.5">
+                  <label className="block font-semibold text-[#333333] mb-1">
                     تعداد کل قطعات سالم تولیدشده در این مرحله:
                   </label>
                   <input
@@ -3003,13 +2991,13 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                     max={prevOp ? prevOp.completedGood : order.orderQty}
                     value={logQtyInput}
                     onChange={e => setLogQtyInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900"
+                    className="w-full px-3 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] font-mono text-sm font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1.5">
+                  <label className="block font-semibold text-[#333333] mb-1">
                     تعداد ضایعات ایستگاه:
                   </label>
                   <input
@@ -3017,21 +3005,21 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                     min={0}
                     value={logScrapInput}
                     onChange={e => setLogScrapInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm text-slate-900 focus:outline-none focus:border-slate-900"
+                    className="w-full px-3 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] font-mono text-sm text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#e8e8e8]">
                   <button
                     type="button"
                     onClick={() => setLoggingTarget(null)}
-                    className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                    className="sap-btn-standard px-3.5 py-1.5 cursor-pointer"
                   >
                     انصراف
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                    className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                   >
                     ثبت و صدور سند کارکرد
                   </button>
@@ -3047,43 +3035,43 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
       {/* ==================================================================== */}
       {editingOrder && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/35 backdrop-blur-[2px] flex justify-end animate-in fade-in"
+          className="fixed inset-0 z-50 bg-[#333333]/40 flex justify-end animate-in fade-in"
           dir="rtl"
           onClick={() => setEditingOrder(null)}
         >
           <div
-            className="bg-white w-full max-w-2xl h-full p-5 shadow-2xl border-r border-slate-200 space-y-4 overflow-y-auto"
+            className="bg-[#ffffff] w-full max-w-2xl h-full p-5 shadow-xl border-r border-[#d9d9d9] space-y-4 overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-xs flex items-center justify-between border-b border-slate-100 pb-3 pt-1">
+            <div className="sticky top-0 z-10 bg-[#ffffff] flex items-center justify-between border-b border-[#d9d9d9] pb-3 pt-1">
               <div>
-                <h4 className="font-bold text-sm text-slate-900">
+                <h4 className="font-semibold text-sm text-[#333333]">
                   {isNewOrderMode
                     ? 'صدور دستور تولید جدید (MO) در کشو — متصل به کاتالوگ کالا، ذوب و OP'
                     : `ویرایش کشویی دستور تولید ${editingOrder.orderCode}`}
                 </h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-[#666666] mt-0.5">
                   بدون خروج از جدول پیشخوان، اطلاعات دستور کار، ورق (BOM) و شماره ذوب را ویرایش کنید.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingOrder(null)}
-                className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer p-1.5 rounded-lg border border-slate-200"
+                className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer p-1.5 rounded border border-[#d9d9d9] bg-[#f7f7f7]"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveWorkOrder} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveWorkOrder} className="space-y-3.5 text-xs">
               {/* STEP 1: Select Product / Part from Master Data */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="p-3.5 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <Boxes className="w-4 h-4 text-emerald-600" />
+                  <label className="font-semibold text-[#333333] flex items-center gap-1.5">
+                    <Boxes className="w-4 h-4 text-[#007cc0]" />
                     <span>۱. انتخاب کالا / قطعه تولیدی از اطلاعات پایه:</span>
                   </label>
-                  <span className="text-[11px] text-emerald-700 font-semibold">
+                  <span className="text-[11px] text-[#107e3e] font-semibold">
                     متصل به کاتالوگ قطعات و مسیر تولید
                   </span>
                 </div>
@@ -3115,7 +3103,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
 
                 {/* Contract & Customer Quota Selection */}
                 <div className="pt-1">
-                  <label className="block text-[11px] text-slate-600 mb-1 font-semibold">
+                  <label className="block text-[11px] text-[#333333] mb-1 font-semibold">
                     اتصال به قرارداد / تعهد ساپکو (اختیاری):
                   </label>
                   <SearchableSelect
@@ -3131,7 +3119,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">
+                    <label className="block text-[11px] text-[#666666] mb-1">
                       شماره دستور تولید (MO):
                     </label>
                     <input
@@ -3140,12 +3128,12 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                       onChange={e =>
                         setEditingOrder({ ...editingOrder, orderCode: e.target.value })
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 font-mono font-bold text-slate-900"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] font-mono font-semibold text-[#333333] focus:border-[#007cc0] focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">
+                    <label className="block text-[11px] text-[#666666] mb-1">
                       شماره بچ تولید (Production Batch):
                     </label>
                     <input
@@ -3157,12 +3145,12 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           productionBatchCode: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 font-mono font-bold text-indigo-700"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] font-mono font-semibold text-[#007cc0] focus:border-[#007cc0] focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">
+                    <label className="block text-[11px] text-[#666666] mb-1">
                       تیراژ دستور تولید (عدد):
                     </label>
                     <input
@@ -3175,7 +3163,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           orderQty: Number(e.target.value) || 1,
                         })
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 font-mono font-bold text-slate-900"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] font-mono font-semibold text-[#333333] tabular-nums focus:border-[#007cc0] focus:outline-none"
                       required
                     />
                   </div>
@@ -3199,36 +3187,50 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               />
 
               {/* STEP 2: BOM Raw Material Sheet + SAPCO Coil & Heat Number Link */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div className="p-3.5 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-indigo-600" />
+                  <div className="font-semibold text-[#333333] flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-[#007cc0]" />
                     <span>۲. ورق مصرفی (BOM) و اتصال به شماره ذوب کلاف ساپکو (Heat No):</span>
                   </div>
-                  <label className="inline-flex items-center gap-1.5 text-[11px] text-slate-700 cursor-pointer select-none">
+                  <label className="inline-flex items-center gap-1.5 text-[11px] text-[#333333] cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={allowManualSheetOverride}
                       onChange={e => setAllowManualSheetOverride(e.target.checked)}
-                      className="rounded border-slate-300 text-slate-900"
+                      className="rounded border-[#bfbfbf] text-[#007cc0]"
                     />
                     <span>تغییر اختیاری ورق / انتخاب کلاف و ذوب دیگر به اختیار کاربر</span>
                   </label>
                 </div>
 
                 {!allowManualSheetOverride ? (
-                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="p-2.5 rounded bg-[#ffffff] border border-[#d9d9d9] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <div className="font-semibold text-slate-900">
+                      <div className="font-semibold text-[#333333]">
                         {editingOrder.rawMaterialName}
                       </div>
-                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                        کلاف: <strong>{editingOrder.coilNumber || 'MOB-2025-DC01-409'}</strong> · شماره ذوب:{' '}
-                        <strong className="text-amber-800">{editingOrder.heatNumber || 'HT-99412-MOB'}</strong>
+                      <div className="text-[11px] text-[#666666] font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <span>کلاف:</span>
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(editingOrder.coilNumber || 'MOB-2025-DC01-409', 'COILS')}
+                          className="sap-doc-link font-mono cursor-pointer"
+                        >
+                          {editingOrder.coilNumber || 'MOB-2025-DC01-409'}
+                        </button>
+                        <span>· شماره ذوب:</span>
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(editingOrder.heatNumber || 'HT-99412-MOB', 'COILS')}
+                          className="sap-doc-link font-mono cursor-pointer"
+                        >
+                          {editingOrder.heatNumber || 'HT-99412-MOB'}
+                        </button>
                       </div>
                     </div>
-                    <div className="text-left font-mono">
-                      <div className="text-xs font-bold text-slate-900">
+                    <div className="text-left font-mono tabular-nums">
+                      <div className="text-xs font-semibold text-[#333333]">
                         نیاز ناخالص:{' '}
                         {formatNumber(
                           Math.round(
@@ -3239,14 +3241,14 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                         )}{' '}
                         ک.گ
                       </div>
-                      <div className="text-[11px] text-emerald-700">
+                      <div className="text-[11px] text-[#107e3e]">
                         موجودی انبار: {formatNumber(editingOrder.warehouseAvailableKg)} ک.گ
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <label className="block text-[11px] text-amber-800 font-semibold">
+                    <label className="block text-[11px] text-[#e9730c] font-semibold">
                       انتخاب کلاف ساپکو و شماره ذوب جایگزین از موجودی انبار (اختیار کاربر):
                     </label>
                     <select
@@ -3269,7 +3271,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           });
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-lg bg-white border border-amber-300 text-slate-900 font-semibold cursor-pointer"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#f5cba7] text-[#333333] font-semibold cursor-pointer focus:border-[#007cc0] focus:outline-none"
                     >
                       {availableRawSheetsCatalog.map(rm => (
                         <option key={rm.code + rm.coilNumber} value={rm.code}>
@@ -3283,34 +3285,34 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               </div>
 
               {/* STEP 3: Preview of Connected Routing & OP Steps */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div className="p-3.5 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <GitBranch className="w-4 h-4 text-emerald-600" />
+                  <div className="font-semibold text-[#333333] flex items-center gap-1.5">
+                    <GitBranch className="w-4 h-4 text-[#107e3e]" />
                     <span>
                       ۳. مراحل عملیات تولید (OP) بارگذاری‌شده از مسیر تولید قطعه (
                       {toPersianDigits(editingOrder.operations.length)} ایستگاه):
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-[#666666]">
                     قابل ویرایش و افزودن OP در جدول
                   </span>
                 </div>
 
-                <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 max-h-40 overflow-y-auto">
+                <div className="bg-[#ffffff] rounded border border-[#d9d9d9] divide-y divide-[#e8e8e8] max-h-40 overflow-y-auto">
                   {editingOrder.operations.map((op, i) => (
                     <div
                       key={op.stepCode + i}
                       className="px-3 py-2 flex items-center justify-between text-[11px]"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono font-bold">
+                        <span className="px-1.5 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono font-semibold">
                           {op.stepCode}
                         </span>
-                        <span className="font-semibold text-slate-900">{op.stepName}</span>
-                        <span className="text-slate-400">({op.hall})</span>
+                        <span className="font-semibold text-[#333333]">{op.stepName}</span>
+                        <span className="text-[#666666]">({op.hall})</span>
                       </div>
-                      <div className="text-slate-600 font-mono">
+                      <div className="text-[#666666] font-mono">
                         {op.machineName} · {op.dieName}
                       </div>
                     </div>
@@ -3318,14 +3320,14 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setInspectingOrderForWip(editingOrder)}
-                  className="px-3 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-semibold flex items-center gap-1.5 cursor-pointer text-xs transition-colors"
+                  className="sap-btn-standard px-3 py-1.5 flex items-center gap-1.5 cursor-pointer text-xs"
                 >
-                  <Boxes className="w-4 h-4 text-indigo-600" />
-                  <span>ارزیابی موجودی بین‌مراحل (WIP) 🔍</span>
+                  <Boxes className="w-3.5 h-3.5" />
+                  <span>ارزیابی موجودی بین‌مراحل (WIP)</span>
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -3336,7 +3338,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                       setIsNewOrderMode(false);
                       router.closeModal();
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                    className="sap-btn-standard px-3.5 py-1.5 cursor-pointer"
                   >
                     انصراف
                   </button>
@@ -3350,7 +3352,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           setInspectingOrderForWip(editingOrder);
                           router.openWipCheckModal(editingOrder.orderCode, editingOrder.partId);
                         }}
-                        className="px-3 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold cursor-pointer border border-indigo-200 flex items-center gap-1.5"
+                        className="sap-btn-standard px-3 py-1.5 cursor-pointer flex items-center gap-1.5"
                       >
                         <GitBranch className="w-3.5 h-3.5" />
                         <span>ارزیابی درختی WIP</span>
@@ -3358,7 +3360,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                     )}
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                    className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                   >
                     {isNewOrderMode ? 'صدور دستور تولید و ابلاغ به خط' : 'ذخیره تغییرات دستور تولید'}
                   </button>
@@ -3385,23 +3387,23 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
         );
 
         return (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl max-w-lg w-full p-5 shadow-xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+            <div className="bg-[#ffffff] rounded border border-[#d9d9d9] max-w-lg w-full p-5 shadow-lg space-y-4">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">
+                  <h4 className="font-semibold text-sm text-[#333333]">
                     {editingOpContext.opIndex === null
                       ? 'افزودن مرحله عملیاتی (OP) متصل به اطلاعات پایه'
                       : `ویرایش ایستگاه ${editingOpContext.stepData.stepCode}`}
                   </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-[#666666] mt-0.5">
                     انتخاب عملیات، سالن، دستگاه پرس و قالب مرتبط با قطعه از بانک اطلاعات پایه
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setEditingOpContext(null)}
-                  className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
+                  className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -3410,7 +3412,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               <form onSubmit={handleSaveOperationStep} className="space-y-3.5 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label className="block font-semibold text-[#333333] mb-1">
                       کد مرحله (OP):
                     </label>
                     <select
@@ -3421,7 +3423,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           stepData: { ...editingOpContext.stepData, stepCode: e.target.value },
                         })
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 bg-white cursor-pointer"
+                      className="w-full px-2.5 py-1.5 rounded border border-[#bfbfbf] font-mono font-semibold text-[#333333] bg-[#ffffff] focus:border-[#007cc0] focus:outline-none cursor-pointer"
                     >
                       {['OP10', 'OP20', 'OP30', 'OP40', 'OP50', 'OP60', 'OP70', 'OP80'].map(
                         code => (
@@ -3434,7 +3436,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label className="block font-semibold text-[#333333] mb-1">
                       نوع فرآیند استاندارد (از بانک عملیات تولید):
                     </label>
                     <select
@@ -3461,7 +3463,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           },
                         });
                       }}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white font-semibold cursor-pointer"
+                      className="w-full px-2.5 py-1.5 rounded border border-[#bfbfbf] text-[#333333] bg-[#ffffff] font-semibold focus:border-[#007cc0] focus:outline-none cursor-pointer"
                     >
                       {PROCESS_DEFINITIONS.map(proc => (
                         <option key={proc.id} value={proc.code}>
@@ -3473,7 +3475,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
+                  <label className="block font-semibold text-[#333333] mb-1">
                     شرح دقیق عملیات در برگه کار ایستگاه:
                   </label>
                   <input
@@ -3485,14 +3487,14 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                         stepData: { ...editingOpContext.stepData, stepName: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+                    className="w-full px-2.5 py-1.5 rounded border border-[#bfbfbf] text-[#333333] bg-[#ffffff] focus:border-[#007cc0] focus:outline-none"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label className="block font-semibold text-[#333333] mb-1">
                       سالن تولید (از اطلاعات پایه):
                     </label>
                     <select
@@ -3503,7 +3505,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           stepData: { ...editingOpContext.stepData, hall: e.target.value },
                         })
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white cursor-pointer"
+                      className="w-full px-2.5 py-1.5 rounded border border-[#bfbfbf] text-[#333333] bg-[#ffffff] focus:border-[#007cc0] focus:outline-none cursor-pointer"
                     >
                       {hallsCatalog.map(h => (
                         <option key={h.id} value={h.name}>
@@ -3519,7 +3521,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label className="block font-semibold text-[#333333] mb-1">
                       دستگاه / پرس (از لیست ماشین‌آلات):
                     </label>
                     <select
@@ -3536,7 +3538,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           },
                         });
                       }}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white cursor-pointer"
+                      className="w-full px-2.5 py-1.5 rounded border border-[#bfbfbf] text-[#333333] bg-[#ffffff] focus:border-[#007cc0] focus:outline-none cursor-pointer"
                     >
                       {machines.map(m => (
                         <option key={m.id} value={m.name}>
@@ -3555,7 +3557,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
+                  <label className="block font-semibold text-[#333333] mb-1">
                     قالب / فیکسچر متصل به قطعه (از بانک قالب‌ها):
                   </label>
                   <select
@@ -3571,7 +3573,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                         },
                       });
                     }}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900 bg-white cursor-pointer"
+                    className="w-full px-2.5 py-1.5 rounded border border-[#bfbfbf] font-mono text-[#333333] bg-[#ffffff] focus:border-[#007cc0] focus:outline-none cursor-pointer"
                   >
                     {correlatedDies.length > 0 && (
                       <optgroup label="★ قالب‌های اختصاصی مرتبط با همین قطعه">
@@ -3599,17 +3601,17 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                   </select>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                   <button
                     type="button"
                     onClick={() => setEditingOpContext(null)}
-                    className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                    className="sap-btn-standard px-3.5 py-1.5 cursor-pointer"
                   >
                     انصراف
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                    className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                   >
                     ذخیره ایستگاه کاری (OP)
                   </button>
@@ -3632,54 +3634,84 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
         );
 
         return (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl max-w-2xl w-full p-5 shadow-xl border border-slate-200 space-y-4 my-8 text-xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center">
-                    <Compass className="w-4 h-4 text-emerald-400" />
+          <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-[#ffffff] rounded border border-[#d9d9d9] max-w-2xl w-full p-5 shadow-lg space-y-4 my-8 text-xs">
+              <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded bg-[#007cc0] text-[#ffffff] flex items-center justify-center">
+                    <Compass className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-slate-900">
+                    <h4 className="font-semibold text-sm text-[#333333]">
                       زنجیره پیگیری دستور تولید {trackedOrder.orderCode} (بچ {trackedOrder.productionBatchCode})
                     </h4>
-                    <p className="text-[11px] text-slate-500">
-                      {trackedOrder.partName} · کلاف: <strong className="font-mono">{trackedOrder.coilNumber}</strong> · شماره ذوب: <strong className="font-mono text-amber-800">{trackedOrder.heatNumber}</strong>
+                    <p className="text-[11px] text-[#666666] flex items-center gap-1.5 flex-wrap mt-0.5">
+                      <span>{trackedOrder.partName} · کلاف:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!trackedOrder.coilNumber) return;
+                          setTrackingOrderId(null);
+                          router.traceDocument(trackedOrder.coilNumber, 'COILS');
+                        }}
+                        className="sap-doc-link font-mono cursor-pointer"
+                      >
+                        {trackedOrder.coilNumber}
+                      </button>
+                      <span>· شماره ذوب:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!trackedOrder.heatNumber) return;
+                          setTrackingOrderId(null);
+                          router.traceDocument(trackedOrder.heatNumber, 'COILS');
+                        }}
+                        className="sap-doc-link font-mono cursor-pointer"
+                      >
+                        {trackedOrder.heatNumber}
+                      </button>
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setTrackingOrderId(null)}
-                  className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
+                  className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
               {/* 3-Stage End-to-End Traceability Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {/* Stage A: Raw Material Voucher & Heat Number */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                <div className="p-3 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2 flex flex-col justify-between">
                   <div>
-                    <div className="text-[11px] text-slate-500">۱. کلاف ورق و شماره ذوب (Heat)</div>
-                    <div className="font-bold text-slate-900 mt-1">
+                    <div className="text-[11px] text-[#666666]">۱. کلاف ورق و شماره ذوب (Heat)</div>
+                    <div className="font-semibold text-[#333333] mt-1">
                       {trackedOrder.rawMaterialName}
                     </div>
-                    <div className="text-[11px] font-mono text-amber-800 font-bold mt-0.5">
+                    <div className="text-[11px] font-mono text-[#e9730c] font-semibold mt-0.5">
                       ذوب: {trackedOrder.heatNumber} · نیاز: {formatNumber(grossRequiredKg)} ک.گ
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
+                  <div className="pt-2 border-t border-[#e8e8e8] flex items-center justify-between">
                     {trackedOrder.materialIssuedVoucherNo ? (
-                      <span className="font-mono font-bold text-emerald-700">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTrackingOrderId(null);
+                          router.traceDocument(trackedOrder.materialIssuedVoucherNo!, 'INVENTORY_LEDGER');
+                        }}
+                        className="sap-doc-link font-mono cursor-pointer"
+                      >
                         سند: {trackedOrder.materialIssuedVoucherNo}
-                      </span>
+                      </button>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleIssueSheetForOrder(trackedOrder)}
-                        className="px-2.5 py-1 rounded bg-slate-900 text-white font-semibold cursor-pointer"
+                        className="sap-btn-emphasized px-2.5 py-1 cursor-pointer"
                       >
                         صدور حواله ورق
                       </button>
@@ -3690,7 +3722,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                         setTrackingOrderId(null);
                         onNavigateToTab?.('sapco');
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+                      className="text-[#007cc0] hover:text-[#0058c4] font-semibold cursor-pointer"
                     >
                       شجره‌نامه ذوب ⟵
                     </button>
@@ -3698,17 +3730,17 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
 
                 {/* Stage B: Shop-Floor OP Execution */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                <div className="p-3 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2 flex flex-col justify-between">
                   <div>
-                    <div className="text-[11px] text-slate-500">۲. وضعیت در ایستگاه‌های OP</div>
-                    <div className="font-bold text-slate-900 mt-1">
+                    <div className="text-[11px] text-[#666666]">۲. وضعیت در ایستگاه‌های OP</div>
+                    <div className="font-semibold text-[#333333] mt-1">
                       {toPersianDigits(trackedOrder.operations.length)} ایستگاه کاری متصل
                     </div>
-                    <div className="text-[11px] text-slate-600 mt-0.5">
+                    <div className="text-[11px] text-[#666666] mt-0.5">
                       ایستگاه اول: {trackedOrder.operations[0]?.completedGood || 0} عدد تولیدشده
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
+                  <div className="pt-2 border-t border-[#e8e8e8] flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => {
@@ -3716,7 +3748,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                         setExpandedOrderId(trackedOrder.id);
                         setExpandedViewMode('OPS');
                       }}
-                      className="text-slate-900 font-bold hover:underline cursor-pointer"
+                      className="text-[#333333] font-semibold hover:text-[#007cc0] hover:underline cursor-pointer"
                     >
                       باز کردن جدول OPها
                     </button>
@@ -3729,7 +3761,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           productionModuleTab: 'LIVE_WIP_OP_TRACKER',
                         });
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+                      className="text-[#007cc0] hover:text-[#0058c4] font-semibold cursor-pointer"
                     >
                       رهگیری WIP ⟵
                     </button>
@@ -3737,20 +3769,40 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 </div>
 
                 {/* Stage C: Finished Goods Receipt */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                <div className="p-3 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2 flex flex-col justify-between">
                   <div>
-                    <div className="text-[11px] text-slate-500">۳. رسید انبار محصول نهایی</div>
-                    <div className="font-bold text-emerald-700 font-mono text-sm mt-1">
+                    <div className="text-[11px] text-[#666666]">۳. رسید انبار محصول نهایی</div>
+                    <div className="font-bold text-[#107e3e] font-mono text-sm mt-1 tabular-nums">
                       {formatNumber(finishedQty)} از {formatNumber(trackedOrder.orderQty)} عدد
                     </div>
-                    <div className="text-[11px] text-slate-600 mt-0.5">
-                      {trackedOrder.finishedReceiptVoucherNo
-                        ? `سند رسید: ${trackedOrder.finishedReceiptVoucherNo}`
-                        : 'پس از ثبت مرحله آخر صادر می‌شود'}
+                    <div className="text-[11px] text-[#666666] mt-0.5">
+                      {trackedOrder.finishedReceiptVoucherNo ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTrackingOrderId(null);
+                            router.traceDocument(trackedOrder.finishedReceiptVoucherNo!, 'INVENTORY_LEDGER');
+                          }}
+                          className="sap-doc-link font-mono cursor-pointer"
+                        >
+                          سند رسید: {trackedOrder.finishedReceiptVoucherNo}
+                        </button>
+                      ) : (
+                        'پس از ثبت مرحله آخر صادر می‌شود'
+                      )}
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between">
-                    <span className="text-slate-500 font-mono">{trackedOrder.productionBatchCode}</span>
+                  <div className="pt-2 border-t border-[#e8e8e8] flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTrackingOrderId(null);
+                        router.traceDocument(trackedOrder.productionBatchCode, 'WIP_TRACEABILITY');
+                      }}
+                      className="sap-doc-link font-mono cursor-pointer"
+                    >
+                      {trackedOrder.productionBatchCode}
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -3760,7 +3812,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                           productionModuleTab: 'DAILY_DISPATCH_SHEET',
                         });
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+                      className="text-[#007cc0] hover:text-[#0058c4] font-semibold cursor-pointer"
                     >
                       برگه شیفت ⟵
                     </button>
@@ -3769,11 +3821,11 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               </div>
 
               {/* Operation Steps Progress Table inside Tracker */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <div className="bg-slate-50 px-3.5 py-2 border-b border-slate-200 font-bold text-slate-800">
+              <div className="border border-[#d9d9d9] rounded overflow-hidden">
+                <div className="bg-[#f7f7f7] px-3.5 py-2 border-b border-[#d9d9d9] font-semibold text-[#333333]">
                   وضعیت لحظه‌ای ایستگاه‌های کاری (OP) این دستور:
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-[#e8e8e8]">
                   {trackedOrder.operations.map((op, i) => {
                     const prev = i > 0 ? trackedOrder.operations[i - 1] : null;
                     const locked = prev !== null && prev.completedGood === 0;
@@ -3784,29 +3836,29 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                     return (
                       <div
                         key={op.stepCode + i}
-                        className="px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                        className="px-3.5 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono font-bold">
+                          <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono font-semibold">
                             {op.stepCode}
                           </span>
                           <div>
-                            <div className="font-bold text-slate-900">{op.stepName}</div>
-                            <div className="text-[11px] text-slate-500">
+                            <div className="font-semibold text-[#333333]">{op.stepName}</div>
+                            <div className="text-[11px] text-[#666666]">
                               {op.hall} · {op.machineName} · قالب {op.dieName}
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 self-end sm:self-center font-mono">
-                          <span className="text-slate-600">
-                            بافر ورودی: <strong>{formatNumber(wipInBuffer)}</strong>
+                        <div className="flex items-center gap-3 self-end sm:self-center font-mono tabular-nums">
+                          <span className="text-[#666666]">
+                            بافر ورودی: <strong className="text-[#333333]">{formatNumber(wipInBuffer)}</strong>
                           </span>
-                          <span className="text-emerald-700 font-bold">
+                          <span className="text-[#107e3e] font-semibold">
                             تولید سالم: {formatNumber(op.completedGood)}
                           </span>
                           {locked ? (
-                            <span className="px-2 py-1 rounded bg-slate-100 text-slate-500 text-[11px]">
+                            <span className="px-2 py-0.5 rounded bg-[#f5f5f5] border border-[#d9d9d9] text-[#666666] text-[11px]">
                               قفل تقدم ({prev?.stepCode})
                             </span>
                           ) : (
@@ -3816,7 +3868,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                                 setTrackingOrderId(null);
                                 handleOpenStepLogger(trackedOrder, i);
                               }}
-                              className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white font-sans font-semibold cursor-pointer"
+                              className="sap-btn-emphasized px-2.5 py-1 font-sans cursor-pointer"
                             >
                               ثبت کارکرد
                             </button>
@@ -3829,14 +3881,14 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
               </div>
 
               {/* Issued Documents & Command Audit Log */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <div className="bg-slate-50 px-3.5 py-2 border-b border-slate-200 font-bold text-slate-800 flex items-center gap-1.5">
-                  <FileCheck2 className="w-4 h-4 text-slate-600" />
+              <div className="border border-[#d9d9d9] rounded overflow-hidden">
+                <div className="bg-[#f7f7f7] px-3.5 py-2 border-b border-[#d9d9d9] font-semibold text-[#333333] flex items-center gap-1.5">
+                  <FileCheck2 className="w-4 h-4 text-[#007cc0]" />
                   <span>تاریخچه دستورات و اسناد صادرشده برای این دستور کار:</span>
                 </div>
-                <div className="divide-y divide-slate-100 max-h-40 overflow-y-auto">
+                <div className="divide-y divide-[#e8e8e8] max-h-40 overflow-y-auto">
                   {(trackedOrder.commandLogs || []).length === 0 ? (
-                    <div className="p-3 text-center text-slate-400">
+                    <div className="p-3 text-center text-[#666666]">
                       هنوز سندی برای این دستور ثبت نشده است.
                     </div>
                   ) : (
@@ -3846,13 +3898,20 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                         className="px-3.5 py-2 flex items-center justify-between text-[11px]"
                       >
                         <div>
-                          <span className="font-mono font-bold text-slate-900 ml-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTrackingOrderId(null);
+                              router.traceDocument(log.docNumber, 'INVENTORY_LEDGER');
+                            }}
+                            className="sap-doc-link font-mono ml-2 cursor-pointer"
+                          >
                             [{log.docNumber}]
-                          </span>
-                          <span className="font-semibold text-slate-800">{log.title}</span>
-                          <span className="text-slate-400 mr-2">({log.targetStation})</span>
+                          </button>
+                          <span className="font-semibold text-[#333333]">{log.title}</span>
+                          <span className="text-[#666666] mr-2">({log.targetStation})</span>
                         </div>
-                        <div className="font-mono text-slate-600 shrink-0">
+                        <div className="font-mono text-[#666666] shrink-0 tabular-nums">
                           {log.qtyOrWeight} · {log.timestamp}
                         </div>
                       </div>
@@ -3865,7 +3924,7 @@ export const FactoryHighwayWorkbench: React.FC<FactoryHighwayWorkbenchProps> = (
                 <button
                   type="button"
                   onClick={() => setTrackingOrderId(null)}
-                  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                  className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                 >
                   بستن پنجره پیگیری
                 </button>

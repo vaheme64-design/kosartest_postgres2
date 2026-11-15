@@ -75,6 +75,7 @@ interface InventoryModuleViewProps {
     role: string;
   };
   initialSubTab?: InventorySubTab;
+  initialSearchQuery?: string;
   initialActionModal?: 'RECEIPT' | 'ISSUE' | 'RETURN' | 'TRANSFER' | null;
   initialReceiptDraft?: any;
   initialIssueDraft?: any;
@@ -99,6 +100,7 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
   stageBalances,
   currentUser,
   initialSubTab,
+  initialSearchQuery,
   initialActionModal,
   initialReceiptDraft,
   initialIssueDraft,
@@ -380,7 +382,7 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
     },
   ];
 
-  const secondaryTabs: { id: InventorySubTab; label: string; icon: any }[] = [
+  const secondaryTabs: { id: InventorySubTab; label: string; icon: any; badge?: number }[] = [
     { id: 'CONTRACTS', label: 'قراردادها و سهمیه مواد', icon: FileSignature },
     { id: 'IMPORT_EXPORT', label: 'ورود و خروج اکسل (CSV)', icon: Upload },
     { id: 'SAPCO', label: 'صورتحساب امانی ساپکو', icon: ScrollText },
@@ -400,26 +402,26 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Top Compact Alert Banner */}
+      {/* Top Compact SAP Critical Alert Banner */}
       {reorderAlerts.length > 0 && activeSubTab !== 'ALERTS' && (
-        <div className="bg-amber-50/60 border border-amber-200/60 rounded-xl px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="bg-[#FFF4E5] border border-[#F5CBA7] rounded-lg px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5 text-xs">
-            <span className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+            <span className="p-1.5 rounded bg-[#FFE4C4] text-[#E9730C] shrink-0">
               <BellRing className="w-3.5 h-3.5" />
             </span>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium text-slate-800">
+              <span className="font-semibold text-[#1D2D3E]">
                 هشدار کسری و نقطه سفارش:
               </span>
-              <span className="text-slate-600">
+              <span className="text-[#556B82]">
                 هم‌اکنون{' '}
-                <strong className="font-medium text-amber-900 underline underline-offset-4">
+                <strong className="font-semibold text-[#B45309] underline underline-offset-4">
                   {toPersianDigits(reorderAlerts.length)} قلم کالا و ورق
                 </strong>{' '}
                 پایین‌تر از حداقل موجودی اطمینان قرار دارند
               </span>
               {criticalAlertsCount > 0 && (
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#FFF0F0] text-[#BB0000] border border-[#F5B7B1]">
                   {toPersianDigits(criticalAlertsCount)} مورد بحرانی
                 </span>
               )}
@@ -430,132 +432,132 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
             <button
               type="button"
               onClick={() => setActiveSubTab('ALERTS')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-amber-50 text-slate-800 border border-amber-200/80 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
             >
               <span>مشاهده و مدیریت کسری‌ها</span>
-              <ArrowLeft className="w-3.5 h-3.5 text-amber-600" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#0064D9]" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Clean Single-Row Navigation & Primary Actions Bar */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200/60 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-        {/* Sub-module Navigation Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
-          {[...primaryTabs, ...secondaryTabs].map(tab => {
-            const isActive = activeSubTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleSelectSubTab(tab.id)}
-                className={`px-3 py-1.5 rounded-md text-xs transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Clean SAP HANA Fiori IconTabBar & Primary Operations Bar */}
+      <div className="sap-card overflow-hidden">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2 px-3 border-b border-[#d9d9d9] bg-white">
+          <div className="sap-icon-tab-bar border-b-0 flex-1">
+            {[...primaryTabs, ...secondaryTabs].map(tab => {
+              const isActive = activeSubTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleSelectSubTab(tab.id)}
+                  className={`sap-icon-tab ${isActive ? 'sap-icon-tab-active' : ''}`}
+                >
+                  <span>{tab.label}</span>
+                  {typeof tab.badge === 'number' && tab.badge > 0 && (
+                    <span className="px-1.5 py-0.2 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf5] font-mono text-[10px]">
+                      {toPersianDigits(tab.badge)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Primary Task-Oriented Operations + Progressive Disclosure Menu */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0 self-end xl:self-auto">
-          <button
-            type="button"
-            onClick={() => setIsReceiptOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <ArrowDownLeft className="w-3.5 h-3.5" />
-            <span>ثبت رسید</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIssueModalPreset({ subType: 'PRODUCTION_LINE', warehouseId: 'WH-RAW' });
-              setIsIssueOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <ArrowUpRight className="w-3.5 h-3.5 text-amber-400" />
-            <span>حواله به خط</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIssueModalPreset({ subType: 'CUSTOMER_DELIVERY', warehouseId: 'WH-FINISHED' });
-              setIsIssueOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <Truck className="w-3.5 h-3.5 text-slate-600" />
-            <span>تحویل مشتری</span>
-          </button>
-
-          <div className="relative">
+          {/* Primary Task-Oriented Operations + Progressive Disclosure Menu */}
+          <div className="flex items-center gap-2 flex-wrap shrink-0 py-2 xl:py-0">
             <button
               type="button"
-              onClick={() => setShowMoreActions(prev => !prev)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
-                showMoreActions
-                  ? 'bg-slate-200 text-slate-900 border-slate-300'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-              }`}
+              onClick={() => setIsReceiptOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#107e3e] hover:bg-[#0d6832] text-white rounded text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
             >
-              <MoreHorizontal className="w-3.5 h-3.5" />
-              <span>سایر عملیات</span>
+              <ArrowDownLeft className="w-3.5 h-3.5" />
+              <span>ثبت رسید</span>
             </button>
-            {showMoreActions && (
-              <div className="absolute left-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5 z-30 space-y-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMoreActions(false);
-                    setIsMaterialIssueOpen(true);
-                  }}
-                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
-                >
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
-                  <span>حواله مواد به عملیات (OP)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMoreActions(false);
-                    setIsReturnOpen(true);
-                  }}
-                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                  <span>برگشت از خط به انبار</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMoreActions(false);
-                    setIsTransferOpen(true);
-                  }}
-                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
-                >
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
-                  <span>انتقال بین انبارها</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMoreActions(false);
-                    setIsAdjustmentOpen(true);
-                  }}
-                  className="w-full text-right px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
-                >
-                  <Scale className="w-3.5 h-3.5 text-slate-500" />
-                  <span>تعدیل و انبارگردانی</span>
-                </button>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setIssueModalPreset({ subType: 'PRODUCTION_LINE', warehouseId: 'WH-RAW' });
+                setIsIssueOpen(true);
+              }}
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>حواله به خط</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIssueModalPreset({ subType: 'CUSTOMER_DELIVERY', warehouseId: 'WH-FINISHED' });
+                setIsIssueOpen(true);
+              }}
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
+            >
+              <Truck className="w-3.5 h-3.5 text-[#007cc0]" />
+              <span>تحویل مشتری</span>
+            </button>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowMoreActions(prev => !prev)}
+                className={`sap-btn-standard flex items-center gap-1.5 px-2.5 py-1.5 text-xs cursor-pointer whitespace-nowrap ${
+                  showMoreActions ? 'bg-[#e5f3fa] border-[#007cc0]' : ''
+                }`}
+              >
+                <MoreHorizontal className="w-3.5 h-3.5" />
+                <span>سایر عملیات</span>
+              </button>
+              {showMoreActions && (
+                <div className="absolute left-0 mt-1.5 w-52 bg-white border border-[#d9d9d9] rounded-md shadow-lg p-1.5 z-30 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMoreActions(false);
+                      setIsMaterialIssueOpen(true);
+                    }}
+                    className="w-full text-right px-3 py-1.5 rounded text-xs font-medium text-[#333333] hover:bg-[#e5f3fa] hover:text-[#007cc0] flex items-center gap-2 cursor-pointer"
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-[#007cc0]" />
+                    <span>حواله مواد به عملیات (OP)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMoreActions(false);
+                      setIsReturnOpen(true);
+                    }}
+                    className="w-full text-right px-3 py-1.5 rounded text-xs font-medium text-[#333333] hover:bg-[#e5f3fa] hover:text-[#007cc0] flex items-center gap-2 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-[#007cc0]" />
+                    <span>برگشت از خط به انبار</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMoreActions(false);
+                      setIsTransferOpen(true);
+                    }}
+                    className="w-full text-right px-3 py-1.5 rounded text-xs font-medium text-[#333333] hover:bg-[#e5f3fa] hover:text-[#007cc0] flex items-center gap-2 cursor-pointer"
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-[#007cc0]" />
+                    <span>انتقال بین انبارها</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMoreActions(false);
+                      setIsAdjustmentOpen(true);
+                    }}
+                    className="w-full text-right px-3 py-2 rounded text-xs font-medium text-[#1D2D3E] hover:bg-[#EBF5FF] hover:text-[#0064D9] flex items-center gap-2 cursor-pointer"
+                  >
+                    <Scale className="w-3.5 h-3.5 text-[#0070F2]" />
+                    <span>تعدیل و انبارگردانی</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -591,46 +593,46 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
         <div className="space-y-4">
           {/* Summary KPI Row for Shortages */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-xs text-slate-500 font-medium">کل اقلام زیر نقطه سفارش</div>
-              <div className="text-2xl font-bold text-slate-900 mt-1.5 tabular-nums">
+            <div className="sap-card p-4">
+              <div className="text-xs text-[#556B82] font-medium">کل اقلام زیر نقطه سفارش</div>
+              <div className="text-2xl font-semibold text-[#1D2D3E] mt-1.5 tabular-nums">
                 {toPersianDigits(reorderAlerts.length)}{' '}
-                <span className="text-xs font-normal text-slate-500">قلم کالا</span>
+                <span className="text-xs font-normal text-[#556B82]">قلم کالا</span>
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">
+              <div className="text-[11px] text-[#556B82] mt-1">
                 مقایسه موجودی آزاد با حداقل اطمینان (Min Stock)
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/20 shadow-2xs">
-              <div className="text-xs text-rose-700 font-semibold flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+            <div className="sap-card p-4 border-[#F5B7B1] bg-[#FFECEC]/30">
+              <div className="text-xs text-[#BB0000] font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-[#BB0000]" />
                 <span>وضعیت بحرانی (موجودی صفر یا زیر ۲۵٪)</span>
               </div>
-              <div className="text-2xl font-bold text-rose-600 mt-1.5 tabular-nums">
+              <div className="text-2xl font-semibold text-[#BB0000] mt-1.5 tabular-nums">
                 {toPersianDigits(criticalAlertsCount)}{' '}
-                <span className="text-xs font-normal text-rose-500">مورد فوری</span>
+                <span className="text-xs font-normal text-[#BB0000]">مورد فوری</span>
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-[#556B82] mt-1">
                 نیازمند تأمین فوری جهت جلوگیری از توقف خط
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/20 shadow-2xs">
-              <div className="text-xs text-amber-800 font-semibold">کسری ورق و مواد اولیه</div>
-              <div className="text-2xl font-bold text-amber-700 mt-1.5 tabular-nums">
+            <div className="sap-card p-4 border-[#F5CBA7] bg-[#FFF4E5]/40">
+              <div className="text-xs text-[#8A4400] font-semibold">کسری ورق و مواد اولیه</div>
+              <div className="text-2xl font-semibold text-[#E9730C] mt-1.5 tabular-nums">
                 {toPersianDigits(rawMaterialAlertsCount)}{' '}
-                <span className="text-xs font-normal text-amber-700">ردیف ماده اولیه</span>
+                <span className="text-xs font-normal text-[#8A4400]">ردیف ماده اولیه</span>
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-[#556B82] mt-1">
                 شامل کلاف‌های ورق، پیچ و مهره و قطعات لاستیکی
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div className="sap-card p-4 flex flex-col justify-between">
               <div>
-                <div className="text-xs text-slate-700 font-bold">ارتباط با برنامه‌ریزی تولید (MRP)</div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <div className="text-xs text-[#1D2D3E] font-semibold">ارتباط با برنامه‌ریزی تولید (MRP)</div>
+                <p className="text-[11px] text-[#556B82] mt-1">
                   بررسی تأثیر کسری مواد بر سفارشات باز مشتریان و برنامه شیفت‌های پرسکاری
                 </p>
               </div>
@@ -638,9 +640,9 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
                 <button
                   type="button"
                   onClick={onNavigateToPlanning}
-                  className="mt-2.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  className="sap-btn-emphasized mt-2.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs"
                 >
-                  <CalendarDays className="w-3.5 h-3.5 text-amber-400" />
+                  <CalendarDays className="w-3.5 h-3.5" />
                   <span>رفتن به ماژول برنامه‌ریزی تولید</span>
                 </button>
               )}
@@ -648,24 +650,24 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
           </div>
 
           {/* Main Alerts Table Card */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/60">
+          <div className="sap-card overflow-hidden">
+            <div className="p-3 border-b border-[#d9d9d9] flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white">
               <div className="flex items-center gap-2.5">
                 <div className="relative w-full sm:w-72">
-                  <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                  <Search className="w-4 h-4 text-[#666666] absolute right-3 top-2 pointer-events-none" />
                   <input
                     type="text"
                     value={alertSearchQuery}
                     onChange={e => setAlertSearchQuery(e.target.value)}
                     placeholder="جستجوی نام، کد کالا، گرید ورق یا ساپکو..."
-                    className="w-full bg-white border border-slate-200 focus:border-slate-900 rounded-xl pr-9 pl-3 py-1.5 text-xs text-slate-900 focus:outline-none"
+                    className="w-full bg-white border border-[#bfbfbf] focus:border-[#007cc0] rounded pr-9 pl-3 py-1.5 text-xs text-[#333333] focus:outline-none"
                   />
                 </div>
 
                 <select
                   value={alertSeverityFilter}
                   onChange={e => setAlertSeverityFilter(e.target.value as any)}
-                  className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 font-medium focus:outline-none"
+                  className="bg-white border border-[#bfbfbf] rounded px-3 py-1.5 text-xs text-[#333333] font-medium focus:outline-none focus:border-[#007cc0]"
                 >
                   <option value="ALL">همه سطوح هشدار</option>
                   <option value="CRITICAL">فقط وضعیت بحرانی</option>
@@ -673,7 +675,7 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
                 </select>
               </div>
 
-              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs overflow-x-auto">
+              <div className="flex items-center gap-1 bg-[#f7f7f7] p-1 rounded border border-[#d9d9d9] text-xs overflow-x-auto">
                 {(
                   [
                     { id: 'ALL', label: 'همه اقلام' },
@@ -686,10 +688,10 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
                     key={cat.id}
                     type="button"
                     onClick={() => setAlertCategoryFilter(cat.id)}
-                    className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`px-3 py-1 rounded transition-colors whitespace-nowrap cursor-pointer ${
                       alertCategoryFilter === cat.id
-                        ? 'bg-slate-900 text-white font-semibold'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-[#007cc0] text-white font-semibold'
+                        : 'text-[#666666] hover:bg-white'
                     }`}
                   >
                     {cat.label}
@@ -699,25 +701,25 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
             </div>
 
             {filteredReorderAlerts.length === 0 ? (
-              <div className="text-center py-12 text-xs text-slate-500 flex flex-col items-center gap-2">
-                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-                <span className="font-semibold text-slate-700">
+              <div className="text-center py-10 text-xs text-[#666666] flex flex-col items-center gap-2">
+                <CheckCircle2 className="w-7 h-7 text-[#107e3e]" />
+                <span className="font-semibold text-[#333333]">
                   هیچ کالایی با فیلترهای انتخابی پایین‌تر از نقطه سفارش قرار ندارد.
                 </span>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <table className="w-full text-right text-xs sap-table-compact">
+                  <thead className="bg-white text-[#333333] border-b border-[#d9d9d9]">
                     <tr>
-                      <th className="py-3 px-4 font-semibold">اولیت و وضعیت</th>
-                      <th className="py-3 px-4 font-semibold">کد و نام کالا / ورق</th>
-                      <th className="py-3 px-4 font-semibold">گروه و مشخصات فنی</th>
-                      <th className="py-3 px-4 font-semibold">موجودی آزاد فعلی</th>
-                      <th className="py-3 px-4 font-semibold">نقطه سفارش (حداقل)</th>
-                      <th className="py-3 px-4 font-semibold">مقدار کسری</th>
-                      <th className="py-3 px-4 font-semibold w-44">درصد پوشش اطمینان</th>
-                      <th className="py-3 px-4 font-semibold text-left">عملیات تأمین</th>
+                      <th className="py-1.5 px-2.5 font-semibold">اولیت و وضعیت</th>
+                      <th className="py-1.5 px-2.5 font-semibold">کد و نام کالا / ورق</th>
+                      <th className="py-1.5 px-2.5 font-semibold">گروه و مشخصات فنی</th>
+                      <th className="py-1.5 px-2.5 font-semibold">موجودی آزاد فعلی</th>
+                      <th className="py-1.5 px-2.5 font-semibold">نقطه سفارش (حداقل)</th>
+                      <th className="py-1.5 px-2.5 font-semibold">مقدار کسری</th>
+                      <th className="py-1.5 px-2.5 font-semibold w-44">درصد پوشش اطمینان</th>
+                      <th className="py-1.5 px-2.5 font-semibold text-left">عملیات تأمین</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -866,6 +868,7 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
       {activeSubTab === 'COILS' && (
         <PhysicalCoilsView
           currentUser={currentUser}
+          initialSearchQuery={initialSearchQuery}
           onRefresh={loadInventoryData}
         />
       )}
@@ -894,6 +897,7 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
           documents={documents}
           warehouses={warehouses}
           loading={loading}
+          initialSearchTerm={initialSearchQuery}
           onRefresh={loadInventoryData}
           onReverseDocument={handleReverseDocument}
         />

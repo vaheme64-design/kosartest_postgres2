@@ -166,10 +166,10 @@ export function calculateInventoryLedger(
       lastActivityDate: data.lastActivityDate,
     });
 
-    // Accumulate category summaries
-    if (stageId === 'STAGE_RAW_STORE' || part.category === 'RAW_MATERIAL') {
+    // Accumulate category summaries strictly by stage (do not classify WIP-stage raw items as raw store stock)
+    if (stageId === 'STAGE_RAW_STORE') {
       rawMaterialKg += weightKg;
-    } else if (stageId === 'STAGE_FINISHED_STORE' || part.category === 'FINISHED_GOOD') {
+    } else if (stageId === 'STAGE_FINISHED_STORE') {
       totalFinishedPcs += data.totalQty;
       totalFinishedKg += weightKg;
     } else {
@@ -246,8 +246,8 @@ export function validateAndPrepareTransaction(
   }
 
   const qty = Number(payload.quantity);
-  if (isNaN(qty) || qty <= 0) {
-    return { valid: false, errorMessage: 'مقدار تراکنش باید عددی مثبت و بزرگتر از صفر باشد.' };
+  if (isNaN(qty) || qty === 0 || (payload.voucherType !== 'ADJUSTMENT' && qty < 0)) {
+    return { valid: false, errorMessage: 'مقدار تراکنش باید عددی معتبر و بزرگتر از صفر باشد (به‌جز سند تعدیل منفی).' };
   }
 
   // Duplicate voucher number prevention
@@ -263,13 +263,10 @@ export function validateAndPrepareTransaction(
     }
   }
 
-  // Check stage stock balance to prevent negative inventory
-  const requiresStockDeduction = [
-    'ISSUE',
-    'CUSTOMER_DELIVERY',
-    'SCRAP',
-    'WIP_TRANSFER_DISPATCH',
-  ].includes(payload.voucherType);
+  // Check stage stock balance to prevent negative inventory (including downward ADJUSTMENT & WIP_TRANSFER_RECEIPT transit guard)
+  const requiresStockDeduction =
+    ['ISSUE', 'CUSTOMER_DELIVERY', 'SCRAP', 'WIP_TRANSFER_DISPATCH'].includes(payload.voucherType) ||
+    (payload.voucherType === 'ADJUSTMENT' && qty < 0);
 
   if (requiresStockDeduction) {
     const currentStatus = calculateInventoryLedger(existingTransactions, parts);
@@ -277,12 +274,26 @@ export function validateAndPrepareTransaction(
       sb => sb.stageId === payload.stageId && sb.partId === payload.partId
     );
     const availableQty = stageEntry ? stageEntry.usableQty : 0;
+    const requestedDeduction = Math.abs(qty);
 
-    if (qty > availableQty) {
+    if (requestedDeduction > availableQty) {
       const stageName = FACTORY_STAGES.find(s => s.id === payload.stageId)?.name || payload.stageId;
       return {
         valid: false,
-        errorMessage: `خطای کنترل موجودی: موجودی در دسترس در «${stageName}» برای قطعه «${part.name}» کافی نیست. موجودی قابل استفاده: ${availableQty} ${part.unit}، مقدار درخواستی: ${qty} ${part.unit}. جلوگیری از موجودی منفی.`,
+        errorMessage: `خطای کنترل موجودی: موجودی در دسترس در «${stageName}» برای قطعه «${part.name}» کافی نیست. موجودی قابل استفاده: ${availableQty} ${part.unit}، مقدار درخواستی: ${requestedDeduction} ${part.unit}. جلوگیری از موجودی منفی.`,
+      };
+    }
+  } else if (payload.voucherType === 'WIP_TRANSFER_RECEIPT') {
+    const currentStatus = calculateInventoryLedger(existingTransactions, parts);
+    const stageEntry = currentStatus.stageBalances.find(
+      sb => sb.stageId === payload.stageId && sb.partId === payload.partId
+    );
+    const inTransitQty = stageEntry ? stageEntry.inTransitQty : 0;
+    if (qty > inTransitQty) {
+      const stageName = FACTORY_STAGES.find(s => s.id === payload.stageId)?.name || payload.stageId;
+      return {
+        valid: false,
+        errorMessage: `خطای کنترل انتقال بین‌ایستگاهی: موجودی در راه برای قطعه «${part.name}» در «${stageName}» (${inTransitQty}) کمتر از مقدار دریافتی (${qty}) است.`,
       };
     }
   }

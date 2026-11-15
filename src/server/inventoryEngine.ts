@@ -319,16 +319,33 @@ export function calculateDetailedStockBalances(
     if (!part) continue;
 
     if (res.lotNumber) {
-      // Case A: Specific Lot / Coil Allocation
-      for (const entry of balanceMap.values()) {
-        if (
+      // Case A: Specific Lot / Coil Allocation (allocate iteratively without duplicating across rows)
+      let remainingLotQty = res.quantity;
+      let remainingLotKg = res.quantityKg;
+      const lotEntries = Array.from(balanceMap.values()).filter(
+        entry =>
           entry.partId === res.partId &&
           entry.warehouseId === res.warehouseId &&
           entry.lotNumber === res.lotNumber
-        ) {
-          entry.reservedQty += res.quantity;
-          entry.reservedKg += res.quantityKg;
-        }
+      );
+
+      for (const entry of lotEntries) {
+        if (remainingLotQty <= 0) break;
+        const availableToReserve = Math.max(0, entry.physicalQty - entry.reservedQty - entry.qualityBlockedQty);
+        const qtyAllocated = Math.min(availableToReserve, remainingLotQty);
+        const kgAllocated =
+          part.unit === 'KG'
+            ? qtyAllocated
+            : Math.min(Math.max(0, entry.physicalKg - entry.reservedKg - entry.qualityBlockedKg), remainingLotKg);
+        entry.reservedQty += qtyAllocated;
+        entry.reservedKg += kgAllocated;
+        remainingLotQty -= qtyAllocated;
+        remainingLotKg -= kgAllocated;
+      }
+
+      if (remainingLotQty > 0 && lotEntries.length > 0) {
+        lotEntries[0].reservedQty += remainingLotQty;
+        lotEntries[0].reservedKg += Math.max(0, remainingLotKg);
       }
     } else {
       // Case B: General Item & Warehouse Reservation
@@ -658,17 +675,43 @@ export function createReversalDocument(
   // Transfer reversal validation: destination warehouse must still have the goods available
   if (targetDocument.documentType === 'TRANSFER' && currentStockBalances && targetDocument.targetWarehouseId) {
     for (const line of targetDocument.lines) {
-      const destBalance = currentStockBalances.find(
+      const destBalances = currentStockBalances.filter(
         b =>
           b.partId === line.partId &&
           b.warehouseId === targetDocument.targetWarehouseId &&
           (!line.lotNumber || b.lotNumber === line.lotNumber)
       );
-      const available = destBalance ? destBalance.availableQty : 0;
+      const available = destBalances.reduce((s, b) => s + b.availableQty, 0);
       if (available < line.quantity) {
         return {
           success: false,
           error: `امکان ابطال انتقال وجود ندارد؛ موجودی منتقل‌شده قطعه «${line.partCode}» در انبار مقصد (${targetDocument.targetWarehouseName}) مصرف شده یا انتقال یافته است. موجودی آزاد مقصد: ${available}، مورد نیاز: ${line.quantity}.`,
+        };
+      }
+    }
+  }
+
+  // Receipt / opening-balance / positive adjustment reversal validation: source warehouse must still hold unconsumed stock
+  if (
+    currentStockBalances &&
+    (targetDocument.documentType === 'RECEIPT_RAW_MATERIAL' ||
+      targetDocument.documentType === 'RECEIPT_FINISHED_GOODS' ||
+      targetDocument.documentType === 'OPENING_BALANCE' ||
+      targetDocument.documentType === 'ADJUSTMENT')
+  ) {
+    for (const line of targetDocument.lines) {
+      if (Number(line.quantity) <= 0) continue;
+      const matchingBalances = currentStockBalances.filter(
+        b =>
+          b.partId === line.partId &&
+          b.warehouseId === targetDocument.warehouseId &&
+          (!line.lotNumber || b.lotNumber === line.lotNumber)
+      );
+      const available = matchingBalances.reduce((s, b) => s + b.availableQty, 0);
+      if (available < line.quantity) {
+        return {
+          success: false,
+          error: `امکان ابطال سند رسید وجود ندارد؛ بخشی از موجودی قطعه «${line.partCode}» در انبار «${targetDocument.warehouseName}» قبلاً حواله/مصرف یا رزرو شده است (موجودی آزاد فعلی: ${available}، مقدار رسید: ${line.quantity}). جلوگیری از منفی شدن موجودی.`,
         };
       }
     }

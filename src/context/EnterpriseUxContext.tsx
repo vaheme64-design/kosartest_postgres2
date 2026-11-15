@@ -320,25 +320,25 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
       {/* ================================================================== */}
       {confirmState && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/45 backdrop-blur-[2px] p-4 animate-in fade-in"
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[#333333]/40 p-4 animate-in fade-in"
           dir="rtl"
           onClick={() => !confirmLoading && setConfirmState(null)}
         >
           <div
-            className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-right"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-md w-full p-5 shadow-md space-y-3.5 text-right"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                  className={`w-9 h-9 rounded-sm flex items-center justify-center shrink-0 border ${
                     confirmState.variant === 'danger'
-                      ? 'bg-rose-50 text-rose-600 border-rose-200'
+                      ? 'bg-[#ffecec] text-[#bb0000] border-[#f5b7b1]'
                       : confirmState.variant === 'emerald'
-                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                      : confirmState.variant === 'indigo'
-                      ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                      : 'bg-amber-50 text-amber-600 border-amber-200'
+                      ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
+                      : confirmState.variant === 'indigo' || confirmState.variant === 'info'
+                      ? 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]'
+                      : 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
                   }`}
                 >
                   {confirmState.variant === 'emerald' ? (
@@ -350,33 +350,33 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
                   )}
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 inline-block mb-1">
-                    سپر دفاعی و تاییدیه عملیات حساس (Defensive UX)
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9] inline-block mb-1">
+                    تاییدیه عملیات سیستمی (SAP Guard)
                   </span>
-                  <h3 className="text-sm font-bold text-slate-900">{confirmState.title}</h3>
+                  <h3 className="text-sm font-bold text-[#333333]">{confirmState.title}</h3>
                 </div>
               </div>
               <button
                 type="button"
                 disabled={confirmLoading}
                 onClick={() => setConfirmState(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-[#666666] leading-relaxed">
               {confirmState.message || confirmState.description}
             </p>
 
             {confirmState.consequences && confirmState.consequences.length > 0 && (
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-[11px] text-slate-700">
-                <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-slate-500" />
+              <div className="p-3 rounded-sm bg-[#f7f7f7] border border-[#d9d9d9] space-y-1.5 text-[11px] text-[#333333]">
+                <div className="font-bold text-[#333333] flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-[#007cc0]" />
                   <span>پیامدها و اثرات سیستمی این عملیات:</span>
                 </div>
-                <ul className="list-disc list-inside space-y-1 text-slate-600 pr-1">
+                <ul className="list-disc list-inside space-y-1 text-[#666666] pr-1">
                   {confirmState.consequences.map((c, idx) => (
                     <li key={idx}>{c}</li>
                   ))}
@@ -384,12 +384,12 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#e8e8e8]">
               <button
                 type="button"
                 disabled={confirmLoading}
                 onClick={() => setConfirmState(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                className="sap-btn-standard px-4 py-1.5 text-xs"
               >
                 {confirmState.cancelLabel || 'انصراف'}
               </button>
@@ -397,14 +397,14 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 type="button"
                 disabled={confirmLoading}
                 onClick={handleConfirmExecute}
-                className={`px-4 py-2 rounded-xl text-white text-xs font-bold transition cursor-pointer shadow-xs ${
+                className={`px-4 py-1.5 rounded-sm text-white text-xs font-bold transition cursor-pointer ${
                   confirmState.variant === 'danger'
-                    ? 'bg-rose-600 hover:bg-rose-700'
+                    ? 'bg-[#bb0000] hover:bg-[#990000]'
                     : confirmState.variant === 'emerald'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : confirmState.variant === 'indigo'
-                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                    : 'bg-amber-600 hover:bg-amber-700'
+                    ? 'bg-[#107e3e] hover:bg-[#0c6330]'
+                    : confirmState.variant === 'indigo' || confirmState.variant === 'info'
+                    ? 'bg-[#007cc0] hover:bg-[#0058c4]'
+                    : 'bg-[#e9730c] hover:bg-[#cc6208]'
                 }`}
               >
                 {confirmLoading ? 'در حال انجام...' : confirmState.confirmLabel || 'تایید و اجرای عملیات'}
@@ -419,31 +419,31 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
       {/* ================================================================== */}
       {quickEditState && (
         <div
-          className="fixed inset-0 z-[85] flex justify-end bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in"
+          className="fixed inset-0 z-[85] flex justify-end bg-[#333333]/40 animate-in fade-in"
           dir="rtl"
           onClick={() => setQuickEditState(null)}
         >
           <div
-            className="relative w-full max-w-lg bg-white h-full shadow-2xl border-r border-slate-200 flex flex-col justify-between overflow-y-auto"
+            className="relative w-full max-w-lg bg-[#ffffff] h-full shadow-lg border-r border-[#d9d9d9] flex flex-col justify-between overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Sticky Header */}
-            <div className="sticky top-0 z-20 p-5 border-b border-slate-200 bg-white/95 backdrop-blur-xs flex items-center justify-between">
+            <div className="sticky top-0 z-20 p-4 border-b border-[#d9d9d9] bg-[#ffffff] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-sm bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] flex items-center justify-center">
                   <Edit3 className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 block">
-                    {quickEditState.moduleName} — ویرایش سریع در کشو (Drawer Editing)
+                  <span className="text-[10px] font-semibold text-[#666666] block">
+                    {quickEditState.moduleName} — ویرایش سریع (SAP Object Drawer)
                   </span>
-                  <h3 className="text-sm font-bold text-slate-900">{quickEditState.title}</h3>
+                  <h3 className="text-sm font-semibold text-[#333333]">{quickEditState.title}</h3>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setQuickEditState(null)}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 cursor-pointer"
+                className="p-1.5 rounded-sm border border-[#d9d9d9] text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -452,7 +452,7 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
             {/* Form Body */}
             <form onSubmit={handleSaveQuickEdit} className="flex-1 p-5 space-y-4 text-xs">
               {quickEditState.subtitle && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+                <div className="p-3 rounded-sm bg-[#f7f7f7] border border-[#d9d9d9] text-[#666666]">
                   {quickEditState.subtitle}
                 </div>
               )}
@@ -460,14 +460,14 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
               <div className="space-y-3.5">
                 {quickEditState.fields.map(field => (
                   <div key={field.key} className="space-y-1">
-                    <label className="block font-bold text-slate-700">{field.label}</label>
+                    <label className="block font-bold text-[#333333]">{field.label}</label>
                     {field.type === 'select' && field.options ? (
                       <select
                         value={String(quickEditForm[field.key] ?? '')}
                         onChange={e =>
                           setQuickEditForm(prev => ({ ...prev, [field.key]: e.target.value }))
                         }
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-medium focus:bg-white focus:border-slate-900 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-sm bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-medium focus:border-[#007cc0] focus:outline-none"
                       >
                         {field.options.map(opt => (
                           <option key={opt.value} value={opt.value}>
@@ -482,7 +482,7 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         onChange={e =>
                           setQuickEditForm(prev => ({ ...prev, [field.key]: e.target.value }))
                         }
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-medium focus:bg-white focus:border-slate-900 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-sm bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-medium focus:border-[#007cc0] focus:outline-none"
                       />
                     ) : (
                       <input
@@ -499,7 +499,7 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
                               field.type === 'number' ? Number(e.target.value) : e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-medium focus:bg-white focus:border-slate-900 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-sm bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-medium focus:border-[#007cc0] focus:outline-none"
                       />
                     )}
                   </div>
@@ -507,7 +507,7 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
               </div>
 
               {/* Embedded Mini Audit Trail for this Record */}
-              <div className="pt-4 border-t border-slate-100">
+              <div className="pt-4 border-t border-[#e8e8e8]">
                 <AuditTrailTabContent
                   entityId={quickEditState.entityId}
                   entityCode={quickEditState.entityCode}
@@ -517,17 +517,17 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
               </div>
 
               {/* Sticky Footer */}
-              <div className="sticky bottom-0 pt-4 pb-2 bg-white border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="sticky bottom-0 pt-3 pb-2 bg-[#ffffff] border-t border-[#d9d9d9] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setQuickEditState(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold cursor-pointer shadow-xs"
+                  className="sap-btn-emphasized px-5 py-1.5"
                 >
                   ذخیره تغییرات
                 </button>
@@ -538,19 +538,19 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
       )}
 
       {/* ================================================================== */}
-      {/* 3. GMAIL-STYLE UNDO TOAST NOTIFICATION                             */}
+      {/* 3. SAP FIORI MESSAGE TOAST                                        */}
       {/* ================================================================== */}
       {toastState && (
         <div
-          className="fixed bottom-5 left-5 z-[95] max-w-md w-full bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center justify-between gap-4 animate-in fade-in"
+          className="fixed bottom-5 left-5 z-[95] max-w-md w-full bg-[#333333] text-white rounded-sm p-3.5 shadow-lg border border-[#555555] flex items-center justify-between gap-4 animate-in fade-in"
           dir="rtl"
         >
           <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-[#75c98e] shrink-0 mt-0.5" />
             <div className="text-xs">
-              <div className="font-bold text-white">{toastState.title}</div>
+              <div className="font-semibold text-white">{toastState.title}</div>
               {(toastState.detail || toastState.description) && (
-                <div className="text-[11px] text-slate-300 mt-0.5">
+                <div className="text-[11px] text-[#e0e0e0] mt-0.5">
                   {toastState.detail || toastState.description}
                 </div>
               )}
@@ -566,7 +566,7 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
                   setToastState(null);
                   undoFn?.();
                 }}
-                className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                className="px-3 py-1 rounded-sm bg-[#007cc0] hover:bg-[#0058c4] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>لغو (Undo)</span>
@@ -575,7 +575,7 @@ export const EnterpriseUxProvider: React.FC<{ children: React.ReactNode }> = ({ 
             <button
               type="button"
               onClick={() => setToastState(null)}
-              className="text-slate-400 hover:text-white p-1 cursor-pointer"
+              className="text-[#cccccc] hover:text-white p-1 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -609,54 +609,54 @@ export const AuditTrailTabContent: React.FC<{
     <div className="space-y-3 text-right" dir="rtl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <History className="w-4 h-4 text-indigo-600" />
-          <h4 className="text-xs font-bold text-slate-900">
+          <History className="w-4 h-4 text-[#007cc0]" />
+          <h4 className="text-xs font-bold text-[#333333]">
             {title || 'تاریخچه تغییرات و لاگ ممیزی سیستم (Enterprise Audit Trail)'}
           </h4>
         </div>
-        <span className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+        <span className="text-[10px] font-mono bg-[#f5f5f5] text-[#333333] px-2 py-0.5 rounded-sm border border-[#d9d9d9]">
           {toPersianDigits(displayList.length)} رویداد ثبت‌شده
         </span>
       </div>
 
-      <div className={`relative pr-4 space-y-2.5 ${compact ? 'max-h-48 overflow-y-auto' : ''}`}>
-        <div className="absolute right-1.5 top-2 bottom-2 w-0.5 bg-slate-200 rounded-full" />
+      <div className={`relative pr-4 space-y-2 ${compact ? 'max-h-48 overflow-y-auto' : ''}`}>
+        <div className="absolute right-1.5 top-2 bottom-2 w-0.5 bg-[#d9d9d9]" />
         {displayList.map(item => {
           const badgeColor =
             item.actionType === 'SOFT_DELETE'
-              ? 'bg-rose-50 text-rose-700 border-rose-200'
+              ? 'bg-[#ffecec] text-[#bb0000] border-[#f5b7b1]'
               : item.actionType === 'RESTORE_UNDO'
-              ? 'bg-amber-50 text-amber-800 border-amber-200'
+              ? 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
               : item.actionType === 'COMPLETE_MO'
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : 'bg-indigo-50 text-indigo-700 border-indigo-200';
+              ? 'bg-[#ebf5ec] text-[#107e3e] border-[#b7dfbf]'
+              : 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]';
 
           return (
             <div
               key={item.id}
-              className="relative bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-1 text-xs"
+              className="relative bg-[#ffffff] border border-[#d9d9d9] rounded-sm p-2.5 space-y-1 text-xs"
             >
-              <span className="absolute -right-[13px] top-4 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-4 ring-white" />
+              <span className="absolute -right-[13px] top-3.5 w-2.5 h-2.5 rounded-full bg-[#007cc0] ring-4 ring-white" />
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badgeColor}`}>
+                  <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border ${badgeColor}`}>
                     {item.moduleName}
                   </span>
-                  <span className="font-bold text-slate-900">{item.title}</span>
+                  <span className="font-bold text-[#333333]">{item.title}</span>
                 </div>
-                <span className="font-mono text-[10px] text-slate-400 flex items-center gap-1">
+                <span className="font-mono text-[10px] text-[#666666] flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {item.timestamp}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-600">{item.details}</p>
-              <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400">
+              <p className="text-[11px] text-[#666666]">{item.details}</p>
+              <div className="flex items-center justify-between pt-1 text-[10px] text-[#666666]">
                 <span className="flex items-center gap-1">
-                  <UserCheck className="w-3 h-3 text-emerald-600" />
+                  <UserCheck className="w-3 h-3 text-[#107e3e]" />
                   ثبت‌کننده: {item.actor}
                 </span>
                 {item.entityCode && (
-                  <span className="font-mono text-slate-500">شناسه: {item.entityCode}</span>
+                  <span className="font-mono text-[#333333]">شناسه: {item.entityCode}</span>
                 )}
               </div>
             </div>

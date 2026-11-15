@@ -44,6 +44,7 @@ import { MasterDataSkeleton } from './ui/Skeleton';
 import { StandardTable, StandardTableHeader, StandardTableRow, StandardTableCell, StandardTableHeadCell } from './common/StandardTable';
 import { SearchableSelect } from './common/SearchableSelect';
 import { useEnterpriseUx } from '../context/EnterpriseUxContext';
+import { useErpRouter } from '../context/RouterContext';
 
 interface MachinesViewProps {
   machines: Machine[];
@@ -77,6 +78,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
   onSubTabChange,
 }) => {
   const { requestConfirm, showUndoToast, recordAudit } = useEnterpriseUx();
+  const { traceDocument } = useErpRouter();
   type SubTab = 'machines' | 'maintenance' | 'oee' | 'utilization' | 'dies' | 'halls' | 'operators';
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialSubTab);
 
@@ -607,18 +609,18 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Grafana-Inspired Light Header & Single Flat Dropdown List Selector Bar */}
-      <div className="bg-white p-4 lg:p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
+      {/* SAP HANA Fiori Header & Selector Bar */}
+      <div className="sap-card p-4 space-y-3.5">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200/70 text-orange-600 flex items-center justify-center shrink-0">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-[#e5f3fa] border border-[#b3d7ff] text-[#007cc0] flex items-center justify-center shrink-0">
               <Cpu className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base lg:text-lg font-bold text-slate-900">
+              <h2 className="text-base font-bold text-[#333333]">
                 مرکز تجهیزات، قالب‌های پرس، سالن‌ها و اپراتورهای کارخانه
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 پرس‌های چندمنظوره (کشش، پانچ، خم)، مدیریت قالب‌های سنبه ماتریس، سالن‌های تولیدی، شاخص OEE و پرسنل خطوط
               </p>
             </div>
@@ -629,43 +631,43 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             {activeSubTab === 'machines' && (
               <button
                 onClick={handleOpenNewMachine}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-orange-400" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>ثبت پرس / دستگاه جدید</span>
               </button>
             )}
             {activeSubTab === 'dies' && (
               <button
                 onClick={handleOpenNewDie}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-orange-400" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>تعریف قالب پرس جدید</span>
               </button>
             )}
             {activeSubTab === 'operators' && (
               <button
                 onClick={handleOpenNewOp}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-orange-400" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>افزودن اپراتور جدید</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Unified Dropdown List Selector + Quick Chips (Replaces Row Tabs) */}
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        {/* Unified Dropdown List Selector + Quick Chips */}
+        <div className="pt-3 border-t border-[#e8e8e8] flex flex-wrap items-center justify-between gap-2.5 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-orange-600" />
-              <span className="text-slate-500 font-medium">انتخاب بخش ماشین‌آلات و ظرفیت:</span>
+            <div className="inline-flex items-center gap-2 bg-[#f0f0f0] border border-[#d9d9d9] rounded-sm px-2.5 py-1">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#007cc0]" />
+              <span className="text-[#666666] font-medium">انتخاب بخش ماشین‌آلات و ظرفیت:</span>
               <select
                 value={activeSubTab}
                 onChange={e => handleSelectSubTab(e.target.value as SubTab)}
-                className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
+                className="bg-transparent font-bold text-[#333333] focus:outline-none cursor-pointer"
               >
                 {subTabsList.map(tab => (
                   <option key={tab.id} value={tab.id}>
@@ -682,10 +684,10 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                   key={tab.id}
                   type="button"
                   onClick={() => handleSelectSubTab(tab.id)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
+                  className={`px-2.5 py-1 rounded-sm text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
                     activeSubTab === tab.id
-                      ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
-                      : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200/80'
+                      ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0] font-bold'
+                      : 'bg-white hover:bg-[#f0f0f0] text-[#666666] border-[#d9d9d9]'
                   }`}
                 >
                   {tab.shortLabel}
@@ -694,7 +696,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-[#666666]">
             کل پرس‌ها: {toPersianDigits(machines.length)} • قالب‌ها: {toPersianDigits(dies.length)} • پرسنل: {toPersianDigits(operators.length)}
           </div>
         </div>
@@ -735,16 +737,16 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
               return (
                 <div
                   key={m.id}
-                  className={`p-5 rounded-xl border transition-all bg-white shadow-2xs ${
+                  className={`p-4 rounded border transition-all bg-white ${
                     isActive
-                      ? 'border-slate-200 hover:border-orange-300'
+                      ? 'border-[#d9d9d9] hover:border-[#007cc0]'
                       : isMaintenance
-                      ? 'border-amber-300 bg-amber-50/30'
-                      : 'border-slate-200 bg-slate-50/50'
+                      ? 'border-[#f5d0a9] bg-[#fff5eb]/50'
+                      : 'border-[#d9d9d9] bg-[#f7f7f7]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-orange-800 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200/80">
+                    <span className="font-mono text-xs font-bold text-[#007cc0] bg-[#e5f3fa] px-2.5 py-0.5 rounded border border-[#b3ddf2]">
                       {m.code}
                     </span>
 
@@ -786,9 +788,9 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                   </div>
 
                   <div className="mt-4 space-y-2 text-xs text-slate-700">
-                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                      <span className="text-slate-500">تناژ اسمی:</span>
-                      <span className="font-mono font-bold text-orange-700">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-[#e8e8e8]">
+                      <span className="text-[#666666]">تناژ اسمی:</span>
+                      <span className="font-mono font-bold text-[#007cc0]">
                         {m.tonnage ? `${toPersianDigits(m.tonnage)} تن` : 'فاقد تناژ'}
                       </span>
                     </div>
@@ -841,72 +843,81 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             </span>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="sap-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
+              <table className="sap-table-compact w-full text-right text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                    <th className="py-3 px-3">کد قالب</th>
-                    <th className="py-3 px-3">عنوان قالب پرس</th>
-                    <th className="py-3 px-3">قطعه تولیدی مرتبط</th>
-                    <th className="py-3 px-3">عملیات فرآیندی</th>
-                    <th className="py-3 px-3">تناژ مورد نیاز</th>
-                    <th className="py-3 px-3">پرس‌های سازگار</th>
-                    <th className="py-3 px-3">کارکرد ضرب / عمر اسمی</th>
-                    <th className="py-3 px-3">محل در انبار</th>
-                    <th className="py-3 px-3">وضعیت</th>
-                    <th className="py-3 px-3">عملیات</th>
+                  <tr className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
+                    <th>کد قالب</th>
+                    <th>عنوان قالب پرس</th>
+                    <th>قطعه تولیدی مرتبط</th>
+                    <th>عملیات فرآیندی</th>
+                    <th>تناژ مورد نیاز</th>
+                    <th>پرس‌های سازگار</th>
+                    <th>کارکرد ضرب / عمر اسمی</th>
+                    <th>محل در انبار</th>
+                    <th>وضعیت</th>
+                    <th>عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                   {dies.map(d => {
                     const healthPct = Math.round((d.currentStrokes / (d.strokeLifeTarget || 1)) * 100);
                     return (
-                      <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-blue-700">{d.code}</td>
-                        <td className="py-3 px-3 text-slate-900 font-bold max-w-xs">{d.name}</td>
-                        <td className="py-3 px-3 text-slate-700">
+                      <tr key={d.id} className="hover:bg-[#e5f3fa]/55 transition-colors">
+                        <td className="font-mono font-bold text-[#007cc0]">{d.code}</td>
+                        <td className="text-[#333333] font-bold max-w-xs">{d.name}</td>
+                        <td className="text-[#333333]">
                           <div className="font-medium">{d.partName}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">{d.partCode}</div>
+                          {d.partCode ? (
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(d.partCode!, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link text-[10px] font-mono"
+                              title="رهگیری قطعه در انبار و کاردکس"
+                            >
+                              {d.partCode}
+                            </button>
+                          ) : null}
                         </td>
-                        <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] border border-slate-200 font-semibold">
+                        <td>
+                          <span className="px-2 py-0.5 rounded-sm bg-[#f0f0f0] text-[#333333] font-mono text-[10px] border border-[#d9d9d9] font-semibold">
                             {d.processType}
                           </span>
                         </td>
-                        <td className="py-3 px-3 font-mono font-bold text-slate-900">{d.requiredTonnage} تن</td>
-                        <td className="py-3 px-3 font-mono text-[11px] text-slate-500">
+                        <td className="font-mono font-bold text-[#333333]">{d.requiredTonnage} تن</td>
+                        <td className="font-mono text-[11px] text-[#666666]">
                           {d.compatibleMachineCodes?.join(', ') || '-'}
                         </td>
-                        <td className="py-3 px-3">
-                          <div className="font-mono text-xs text-slate-800 font-semibold">
+                        <td>
+                          <div className="font-mono text-xs text-[#333333] font-semibold">
                             {formatNumber(d.currentStrokes)} / {formatNumber(d.strokeLifeTarget)}
                           </div>
-                          <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden border border-slate-200">
+                          <div className="w-24 bg-[#f0f0f0] h-1.5 rounded-sm mt-1 overflow-hidden border border-[#d9d9d9]">
                             <div
-                              className={`h-full rounded-full ${
-                                healthPct > 80 ? 'bg-rose-500' : 'bg-emerald-500'
+                              className={`h-full rounded-sm ${
+                                healthPct > 80 ? 'bg-[#bb0000]' : 'bg-[#107e3e]'
                               }`}
                               style={{ width: `${Math.min(100, healthPct)}%` }}
                             />
                           </div>
                         </td>
-                        <td className="py-3 px-3 text-slate-600 text-[11px]">{d.location}</td>
-                        <td className="py-3 px-3">
+                        <td className="text-[#666666] text-[11px]">{d.location}</td>
+                        <td>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border ${
                               d.status === 'READY'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                                ? 'bg-[#eefaf2] text-[#107e3e] border-[#b6e4c8]'
+                                : 'bg-[#fff7eb] text-[#e9730c] border-[#f5d29c]'
                             }`}
                           >
                             {d.status === 'READY' ? 'آماده تولید' : 'سرویس / تیزکاری'}
                           </span>
                         </td>
-                        <td className="py-3 px-3">
+                        <td>
                           <button
                             onClick={() => handleEditDie(d)}
-                            className="text-xs text-blue-600 hover:text-blue-800 font-bold transition-colors cursor-pointer"
+                            className="text-xs text-[#007cc0] hover:text-[#006299] font-bold transition-colors cursor-pointer"
                           >
                             ویرایش
                           </button>
@@ -927,29 +938,29 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
           {halls.map(hall => {
             const machinesInHall = machines.filter(m => m.location?.includes(hall.name) || m.hallId === hall.id);
             return (
-              <div key={hall.id} className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+              <div key={hall.id} className="sap-card p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                  <span className="font-mono text-xs font-bold text-[#007cc0] bg-[#e5f3fa] px-2.5 py-0.5 rounded-sm border border-[#b3d7ff]">
                     {hall.code}
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-semibold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[#f0f0f0] text-[#333333] border border-[#d9d9d9] font-semibold">
                     {hall.type}
                   </span>
                 </div>
 
-                <h3 className="text-sm font-bold text-slate-900">{hall.name}</h3>
+                <h3 className="text-sm font-bold text-[#333333]">{hall.name}</h3>
 
-                <div className="space-y-1.5 text-xs text-slate-700">
-                  <div className="flex justify-between pb-1 border-b border-slate-100">
-                    <span className="text-slate-500">سرپرست سالن:</span>
-                    <span className="text-slate-900 font-bold">{hall.supervisorName || '-'}</span>
+                <div className="space-y-1.5 text-xs text-[#333333]">
+                  <div className="flex justify-between pb-1 border-b border-[#e8e8e8]">
+                    <span className="text-[#666666]">سرپرست سالن:</span>
+                    <span className="text-[#333333] font-bold">{hall.supervisorName || '-'}</span>
                   </div>
-                  <div className="flex justify-between pb-1 border-b border-slate-100">
-                    <span className="text-slate-500">تجهیزات و پرس‌ها:</span>
-                    <span className="text-emerald-700 font-bold">{toPersianDigits(machinesInHall.length)} دستگاه</span>
+                  <div className="flex justify-between pb-1 border-b border-[#e8e8e8]">
+                    <span className="text-[#666666]">تجهیزات و پرس‌ها:</span>
+                    <span className="text-[#107e3e] font-bold">{toPersianDigits(machinesInHall.length)} دستگاه</span>
                   </div>
                   {hall.capacityDesc && (
-                    <p className="text-[11px] text-slate-500 pt-1 leading-relaxed">
+                    <p className="text-[11px] text-[#666666] pt-1 leading-relaxed">
                       {hall.capacityDesc}
                     </p>
                   )}
@@ -964,23 +975,23 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
       {activeSubTab === 'operators' && (
         <div className="space-y-3">
           {/* Search bar and counter */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs">
+          <div className="sap-card flex flex-col sm:flex-row items-center justify-between gap-3 p-3">
             <div className="relative w-full sm:w-80">
-              <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
               <input
                 type="text"
                 placeholder="جستجو در اپراتورها (نام، کد پرسنلی، مهارت)..."
                 value={operatorSearch}
                 onChange={e => setOperatorSearch(e.target.value)}
-                className="w-full pr-8 pl-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-900"
+                className="w-full pr-8 pl-3 py-1.5 text-xs bg-white border border-[#d9d9d9] rounded-sm focus:outline-none focus:border-[#007cc0] text-[#333333]"
               />
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-[#666666]">
               <span>تعداد پرسنل فعال: {toPersianDigits(operators.filter(o => o.active).length)} نفر</span>
               <button
                 type="button"
                 onClick={handleOpenNewOp}
-                className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-xs shadow-2xs cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ اپراتور جدید</span>
@@ -988,21 +999,21 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="sap-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
+              <table className="sap-table-compact w-full text-right text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                    <th className="py-3 px-3">کد پرسنلی</th>
-                    <th className="py-3 px-3">نام و نام خانوادگی</th>
-                    <th className="py-3 px-3">مهارت‌های تخصصی</th>
-                    <th className="py-3 px-3">شیفت پیش‌فرض</th>
-                    <th className="py-3 px-3">تماس</th>
-                    <th className="py-3 px-3 text-center">وضعیت</th>
-                    <th className="py-3 px-3 text-center">عملیات و گزارش</th>
+                  <tr className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
+                    <th>کد پرسنلی</th>
+                    <th>نام و نام خانوادگی</th>
+                    <th>مهارت‌های تخصصی</th>
+                    <th>شیفت پیش‌فرض</th>
+                    <th>تماس</th>
+                    <th className="text-center">وضعیت</th>
+                    <th className="text-center">عملیات و گزارش</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                   {operators
                     .filter(op => {
                       if (!operatorSearch.trim()) return true;
@@ -1014,34 +1025,34 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                       );
                     })
                     .map(op => (
-                      <tr key={op.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-orange-700">{op.personnelCode}</td>
-                        <td className="py-3 px-3 text-slate-900 font-bold">{op.fullName}</td>
-                        <td className="py-3 px-3">
+                      <tr key={op.id} className="hover:bg-[#e5f3fa]/55 transition-colors">
+                        <td className="font-mono font-bold text-[#007cc0]">{op.personnelCode}</td>
+                        <td className="text-[#333333] font-bold">{op.fullName}</td>
+                        <td>
                           <div className="flex flex-wrap gap-1">
                             {op.skillProcessTypes?.map((s, i) => (
-                              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono font-semibold">
+                              <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-sm bg-[#f0f0f0] text-[#333333] border border-[#d9d9d9] font-mono font-semibold">
                                 {s}
                               </span>
                             ))}
                           </div>
                         </td>
-                        <td className="py-3 px-3 text-slate-700">
+                        <td className="text-[#333333]">
                           {op.defaultShift === 'MORNING' ? 'شیفت صبح' : op.defaultShift === 'EVENING' ? 'شیفت عصر' : 'شیفت شب'}
                         </td>
-                        <td className="py-3 px-3 font-mono text-slate-500 text-[11px]">{op.phone || '-'}</td>
-                        <td className="py-3 px-3 text-center">
-                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <td className="font-mono text-[#666666] text-[11px]">{op.phone || '-'}</td>
+                        <td className="text-center">
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-sm bg-[#eefaf2] text-[#107e3e] border border-[#b6e4c8] font-semibold">
+                            <CheckCircle2 className="w-3 h-3 text-[#107e3e]" />
                             شاغل
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-center">
+                        <td className="text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => handleOpenTimesheetReport(op)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-[11px] transition cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#e5f3fa] hover:bg-[#d1ecfa] text-[#007cc0] border border-[#b3d7ff] font-semibold text-[11px] transition cursor-pointer"
                               title="مشاهده کارنامه و ساعات کارکرد"
                             >
                               <FileText className="w-3 h-3" />
@@ -1050,7 +1061,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleEditOp(op)}
-                              className="p-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition cursor-pointer"
+                              className="p-1 rounded-sm hover:bg-[#e5f3fa] text-[#007cc0] transition cursor-pointer"
                               title="ویرایش مشخصات اپراتور"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
@@ -1058,7 +1069,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleDeleteOp(op)}
-                              className="p-1 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer"
+                              className="p-1 rounded-sm hover:bg-[#fff2f2] text-[#bb0000] transition cursor-pointer"
                               title="حذف اپراتور"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1077,7 +1088,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
       {/* SLIDE-OVER DRAWER: ADD / EDIT MACHINE */}
       {isMachineModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-xs flex justify-end"
+          className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex justify-end"
           onClick={() => setIsMachineModalOpen(false)}
         >
           <div
@@ -1085,17 +1096,17 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             className="bg-white border-r border-slate-200 w-full max-w-lg h-full p-6 shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 z-10 bg-white flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-orange-600" />
+              <h3 className="text-sm font-bold text-[#333333] flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-[#007cc0]" />
                 <span>{editingMachine ? 'کشوی ویرایش مشخصات ماشین / پرس' : 'کشوی ثبت پرس یا دستگاه جدید'}</span>
               </h3>
-              <button onClick={() => setIsMachineModalOpen(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
+              <button onClick={() => setIsMachineModalOpen(false)} className="text-[#666666] hover:text-[#333333] cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+              <div className="mt-3 p-3 rounded bg-[#fdf3f3] border border-[#e5b3b3] text-[#bb0000] text-xs">
                 {formError}
               </div>
             )}
@@ -1103,70 +1114,70 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             <form onSubmit={handleMachineSubmit} className="mt-4 space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">کد شناسایی ماشین *</label>
+                  <label className="text-[#333333] font-medium">کد شناسایی ماشین *</label>
                   <input
                     type="text"
                     value={machineFormData.code || ''}
                     onChange={e => setMachineFormData({ ...machineFormData, code: e.target.value })}
                     placeholder="PRS-400-02"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">تناژ اسمی پرس (تن) *</label>
+                  <label className="text-[#333333] font-medium">تناژ اسمی پرس (تن) *</label>
                   <input
                     type="number"
                     value={machineFormData.tonnage || 0}
                     onChange={e => setMachineFormData({ ...machineFormData, tonnage: parseFloat(e.target.value) || 0 })}
                     placeholder="400"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-700 font-medium">عنوان کامل ماشین در کارخانه *</label>
+                <label className="text-[#333333] font-medium">عنوان کامل ماشین در کارخانه *</label>
                 <input
                   type="text"
                   value={machineFormData.name || ''}
                   onChange={e => setMachineFormData({ ...machineFormData, name: e.target.value })}
                   placeholder="پرس مکانیکی ضربه‌ای شولر ۴۰۰ تن C-Frame"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   required
                 />
               </div>
 
               {/* Multi-Capability Checkboxes */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="space-y-1.5 p-3 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-slate-800 font-bold">
+                  <label className="text-[#333333] font-bold">
                     قابلیت‌های فرآیندی این دستگاه (چند انتخابی بر اساس قالب‌های قابل نصب):
                   </label>
                   <button
                     type="button"
                     onClick={() => setIsNewProcessModalOpen(true)}
-                    className="text-[11px] font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200"
+                    className="text-[11px] font-bold text-[#007cc0] hover:text-[#006299] flex items-center gap-1 cursor-pointer bg-[#e5f3fa] px-2 py-0.5 rounded border border-[#b3ddf2]"
                   >
                     <Plus className="w-3 h-3" />
                     <span>+ قابلیت جدید / ویرایش لیست</span>
                   </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white p-2.5 rounded border border-[#e8e8e8]">
                   {availableProcesses.map(p => {
                     const isChecked = (machineFormData.capabilities || []).includes(p.code as any);
                     return (
-                      <label key={p.code} className="flex items-center justify-between gap-1 cursor-pointer text-[11px] text-slate-700 hover:text-slate-900 bg-white px-2 py-1.5 rounded-lg border border-slate-200/80">
+                      <label key={p.code} className="flex items-center justify-between gap-1 cursor-pointer text-[11px] text-[#333333] hover:text-[#007cc0] bg-[#f7f7f7] px-2 py-1.5 rounded border border-[#d9d9d9]">
                         <div className="flex items-center gap-1.5 truncate">
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => toggleCapability(p.code)}
-                            className="rounded bg-white border-slate-300 text-orange-600 focus:ring-0 cursor-pointer"
+                            className="rounded bg-white border-[#bfbfbf] text-[#007cc0] focus:ring-0 cursor-pointer"
                           />
                           <span className="truncate">{p.name}</span>
                         </div>
-                        <span className="font-mono text-[9px] text-slate-400">{p.code}</span>
+                        <span className="font-mono text-[9px] text-[#666666]">{p.code}</span>
                       </label>
                     );
                   })}
@@ -1175,22 +1186,22 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-medium">ابعاد میز پرس (Bolster)</label>
+                  <label className="text-[#333333] font-medium">ابعاد میز پرس (Bolster)</label>
                   <input
                     type="text"
                     value={machineFormData.bolsterSize || ''}
                     onChange={e => setMachineFormData({ ...machineFormData, bolsterSize: e.target.value })}
                     placeholder="2200x1400 mm"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-slate-700 font-medium">سالن استقرار</label>
+                    <label className="text-[#333333] font-medium">سالن استقرار</label>
                     <button
                       type="button"
                       onClick={() => setIsQuickHallModalOpen(true)}
-                      className="text-[11px] text-orange-600 hover:text-orange-700 font-bold flex items-center gap-1 cursor-pointer"
+                      className="text-[11px] text-[#007cc0] hover:text-[#006299] font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" />
                       <span>+ سالن جدید / مدیریت</span>
@@ -1206,7 +1217,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                         location: selectedH ? selectedH.name : machineFormData.location,
                       });
                     }}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500 font-medium"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                   >
                     {hallsList.map(h => (
                       <option key={h.id} value={h.id}>
@@ -1217,18 +1228,18 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsMachineModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium"
+                  className="sap-btn-standard text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all"
+                  className="sap-btn-emphasized text-xs"
                 >
                   {loading ? 'در حال ثبت...' : 'ذخیره مشخصات ماشین'}
                 </button>
@@ -1241,7 +1252,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
       {/* SLIDE-OVER DRAWER: ADD / EDIT DIE / MOLD */}
       {isDieModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-xs flex justify-end"
+          className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex justify-end"
           onClick={() => setIsDieModalOpen(false)}
         >
           <div
@@ -1484,18 +1495,18 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsDieModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium"
+                  className="sap-btn-standard text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all"
+                  className="sap-btn-emphasized text-xs"
                 >
                   {loading ? 'در حال ثبت...' : 'ذخیره مشخصات قالب'}
                 </button>
@@ -1508,7 +1519,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
       {/* SLIDE-OVER DRAWER: ADD / EDIT OPERATOR */}
       {isOpModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-xs flex justify-end"
+          className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex justify-end"
           onClick={() => setIsOpModalOpen(false)}
         >
           <div
@@ -1576,21 +1587,21 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpModalOpen(false);
                     setEditingOperator(null);
                   }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 cursor-pointer"
                 >
                   {loading ? 'در حال ثبت...' : editingOperator ? 'ذخیره تغییرات اپراتور' : 'ثبت اپراتور جدید'}
                 </button>
@@ -1602,18 +1613,18 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
       {/* MODAL: OPERATOR TIMESHEET & PERFORMANCE REPORT (گزارش کارکرد هر نفر) */}
       {selectedOpForReport && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-2xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200">
+                <div className="p-2 bg-[#e5f3fa] text-[#007cc0] rounded-sm border border-[#b3d7ff]">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-bold text-[#333333]">
                     گزارش کارکرد و بازدهی: {selectedOpForReport.fullName}
                   </h3>
-                  <p className="text-xs text-slate-500 font-mono">
+                  <p className="text-xs text-[#666666] font-mono">
                     کد پرسنلی: {selectedOpForReport.personnelCode} • شیفت: {selectedOpForReport.defaultShift === 'MORNING' ? 'صبح' : 'عصر'}
                   </p>
                 </div>
@@ -1621,41 +1632,41 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedOpForReport(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] p-1 rounded-sm hover:bg-[#f0f0f0] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {loadingTimesheet ? (
-              <div className="py-12 text-center text-xs text-slate-500">
+              <div className="py-12 text-center text-xs text-[#666666]">
                 در حال فراخوانی آمار و کارکرد شیفت‌ها...
               </div>
             ) : opTimesheetData ? (
               <div className="space-y-4 text-xs">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 text-right">
-                    <span className="text-[10px] text-slate-500 block">ساعات کارکرد کل:</span>
-                    <span className="text-base font-extrabold text-slate-900 font-mono">
+                  <div className="p-3 rounded-sm bg-[#f7f9fa] border border-[#d9d9d9] text-right">
+                    <span className="text-[10px] text-[#666666] block">ساعات کارکرد کل:</span>
+                    <span className="text-base font-extrabold text-[#333333] font-mono">
                       {toPersianDigits(opTimesheetData.summary.totalHoursWorked)} ساعت
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200/90 text-right">
-                    <span className="text-[10px] text-emerald-700 block">تولید سالم کل:</span>
-                    <span className="text-base font-extrabold text-emerald-800 font-mono">
+                  <div className="p-3 rounded-sm bg-[#eefaf2] border border-[#b6e4c8] text-right">
+                    <span className="text-[10px] text-[#107e3e] block">تولید سالم کل:</span>
+                    <span className="text-base font-extrabold text-[#107e3e] font-mono">
                       {formatNumber(opTimesheetData.summary.totalPiecesProduced)} عدد
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/90 text-right">
-                    <span className="text-[10px] text-amber-700 block">توقفات ثبت‌شده:</span>
-                    <span className="text-base font-extrabold text-amber-900 font-mono">
+                  <div className="p-3 rounded-sm bg-[#fff7eb] border border-[#f5d29c] text-right">
+                    <span className="text-[10px] text-[#e9730c] block">توقفات ثبت‌شده:</span>
+                    <span className="text-base font-extrabold text-[#e9730c] font-mono">
                       {toPersianDigits(opTimesheetData.summary.downtimeReportedHours)} ساعت
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200/90 text-right">
-                    <span className="text-[10px] text-indigo-700 block">راندمان عملکرد:</span>
-                    <span className="text-base font-extrabold text-indigo-900 font-mono">
+                  <div className="p-3 rounded-sm bg-[#e5f3fa] border border-[#b3d7ff] text-right">
+                    <span className="text-[10px] text-[#007cc0] block">راندمان عملکرد:</span>
+                    <span className="text-base font-extrabold text-[#007cc0] font-mono">
                       {toPersianDigits(opTimesheetData.summary.overallEfficiencyPercent)}%
                     </span>
                   </div>
@@ -1663,41 +1674,50 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
                 {/* Shift Log Table */}
                 <div>
-                  <h4 className="font-bold text-slate-800 mb-2">ریز عملکرد روزانه و شیفت‌های اخیر:</h4>
-                  <div className="overflow-x-auto rounded-xl border border-slate-200/90">
-                    <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <h4 className="font-bold text-[#333333] mb-2">ریز عملکرد روزانه و شیفت‌های اخیر:</h4>
+                  <div className="overflow-x-auto rounded-sm border border-[#d9d9d9]">
+                    <table className="sap-table-compact w-full text-right text-xs">
+                      <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
                         <tr>
-                          <th className="py-2.5 px-3">تاریخ و شیفت</th>
-                          <th className="py-2.5 px-3">دستگاه</th>
-                          <th className="py-2.5 px-3">قطعه تولیدی</th>
-                          <th className="py-2.5 px-3 text-center">تولید سالم</th>
-                          <th className="py-2.5 px-3 text-center">ضایعات</th>
-                          <th className="py-2.5 px-3 text-center">توقف (دقیقه)</th>
-                          <th className="py-2.5 px-3">علت توقف</th>
+                          <th>تاریخ و شیفت</th>
+                          <th>دستگاه</th>
+                          <th>قطعه تولیدی</th>
+                          <th className="text-center">تولید سالم</th>
+                          <th className="text-center">ضایعات</th>
+                          <th className="text-center">توقف (دقیقه)</th>
+                          <th>علت توقف</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
+                      <tbody className="divide-y divide-[#e8e8e8] text-[#333333] font-mono">
                         {opTimesheetData.shiftRecords.map((r: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-slate-50/80">
-                            <td className="py-2.5 px-3 font-sans font-medium text-slate-900">
-                              {r.date} <span className="text-[10px] text-slate-400 block">{r.shift}</span>
+                          <tr key={idx} className="hover:bg-[#e5f3fa]/55">
+                            <td className="font-sans font-medium text-[#333333]">
+                              {r.date} <span className="text-[10px] text-[#666666] block">{r.shift}</span>
                             </td>
-                            <td className="py-2.5 px-3 font-bold text-slate-800">{r.machineCode}</td>
-                            <td className="py-2.5 px-3 font-sans">
-                              <span className="font-semibold text-slate-900">{r.partName}</span>
-                              <span className="text-[10px] text-slate-400 block font-mono">{r.partCode}</span>
+                            <td className="font-bold text-[#333333]">{r.machineCode}</td>
+                            <td className="font-sans">
+                              <span className="font-semibold text-[#333333]">{r.partName}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedOpForReport(null);
+                                  traceDocument(r.partCode, 'INVENTORY_LEDGER');
+                                }}
+                                className="sap-doc-link text-[10px] block font-mono"
+                              >
+                                {r.partCode}
+                              </button>
                             </td>
-                            <td className="py-2.5 px-3 text-center font-bold text-emerald-700">
+                            <td className="text-center font-bold text-[#107e3e]">
                               {formatNumber(r.actualProduced)}
                             </td>
-                            <td className="py-2.5 px-3 text-center text-rose-600 font-semibold">
+                            <td className="text-center text-[#bb0000] font-semibold">
                               {toPersianDigits(r.scrapCount)}
                             </td>
-                            <td className="py-2.5 px-3 text-center text-amber-700">
+                            <td className="text-center text-[#e9730c]">
                               {toPersianDigits(r.downtimeMin)}
                             </td>
-                            <td className="py-2.5 px-3 font-sans text-slate-500 text-[11px] max-w-xs truncate">
+                            <td className="font-sans text-[#666666] text-[11px] max-w-xs truncate">
                               {r.downtimeReason}
                             </td>
                           </tr>
@@ -1707,11 +1727,11 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#e8e8e8]">
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                    className="sap-btn-standard flex items-center gap-1.5 px-3.5 py-1.5 cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>چاپ کارنامه</span>
@@ -1719,7 +1739,7 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setSelectedOpForReport(null)}
-                    className="px-4 py-1.5 rounded-lg bg-slate-900 text-white font-bold cursor-pointer"
+                    className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                   >
                     بستن
                   </button>
@@ -1732,35 +1752,35 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
       {/* MODAL: DYNAMIC PROCESS CAPABILITIES MANAGEMENT (مدیریت قابلیت‌های فرآیندی پرس) */}
       {isNewProcessModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-md p-5 space-y-4 shadow-lg">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
               <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-orange-600" />
-                <h3 className="text-sm font-bold text-slate-900">مدیریت قابلیت‌های فرآیندی پرس‌ها</h3>
+                <Settings className="w-4 h-4 text-[#007cc0]" />
+                <h3 className="text-sm font-bold text-[#333333]">مدیریت قابلیت‌های فرآیندی پرس‌ها</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewProcessModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Existing Processes List */}
-            <div className="space-y-1 max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs">
-              <span className="text-[11px] font-bold text-slate-500 block mb-1">قابلیت‌های ثبت‌شده در سیستم:</span>
+            <div className="space-y-1 max-h-48 overflow-y-auto divide-y divide-[#e8e8e8] text-xs">
+              <span className="text-[11px] font-bold text-[#666666] block mb-1">قابلیت‌های ثبت‌شده در سیستم:</span>
               {availableProcesses.map(p => (
                 <div key={p.code} className="flex items-center justify-between py-1.5 px-1">
                   <div>
-                    <span className="font-bold text-slate-900 font-mono">{p.code}</span>
-                    <span className="text-slate-500 mr-2 text-[11px]">{p.name}</span>
+                    <span className="font-bold text-[#333333] font-mono">{p.code}</span>
+                    <span className="text-[#666666] mr-2 text-[11px]">{p.name}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleDeleteProcess(p.code)}
-                    className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 cursor-pointer"
+                    className="text-[#bb0000] hover:bg-[#fdf3f3] p-1 rounded cursor-pointer"
                     title="حذف قابلیت"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1770,29 +1790,29 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
             </div>
 
             {/* Form to add a new process */}
-            <form onSubmit={handleCreateProcess} className="pt-3 border-t border-slate-100 space-y-2.5 text-xs">
-              <span className="text-[11px] font-bold text-slate-700 block">افزودن قابلیت فرآیندی جدید:</span>
+            <form onSubmit={handleCreateProcess} className="pt-3 border-t border-[#e8e8e8] space-y-2.5 text-xs">
+              <span className="text-[11px] font-bold text-[#333333] block">افزودن قابلیت فرآیندی جدید:</span>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">شناسه انگلیسی (Code) *</label>
+                  <label className="text-[10px] text-[#666666] block mb-0.5">شناسه انگلیسی (Code) *</label>
                   <input
                     type="text"
                     required
                     placeholder="مثال: COINING یا FLANGING"
                     value={newProcCode}
                     onChange={e => setNewProcCode(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-orange-500 uppercase"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 font-mono text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] uppercase"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">عنوان فارسی فرایند *</label>
+                  <label className="text-[10px] text-[#666666] block mb-0.5">عنوان فارسی فرایند *</label>
                   <input
                     type="text"
                     required
                     placeholder="مثال: سکه‌زنی یا فلنج‌کاری"
                     value={newProcName}
                     onChange={e => setNewProcName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
@@ -1801,13 +1821,13 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsNewProcessModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs cursor-pointer"
+                  className="sap-btn-standard text-xs"
                 >
                   بستن
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs cursor-pointer shadow-xs"
+                  className="sap-btn-emphasized text-xs"
                 >
                   + افزودن قابلیت
                 </button>
@@ -1819,17 +1839,17 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
       {/* MODAL: QUICK ADD FACTORY HALL (تعریف سالن استقرار جدید) */}
       {isQuickHallModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-xl text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-md p-5 space-y-4 shadow-lg text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
               <div className="flex items-center gap-2">
-                <Building className="w-4 h-4 text-orange-600" />
-                <h3 className="text-sm font-bold text-slate-900">ثبت و تعریف سالن تولید جدید</h3>
+                <Building className="w-4 h-4 text-[#007cc0]" />
+                <h3 className="text-sm font-bold text-[#333333]">ثبت و تعریف سالن تولید جدید</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsQuickHallModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1837,36 +1857,36 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
 
             <form onSubmit={handleCreateQuickHall} className="space-y-3 text-xs">
               <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">کد سالن *</label>
+                <label className="text-[11px] font-bold text-[#333333] block mb-1">کد سالن *</label>
                 <input
                   type="text"
                   required
                   placeholder="HALL-PRESS-02"
                   value={quickHallCode}
                   onChange={e => setQuickHallCode(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 uppercase focus:outline-none focus:border-orange-500 font-bold"
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 font-mono text-[#333333] uppercase focus:outline-none focus:border-[#007cc0] font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">نام سالن تولید *</label>
+                <label className="text-[11px] font-bold text-[#333333] block mb-1">نام سالن تولید *</label>
                 <input
                   type="text"
                   required
                   placeholder="مثال: سالن پرس متوسط و فیدر خطوط تارا"
                   value={quickHallName}
                   onChange={e => setQuickHallName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500 font-medium"
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">نوع سالن *</label>
+                  <label className="text-[11px] font-bold text-[#333333] block mb-1">نوع سالن *</label>
                   <select
                     value={quickHallType}
                     onChange={e => setQuickHallType(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="STAMPING">پرسکاری و پرس ضربه‌ای</option>
                     <option value="WELDING">مجموعه‌سازی و جوشکاری</option>
@@ -1876,29 +1896,29 @@ export const MachinesView: React.FC<MachinesViewProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">سرپرست سالن</label>
+                  <label className="text-[11px] font-bold text-[#333333] block mb-1">سرپرست سالن</label>
                   <input
                     type="text"
                     placeholder="مهندس مرادی"
                     value={quickHallSupervisor}
                     onChange={e => setQuickHallSupervisor(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsQuickHallModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-medium cursor-pointer"
+                  className="sap-btn-standard text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={savingQuickHall}
-                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold cursor-pointer shadow-xs"
+                  className="sap-btn-emphasized text-xs disabled:opacity-50"
                 >
                   {savingQuickHall ? 'در حال ثبت...' : 'ثبت و انتخاب سالن'}
                 </button>

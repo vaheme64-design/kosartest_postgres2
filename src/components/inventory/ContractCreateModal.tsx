@@ -289,50 +289,42 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
   const productDeliveries = commercialLines.filter(l => l.lineType === 'FINISHED_PRODUCT_DELIVERY');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto" dir="rtl">
-      <div className="relative w-full max-w-4xl bg-white border border-slate-200 shadow-2xl rounded-lg overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-[1px] overflow-y-auto" dir="rtl">
+      <div className="relative w-full max-w-4xl bg-white border border-[#d9d9d9] shadow-xl rounded-md overflow-hidden my-6">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-100 border-b border-slate-200">
+        <div className="flex items-center justify-between px-5 py-3.5 bg-[#ffffff] border-b border-[#d9d9d9]">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded">
+            <div className="p-2 bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] rounded">
               <FileSignature className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">ثبت قرارداد جدید و تعهدات تجاری / تأمین مواد</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-sm font-bold text-[#333333]">ثبت قرارداد جدید و تعهدات تجاری / تأمین مواد</h2>
+              <p className="text-xs text-[#666666]">
                 تعریف قراردادهای تأمین امانی ساپکو، قطعات تأمینی مشتری (ورق، پیچ و مهره، لاستیک) و تعهدات تحویل محصول
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+            className="p-1.5 text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] rounded transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-white">
+        <div className="sap-icon-tab-bar px-5">
           <button
             type="button"
             onClick={() => setActiveTab('BASE')}
-            className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
-              activeTab === 'BASE'
-                ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-700'
-            }`}
+            className={`sap-icon-tab cursor-pointer ${activeTab === 'BASE' ? 'sap-icon-tab-active' : ''}`}
           >
             ۱. اطلاعات پایه و طرف حساب
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('MATERIALS')}
-            className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'MATERIALS'
-                ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-700'
-            }`}
+            className={`sap-icon-tab flex items-center gap-1.5 cursor-pointer ${activeTab === 'MATERIALS' ? 'sap-icon-tab-active' : ''}`}
           >
             <Package className="w-3.5 h-3.5" />
             ۲. مواد دریافتی از مشتری ({toPersianDigits(incomingMaterials.length)})
@@ -340,11 +332,7 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('PRODUCTS')}
-            className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'PRODUCTS'
-                ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-700'
-            }`}
+            className={`sap-icon-tab flex items-center gap-1.5 cursor-pointer ${activeTab === 'PRODUCTS' ? 'sap-icon-tab-active' : ''}`}
           >
             <PackageCheck className="w-3.5 h-3.5" />
             ۳. تعهدات تحویل محصول ({toPersianDigits(productDeliveries.length)})
@@ -352,11 +340,7 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('COILS')}
-            className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'COILS'
-                ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-700'
-            }`}
+            className={`sap-icon-tab flex items-center gap-1.5 cursor-pointer ${activeTab === 'COILS' ? 'sap-icon-tab-active' : ''}`}
           >
             <Layers className="w-3.5 h-3.5" />
             ۴. تخصیص کلاف‌های اولیه ({toPersianDigits(selectedCoilAllocations.length)})
@@ -364,20 +348,20 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-700 text-xs rounded flex items-center gap-2">
+          <div className="mx-5 mt-4 p-3 bg-[#fde8e8] border border-[#f5b7b7] text-[#bb0000] text-xs rounded flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-5">
           {/* TAB 1: BASE INFO */}
           {activeTab === 'BASE' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  شماره قرارداد <span className="text-rose-400">*</span>
+                <label className="block text-xs font-medium text-[#333333] mb-1">
+                  شماره قرارداد <span className="text-[#bb0000]">*</span>
                 </label>
                 <input
                   type="text"
@@ -385,17 +369,17 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                   placeholder="e.g. CNT-SAPCO-1403-Q4 یا CNT-SAIPA-1404-01"
                   value={contractNumber}
                   onChange={e => setContractNumber(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono text-left"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0] font-mono text-left"
                   dir="ltr"
                 />
-                <span className="text-[10px] text-slate-500 mt-0.5 block">
+                <span className="text-[10px] text-[#666666] mt-0.5 block">
                   کد یکتای ثبت قرارداد در دفاتر مالی و زنجیره تأمین
                 </span>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  عنوان یا موضوع قرارداد <span className="text-rose-400">*</span>
+                <label className="block text-xs font-medium text-[#333333] mb-1">
+                  عنوان یا موضوع قرارداد <span className="text-[#bb0000]">*</span>
                 </label>
                 <input
                   type="text"
@@ -403,19 +387,19 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                   placeholder="e.g. تأمین ورق DC04 و مهره جوشی جهت تحویل براکت رام پژو ۲۰۶"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-medium text-slate-700">
-                    طرف حساب / مشتری / کارفرما <span className="text-rose-400">*</span>
+                  <label className="text-xs font-medium text-[#333333]">
+                    طرف حساب / مشتری / کارفرما <span className="text-[#bb0000]">*</span>
                   </label>
                   <button
                     type="button"
                     onClick={() => setActiveQuickModal('CUSTOMER')}
-                    className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-700 flex items-center gap-0.5 cursor-pointer"
+                    className="text-[11px] font-semibold text-[#107e3e] hover:underline flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>+ مشتری جدید</span>
@@ -426,7 +410,7 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                     <select
                       value={customerName}
                       onChange={e => setCustomerName(e.target.value)}
-                      className="w-1/2 px-2.5 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                      className="w-1/2 px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                     >
                       <option value={customerName}>{customerName}</option>
                       {localCustomers.map(c => (
@@ -442,17 +426,17 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                     placeholder="e.g. شرکت ساپکو، سازه‌گستر سایپا، ایران‌خودرو"
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="flex-1 px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">نوع ساختار قرارداد</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">نوع ساختار قرارداد</label>
                 <select
                   value={contractType}
                   onChange={e => setContractType(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 >
                   <option value="HYBRID">قرارداد دوطرفه (دریافت مواد/قطعات + تعهد تحویل محصول نهایی)</option>
                   <option value="SAPCO_CONSIGNMENT">تأمین امانی مواد و ورق خام ساپکو (Mobarakeh/SAPCO)</option>
@@ -462,11 +446,11 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">نوع مالکیت متریال در انبار</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">نوع مالکیت متریال در انبار</label>
                 <select
                   value={ownership}
                   onChange={e => setOwnership(e.target.value as StockOwnership)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 >
                   <option value="SAPCO_SUPPLIER_OWNED">امانی تأمین‌کننده (SAPCO_SUPPLIER_OWNED)</option>
                   <option value="CUSTOMER_SUPPLIED">تأمینی مستقیم مشتری (CUSTOMER_SUPPLIED)</option>
@@ -476,18 +460,18 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">گرید پیش‌فرض فولاد یا مشخصه ماده</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">گرید پیش‌فرض فولاد یا مشخصه ماده</label>
                 <input
                   type="text"
                   placeholder="e.g. DC04, ST14, DX51D, ST37"
                   value={materialGrade}
                   onChange={e => setMaterialGrade(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-[#333333] mb-1">
                   کل سهمیه وزنی قرارداد (کیلوگرم)
                 </label>
                 <input
@@ -496,54 +480,54 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                   step="100"
                   value={allocatedWeightKg}
                   onChange={e => setAllocatedWeightKg(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0] font-mono"
                   dir="ltr"
                 />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">
+                <span className="text-[10px] text-[#666666] mt-0.5 block">
                   معادل {formatNumber(Math.round(allocatedWeightKg / 1000))} تن
                 </span>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">موجودی اول دوره قرارداد (کیلوگرم)</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">موجودی اول دوره قرارداد (کیلوگرم)</label>
                 <input
                   type="number"
                   min="0"
                   value={openingBalanceKg}
                   onChange={e => setOpeningBalanceKg(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0] font-mono"
                   dir="ltr"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">تاریخ شروع قرارداد</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">تاریخ شروع قرارداد</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">تاریخ انقضا / خاتمه قرارداد</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">تاریخ انقضا / خاتمه قرارداد</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] font-mono"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-700 mb-1">توضیحات و ملاحظات قرارداد</label>
+                <label className="block text-xs font-medium text-[#333333] mb-1">توضیحات و ملاحظات قرارداد</label>
                 <textarea
                   rows={2}
                   placeholder="ملاحظات بازرگانی، شروط تحویل، تلورانس وزنی باسکول یا درصد ضایعات مجاز..."
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] placeholder-[#888888] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
             </div>
@@ -552,10 +536,10 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
           {/* TAB 2: INCOMING MATERIALS */}
           {activeTab === 'MATERIALS' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div className="flex items-center justify-between pb-2 border-b border-[#d9d9d9]">
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900">مواد و قطعات دریافتی مستقیم از کارفرما / تأمین‌کننده</h3>
-                  <p className="text-[11px] text-slate-400">
+                  <h3 className="text-xs font-bold text-[#333333]">مواد و قطعات دریافتی مستقیم از کارفرما / تأمین‌کننده</h3>
+                  <p className="text-[11px] text-[#666666]">
                     ورق‌های کلاف، پیچ و مهره‌های جوشی، ضربه‌گیرهای لاستیکی و سایر اقلامی که ساپکو یا مشتری مستقیماً ارسال می‌کند
                   </p>
                 </div>
@@ -566,15 +550,15 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                       setQuickPartDefaultCat('RAW_MATERIAL');
                       setActiveQuickModal('PART');
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-100 text-emerald-400 border border-slate-200 text-xs font-medium rounded transition-colors cursor-pointer"
+                    className="sap-btn-standard flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 text-[#107e3e]" />
                     <span>+ تعریف ماده/ورق جدید</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleAddMaterialLine}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded transition-colors cursor-pointer"
+                    className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     افزودن ردیف ماده/قطعه
@@ -583,25 +567,25 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
               </div>
 
               {incomingMaterials.length === 0 ? (
-                <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-200 rounded bg-slate-50">
+                <div className="py-8 text-center text-[#666666] text-xs border border-dashed border-[#bfbfbf] rounded bg-[#f7f7f7]">
                   هیچ ردیف ماده‌ای تعریف نشده است. جهت ثبت سهمیه ورق، پیچ و مهره یا لاستیک دکمه بالا را بزنید.
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {incomingMaterials.map((line, index) => (
                     <div
                       key={line.id}
-                      className="p-3 bg-slate-50 border border-slate-200 rounded grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                      className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
                     >
-                      <div className="md:col-span-1 text-center font-mono text-xs text-slate-400">
+                      <div className="md:col-span-1 text-center font-mono text-xs text-[#666666]">
                         #{toPersianDigits(index + 1)}
                       </div>
                       <div className="md:col-span-4">
-                        <label className="block text-[10px] text-slate-400 mb-1">انتخاب کالا / قطعه</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">انتخاب کالا / قطعه</label>
                         <select
                           value={line.partId}
                           onChange={e => handleUpdateLine(line.id, { partId: e.target.value })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                         >
                           {localParts.map(p => (
                             <option key={p.id} value={p.id}>
@@ -611,35 +595,35 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                         </select>
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-[10px] text-slate-400 mb-1">واحد سنجش</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">واحد سنجش</label>
                         <select
                           value={line.unit}
                           onChange={e => handleUpdateLine(line.id, { unit: e.target.value as any })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 focus:outline-none"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                         >
                           <option value="KG">کیلوگرم (KG)</option>
                           <option value="PCS">عدد (PCS)</option>
                         </select>
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-[10px] text-slate-400 mb-1">سهمیه قرارداد</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">سهمیه قرارداد</label>
                         <input
                           type="number"
                           min="0"
                           value={line.contractQty}
                           onChange={e => handleUpdateLine(line.id, { contractQty: Number(e.target.value) })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 font-mono text-left"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] font-mono text-left focus:outline-none focus:border-[#007cc0]"
                           dir="ltr"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-[10px] text-slate-400 mb-1">وزن کل (کیلوگرم)</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">وزن کل (کیلوگرم)</label>
                         <input
                           type="number"
                           min="0"
                           value={line.contractWeightKg}
                           onChange={e => handleUpdateLine(line.id, { contractWeightKg: Number(e.target.value) })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 font-mono text-left"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] font-mono text-left focus:outline-none focus:border-[#007cc0]"
                           dir="ltr"
                         />
                       </div>
@@ -647,7 +631,7 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveLine(line.id)}
-                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                          className="p-1.5 text-[#666666] hover:text-[#bb0000] hover:bg-[#fde8e8] rounded transition-colors cursor-pointer"
                           title="حذف ردیف"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -663,10 +647,10 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
           {/* TAB 3: PRODUCT DELIVERIES */}
           {activeTab === 'PRODUCTS' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div className="flex items-center justify-between pb-2 border-b border-[#d9d9d9]">
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900">تعهدات تجاری تحویل محصول تولیدی به مشتری</h3>
-                  <p className="text-[11px] text-slate-400">
+                  <h3 className="text-xs font-bold text-[#333333]">تعهدات تجاری تحویل محصول تولیدی به مشتری</h3>
+                  <p className="text-[11px] text-[#666666]">
                     قطعات نهایی پرسی و مجموعه‌های مونتاژی که کارخانه طبق این قرارداد متعهد به تولید و تحویل است
                   </p>
                 </div>
@@ -677,15 +661,15 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                       setQuickPartDefaultCat('FINISHED_GOOD');
                       setActiveQuickModal('PART');
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-100 text-emerald-400 border border-slate-200 text-xs font-medium rounded transition-colors cursor-pointer"
+                    className="sap-btn-standard flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 text-[#107e3e]" />
                     <span>+ تعریف محصول جدید</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleAddProductLine}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded transition-colors cursor-pointer"
+                    className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     افزودن تعهد محصول
@@ -694,25 +678,25 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
               </div>
 
               {productDeliveries.length === 0 ? (
-                <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-200 rounded bg-slate-50">
+                <div className="py-8 text-center text-[#666666] text-xs border border-dashed border-[#bfbfbf] rounded bg-[#f7f7f7]">
                   هیچ تعهد محصولی اضافه نشده است. جهت ثبت قطعات تحویلی دکمه بالا را بزنید.
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {productDeliveries.map((line, index) => (
                     <div
                       key={line.id}
-                      className="p-3 bg-slate-50 border border-slate-200 rounded grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                      className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
                     >
-                      <div className="md:col-span-1 text-center font-mono text-xs text-slate-400">
+                      <div className="md:col-span-1 text-center font-mono text-xs text-[#666666]">
                         #{toPersianDigits(index + 1)}
                       </div>
                       <div className="md:col-span-5">
-                        <label className="block text-[10px] text-slate-400 mb-1">قطعه محصول نهایی</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">قطعه محصول نهایی</label>
                         <select
                           value={line.partId}
                           onChange={e => handleUpdateLine(line.id, { partId: e.target.value })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                         >
                           {localParts
                             .filter(p => p.category === 'FINISHED_GOOD' || p.category === 'WIP_PART')
@@ -724,24 +708,24 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                         </select>
                       </div>
                       <div className="md:col-span-3">
-                        <label className="block text-[10px] text-slate-400 mb-1">تیراژ تعهد شده (عدد)</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">تیراژ تعهد شده (عدد)</label>
                         <input
                           type="number"
                           min="1"
                           value={line.contractQty}
                           onChange={e => handleUpdateLine(line.id, { contractQty: Number(e.target.value) })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 font-mono text-left"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] font-mono text-left focus:outline-none focus:border-[#007cc0]"
                           dir="ltr"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-[10px] text-slate-400 mb-1">تخمین وزن کل (کیلوگرم)</label>
+                        <label className="block text-[10px] text-[#666666] mb-1">تخمین وزن کل (کیلوگرم)</label>
                         <input
                           type="number"
                           min="0"
                           value={line.contractWeightKg}
                           onChange={e => handleUpdateLine(line.id, { contractWeightKg: Number(e.target.value) })}
-                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 font-mono text-left"
+                          className="w-full px-2.5 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] font-mono text-left focus:outline-none focus:border-[#007cc0]"
                           dir="ltr"
                         />
                       </div>
@@ -749,7 +733,7 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveLine(line.id)}
-                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                          className="p-1.5 text-[#666666] hover:text-[#bb0000] hover:bg-[#fde8e8] rounded transition-colors cursor-pointer"
                           title="حذف ردیف"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -765,17 +749,17 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
           {/* TAB 4: INITIAL COIL ALLOCATIONS */}
           {activeTab === 'COILS' && (
             <div className="space-y-4">
-              <div className="pb-2 border-b border-slate-200">
-                <h3 className="text-xs font-bold text-slate-900">تخصیص کلاف‌های موجود در انبار به این قرارداد</h3>
-                <p className="text-[11px] text-slate-400">
+              <div className="pb-2 border-b border-[#d9d9d9]">
+                <h3 className="text-xs font-bold text-[#333333]">تخصیص کلاف‌های موجود در انبار به این قرارداد</h3>
+                <p className="text-[11px] text-[#666666]">
                   می‌توانید یک یا چند کلاف (یا بخشی از وزن یک کلاف) را از همین ابتدا به این شماره قرارداد متصل کنید
                 </p>
               </div>
 
               {coils.length === 0 ? (
-                <div className="py-6 text-center text-slate-500 text-xs">کلافی در انبار یافت نشد.</div>
+                <div className="py-6 text-center text-[#666666] text-xs">کلافی در انبار یافت نشد.</div>
               ) : (
-                <div className="max-h-72 overflow-y-auto space-y-2 border border-slate-200 rounded p-2 bg-slate-50">
+                <div className="max-h-72 overflow-y-auto space-y-2 border border-[#d9d9d9] rounded p-2 bg-[#f7f7f7]">
                   {coils.map(coil => {
                     const isSelected = selectedCoilAllocations.some(c => c.coilId === coil.coilId);
                     const selectedAlloc = selectedCoilAllocations.find(c => c.coilId === coil.coilId);
@@ -785,8 +769,8 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                         key={coil.id}
                         className={`p-3 rounded border transition-colors flex items-center justify-between gap-4 ${
                           isSelected
-                            ? 'bg-blue-500/10 border-blue-500/40'
-                            : 'bg-white border-slate-200 hover:border-slate-200'
+                            ? 'bg-[#e5f3fa] border-[#007cc0]'
+                            : 'bg-white border-[#d9d9d9] hover:border-[#bfbfbf]'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -794,19 +778,19 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleToggleCoil(coil)}
-                            className="w-4 h-4 rounded text-blue-600 bg-slate-100 border-slate-200 focus:ring-0"
+                            className="w-4 h-4 rounded text-[#007cc0] bg-white border-[#bfbfbf] focus:ring-0"
                           />
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-slate-900">{coil.coilId}</span>
-                              <span className="px-1.5 py-0.5 bg-slate-100 text-[10px] text-blue-700 font-mono rounded">
+                              <span className="font-mono text-xs font-bold text-[#333333]">{coil.coilId}</span>
+                              <span className="px-1.5 py-0.5 bg-[#e5f3fa] text-[10px] text-[#007cc0] font-mono rounded">
                                 پکینگ: {coil.coilPackNumber}
                               </span>
-                              <span className="text-[11px] text-slate-400 font-medium">
+                              <span className="text-[11px] text-[#666666] font-medium">
                                 گرید: {coil.materialGrade} | ضخامت: {coil.thicknessMm}mm | عرض: {coil.widthMm}mm
                               </span>
                             </div>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-[#666666]">
                               انبار: {coil.warehouseName} | مانده در انبار: {formatNumber(coil.remainingWeightKg)} kg
                             </span>
                           </div>
@@ -814,17 +798,17 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
 
                         {isSelected && (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400">وزن تخصیصی:</span>
+                            <span className="text-xs text-[#666666]">وزن تخصیصی:</span>
                             <input
                               type="number"
                               min="1"
                               max={coil.originalWeightKg}
                               value={selectedAlloc?.allocatedWeightKg || coil.remainingWeightKg}
                               onChange={e => handleUpdateCoilWeight(coil.coilId, Number(e.target.value))}
-                              className="w-24 px-2 py-1 bg-slate-50 border border-blue-500/50 rounded text-xs text-slate-900 font-mono text-left"
+                              className="w-24 px-2 py-1 bg-white border border-[#007cc0] rounded text-xs text-[#333333] font-mono text-left"
                               dir="ltr"
                             />
-                            <span className="text-xs text-slate-400">کیلوگرم</span>
+                            <span className="text-xs text-[#666666]">کیلوگرم</span>
                           </div>
                         )}
                       </div>
@@ -836,8 +820,8 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
           )}
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center justify-between pt-4 border-t border-[#d9d9d9]">
+            <div className="flex items-center gap-2 text-xs text-[#666666]">
               <span>ردیف‌های ماده: {toPersianDigits(incomingMaterials.length)}</span>
               <span>•</span>
               <span>تعهدات محصول: {toPersianDigits(productDeliveries.length)}</span>
@@ -845,18 +829,18 @@ export const ContractCreateModal: React.FC<ContractCreateModalProps> = ({
               <span>کلاف‌های متصل: {toPersianDigits(selectedCoilAllocations.length)}</span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-100 text-slate-700 text-xs rounded transition-colors"
+                className="sap-btn-standard px-4 py-1.5 text-xs cursor-pointer"
               >
                 انصراف
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white text-xs font-bold rounded transition-colors"
+                className="sap-btn-emphasized flex items-center gap-2 px-5 py-1.5 text-xs cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <span>در حال ثبت...</span>

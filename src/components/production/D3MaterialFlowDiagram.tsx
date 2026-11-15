@@ -10,6 +10,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
+import { useErpRouter } from '../../context/RouterContext';
 
 interface OpFlowNode {
   success: boolean;
@@ -68,6 +69,7 @@ interface MrpRequirementItem {
 }
 
 export const D3MaterialFlowDiagram: React.FC = () => {
+  const { traceDocument } = useErpRouter();
   const [workOrders, setWorkOrders] = useState<Array<{ id: string; orderNumber: string; item: { name: string; code: string } }>>([]);
   const [selectedOrderNumber, setSelectedOrderNumber] = useState<string>('WO-1404-1001');
   const [flowData, setFlowData] = useState<WorkOrderFlowData | null>(null);
@@ -178,30 +180,32 @@ export const D3MaterialFlowDiagram: React.FC = () => {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4" dir="rtl">
+    <div className="sap-card p-3.5 space-y-3.5" dir="rtl">
       {/* Compact Header & Order Selector */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e8e8] pb-2.5">
         <div className="flex items-center gap-2.5">
-          <GitBranch className="w-4 h-4 text-slate-700 shrink-0" />
+          <div className="w-8 h-8 rounded bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] flex items-center justify-center shrink-0">
+            <GitBranch className="w-4 h-4" />
+          </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">
+            <h3 className="text-sm font-semibold text-[#333333]">
               جریان ایستگاهی مواد و موجودی پای خط (WIP)
             </h3>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-[#666666]">
               روی هر ایستگاه کلیک کنید تا جزئیات ورودی، خروجی و ثبت کارکرد آن نمایش داده شود
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <label className="font-semibold text-slate-600 whitespace-nowrap">دستور کار:</label>
+          <label className="font-semibold text-[#666666] whitespace-nowrap">دستور کار:</label>
           <select
             value={selectedOrderNumber}
             onChange={e => {
               setSelectedOrderNumber(e.target.value);
               setActionFeedback(null);
             }}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-400 cursor-pointer"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 text-xs font-semibold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer"
           >
             {workOrders.length > 0 ? (
               workOrders.map(wo => (
@@ -217,19 +221,30 @@ export const D3MaterialFlowDiagram: React.FC = () => {
             )}
           </select>
 
+          {flowData && (
+            <button
+              type="button"
+              onClick={() => traceDocument(flowData.orderNumber, 'WIP_TRACEABILITY')}
+              className="sap-doc-link text-[11px] font-mono px-2 py-1 rounded border border-[#d9d9d9] bg-[#ffffff] hover:bg-[#e5f3fa] cursor-pointer whitespace-nowrap"
+              title="رهگیری کامل سند دستور کار"
+            >
+              رهگیری {flowData.orderNumber}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => loadFlowAndMrp(selectedOrderNumber)}
-            className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+            className="sap-btn-standard p-1.5 cursor-pointer"
             title="بروزرسانی"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007cc0]' : ''}`} />
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+        <div className="p-2.5 rounded bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] text-xs flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -250,69 +265,55 @@ export const D3MaterialFlowDiagram: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedOp(node)}
-                  className={`flex-1 min-w-[180px] text-right rounded-lg border p-3 transition-all flex flex-col justify-between gap-2.5 cursor-pointer ${
+                  className={`flex-1 min-w-[180px] text-right rounded border p-2.5 transition-all flex flex-col justify-between gap-2 cursor-pointer ${
                     isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                      ? 'bg-[#e5f3fa] text-[#333333] border-[#007cc0] ring-1 ring-[#007cc0]'
                       : isLocked
-                      ? 'bg-rose-50/40 border-rose-200 hover:border-rose-300 text-slate-900'
-                      : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                      ? 'bg-[#ffecec] border-[#f5b7b1] hover:border-[#bb0000] text-[#333333]'
+                      : 'bg-[#ffffff] border-[#d9d9d9] hover:border-[#007cc0] text-[#333333]'
                   }`}
                 >
                   <div className="space-y-1 w-full">
                     <div className="flex items-center justify-between gap-2">
                       <span
-                        className={`font-mono text-xs font-bold ${
-                          isSelected ? 'text-amber-400' : 'text-slate-900'
+                        className={`font-mono text-xs font-semibold px-1.5 py-0.5 rounded ${
+                          isSelected ? 'bg-[#007cc0] text-[#ffffff]' : 'bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]'
                         }`}
                       >
                         {node.currentOperation.opCode}
                       </span>
-                      <span
-                        className={`text-[10px] font-mono ${
-                          isSelected ? 'text-slate-300' : 'text-slate-400'
-                        }`}
-                      >
+                      <span className="text-[10px] font-mono text-[#666666]">
                         {node.currentOperation.workCenterCode}
                       </span>
                     </div>
                     <div
-                      className={`text-xs font-bold leading-snug line-clamp-1 ${
-                        isSelected ? 'text-white' : 'text-slate-800'
-                      }`}
+                      className="text-xs font-semibold leading-snug line-clamp-1 text-[#333333]"
                       title={node.currentOperation.opName}
                     >
                       {node.currentOperation.opName}
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 w-full pt-2 border-t border-slate-200/20 text-[11px] tabular-nums">
+                  <div className="space-y-1 w-full pt-1.5 border-t border-[#e8e8e8] text-[11px] tabular-nums">
                     <div className="flex items-center justify-between">
-                      <span className={isSelected ? 'text-slate-300' : 'text-slate-500'}>بافر ورودی:</span>
-                      <strong className={`font-mono ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                      <span className="text-[#666666]">بافر ورودی:</span>
+                      <strong className="font-mono text-[#333333]">
                         {formatNumber(node.wipBufferAvailable)} عدد
                       </strong>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className={isSelected ? 'text-slate-300' : 'text-slate-500'}>تولید سالم:</span>
-                      <strong
-                        className={`font-mono ${
-                          isSelected ? 'text-emerald-400' : 'text-emerald-700'
-                        }`}
-                      >
+                      <span className="text-[#666666]">تولید سالم:</span>
+                      <strong className="font-mono text-[#107e3e]">
                         {formatNumber(node.currentOpGoodQuantity)} عدد
                       </strong>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className={isSelected ? 'text-slate-300' : 'text-slate-500'}>ضایعات:</span>
+                      <span className="text-[#666666]">ضایعات:</span>
                       <span
                         className={`font-mono ${
                           node.currentOpScrapQuantity > 0
-                            ? isSelected
-                              ? 'text-rose-300'
-                              : 'text-rose-600 font-semibold'
-                            : isSelected
-                            ? 'text-slate-400'
-                            : 'text-slate-400'
+                            ? 'text-[#bb0000] font-semibold'
+                            : 'text-[#888888]'
                         }`}
                       >
                         {formatNumber(node.currentOpScrapQuantity)} عدد
@@ -321,14 +322,10 @@ export const D3MaterialFlowDiagram: React.FC = () => {
 
                     {/* Progress Bar */}
                     <div className="pt-1">
-                      <div
-                        className={`w-full h-1.5 rounded-full overflow-hidden ${
-                          isSelected ? 'bg-slate-700' : 'bg-slate-100'
-                        }`}
-                      >
+                      <div className="w-full h-1.5 rounded-full overflow-hidden bg-[#e8e8e8]">
                         <div
                           className={`h-full rounded-full ${
-                            isLocked ? 'bg-rose-500' : 'bg-emerald-500'
+                            isLocked ? 'bg-[#bb0000]' : 'bg-[#007cc0]'
                           }`}
                           style={{ width: `${pct}%` }}
                         />
@@ -340,12 +337,12 @@ export const D3MaterialFlowDiagram: React.FC = () => {
                 {/* Inter-Stage Connector */}
                 {idx < opsFlow.length - 1 && (
                   <div className="flex flex-col items-center justify-center px-1 shrink-0 text-center">
-                    <span className="text-[10px] font-mono text-slate-500 whitespace-nowrap mb-0.5">
+                    <span className="text-[10px] font-mono text-[#666666] whitespace-nowrap mb-0.5 tabular-nums">
                       {formatNumber(opsFlow[idx + 1].wipBufferAvailable)} عدد
                     </span>
                     <ArrowLeft
                       className={`w-4 h-4 ${
-                        opsFlow[idx + 1].isPrecedenceLocked ? 'text-rose-400' : 'text-emerald-600'
+                        opsFlow[idx + 1].isPrecedenceLocked ? 'text-[#bb0000]' : 'text-[#107e3e]'
                       }`}
                     />
                   </div>
@@ -357,49 +354,49 @@ export const D3MaterialFlowDiagram: React.FC = () => {
       </div>
 
       {/* Selected Operation Inspection & BOM Requirements */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-1">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pt-1">
         {/* Right 6 cols: Selected OP Details & Live Production Log Input */}
         {selectedOp && (
-          <div className="lg:col-span-6 p-4 rounded-lg border border-slate-200 bg-slate-50/40 space-y-3 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+          <div className="lg:col-span-6 p-3 rounded border border-[#d9d9d9] bg-[#f7f7f7] space-y-2.5 text-xs">
+            <div className="flex items-center justify-between border-b border-[#d9d9d9] pb-2">
               <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-slate-900">
+                <span className="font-mono font-semibold text-[#007cc0]">
                   {selectedOp.currentOperation.opCode}
                 </span>
-                <span className="text-slate-300">·</span>
-                <span className="font-bold text-slate-900">{selectedOp.currentOperation.opName}</span>
+                <span className="text-[#bfbfbf]">·</span>
+                <span className="font-semibold text-[#333333]">{selectedOp.currentOperation.opName}</span>
               </div>
               {selectedOp.isPrecedenceLocked ? (
-                <span className="text-rose-700 font-semibold text-[11px] flex items-center gap-1">
+                <span className="text-[#bb0000] font-semibold text-[11px] flex items-center gap-1">
                   <Lock className="w-3 h-3" />
                   <span>قفل تقدم</span>
                 </span>
               ) : (
-                <span className="text-emerald-700 font-semibold text-[11px] flex items-center gap-1">
+                <span className="text-[#107e3e] font-semibold text-[11px] flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>آماده تولید</span>
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5 font-mono tabular-nums">
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-sans block">خروجی مرحله قبل:</span>
-                <strong className="text-slate-900 text-sm">
+            <div className="grid grid-cols-3 gap-2 font-mono tabular-nums">
+              <div className="p-2 bg-[#ffffff] rounded border border-[#d9d9d9]">
+                <span className="text-[10px] text-[#666666] font-sans block">خروجی مرحله قبل:</span>
+                <strong className="text-[#333333] text-sm">
                   {formatNumber(selectedOp.previousOpApprovedGoodQuantity)} عدد
                 </strong>
               </div>
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-sans block">مصرف این مرحله:</span>
-                <strong className="text-slate-900 text-sm">
+              <div className="p-2 bg-[#ffffff] rounded border border-[#d9d9d9]">
+                <span className="text-[10px] text-[#666666] font-sans block">مصرف این مرحله:</span>
+                <strong className="text-[#333333] text-sm">
                   {formatNumber(selectedOp.currentOpConsumedQuantity)} عدد
                 </strong>
               </div>
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-sans block">موجودی پای خط:</span>
+              <div className="p-2 bg-[#ffffff] rounded border border-[#d9d9d9]">
+                <span className="text-[10px] text-[#666666] font-sans block">موجودی پای خط:</span>
                 <strong
                   className={`text-sm ${
-                    selectedOp.isPrecedenceLocked ? 'text-rose-600' : 'text-emerald-700'
+                    selectedOp.isPrecedenceLocked ? 'text-[#bb0000]' : 'text-[#107e3e]'
                   }`}
                 >
                   {formatNumber(selectedOp.wipBufferAvailable)} عدد
@@ -408,53 +405,53 @@ export const D3MaterialFlowDiagram: React.FC = () => {
             </div>
 
             {selectedOp.isPrecedenceLocked && selectedOp.lockReason && (
-              <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] flex items-center gap-2">
-                <Lock className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+              <div className="p-2 rounded bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] text-[11px] flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5 shrink-0 text-[#bb0000]" />
                 <span>{selectedOp.lockReason}</span>
               </div>
             )}
 
             {/* Quick Live Production Log Form */}
-            <form onSubmit={handleRegisterLiveLog} className="pt-2 border-t border-slate-200/80 space-y-2">
-              <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                <PlusCircle className="w-3.5 h-3.5 text-slate-600" />
+            <form onSubmit={handleRegisterLiveLog} className="pt-2 border-t border-[#d9d9d9] space-y-2">
+              <div className="font-semibold text-[#333333] flex items-center gap-1.5">
+                <PlusCircle className="w-3.5 h-3.5 text-[#007cc0]" />
                 <span>ثبت کارکرد مرحله {selectedOp.currentOperation.opCode}:</span>
               </div>
               <div className="grid grid-cols-3 gap-2 items-end">
                 <div>
-                  <label className="block text-[10px] text-slate-600 mb-1">تعداد سالم</label>
+                  <label className="block text-[10px] text-[#666666] mb-1">تعداد سالم</label>
                   <input
                     type="number"
                     min={1}
                     value={logGoodQty}
                     onChange={e => setLogGoodQty(Number(e.target.value) || 0)}
-                    className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-slate-900"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 font-mono font-semibold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-600 mb-1">تعداد ضایعات</label>
+                  <label className="block text-[10px] text-[#666666] mb-1">تعداد ضایعات</label>
                   <input
                     type="number"
                     min={0}
                     value={logScrapQty}
                     onChange={e => setLogScrapQty(Number(e.target.value) || 0)}
-                    className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-rose-700"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 font-mono font-semibold text-[#bb0000] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submittingLog}
-                  className="py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition cursor-pointer disabled:opacity-50"
+                  className="sap-btn-emphasized py-1 px-3 text-xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
                 >
                   {submittingLog ? 'در حال ثبت...' : 'ثبت کارکرد'}
                 </button>
               </div>
               {actionFeedback && (
                 <div
-                  className={`p-2 rounded-lg text-[11px] font-semibold ${
+                  className={`p-2 rounded text-[11px] font-semibold ${
                     actionFeedback.type === 'error'
-                      ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      ? 'bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1]'
+                      : 'bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf]'
                   }`}
                 >
                   {actionFeedback.text}
@@ -465,50 +462,61 @@ export const D3MaterialFlowDiagram: React.FC = () => {
         )}
 
         {/* Left 6 cols: Recursive BOM Explosion Output */}
-        <div className="lg:col-span-6 p-4 rounded-lg border border-slate-200 bg-slate-50/40 space-y-3 text-xs">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-            <div className="flex items-center gap-1.5 font-bold text-slate-900">
-              <Boxes className="w-4 h-4 text-slate-600" />
+        <div className="lg:col-span-6 p-3 rounded border border-[#d9d9d9] bg-[#f7f7f7] space-y-2.5 text-xs">
+          <div className="flex items-center justify-between border-b border-[#d9d9d9] pb-2">
+            <div className="flex items-center gap-1.5 font-semibold text-[#333333]">
+              <Boxes className="w-4 h-4 text-[#007cc0]" />
               <span>مواد و اجزای مورد نیاز دستور کار (BOM)</span>
             </div>
             {flowData && (
-              <span className="font-mono text-[11px] text-slate-600">
-                تیراژ: <strong>{formatNumber(flowData.plannedQuantity)}</strong> عدد
+              <span className="font-mono text-[11px] text-[#666666] tabular-nums">
+                تیراژ: <strong className="text-[#333333]">{formatNumber(flowData.plannedQuantity)}</strong> عدد
               </span>
             )}
           </div>
 
           {mrpItems.length === 0 ? (
-            <div className="text-slate-500 py-4 text-center">در حال بارگذاری درخت مواد...</div>
+            <div className="text-[#666666] py-4 text-center">در حال بارگذاری درخت مواد...</div>
           ) : (
-            <div className="overflow-x-auto bg-white rounded-lg border border-slate-200">
-              <table className="w-full text-right border-collapse text-[11px]">
+            <div className="overflow-x-auto bg-[#ffffff] rounded border border-[#d9d9d9]">
+              <table className="sap-table-compact w-full text-right border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                    <th className="py-2 px-2.5">سطح</th>
-                    <th className="py-2 px-2.5">قطعه / ماده اولیه</th>
-                    <th className="py-2 px-2.5">نوع</th>
-                    <th className="py-2 px-2.5">ضریب</th>
-                    <th className="py-2 px-2.5">نیاز کل</th>
+                  <tr>
+                    <th className="py-1.5 px-2.5">سطح</th>
+                    <th className="py-1.5 px-2.5">قطعه / ماده اولیه</th>
+                    <th className="py-1.5 px-2.5">نوع</th>
+                    <th className="py-1.5 px-2.5">ضریب</th>
+                    <th className="py-1.5 px-2.5">نیاز کل</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 tabular-nums">
+                <tbody className="tabular-nums">
                   {mrpItems.map((item, idx) => (
-                    <tr key={`${item.itemId}-${idx}`} className="hover:bg-slate-50">
-                      <td className="py-2 px-2.5 font-mono text-slate-600 whitespace-nowrap">
+                    <tr key={`${item.itemId}-${idx}`} className="hover:bg-[#e5f3fa]">
+                      <td className="py-1.5 px-2.5 font-mono text-[#666666] whitespace-nowrap">
                         سطح {toPersianDigits(item.level)}
                       </td>
-                      <td className="py-2 px-2.5">
-                        <div className="font-bold text-slate-900">{item.itemName}</div>
-                        <div className="font-mono text-[10px] text-slate-400">{item.itemCode}</div>
+                      <td className="py-1.5 px-2.5">
+                        <div className="font-semibold text-[#333333]">{item.itemName}</div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            traceDocument(
+                              item.itemCode,
+                              item.itemType === 'RAW_MATERIAL' ? 'INVENTORY_LEDGER' : 'WIP_TRACEABILITY'
+                            )
+                          }
+                          className="sap-doc-link font-mono text-[10px] cursor-pointer"
+                        >
+                          {item.itemCode}
+                        </button>
                       </td>
-                      <td className="py-2 px-2.5 text-slate-600 whitespace-nowrap">
+                      <td className="py-1.5 px-2.5 text-[#666666] whitespace-nowrap">
                         {item.itemType === 'RAW_MATERIAL' ? 'ماده اولیه' : 'نیمه‌ساخته'}
                       </td>
-                      <td className="py-2 px-2.5 font-mono font-semibold text-slate-800">
+                      <td className="py-1.5 px-2.5 font-mono font-semibold text-[#333333]">
                         {item.quantityPerParent}
                       </td>
-                      <td className="py-2 px-2.5 font-mono font-bold text-slate-900 whitespace-nowrap">
+                      <td className="py-1.5 px-2.5 font-mono font-semibold text-[#333333] whitespace-nowrap">
                         {formatNumber(item.effectiveGrossRequirement)} {item.unit === 'KG' ? 'kg' : 'عدد'}
                       </td>
                     </tr>

@@ -364,15 +364,15 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
   }
 
   return (
-    <div className="space-y-5">
-      {/* Clean Enterprise Header & Section Tabs */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/60 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+    <div className="space-y-4">
+      {/* SAP Fiori Dynamic Page Header & IconTabBar */}
+      <div className="sap-card overflow-hidden">
+        <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#d9d9d9]">
           <div>
-            <h1 className="text-sm font-medium text-slate-800">
-              برنامه‌ریزی کلان تولید و نیازسنجی مواد (MRP)
+            <h1 className="text-sm font-semibold text-[#333333]">
+              برنامه‌ریزی کلان تولید و نیازسنجی مواد (SAP MRP / PP)
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#666666] mt-0.5">
               سفارشات ساپکو، انفجار BOM، محاسبه نیاز خالص ورق و تخصیص پرس‌ها
             </p>
           </div>
@@ -382,15 +382,15 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
               type="button"
               onClick={loadPlanningData}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/60 rounded-lg text-xs font-normal transition-colors cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007cc0]' : ''}`} />
               <span>بروزرسانی</span>
             </button>
             <button
               type="button"
               onClick={() => setIsOrderModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>ثبت سفارش مشتری</span>
@@ -398,7 +398,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
           </div>
         </div>
 
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
+        <div className="sap-icon-tab-bar px-2 border-b-0">
           {[
             { id: 'mrp', label: '۱. انفجار BOM و نیاز ورق (MRP)' },
             { id: 'capacity_planning', label: '۲. تقویم ظرفیت ماشین‌آلات (Capacity Planning)' },
@@ -411,11 +411,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
               key={item.id}
               type="button"
               onClick={() => handleSelectSubTab(item.id as any)}
-              className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
-                activeSubTab === item.id
-                  ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`sap-icon-tab ${activeSubTab === item.id ? 'sap-icon-tab-active' : ''}`}
             >
               {item.label}
             </button>
@@ -424,9 +420,9 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
       </div>
 
       {planToast && (
-        <div className="p-3.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800 flex items-center justify-between text-xs">
+        <div className="p-3 rounded border bg-[#ebf5ec] border-[#b7dfbf] text-[#107e3e] flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-[#107e3e]" />
             <span>{planToast}</span>
           </div>
           <button type="button" onClick={() => setPlanToast(null)} className="cursor-pointer">
@@ -498,24 +494,24 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
 
       {/* 3. Customer Orders Sub-Tab */}
       {activeSubTab === 'orders' && (
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-3 flex-wrap">
+        <div className="space-y-3.5">
+          <div className="sap-card p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-[#666666] absolute right-2.5 top-2" />
                 <input
                   type="text"
                   placeholder="جستجو در سفارشات ساپکو، قطعات..."
                   value={orderSearchTerm}
                   onChange={e => setOrderSearchTerm(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl pr-9 pl-3 py-1.5 text-xs text-slate-900 w-64 focus:outline-none focus:border-slate-900"
+                  className="bg-[#f5f5f5] border border-[#bfbfbf] rounded pr-8 pl-3 py-1 text-xs text-[#333333] w-64 focus:bg-[#ffffff] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <select
                 value={orderStatusFilter}
                 onChange={e => setOrderStatusFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-slate-900"
+                className="bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
               >
                 <option value="ALL">همه وضعیت‌ها</option>
                 <option value="OPEN">سفارشات باز (در حال برنامه‌ریزی)</option>
@@ -530,49 +526,58 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
                 setEditingOrder(null);
                 setIsOrderModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-sm"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>ثبت تعهد تحویل جدید</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {filteredOrders.map(order => (
               <div
                 key={order.id}
-                className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-2xs hover:border-slate-300 transition"
+                className="sap-card p-3.5 space-y-3 hover:border-[#007cc0] transition"
               >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2.5">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">
+                      <span className="font-semibold text-[#333333] text-sm font-mono">
                         {order.orderNumber}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                           order.priority === 1
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1]'
                             : order.priority === 2
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]'
+                            : 'bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9]'
                         }`}
                       >
-                        {order.priority === 1 ? '🔴 اولویت فوری' : order.priority === 2 ? '🔵 اولویت عادی' : '⚪ اولویت مازاد'}
+                        {order.priority === 1 ? 'اولویت فوری' : order.priority === 2 ? 'اولویت عادی' : 'اولویت مازاد'}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <div className="text-xs text-[#666666] mt-1 flex items-center gap-2 flex-wrap">
+                      <Building2 className="w-3.5 h-3.5 text-[#666666]" />
                       <span>{order.customerName}</span>
-                      <span className="text-slate-400 font-mono">({order.contractNumber})</span>
+                      {order.contractNumber && (
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(order.contractNumber, 'CONTRACTS')}
+                          className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                          title="مشاهده قرارداد در ماژول قراردادها"
+                        >
+                          ({order.contractNumber})
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   <div className="text-left">
-                    <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf]">
                       سفارش فعال
                     </span>
-                    <div className="text-[11px] text-slate-500 mt-1 tabular-nums font-mono">
+                    <div className="text-[11px] text-[#666666] mt-1 tabular-nums font-mono">
                       تحویل: {formatToJalali(order.dueDate)}
                     </div>
                   </div>
@@ -580,44 +585,51 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
 
                 {/* Order Lines */}
                 <div className="space-y-1.5">
-                  <div className="text-[11px] text-slate-500 font-medium">اقلام تعهد تحویل:</div>
+                  <div className="text-[11px] text-[#666666] font-medium">اقلام تعهد تحویل:</div>
                   {order.lines.map(line => (
                     <div
                       key={line.id}
-                      className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/70 flex items-center justify-between text-xs"
+                      className="bg-[#f5f5f5] p-2 rounded border border-[#d9d9d9] flex items-center justify-between text-xs"
                     >
                       <div>
-                        <div className="font-bold text-slate-900">{line.partName}</div>
-                        <div className="text-[11px] text-slate-500 font-mono">{line.partCode}</div>
+                        <div className="font-semibold text-[#333333]">{line.partName}</div>
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(line.partCode, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link text-[11px] font-mono cursor-pointer"
+                          title="مشاهده موجودی و کاردکس قطعه"
+                        >
+                          {line.partCode}
+                        </button>
                       </div>
                       <div className="text-left tabular-nums">
-                        <span className="text-slate-900 font-bold font-mono">
+                        <span className="text-[#333333] font-semibold font-mono">
                           {formatNumber(line.orderedQuantity)}
                         </span>{' '}
-                        <span className="text-slate-500 text-[10px]">عدد</span>
+                        <span className="text-[#666666] text-[10px]">عدد</span>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {order.notes && (
-                  <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
+                  <div className="text-[11px] text-[#666666] bg-[#f5f5f5] p-2 rounded border border-[#d9d9d9]">
                     یادداشت: {order.notes}
                   </div>
                 )}
 
                 {/* Enterprise Dynamic Action Bar (Edit / Delete / Dynamic Priority) */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 text-xs">
+                <div className="flex items-center justify-between pt-2 border-t border-[#e8e8e8] text-xs">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-400">تغییر اولویت:</span>
+                    <span className="text-[10px] text-[#666666]">تغییر اولویت:</span>
                     <select
                       value={order.priority}
                       onChange={e => handleQuickUpdatePriority(order.id, Number(e.target.value) as 1 | 2 | 3)}
-                      className="text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 text-slate-800 cursor-pointer focus:outline-none"
+                      className="text-[11px] font-semibold bg-[#ffffff] border border-[#bfbfbf] rounded px-2 py-0.5 text-[#333333] cursor-pointer focus:outline-none focus:border-[#007cc0]"
                     >
-                      <option value={1}>🔴 فوری (اولویت ۱)</option>
-                      <option value={2}>🔵 عادی (اولویت ۲)</option>
-                      <option value={3}>⚪ مازاد (اولویت ۳)</option>
+                      <option value={1}>فوری (اولویت ۱)</option>
+                      <option value={2}>عادی (اولویت ۲)</option>
+                      <option value={3}>مازاد (اولویت ۳)</option>
                     </select>
                   </div>
 
@@ -628,16 +640,16 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
                         setEditingOrder(order);
                         setIsOrderModalOpen(true);
                       }}
-                      className="px-2.5 py-1 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-bold border border-indigo-200"
+                      className="sap-btn-standard px-2.5 py-1 text-[11px] font-semibold cursor-pointer flex items-center gap-1 whitespace-nowrap"
                       title="ویرایش کامل مشخصات و تیراژ سفارش"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
+                      <Edit3 className="w-3.5 h-3.5 text-[#007cc0]" />
                       <span>ویرایش</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteCustomerOrder(order)}
-                      className="px-2.5 py-1 text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-bold border border-rose-200"
+                      className="px-2.5 py-1 text-[#bb0000] bg-[#ffecec] hover:bg-[#f5b7b1] rounded transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold border border-[#f5b7b1] whitespace-nowrap"
                       title="حذف سفارش"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -653,50 +665,57 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
 
       {/* 4. Approved Plans Sub-Tab */}
       {activeSubTab === 'approved_plans' && (
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div className="space-y-3.5">
+          <div className="sap-card p-3.5">
+            <h3 className="text-sm font-semibold text-[#333333] flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e]" />
               سوابق برنامه‌های مصوب مدیر تولید و دستور کارهای صادر شده به کارگاه
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#666666] mt-0.5">
               برنامه‌های تأیید شده قابلیت آزادسازی و ایجاد شناسه رسمی دستور کار (MO) در واحد WIP را دارند.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {approvedPlans.length === 0 ? (
-              <div className="col-span-2 bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500 text-xs">
+              <div className="col-span-2 sap-card p-6 text-center text-[#666666] text-xs">
                 هنوز برنامه‌ای به تصویب نرسیده است. از تب «تخصیص ماشین‌آلات و پیشنهاد برنامه» اقدام به تأیید برنامه‌ها نمایید.
               </div>
             ) : (
               approvedPlans.map(plan => (
                 <div
                   key={plan.id}
-                  className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-2xs"
+                  className="sap-card p-3.5 space-y-3"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2.5">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-sm">
+                        <span className="font-semibold text-[#333333] text-sm font-mono">
                           {plan.planNumber}
                         </span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7]">
                           {plan.planVersion}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-700 font-medium mt-1">
-                        قطعه: {plan.partName} <span className="text-slate-400">({plan.partCode})</span>
+                      <div className="text-xs text-[#333333] font-medium mt-1">
+                        قطعه: {plan.partName}{' '}
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(plan.partCode, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                        >
+                          ({plan.partCode})
+                        </button>
                       </div>
                     </div>
 
                     <div className="text-left">
                       {plan.approvalStatus === 'CONVERTED_TO_MO' ? (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                           صادر شده به دستور کار
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf]">
                           مصوب مدیر تولید
                         </span>
                       )}
@@ -704,21 +723,21 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/70">
-                      <div className="text-[10px] text-slate-500">تیراژ خالص مصوب</div>
-                      <div className="font-bold text-slate-900 mt-0.5 tabular-nums">
+                    <div className="bg-[#f5f5f5] p-2 rounded border border-[#d9d9d9]">
+                      <div className="text-[10px] text-[#666666]">تیراژ خالص مصوب</div>
+                      <div className="font-semibold text-[#333333] mt-0.5 tabular-nums font-mono">
                         {formatNumber(plan.proposedQuantity)}
                       </div>
                     </div>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/70">
-                      <div className="text-[10px] text-slate-500">ورق مورد نیاز</div>
-                      <div className="font-bold text-slate-800 mt-0.5 tabular-nums">
+                    <div className="bg-[#f5f5f5] p-2 rounded border border-[#d9d9d9]">
+                      <div className="text-[10px] text-[#666666]">ورق مورد نیاز</div>
+                      <div className="font-semibold text-[#333333] mt-0.5 tabular-nums font-mono">
                         {formatNumber(plan.materialStatus.requiredWeightKg)} kg
                       </div>
                     </div>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/70">
-                      <div className="text-[10px] text-slate-500">موعد تحویل</div>
-                      <div className="font-bold text-slate-800 mt-0.5 tabular-nums">
+                    <div className="bg-[#f5f5f5] p-2 rounded border border-[#d9d9d9]">
+                      <div className="text-[10px] text-[#666666]">موعد تحویل</div>
+                      <div className="font-semibold text-[#333333] mt-0.5 tabular-nums font-mono">
                         {formatToJalali(plan.targetDueDate)}
                       </div>
                     </div>
@@ -731,7 +750,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
                         setSelectedSuggestionId(plan.id);
                         setActiveSubTab('recommendations');
                       }}
-                      className="text-xs text-slate-700 hover:text-slate-950 font-semibold cursor-pointer"
+                      className="text-xs text-[#007cc0] hover:underline font-semibold cursor-pointer"
                     >
                       مشاهده جزئیات مراحل و ماشین‌ها ←
                     </button>
@@ -745,7 +764,7 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
                             setPlanToast('دستور کار کارگاهی (MO) با موفقیت صادر و به واحد WIP ارسال شد.');
                           }
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                        className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
                       >
                         <Send className="w-3.5 h-3.5" />
                         <span>صدور رسمی MO</span>
@@ -753,9 +772,14 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
                     )}
 
                     {plan.approvalStatus === 'CONVERTED_TO_MO' && plan.createdMoId && (
-                      <div className="text-[11px] font-semibold text-purple-800 bg-purple-50 px-2.5 py-1 rounded border border-purple-200">
+                      <button
+                        type="button"
+                        onClick={() => router.traceDocument(plan.createdMoId!, 'WIP_TRACEABILITY')}
+                        className="sap-doc-link text-[11px] font-semibold font-mono bg-[#e5f3fa] px-2.5 py-1 rounded border border-[#b3ddf2] cursor-pointer"
+                        title="رهگیری دستور کار در WIP"
+                      >
                         MO: {plan.createdMoId}
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>

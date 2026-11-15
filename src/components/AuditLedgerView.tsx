@@ -24,6 +24,7 @@ import {
   getVoucherTypeLabel,
   exportToCsv,
 } from '../utils/formatters';
+import { useErpRouter } from '../context/RouterContext';
 
 interface AuditLedgerViewProps {
   transactions: InventoryTransaction[];
@@ -38,6 +39,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
   onReverseVoucher,
   loading,
 }) => {
+  const { traceDocument } = useErpRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -150,31 +152,31 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="bg-slate-100 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="sap-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base lg:text-lg font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-5 h-5 text-purple-400" />
+          <h2 className="text-base font-bold text-[#333333] flex items-center gap-2">
+            <History className="w-5 h-5 text-[#007cc0]" />
             دفتر کل گردش تراکنش‌ها و سوابق اصلاحات اسناد (Audit Trail)
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#666666] mt-1">
             دفتر کل غیرقابل‌حذف (Immutable Ledger)؛ تمامی اصلاحات با صدور سند معکوس و حفظ زنجیره سوابق انجام می‌پذیرد.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-medium border border-slate-200 transition-all"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>به‌روزرسانی دفتر</span>
           </button>
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition-all shadow-md shadow-emerald-900/30"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs"
           >
             <Download className="w-3.5 h-3.5" />
             <span>خروجی اکسل اسناد</span>
@@ -183,17 +185,17 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3 flex-1">
+      <div className="sap-card p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Search */}
           <div className="relative min-w-[240px] flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#666666] absolute right-3 top-2" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="جستجوی شماره سند، کد قطعه، بارنامه، اپراتور..."
-              className="w-full bg-white border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+              className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm pr-9 pl-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
 
@@ -201,7 +203,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
           <select
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه انواع اسناد</option>
             <option value="RECEIPT">رسیدهای ورود ساپکو</option>
@@ -218,7 +220,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه وضعیت‌ها</option>
             <option value="CONFIRMED">معتبر و تأییدشده</option>
@@ -229,7 +231,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
           <select
             value={stageFilter}
             onChange={e => setStageFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+            className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه انبارها و ایستگاه‌ها</option>
             {FACTORY_STAGES.map(st => (
@@ -240,35 +242,35 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
           </select>
         </div>
 
-        <div className="text-xs text-slate-400">
-          تعداد اسناد: <span className="font-bold text-slate-900">{formatNumber(filteredTransactions.length)}</span>
+        <div className="text-xs text-[#666666]">
+          تعداد اسناد: <span className="font-bold text-[#333333]">{formatNumber(filteredTransactions.length)}</span>
         </div>
       </div>
 
       {/* Ledger Table */}
-      <div className="bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="sap-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-right text-xs sap-table-compact">
             <thead>
-              <tr className="bg-white border-b border-slate-200 text-slate-400 font-semibold select-none">
-                <th className="py-3 px-3">شماره سند</th>
-                <th className="py-3 px-3">نوع سند</th>
-                <th className="py-3 px-3">قطعه / ماده اولیه</th>
-                <th className="py-3 px-3">مبدا / ایستگاه</th>
-                <th className="py-3 px-3">مقصد</th>
-                <th className="py-3 px-3">مقدار</th>
-                <th className="py-3 px-3">وزن (kg)</th>
-                <th className="py-3 px-3">مرجع / بارنامه</th>
-                <th className="py-3 px-3">مسئول ثبت</th>
-                <th className="py-3 px-3">تاریخ و ساعت</th>
-                <th className="py-3 px-3">وضعیت</th>
-                <th className="py-3 px-3 text-center">عملیات اصلاحی</th>
+              <tr className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold select-none">
+                <th>شماره سند</th>
+                <th>نوع سند</th>
+                <th>قطعه / ماده اولیه</th>
+                <th>مبدا / ایستگاه</th>
+                <th>مقصد</th>
+                <th>مقدار</th>
+                <th>وزن (kg)</th>
+                <th>مرجع / بارنامه</th>
+                <th>مسئول ثبت</th>
+                <th>تاریخ و ساعت</th>
+                <th>وضعیت</th>
+                <th className="text-center">عملیات اصلاحی</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#e8e8e8]">
               {pagedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-8 text-center text-slate-400">
+                  <td colSpan={12} className="py-8 text-center text-[#666666]">
                     هیچ سندی در این بازه یا فیلتر یافت نشد.
                   </td>
                 </tr>
@@ -280,73 +282,110 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
                   return (
                     <tr
                       key={t.id}
-                      className={`hover:bg-slate-100 transition-colors ${
-                        isReversed ? 'opacity-60 bg-rose-950/10' : ''
+                      className={`hover:bg-[#e5f3fa] transition-colors ${
+                        isReversed ? 'opacity-65 bg-[#ffecec]/40' : ''
                       }`}
                     >
-                      <td className="py-3 px-3 font-mono font-bold text-amber-400 whitespace-nowrap">
-                        {t.voucherNumber}
+                      <td className="font-mono font-bold whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(t.voucherNumber, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link"
+                          title="رهگیری این سند در دفتر کل گردش کالا"
+                        >
+                          {t.voucherNumber}
+                        </button>
                         {t.reversalOfVoucherId && (
-                          <div className="text-[10px] text-orange-400 font-normal">
-                            عطف به: {t.reversalOfVoucherId}
+                          <div className="text-[10px] text-[#e9730c] font-normal mt-0.5">
+                            عطف به:{' '}
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(t.reversalOfVoucherId!, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link text-[10px]"
+                            >
+                              {t.reversalOfVoucherId}
+                            </button>
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${badge.bg} ${badge.color}`}>
+                      <td className="whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-sm text-[10px] font-medium border ${badge.bg} ${badge.color}`}>
                           {badge.label}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-slate-900 font-medium max-w-[200px]">
+                      <td className="text-[#333333] font-medium max-w-[200px]">
                         <div className="truncate">{t.partName}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{t.partCode}</div>
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(t.partCode, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link text-[10px]"
+                        >
+                          {t.partCode}
+                        </button>
                       </td>
-                      <td className="py-3 px-3 text-slate-700 whitespace-nowrap">{t.stageName}</td>
-                      <td className="py-3 px-3 text-purple-400 whitespace-nowrap">
+                      <td className="text-[#333333] whitespace-nowrap">{t.stageName}</td>
+                      <td className="text-[#007cc0] font-medium whitespace-nowrap">
                         {t.targetStageName || '-'}
                       </td>
-                      <td className="py-3 px-3 font-bold font-mono whitespace-nowrap">
-                        <span className={t.quantity < 0 ? 'text-rose-400' : 'text-slate-900'}>
+                      <td className="font-bold font-mono whitespace-nowrap">
+                        <span className={t.quantity < 0 ? 'text-[#bb0000]' : 'text-[#333333]'}>
                           {t.quantity > 0 ? `+${formatNumber(t.quantity)}` : formatNumber(t.quantity)} {t.unit}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-slate-400 whitespace-nowrap font-mono">
+                      <td className="text-[#666666] whitespace-nowrap font-mono">
                         {formatWeightKg(t.quantityKg)}
                       </td>
-                      <td className="py-3 px-3 text-slate-400 text-[11px] truncate max-w-[120px]">
-                        {t.referenceDoc || '-'}
+                      <td className="text-[#666666] text-[11px] truncate max-w-[140px]">
+                        {t.referenceDoc ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              traceDocument(
+                                t.referenceDoc!,
+                                t.referenceDoc!.startsWith('MO') || t.referenceDoc!.startsWith('WO')
+                                  ? 'WIP_TRACEABILITY'
+                                  : 'INVENTORY_LEDGER'
+                              )
+                            }
+                            className="sap-doc-link text-[11px]"
+                          >
+                            {t.referenceDoc}
+                          </button>
+                        ) : (
+                          '-'
+                        )}
                       </td>
-                      <td className="py-3 px-3 text-slate-700 text-[11px] whitespace-nowrap">
+                      <td className="text-[#333333] text-[11px] whitespace-nowrap">
                         {t.operatorName || '-'}
                       </td>
-                      <td className="py-3 px-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                      <td className="text-[#666666] font-mono text-[11px] whitespace-nowrap">
                         {formatDateTime(t.createdAt)}
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
+                      <td className="whitespace-nowrap">
                         {t.status === 'CONFIRMED' ? (
-                          <span className="text-emerald-400 text-[11px] flex items-center gap-1">
+                          <span className="text-[#107e3e] text-[11px] flex items-center gap-1 font-medium">
                             <CheckCircle2 className="w-3 h-3" />
                             تأیید شده
                           </span>
                         ) : (
-                          <span className="text-rose-400 text-[11px] flex items-center gap-1 font-semibold">
+                          <span className="text-[#bb0000] text-[11px] flex items-center gap-1 font-semibold">
                             <AlertOctagon className="w-3 h-3" />
                             ابطال شده
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <td className="text-center whitespace-nowrap">
                         {t.status === 'CONFIRMED' && t.voucherType !== 'ADJUSTMENT' ? (
                           <button
                             onClick={() => handleOpenReverse(t)}
-                            className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 border border-rose-500/30 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1 mx-auto"
+                            className="px-2 py-0.5 bg-[#ffecec] hover:bg-[#fadbd8] text-[#bb0000] border border-[#f5b7b1] rounded-sm text-[11px] font-medium transition-colors flex items-center gap-1 mx-auto cursor-pointer"
                             title="ابطال سند با صدور سند اصلاحی جبرانی"
                           >
                             <RotateCcw className="w-3 h-3" />
                             <span>ابطال / سند اصلاحی</span>
                           </button>
                         ) : (
-                          <span className="text-slate-600 text-[11px]">-</span>
+                          <span className="text-[#666666] text-[11px]">-</span>
                         )}
                       </td>
                     </tr>
@@ -359,7 +398,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-400">
+          <div className="p-3 bg-[#ffffff] border-t border-[#d9d9d9] flex items-center justify-between text-xs text-[#666666]">
             <div>
               صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)}
             </div>
@@ -367,7 +406,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-100 text-slate-900 rounded-lg disabled:opacity-40 transition-colors"
+                className="sap-btn-standard px-2.5 py-1 disabled:opacity-40"
               >
                 قبلی
               </button>
@@ -375,10 +414,10 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-7 h-7 rounded-lg font-mono font-medium transition-colors ${
+                  className={`w-7 h-7 rounded-sm font-mono font-medium transition-colors cursor-pointer border ${
                     currentPage === pageNum
-                      ? 'bg-purple-600 text-white font-bold'
-                      : 'bg-slate-100 hover:bg-slate-100 text-slate-700'
+                      ? 'bg-[#007cc0] text-white border-[#007cc0] font-bold'
+                      : 'bg-[#ffffff] hover:bg-[#e5f3fa] text-[#333333] border-[#d9d9d9]'
                   }`}
                 >
                   {toPersianDigits(pageNum)}
@@ -387,7 +426,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-100 text-slate-900 rounded-lg disabled:opacity-40 transition-colors"
+                className="sap-btn-standard px-2.5 py-1 disabled:opacity-40"
               >
                 بعدی
               </button>
@@ -398,70 +437,70 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
 
       {/* Reversal / Adjustment Modal */}
       {reversalModalTx && (
-        <div className="fixed inset-0 z-50 bg-slate-50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <div className="flex items-center gap-2 text-rose-400">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm w-full max-w-md p-5 shadow-lg">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <div className="flex items-center gap-2 text-[#bb0000]">
                 <RotateCcw className="w-4 h-4" />
-                <h3 className="text-sm font-bold text-slate-900">صدور سند اصلاحی و ابطال</h3>
+                <h3 className="text-sm font-bold text-[#333333]">صدور سند اصلاحی و ابطال</h3>
               </div>
               <button
                 onClick={() => setReversalModalTx(null)}
-                className="text-slate-400 hover:text-slate-900 transition-colors"
+                className="text-[#666666] hover:text-[#333333] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {reversalError && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs">
+              <div className="mt-3 p-3 rounded-sm bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] text-xs">
                 {reversalError}
               </div>
             )}
 
-            <div className="mt-4 space-y-3 text-xs text-slate-700">
-              <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 space-y-1.5">
+            <div className="mt-4 space-y-3 text-xs text-[#333333]">
+              <div className="p-3 rounded-sm bg-[#f7f7f7] border border-[#d9d9d9] space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">شماره سند هدف:</span>
-                  <span className="font-mono font-bold text-amber-400">{reversalModalTx.voucherNumber}</span>
+                  <span className="text-[#666666]">شماره سند هدف:</span>
+                  <span className="font-mono font-bold text-[#007cc0]">{reversalModalTx.voucherNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">عنوان قطعه:</span>
-                  <span className="font-medium text-slate-900">{reversalModalTx.partName}</span>
+                  <span className="text-[#666666]">عنوان قطعه:</span>
+                  <span className="font-medium text-[#333333]">{reversalModalTx.partName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">مقدار سند:</span>
-                  <span className="font-mono font-bold text-slate-900">
+                  <span className="text-[#666666]">مقدار سند:</span>
+                  <span className="font-mono font-bold text-[#333333]">
                     {formatNumber(reversalModalTx.quantity)} {reversalModalTx.unit}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">ایستگاه مربوطه:</span>
-                  <span className="text-slate-900">{reversalModalTx.stageName}</span>
+                  <span className="text-[#666666]">ایستگاه مربوطه:</span>
+                  <span className="text-[#333333]">{reversalModalTx.stageName}</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 text-[11px] leading-relaxed">
+              <div className="p-3 rounded-sm bg-[#fff4e5] border border-[#f9d6a7] text-[#e9730c] text-[11px] leading-relaxed">
                 طبق اصول حسابداری صنعتی کارخانه، این سند از پایگاه داده فیزیکی حذف نمی‌شود؛ بلکه وضعیت آن به «ابطال شده» تغییر یافته و یک سند معکوس خودکار (ADJUSTMENT) در دفاتر درج خواهد شد تا تراز موجودی اصلاح گردد.
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-700 font-medium">علت و دلیل صدور سند اصلاحی *</label>
+                <label className="text-[#333333] font-medium">علت و دلیل صدور سند اصلاحی *</label>
                 <textarea
                   rows={3}
                   value={reversalReason}
                   onChange={e => setReversalReason(e.target.value)}
                   placeholder="علت ابطال (مثلاً: ثبت اشتباه مقدار توسط اپراتور شیفت...)"
-                  className="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 text-slate-900 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm p-2.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setReversalModalTx(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-100 text-slate-700 rounded-xl font-medium transition-colors"
+                  className="sap-btn-standard px-4 py-1.5"
                 >
                   انصراف
                 </button>
@@ -469,7 +508,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
                   type="button"
                   onClick={handleConfirmReverse}
                   disabled={reversalLoading || !reversalReason.trim()}
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold transition-all shadow-md shadow-rose-900/30 disabled:opacity-50"
+                  className="px-5 py-1.5 bg-[#bb0000] hover:bg-[#990000] text-white rounded-sm font-bold transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {reversalLoading ? 'در حال صدور سند معکوس...' : 'تأیید ابطال و صدور سند معکوس'}
                 </button>

@@ -28,25 +28,34 @@ import { PhysicalCoil, StockOwnership } from '../../types/inventory';
 import { formatNumber, formatWeightKg, toPersianDigits } from '../../utils/formatters';
 import { CoilSlittingGenealogyPanel } from './CoilSlittingGenealogyPanel';
 import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 import { loadQcHoldMap, saveQcHoldMap, QcHoldRecord } from '../../utils/qcHoldStore';
 
 interface PhysicalCoilsViewProps {
   onRefresh?: () => Promise<void>;
+  initialSearchQuery?: string;
   currentUser: {
     uid: string;
     displayName: string;
   };
 }
 
-export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUser }) => {
+export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUser, initialSearchQuery }) => {
+  const router = useErpRouter();
   const { requestConfirm, showUndoToast, openQuickEditDrawer, recordAudit } = useEnterpriseUx();
   const [coils, setCoils] = useState<PhysicalCoil[]>([]);
   const [qcHoldMap, setQcHoldMap] = useState<Record<string, QcHoldRecord>>(() => loadQcHoldMap());
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearchQuery || '');
   const [gradeFilter, setGradeFilter] = useState('ALL');
   const [ownershipFilter, setOwnershipFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'FULL' | 'PARTIAL' | 'CONSUMED'>('ALL');
+
+  useEffect(() => {
+    if (initialSearchQuery !== undefined && initialSearchQuery !== '') {
+      setSearchTerm(initialSearchQuery);
+    }
+  }, [initialSearchQuery]);
 
   useEffect(() => {
     const onHoldChange = () => setQcHoldMap(loadQcHoldMap());
@@ -527,116 +536,116 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
       {/* Toast Notification */}
       {notification && (
         <div
-          className={`p-3 rounded-lg border flex items-center justify-between text-xs transition-all ${
+          className={`p-3 rounded border flex items-center justify-between text-xs transition-all ${
             notification.type === 'success'
-              ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-700'
-              : 'bg-rose-950/40 border-rose-500/30 text-rose-700'
+              ? 'bg-[#eef8f2] border-[#b2dfc4] text-[#107e3e]'
+              : 'bg-[#fdf3f3] border-[#e5b3b3] text-[#bb0000]'
           }`}
         >
           <div className="flex items-center gap-2">
             {notification.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0" />
             )}
             <span>{notification.message}</span>
           </div>
-          <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+          <button onClick={() => setNotification(null)} className="text-[#666666] hover:text-[#333333] cursor-pointer">
             ✕
           </button>
         </div>
       )}
 
-      {/* KPI Cards & Lifecycle Tabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+      {/* KPI Cards & Lifecycle Tabs (SAP HANA Fiori) */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
         <button
           type="button"
           onClick={() => setStatusFilter('ALL')}
-          className={`p-4 rounded-xl border text-right transition-all cursor-pointer ${
+          className={`p-3 rounded-md border text-right transition-all cursor-pointer ${
             statusFilter === 'ALL'
-              ? 'bg-white text-slate-900 border-slate-900 shadow-sm'
-              : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+              ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0] shadow-2xs'
+              : 'bg-white hover:bg-[#f5f5f5] text-[#333333] border-[#d9d9d9]'
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className={statusFilter === 'ALL' ? 'text-slate-700' : 'text-slate-500'}>کل کلاف‌های ثبت‌شده</span>
-            <Layers className="w-4 h-4 opacity-70" />
+            <span className={statusFilter === 'ALL' ? 'text-[#007cc0] font-semibold' : 'text-[#666666]'}>کل کلاف‌های ثبت‌شده</span>
+            <Layers className="w-4 h-4 opacity-80" />
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight">
+          <div className="text-xl font-bold font-mono tabular-nums tracking-tight">
             {formatNumber(coils.length)}{' '}
-            <span className="text-xs font-normal opacity-70">رول</span>
+            <span className="text-xs font-normal opacity-75">رول</span>
           </div>
         </button>
 
         <button
           type="button"
           onClick={() => setStatusFilter('FULL')}
-          className={`p-4 rounded-xl border text-right transition-all cursor-pointer ${
+          className={`p-3 rounded-md border text-right transition-all cursor-pointer ${
             statusFilter === 'FULL'
-              ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-              : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+              ? 'bg-[#f1f8f3] text-[#107e3e] border-[#107e3e] shadow-2xs'
+              : 'bg-white hover:bg-[#f5f5f5] text-[#333333] border-[#d9d9d9]'
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className={statusFilter === 'FULL' ? 'text-emerald-100' : 'text-slate-500'}>کلاف‌های دست‌نخورده (کامل)</span>
-            <Boxes className="w-4 h-4 text-emerald-500" />
+            <span className={statusFilter === 'FULL' ? 'text-[#107e3e] font-semibold' : 'text-[#666666]'}>کلاف‌های دست‌نخورده (کامل)</span>
+            <Boxes className="w-4 h-4 text-[#107e3e]" />
           </div>
-          <div className={`text-2xl font-bold font-mono tracking-tight ${statusFilter === 'FULL' ? 'text-slate-900' : 'text-emerald-700'}`}>
+          <div className="text-xl font-bold font-mono tabular-nums tracking-tight text-[#107e3e]">
             {formatNumber(fullCoilsCount)}{' '}
-            <span className="text-xs font-normal opacity-70">رول</span>
+            <span className="text-xs font-normal opacity-75">رول</span>
           </div>
         </button>
 
         <button
           type="button"
           onClick={() => setStatusFilter('PARTIAL')}
-          className={`p-4 rounded-xl border text-right transition-all cursor-pointer ${
+          className={`p-3 rounded-md border text-right transition-all cursor-pointer ${
             statusFilter === 'PARTIAL'
-              ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-              : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+              ? 'bg-[#fef7f1] text-[#b85a00] border-[#e9730c] shadow-2xs'
+              : 'bg-white hover:bg-[#f5f5f5] text-[#333333] border-[#d9d9d9]'
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className={statusFilter === 'PARTIAL' ? 'text-amber-100' : 'text-slate-500'}>کلاف‌های ناقص / در گردش (ته‌رول)</span>
-            <Split className="w-4 h-4 text-amber-500" />
+            <span className={statusFilter === 'PARTIAL' ? 'text-[#b85a00] font-semibold' : 'text-[#666666]'}>کلاف‌های ناقص / در گردش (ته‌رول)</span>
+            <Split className="w-4 h-4 text-[#e9730c]" />
           </div>
-          <div className={`text-2xl font-bold font-mono tracking-tight ${statusFilter === 'PARTIAL' ? 'text-slate-900' : 'text-amber-700'}`}>
+          <div className="text-xl font-bold font-mono tabular-nums tracking-tight text-[#b85a00]">
             {formatNumber(partialCoilsCount)}{' '}
-            <span className="text-xs font-normal opacity-70">رول</span>
+            <span className="text-xs font-normal opacity-75">رول</span>
           </div>
         </button>
 
         <button
           type="button"
           onClick={() => setStatusFilter('CONSUMED')}
-          className={`p-4 rounded-xl border text-right transition-all cursor-pointer ${
+          className={`p-3 rounded-md border text-right transition-all cursor-pointer ${
             statusFilter === 'CONSUMED'
-              ? 'bg-slate-700 text-slate-900 border-slate-200 shadow-sm'
-              : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+              ? 'bg-[#e5f3fa] text-[#007cc0] border-[#007cc0] shadow-2xs'
+              : 'bg-white hover:bg-[#f5f5f5] text-[#333333] border-[#d9d9d9]'
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className={statusFilter === 'CONSUMED' ? 'text-slate-900' : 'text-slate-500'}>کلاف‌های پایان‌یافته (مصرف‌شده)</span>
-            <CheckCircle2 className="w-4 h-4 text-slate-400" />
+            <span className={statusFilter === 'CONSUMED' ? 'text-[#007cc0] font-semibold' : 'text-[#666666]'}>کلاف‌های پایان‌یافته (مصرف‌شده)</span>
+            <CheckCircle2 className="w-4 h-4 text-[#666666]" />
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight">
+          <div className="text-xl font-bold font-mono tabular-nums tracking-tight">
             {formatNumber(consumedCoilsCount)}{' '}
-            <span className="text-xs font-normal opacity-70">رول</span>
+            <span className="text-xs font-normal opacity-75">رول</span>
           </div>
         </button>
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
+      <div className="bg-white border border-[#d9d9d9] rounded-md p-3 flex flex-wrap items-center justify-between gap-2.5 text-xs shadow-2xs">
         <div className="flex items-center gap-2 flex-1 min-w-[240px]">
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-[#666666]" />
             <input
               type="text"
               placeholder="جستجوی شماره کویل، پکینگ، شماره ذوب یا قطعه..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-8 pl-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white"
+              className="w-full bg-[#f5f5f5] border border-[#d9d9d9] rounded pr-8 pl-3 py-1.5 text-xs text-[#333333] placeholder-[#767676] focus:outline-none focus:border-[#007cc0] focus:bg-white"
             />
           </div>
         </div>
@@ -645,7 +654,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
           <select
             value={gradeFilter}
             onChange={e => setGradeFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none"
+            className="bg-white border border-[#d9d9d9] rounded px-2.5 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه گریدها</option>
             <option value="DC04">DC04</option>
@@ -656,7 +665,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
           <select
             value={ownershipFilter}
             onChange={e => setOwnershipFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none"
+            className="bg-white border border-[#d9d9d9] rounded px-2.5 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه مالکیت‌ها</option>
             <option value="SAPCO_SUPPLIER_OWNED">امانی ساپکو</option>
@@ -667,10 +676,10 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
           <button
             onClick={fetchCoils}
             disabled={loading}
-            className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+            className="sap-btn-standard p-1.5 cursor-pointer"
             title="بروزرسانی اطلاعات"
           >
-            <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RotateCcw className={`w-3.5 h-3.5 text-[#007cc0] ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
@@ -678,28 +687,28 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
       {/* Visual Parent-to-Child Coil Slitting Genealogy Tree */}
       <CoilSlittingGenealogyPanel coils={coils} />
 
-      {/* Coils Table */}
-      <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-xs">
+      {/* Coils Table (SAP HANA Compact Density) */}
+      <div className="bg-white border border-[#d9d9d9] rounded-md overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-medium">
+          <table className="w-full text-right text-xs sap-table-compact">
+            <thead className="bg-white text-[#333333] border-b border-[#d9d9d9] font-semibold">
               <tr>
-                <th className="py-3 px-3.5">شناسه کویل</th>
-                <th className="py-3 px-3.5">شماره پکینگ (پلاک)</th>
-                <th className="py-3 px-3.5">وضعیت چرخه عمر</th>
-                <th className="py-3 px-3.5">شرح ورق و ابعاد</th>
-                <th className="py-3 px-3.5">گرید</th>
-                <th className="py-3 px-3.5">وزن اولیه</th>
-                <th className="py-3 px-3.5">مانده در انبار</th>
-                <th className="py-3 px-3.5">سهمیه قراردادها</th>
-                <th className="py-3 px-3.5">محل استقرار</th>
-                <th className="py-3 px-3.5 text-center">عملیات کارگاهی</th>
+                <th className="py-2 px-2.5">شناسه کویل</th>
+                <th className="py-2 px-2.5">شماره پکینگ (پلاک)</th>
+                <th className="py-2 px-2.5">وضعیت چرخه عمر</th>
+                <th className="py-2 px-2.5">شرح ورق و ابعاد</th>
+                <th className="py-2 px-2.5">گرید</th>
+                <th className="py-2 px-2.5">وزن اولیه</th>
+                <th className="py-2 px-2.5">مانده در انبار</th>
+                <th className="py-2 px-2.5">سهمیه قراردادها</th>
+                <th className="py-2 px-2.5">محل استقرار</th>
+                <th className="py-2 px-2.5 text-center">عملیات کارگاهی و پیوستگی</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
+            <tbody className="divide-y divide-[#e5e5e5] text-[#333333] tabular-nums">
               {filteredCoils.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-slate-400">
+                  <td colSpan={10} className="py-6 text-center text-[#666666]">
                     هیچ کلاف فیزیکی منطبق بر این فیلترها یافت نشد.
                   </td>
                 </tr>
@@ -707,105 +716,123 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                 filteredCoils.map(coil => {
                   const isFull = coil.remainingWeightKg === coil.originalWeightKg && coil.remainingWeightKg > 0;
                   const isPartial = coil.remainingWeightKg < coil.originalWeightKg && coil.remainingWeightKg > 0;
-                  const isConsumed = coil.remainingWeightKg <= 0;
                   const isHeld = isCoilInQcHold(coil);
 
                   return (
                     <tr
                       key={coil.id}
-                      className={`transition-colors ${
-                        isHeld ? 'bg-rose-50/75 hover:bg-rose-50' : 'hover:bg-slate-50/60'
+                      className={`h-8 transition-colors ${
+                        isHeld ? 'bg-[#fff0f0]/75 hover:bg-[#fff0f0]' : 'hover:bg-[#e5f3fa]/55'
                       }`}
                     >
-                      <td className="py-3 px-3.5 font-mono font-medium text-slate-900">
+                      <td className="py-1.5 px-2.5 font-mono font-semibold text-[#333333]">
                         <div className="flex items-center gap-1.5">
-                          <span>{coil.coilId}</span>
+                          <button
+                            type="button"
+                            onClick={() => router.traceDocument(coil.coilId, 'WIP_TRACEABILITY')}
+                            className="sap-doc-link font-mono cursor-pointer"
+                            title="ردگیری مصرف این کلاف در خط تولید"
+                          >
+                            {coil.coilId}
+                          </button>
                           {isHeld && (
-                            <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-sans text-[9px] font-bold">
+                            <span className="px-1.5 py-0.5 rounded bg-[#bb0000] text-white font-sans text-[9px] font-bold">
                               QC Hold
                             </span>
                           )}
                         </div>
                         {coil.heatNumber && (
-                          <div className="text-[10px] text-slate-400">ذوب: {coil.heatNumber}</div>
+                          <button
+                            type="button"
+                            onClick={() => router.traceDocument(coil.heatNumber!, 'INVENTORY_LEDGER')}
+                            className="sap-doc-link text-[10px] block cursor-pointer"
+                            title="جستجوی شماره ذوب در کاردکس انبار"
+                          >
+                            ذوب: {coil.heatNumber}
+                          </button>
                         )}
                       </td>
-                      <td className="py-3 px-3.5 font-mono text-slate-800 font-medium">
+                      <td className="py-1.5 px-2.5 font-mono text-[#333333] font-medium">
                         {coil.coilPackNumber}
                       </td>
-                      <td className="py-3 px-3.5">
+                      <td className="py-1.5 px-2.5">
                         {isHeld ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-rose-800 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-full font-bold">
-                            <Lock className="w-3 h-3 text-rose-700" />
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#bb0000] bg-[#fff0f0] border border-[#f2b8b5] px-2 py-0.5 rounded font-semibold">
+                            <Lock className="w-3 h-3 text-[#bb0000]" />
                             قرنطینه کیفی (کسر از ATP)
                           </span>
                         ) : isFull ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#107e3e] bg-[#f1f8f3] border border-[#b7dfc4] px-2 py-0.5 rounded font-medium">
                             کامل (دست‌نخورده)
                           </span>
                         ) : isPartial ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#b85a00] bg-[#fef7f1] border border-[#f5d0b3] px-2 py-0.5 rounded font-medium">
                             ناقص / ته‌رول
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-medium">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#666666] bg-[#f5f5f5] border border-[#d9d9d9] px-2 py-0.5 rounded font-medium">
                             پایان‌یافته (صفر)
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-3.5">
-                        <div className="font-medium text-slate-900">{coil.partName}</div>
-                        <div className="text-[10px] text-slate-500">
+                      <td className="py-1.5 px-2.5">
+                        <div className="font-medium text-[#333333]">{coil.partName}</div>
+                        <div className="text-[10px] text-[#666666]">
                           ضخامت: {coil.thicknessMm}mm | عرض: {coil.widthMm}mm
                         </div>
                       </td>
-                      <td className="py-3 px-3.5">
-                        <span className="font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+                      <td className="py-1.5 px-2.5">
+                        <span className="font-mono text-[#333333] bg-[#f5f5f5] border border-[#d9d9d9] px-1.5 py-0.5 rounded text-[11px]">
                           {coil.materialGrade}
                         </span>
                       </td>
-                      <td className="py-3 px-3.5 font-mono text-slate-500">
+                      <td className="py-1.5 px-2.5 font-mono text-[#666666]">
                         {formatWeightKg(coil.originalWeightKg)}
                       </td>
-                      <td className="py-3 px-3.5 font-mono font-bold">
+                      <td className="py-1.5 px-2.5 font-mono font-bold">
                         {isHeld ? (
                           <div>
-                            <span className="text-rose-700 line-through">{formatWeightKg(coil.remainingWeightKg)}</span>
-                            <span className="block text-[10px] text-rose-600 font-sans">آزاد (ATP): ۰ kg</span>
+                            <span className="text-[#bb0000] line-through">{formatWeightKg(coil.remainingWeightKg)}</span>
+                            <span className="block text-[10px] text-[#bb0000] font-sans">آزاد (ATP): ۰ kg</span>
                           </div>
                         ) : (
-                          <span className="text-emerald-700">{formatWeightKg(coil.remainingWeightKg)}</span>
+                          <span className="text-[#107e3e]">{formatWeightKg(coil.remainingWeightKg)}</span>
                         )}
                       </td>
-                      <td className="py-3 px-3.5">
+                      <td className="py-1.5 px-2.5">
                         {coil.allocations && coil.allocations.length > 0 ? (
                           <div className="space-y-0.5">
                             {coil.allocations.map((alloc, idx) => (
                               <div key={idx} className="flex items-center justify-between gap-1 text-[11px]">
-                                <span className="text-slate-500">{alloc.contractNumber}:</span>
-                                <span className="font-mono text-slate-800">{formatNumber(alloc.allocatedWeightKg)} kg</span>
+                                <button
+                                  type="button"
+                                  onClick={() => router.traceDocument(alloc.contractNumber, 'CONTRACTS')}
+                                  className="sap-doc-link font-mono cursor-pointer"
+                                  title="مشاهده قرارداد در ماژول قراردادها"
+                                >
+                                  {alloc.contractNumber}:
+                                </button>
+                                <span className="font-mono text-[#333333]">{formatNumber(alloc.allocatedWeightKg)} kg</span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-[11px]">—</span>
+                          <span className="text-[#767676] text-[11px]">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-3.5">
-                        <div className="text-slate-800">{coil.warehouseName}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{coil.warehouseLocationCode}</div>
+                      <td className="py-1.5 px-2.5">
+                        <div className="text-[#333333]">{coil.warehouseName}</div>
+                        <div className="text-[10px] text-[#666666] font-mono">{coil.warehouseLocationCode}</div>
                       </td>
-                      <td className="py-3 px-3.5">
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <td className="py-1.5 px-2.5">
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
                           <button
                             type="button"
                             onClick={() => handleToggleCoilQcHold(coil)}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors flex items-center gap-1 border cursor-pointer ${
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors flex items-center gap-1 border cursor-pointer ${
                               isHeld
-                                ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700'
-                                : 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-200'
+                                ? 'bg-[#bb0000] hover:bg-[#990000] text-white border-[#990000]'
+                                : 'bg-[#fff0f0] hover:bg-[#ffe0e0] text-[#bb0000] border-[#f2b8b5]'
                             }`}
                             title={
                               isHeld
@@ -814,7 +841,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                             }
                           >
                             {isHeld ? <Unlock className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                            <span>{isHeld ? 'رفع قرنطینه' : 'قرنطینه کیفی / QC Hold'}</span>
+                            <span>{isHeld ? 'رفع قرنطینه' : 'QC Hold'}</span>
                           </button>
 
                           <button
@@ -830,11 +857,11 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                               setIssueModalOpen(true);
                             }}
                             disabled={coil.remainingWeightKg <= 0 || isHeld}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                            className="sap-btn-standard px-2 py-0.5 text-[11px] flex items-center gap-1 disabled:opacity-40 cursor-pointer"
                             title={isHeld ? 'کلاف در قرنطینه کیفی است و امکان صدور ندارد' : 'صدور کلاف به خطوط پرس'}
                           >
-                            <ArrowUpRight className="w-3 h-3 text-slate-500" />
-                            <span>خروج / صدور</span>
+                            <ArrowUpRight className="w-3 h-3 text-[#007cc0]" />
+                            <span>صدور</span>
                           </button>
                           <button
                             onClick={() => {
@@ -842,23 +869,31 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                               setReturnWeight('');
                               setReturnModalOpen(true);
                             }}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
+                            className="sap-btn-standard px-2 py-0.5 text-[11px] flex items-center gap-1 cursor-pointer"
                             title="برگشت ته‌کلاف یا مازاد به انبار"
                           >
-                            <ArrowDownLeft className="w-3 h-3 text-slate-500" />
-                            <span>برگشت ته‌رول</span>
+                            <ArrowDownLeft className="w-3 h-3 text-[#007cc0]" />
+                            <span>ته‌رول</span>
                           </button>
                           <button
                             onClick={() => openGenealogyModal(coil)}
-                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                            className="px-2 py-0.5 bg-[#e5f3fa] hover:bg-[#d3ebf7] text-[#007cc0] border border-[#b3ddf2] rounded text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                             title="شناسنامه کامل و ردگیری مصرف این کلاف"
                           >
-                            <FileText className="w-3 h-3 text-emerald-600" />
-                            <span>ردگیری / شناسنامه</span>
+                            <FileText className="w-3 h-3 text-[#007cc0]" />
+                            <span>شناسنامه</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => router.traceDocument(coil.coilId, 'INVENTORY_LEDGER')}
+                            className="sap-btn-standard px-2 py-0.5 text-[11px] text-[#007cc0] cursor-pointer"
+                            title="مشاهده تمام اسناد ورود و حواله این کلاف در کاردکس انبار"
+                          >
+                            کاردکس
                           </button>
                           <button
                             onClick={() => openAllocateModal(coil)}
-                            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[11px] transition-colors cursor-pointer"
+                            className="sap-btn-standard px-2 py-0.5 text-[11px] cursor-pointer"
                             title="مدیریت سهمیه‌ها و قراردادها"
                           >
                             تسهیم
@@ -970,33 +1005,33 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
 
       {/* Multi-Part Issue Modal */}
       {issueModalOpen && selectedCoil && (
-        <div className="fixed inset-0 bg-white backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 text-right shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+        <div className="fixed inset-0 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md max-w-lg w-full p-5 text-right shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#d9d9d9] mb-3 bg-white">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-[#333333]">
                   خروج و صدور کلاف به خطوط تولید (امکان تخصیص همزمان به ۲ قطعه)
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#666666] mt-0.5">
                   کویل {selectedCoil.coilId} (پکینگ {selectedCoil.coilPackNumber}) — مانده موجود: {formatWeightKg(selectedCoil.remainingWeightKg)}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIssueModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] p-1 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Toggle Issue Mode: Single Part vs Multi-Part */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl mb-4 text-xs font-semibold">
+            <div className="flex items-center bg-[#f0f0f0] p-1 rounded mb-4 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setIssueMode('SINGLE')}
-                className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  issueMode === 'SINGLE' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 py-1.5 rounded transition-all cursor-pointer ${
+                  issueMode === 'SINGLE' ? 'bg-white text-[#007cc0] shadow-2xs border border-[#d9d9d9]' : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 صدور برای یک قطعه / سفارش ساخت
@@ -1004,8 +1039,8 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
               <button
                 type="button"
                 onClick={() => setIssueMode('MULTI')}
-                className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  issueMode === 'MULTI' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                className={`flex-1 py-1.5 rounded transition-all cursor-pointer ${
+                  issueMode === 'MULTI' ? 'bg-[#007cc0] text-white shadow-2xs' : 'text-[#666666] hover:text-[#333333]'
                 }`}
               >
                 صدور همزمان برای ۲ قطعه (تسهیم بین دو خط)
@@ -1215,7 +1250,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-xs"
+                  className="sap-btn-emphasized px-4 py-1.5 text-xs font-medium cursor-pointer"
                 >
                   ثبت خروج و صدور به خط تولید
                 </button>
@@ -1227,8 +1262,8 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
 
       {/* Remnant Return Modal */}
       {returnModalOpen && selectedCoil && (
-        <div className="fixed inset-0 bg-white backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 text-right shadow-xl">
+        <div className="fixed inset-0 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md max-w-md w-full p-5 text-right shadow-xl">
             <h3 className="text-sm font-bold text-slate-900 mb-1">
               برگشت ته‌کلاف یا مازاد از خط تولید به انبار
             </h3>
@@ -1283,8 +1318,8 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
 
       {/* COIL GENEALOGY & TRACEABILITY AUDIT MODAL */}
       {genealogyModalOpen && selectedCoil && (
-        <div className="fixed inset-0 bg-white backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 text-right shadow-2xl my-6">
+        <div className="fixed inset-0 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white border border-[#d9d9d9] rounded-md max-w-2xl w-full p-5 text-right shadow-2xl my-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
                 <span className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
@@ -1501,12 +1536,12 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
 
       {/* Multi-Contract Allocation Modal */}
       {allocateModalOpen && selectedCoil && (
-        <div className="fixed inset-0 bg-white backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-200 rounded-xl max-w-lg w-full p-6 text-right shadow-xl">
-            <h3 className="text-sm font-bold text-slate-900 mb-1">
+        <div className="fixed inset-0 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md max-w-lg w-full p-5 text-right shadow-xl">
+            <h3 className="text-sm font-bold text-[#333333] mb-1">
               تسهیم چندقراردادی کلاف فیزیکی شماره {selectedCoil.coilId}
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-[#666666] mb-4">
               وزن کل فیزیکی کلاف: {formatWeightKg(selectedCoil.originalWeightKg)} | این کلاف واحد می‌تواند به چند قرارداد سهمیه تخصیص داده شود بدون ایجاد کلاف تکراری.
             </p>
 
@@ -1515,10 +1550,10 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                 {allocationsList.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200"
+                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-[#f5f5f5] p-2.5 rounded border border-[#d9d9d9]"
                   >
                     <div className="flex-1">
-                      <label className="block text-[10px] text-slate-500 mb-1">
+                      <label className="block text-[10px] text-[#666666] mb-1">
                         انتخاب قرارداد از لیست قراردادهای فعال:
                       </label>
                       <select
@@ -1528,7 +1563,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                           updated[idx].contractId = e.target.value;
                           setAllocationsList(updated);
                         }}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 font-mono font-bold focus:outline-none text-xs"
+                        className="w-full bg-white border border-[#d9d9d9] rounded px-2.5 py-1.5 text-[#333333] font-mono font-bold focus:outline-none focus:border-[#007cc0] text-xs"
                       >
                         <option value="">-- انتخاب قرارداد از لیست --</option>
                         {availableContracts.map(cnt => (
@@ -1543,7 +1578,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                       </select>
                     </div>
                     <div className="w-full sm:w-32">
-                      <label className="block text-[10px] text-slate-500 mb-1">وزن تخصیصی (kg):</label>
+                      <label className="block text-[10px] text-[#666666] mb-1">وزن تخصیصی (kg):</label>
                       <input
                         type="number"
                         placeholder="وزن (kg)"
@@ -1553,7 +1588,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                           updated[idx].allocatedWeightKg = Number(e.target.value);
                           setAllocationsList(updated);
                         }}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 font-mono font-bold text-xs focus:outline-none"
+                        className="w-full bg-white border border-[#d9d9d9] rounded px-2.5 py-1.5 text-[#333333] font-mono font-bold text-xs focus:outline-none focus:border-[#007cc0]"
                       />
                     </div>
                     {allocationsList.length > 1 && (
@@ -1562,7 +1597,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                         onClick={() => {
                           setAllocationsList(allocationsList.filter((_, i) => i !== idx));
                         }}
-                        className="text-rose-500 hover:text-rose-700 px-1.5 pt-4 text-sm cursor-pointer self-end sm:self-center"
+                        className="text-[#bb0000] hover:text-[#990000] px-1.5 pt-4 text-sm cursor-pointer self-end sm:self-center"
                       >
                         ✕
                       </button>
@@ -1580,27 +1615,27 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
                     { contractId: defaultCnt, allocatedWeightKg: 0 },
                   ]);
                 }}
-                className="text-xs text-indigo-700 hover:text-indigo-900 font-bold flex items-center gap-1 mt-1 cursor-pointer"
+                className="text-xs text-[#007cc0] hover:text-[#006299] font-bold flex items-center gap-1 mt-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ افزودن سهم قرارداد دیگر</span>
               </button>
 
-              <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100">
-                <span className="text-slate-500">
-                  مجموع تسهیم‌شده: <strong className="text-slate-900 font-mono">{formatNumber(allocationsList.reduce((s, a) => s + Number(a.allocatedWeightKg || 0), 0))}</strong> / {selectedCoil.originalWeightKg} kg
+              <div className="flex items-center justify-between text-xs pt-3 border-t border-[#e5e5e5]">
+                <span className="text-[#666666]">
+                  مجموع تسهیم‌شده: <strong className="text-[#333333] font-mono">{formatNumber(allocationsList.reduce((s, a) => s + Number(a.allocatedWeightKg || 0), 0))}</strong> / {selectedCoil.originalWeightKg} kg
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setAllocateModalOpen(false)}
-                    className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs transition-colors cursor-pointer"
+                    className="sap-btn-standard px-3.5 py-1.5 text-xs cursor-pointer"
                   >
                     انصراف
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-xs"
+                    className="sap-btn-emphasized px-4 py-1.5 text-xs font-medium cursor-pointer"
                   >
                     ذخیره تسهیم
                   </button>
@@ -1614,7 +1649,7 @@ export const PhysicalCoilsView: React.FC<PhysicalCoilsViewProps> = ({ currentUse
       {/* Mandatory QC Hold Reason Modal (ثبت اجباری علت قرنطینه کیفی کلاف) */}
       {qcHoldModalCoil && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center z-50 p-4"
           onClick={() => setQcHoldModalCoil(null)}
         >
           <div

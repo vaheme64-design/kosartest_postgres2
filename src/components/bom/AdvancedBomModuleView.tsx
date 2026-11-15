@@ -35,6 +35,8 @@ import {
 import { toPersianDigits, formatNumber } from '../../utils/formatters';
 import { MasterDataDifferenceGuideModal } from '../common/MasterDataDifferenceGuideModal';
 import { SearchableSelect } from '../common/SearchableSelect';
+import { useErpRouter } from '../../context/RouterContext';
+import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
 
 interface AdvancedBomModuleViewProps {
   parts: Part[];
@@ -47,6 +49,8 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
   onOpenTraceabilityModal,
   onNavigateToParallelFlow,
 }) => {
+  const { traceDocument } = useErpRouter();
+  const { requestConfirm, showUndoToast } = useEnterpriseUx();
   const [boms, setBoms] = useState<AdvancedBomDefinition[]>([]);
   const [selectedBomId, setSelectedBomId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -118,7 +122,7 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
   const handleCreateNewBom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBomPartId) {
-      alert('لطفاً قطعه مورد نظر را انتخاب کنید.');
+      showUndoToast({ title: 'لطفاً قطعه مورد نظر را انتخاب کنید.', variant: 'warning' });
       return;
     }
     const part = parts.find(p => p.id === newBomPartId);
@@ -150,11 +154,12 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
         setNewBomPartId('');
         setNewBomVersion('V1.0');
         setNewBomNotes('');
+        showUndoToast({ title: 'درخت محصول جدید با موفقیت ایجاد شد.', variant: 'success' });
       } else {
-        alert(data.error || 'خطا در ثبت درخت محصول جدید');
+        showUndoToast({ title: data.error || 'خطا در ثبت درخت محصول جدید', variant: 'danger' });
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      showUndoToast({ title: 'خطا در ارتباط با سرور', variant: 'danger' });
     }
   };
 
@@ -188,33 +193,39 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
       if (data.success) {
         await loadBoms();
         setIsEditBomModalOpen(false);
+        showUndoToast({ title: 'مشخصات BOM بروزرسانی شد.', variant: 'success' });
       }
     } catch {
-      alert('خطا در بروزرسانی مشخصات BOM');
+      showUndoToast({ title: 'خطا در بروزرسانی مشخصات BOM', variant: 'danger' });
     }
   };
 
   // Delete Entire BOM
-  const handleDeleteBom = async () => {
+  const handleDeleteBom = () => {
     if (!activeBom) return;
-    if (!confirm(`آیا از حذف کامل درخت محصول ${activeBom.assemblyPartCode} - ${activeBom.assemblyPartName} اطمینان دارید؟`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/production/boms/${activeBom.id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        const remaining = boms.filter(b => b.id !== activeBom.id);
-        setBoms(remaining);
-        if (remaining.length > 0) setSelectedBomId(remaining[0].id);
-        else setSelectedBomId('');
-      } else {
-        alert(data.error || 'خطا در حذف BOM');
-      }
-    } catch {
-      alert('خطا در حذف BOM');
-    }
+    requestConfirm({
+      title: 'حذف درخت محصول',
+      message: `آیا از حذف کامل درخت محصول ${activeBom.assemblyPartCode} - ${activeBom.assemblyPartName} اطمینان دارید؟`,
+      confirmLabel: 'تایید و حذف',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/production/boms/${activeBom.id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            const remaining = boms.filter(b => b.id !== activeBom.id);
+            setBoms(remaining);
+            if (remaining.length > 0) setSelectedBomId(remaining[0].id);
+            else setSelectedBomId('');
+            showUndoToast({ title: 'درخت محصول حذف شد.', variant: 'info' });
+          } else {
+            showUndoToast({ title: data.error || 'خطا در حذف BOM', variant: 'danger' });
+          }
+        } catch {
+          showUndoToast({ title: 'خطا در حذف BOM', variant: 'danger' });
+        }
+      },
+    });
   };
 
   // Open Add Component Modal
@@ -259,35 +270,42 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
   };
 
   // Delete Component from BOM
-  const handleDeleteComponent = async (compId: string) => {
+  const handleDeleteComponent = (compId: string) => {
     if (!activeBom) return;
-    if (!confirm('آیا از حذف این جزء از درخت محصول مطمئن هستید؟')) return;
+    requestConfirm({
+      title: 'حذف جزء از درخت محصول',
+      message: 'آیا از حذف این جزء از درخت محصول مطمئن هستید؟',
+      confirmLabel: 'حذف جزء',
+      variant: 'danger',
+      onConfirm: async () => {
+        const updatedComponents = activeBom.components.filter(c => c.id !== compId && c.parentId !== compId);
+        const totalGross = updatedComponents.reduce((s, c) => s + (c.grossWeightKg || 0), 0);
+        const totalNet = updatedComponents.reduce((s, c) => s + (c.netWeightKg || 0), 0);
 
-    const updatedComponents = activeBom.components.filter(c => c.id !== compId && c.parentId !== compId);
-    const totalGross = updatedComponents.reduce((s, c) => s + (c.grossWeightKg || 0), 0);
-    const totalNet = updatedComponents.reduce((s, c) => s + (c.netWeightKg || 0), 0);
+        const updatedBom: AdvancedBomDefinition = {
+          ...activeBom,
+          components: updatedComponents,
+          totalGrossWeightKg: Math.round(totalGross * 1000) / 1000,
+          totalNetWeightKg: Math.round(totalNet * 1000) / 1000,
+          yieldEfficiencyPercent: totalGross > 0 ? Math.round((totalNet / totalGross) * 1000) / 10 : 85,
+        };
 
-    const updatedBom: AdvancedBomDefinition = {
-      ...activeBom,
-      components: updatedComponents,
-      totalGrossWeightKg: Math.round(totalGross * 1000) / 1000,
-      totalNetWeightKg: Math.round(totalNet * 1000) / 1000,
-      yieldEfficiencyPercent: totalGross > 0 ? Math.round((totalNet / totalGross) * 1000) / 10 : 85,
-    };
-
-    try {
-      const res = await fetch('/api/production/boms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedBom),
-      });
-      const data = await res.json();
-      if (data.success) {
-        await loadBoms();
-      }
-    } catch {
-      alert('خطا در حذف جزء');
-    }
+        try {
+          const res = await fetch('/api/production/boms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedBom),
+          });
+          const data = await res.json();
+          if (data.success) {
+            await loadBoms();
+            showUndoToast({ title: 'جزء از درخت محصول حذف شد.', variant: 'info' });
+          }
+        } catch {
+          showUndoToast({ title: 'خطا در حذف جزء', variant: 'danger' });
+        }
+      },
+    });
   };
 
   // Save Component (Add or Edit)
@@ -388,31 +406,31 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
       setGeneratedSubMos(data.data);
       setSubMoModalOpen(true);
     } catch (err: any) {
-      alert(err.message || 'خطای سرور');
+      showUndoToast({ title: err.message || 'خطای سرور', variant: 'danger' });
     } finally {
       setIsGeneratingSubMos(false);
     }
   };
 
   return (
-    <div className="space-y-5 font-sans text-right">
-      {/* Grafana-Inspired Clean Header Banner */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 text-slate-900 shadow-2xs space-y-4">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/70 text-orange-600 flex items-center justify-center shrink-0">
+    <div className="space-y-4 font-sans text-right">
+      {/* SAP Fiori Header Banner */}
+      <div className="sap-card p-4 text-[#333333] space-y-3">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] flex items-center justify-center shrink-0">
               <ListTree className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base lg:text-lg font-bold text-slate-900">
-                  مدیریت درخت محصول چندسطحی (Multi-Level BOM & Assemblies)
+                <h2 className="text-base font-bold text-[#333333]">
+                  مدیریت درخت محصول چندسطحی (Multi-Level BOM &amp; Assemblies)
                 </h2>
-                <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-mono font-bold">
+                <span className="text-[11px] bg-[#ebf7ef] text-[#107e3e] border border-[#a9dfbf] px-2 py-0.5 rounded-sm font-mono font-bold">
                   مهندسی پرسکاری و مونتاژ
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 تعریف ساختار قطعات ترکیبی خودرویی، ورق‌های مختلف، مهره‌های جوشی و صدور دستورات ساخت فرعی کارگاهی
               </p>
             </div>
@@ -423,9 +441,9 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
             <button
               type="button"
               onClick={() => setIsNewBomModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs"
             >
-              <Plus className="w-4 h-4 text-orange-400" />
+              <Plus className="w-3.5 h-3.5" />
               <span>تعریف BOM جدید برای محصول</span>
             </button>
 
@@ -433,9 +451,9 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToParallelFlow}
-                className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl text-xs font-semibold transition cursor-pointer"
+                className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
               >
-                <GitFork className="w-4 h-4 text-purple-600" />
+                <GitFork className="w-3.5 h-3.5 text-[#007cc0]" />
                 <span>منطق قالب‌های مشترک و قرینه چپ/راست</span>
               </button>
             )}
@@ -443,22 +461,22 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
             <button
               type="button"
               onClick={() => setIsGuideOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
             >
-              <HelpCircle className="w-4 h-4 text-slate-500" />
+              <HelpCircle className="w-3.5 h-3.5 text-[#666666]" />
               <span>راهنمای تفاوت کاتالوگ و BOM</span>
             </button>
           </div>
         </div>
 
         {/* BOM Selector Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#e8e8e8] text-xs">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-slate-500 font-medium">انتخاب درخت محصول جاری:</span>
+            <span className="text-[#666666] font-medium">انتخاب درخت محصول جاری:</span>
             <select
               value={selectedBomId}
               onChange={e => setSelectedBomId(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-orange-500 cursor-pointer"
+              className="bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-xs text-[#333333] font-bold focus:outline-none focus:border-[#007cc0] cursor-pointer"
             >
               {boms.map(b => (
                 <option key={b.id} value={b.id}>
@@ -468,36 +486,41 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
             </select>
           </div>
 
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-[#666666]">
             تعداد BOMهای فعال: <strong>{toPersianDigits(boms.length)}</strong>
           </div>
         </div>
       </div>
 
       {activeBom && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-5">
+        <div className="sap-card p-4 space-y-4">
           {/* Active BOM Summary Header */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-3 border-b border-[#e8e8e8]">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs px-2.5 py-0.5 rounded-lg bg-slate-900 text-white font-mono font-bold">
+                <button
+                  type="button"
+                  onClick={() => traceDocument(activeBom.assemblyPartCode, 'INVENTORY_LEDGER')}
+                  className="text-xs px-2 py-0.5 rounded-sm bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono font-bold hover:underline cursor-pointer"
+                  title="رهگیری در کاردکس انبار"
+                >
                   {activeBom.assemblyPartCode}
-                </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-lg bg-orange-50 text-orange-800 border border-orange-200 font-bold">
+                </button>
+                <span className="text-xs px-2 py-0.5 rounded-sm bg-[#fff4e5] text-[#e9730c] border border-[#f9d6a7] font-bold">
                   نسخه {activeBom.version}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-sm bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] font-medium">
                   مدل خودرو: <strong>{activeBom.carModel}</strong>
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-[#666666]">
                   تاریخ اعتبار: <span className="font-mono">{toPersianDigits(activeBom.effectiveDate || '۱۴۰۳/۰۸')}</span>
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-2">
+              <h3 className="text-base font-bold text-[#333333] mt-2">
                 {activeBom.assemblyPartName}
               </h3>
               {activeBom.notes && (
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <p className="text-xs text-[#666666] mt-1 leading-relaxed">
                   توضیحات مهندسی: {activeBom.notes}
                 </p>
               )}
@@ -508,16 +531,16 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleOpenAddComponent()}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="sap-btn-emphasized px-3 py-1.5 text-xs flex items-center gap-1"
               >
-                <Plus className="w-4 h-4" />
-                <span>+ افزودن جزء / ورق / اتصال به BOM</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>افزودن جزء / ورق / اتصال به BOM</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleOpenEditBom}
-                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                className="sap-btn-standard px-3 py-1.5 text-xs flex items-center gap-1"
                 title="ویرایش نسخه و توضیحات BOM"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -527,7 +550,7 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
               <button
                 type="button"
                 onClick={handleDeleteBom}
-                className="p-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition cursor-pointer border border-rose-200"
+                className="p-1.5 text-[#bb0000] hover:bg-[#ffecec] rounded-sm transition cursor-pointer border border-[#f5b7b1]"
                 title="حذف کامل این BOM"
               >
                 <Trash2 className="w-4 h-4" />
@@ -537,9 +560,9 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                 type="button"
                 onClick={handleGenerateSubMos}
                 disabled={isGeneratingSubMos}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-purple-800 border border-purple-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="sap-btn-standard px-3 py-1.5 text-xs flex items-center gap-1 text-[#007cc0] border-[#b3ddf2] disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <Sparkles className="w-3.5 h-3.5 text-[#007cc0]" />
                 <span>صدور دستورات ساخت فرعی (Sub-MO)</span>
               </button>
             </div>
@@ -547,128 +570,133 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
           {/* Key Engineering Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl">
-              <span className="text-[11px] text-slate-500 block">وزن ناخالص ورق مصرفی:</span>
-              <span className="text-base font-bold text-slate-900 font-mono">
+            <div className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm">
+              <span className="text-[11px] text-[#666666] block">وزن ناخالص ورق مصرفی:</span>
+              <span className="text-base font-bold text-[#333333] font-mono tabular-nums">
                 {toPersianDigits(activeBom.totalGrossWeightKg)} <span className="text-xs font-normal">کیلوگرم</span>
               </span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">شامل پرت بلنکینگ</span>
+              <span className="text-[10px] text-[#666666] block mt-0.5">شامل پرت بلنکینگ</span>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl">
-              <span className="text-[11px] text-slate-500 block">وزن خالص مجموعه نهایی:</span>
-              <span className="text-base font-bold text-emerald-700 font-mono">
+            <div className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm">
+              <span className="text-[11px] text-[#666666] block">وزن خالص مجموعه نهایی:</span>
+              <span className="text-base font-bold text-[#107e3e] font-mono tabular-nums">
                 {toPersianDigits(activeBom.totalNetWeightKg)} <span className="text-xs font-normal">کیلوگرم</span>
               </span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">وزن تحویلی به خودروساز</span>
+              <span className="text-[10px] text-[#666666] block mt-0.5">وزن تحویلی به خودروساز</span>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl">
-              <span className="text-[11px] text-slate-500 block">راندمان مصرف ورق (Yield):</span>
-              <span className="text-base font-bold text-orange-700 font-mono">
+            <div className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm">
+              <span className="text-[11px] text-[#666666] block">راندمان مصرف ورق (Yield):</span>
+              <span className="text-base font-bold text-[#e9730c] font-mono tabular-nums">
                 {toPersianDigits(activeBom.yieldEfficiencyPercent)}%
               </span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">
+              <span className="text-[10px] text-[#666666] block mt-0.5">
                 نرخ پرت استاندارد: {toPersianDigits(Math.round((100 - activeBom.yieldEfficiencyPercent) * 10) / 10)}%
               </span>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-xl">
-              <span className="text-[11px] text-slate-500 block">دستورهای ساخت فرعی وابسته:</span>
-              <span className="text-base font-bold text-purple-700 font-mono">
+            <div className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm">
+              <span className="text-[11px] text-[#666666] block">دستورهای ساخت فرعی وابسته:</span>
+              <span className="text-base font-bold text-[#007cc0] font-mono tabular-nums">
                 {toPersianDigits(activeBom.components.filter(c => c.subMoRequired).length)} <span className="text-xs font-normal">کارت کارگاهی</span>
               </span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">تولید موازی در سالن‌ها</span>
+              <span className="text-[10px] text-[#666666] block mt-0.5">تولید موازی در سالن‌ها</span>
             </div>
           </div>
 
           {/* Components Breakdown Table */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-orange-600" />
+              <h4 className="text-xs font-bold text-[#333333] flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-[#007cc0]" />
                 <span>اجزای متشکله درخت محصول و ضرایب مصرف تفکیکی (Component Breakdown):</span>
               </h4>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-[#666666]">
                 {toPersianDigits(activeBom.components.length)} جزء و قطعه متصل
               </span>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+            <div className="overflow-x-auto border border-[#d9d9d9] rounded-sm">
+              <table className="sap-table-compact w-full text-right text-xs">
+                <thead>
                   <tr>
-                    <th className="py-3 px-3.5">نوع جزء</th>
-                    <th className="py-3 px-3.5">کد و شرح قطعه / ورق / اتصال</th>
-                    <th className="py-3 px-3.5 text-center">ضریب مصرف</th>
-                    <th className="py-3 px-3.5">وزن خالص / ناخالص</th>
-                    <th className="py-3 px-3.5 text-center">درصد ضایعات</th>
-                    <th className="py-3 px-3.5">مرحله و روش اتصال</th>
-                    <th className="py-3 px-3.5">دستور ساخت فرعی؟</th>
-                    <th className="py-3 px-3.5">تأمین‌کننده</th>
-                    <th className="py-3 px-3.5 text-center">عملیات</th>
+                    <th>نوع جزء</th>
+                    <th>کد و شرح قطعه / ورق / اتصال</th>
+                    <th className="text-center">ضریب مصرف</th>
+                    <th>وزن خالص / ناخالص</th>
+                    <th className="text-center">درصد ضایعات</th>
+                    <th>مرحله و روش اتصال</th>
+                    <th>دستور ساخت فرعی؟</th>
+                    <th>تأمین‌کننده</th>
+                    <th className="text-center">عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                   {activeBom.components.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-slate-500">
-                        هنوز جزئی به این درخت محصول اضافه نشده است. برای اضافه کردن ورق، پیچ یا قطعات نیمه‌ساخته روی «+ افزودن جزء جدید» کلیک کنید.
+                      <td colSpan={9} className="py-8 text-center text-[#666666]">
+                        هنوز جزئی به این درخت محصول اضافه نشده است. برای اضافه کردن ورق، پیچ یا قطعات نیمه‌ساخته روی «افزودن جزء جدید» کلیک کنید.
                       </td>
                     </tr>
                   ) : (
                     activeBom.components.map((comp, idx) => (
-                      <tr key={comp.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={comp.id || idx} className="hover:bg-[#f5f5f5] transition-colors">
                         {/* Type Badge */}
-                        <td className="py-3 px-3.5 whitespace-nowrap">
+                        <td className="whitespace-nowrap">
                           {comp.componentType === 'RAW_SHEET' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                              <Disc className="w-3 h-3 text-amber-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#fff4e5] text-[#e9730c] border border-[#f9d6a7]">
+                              <Disc className="w-3 h-3 text-[#e9730c]" />
                               <span>ورق خام اولیه</span>
                             </span>
                           )}
                           {comp.componentType === 'FASTENER_HARDWARE' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
-                              <Wrench className="w-3 h-3 text-indigo-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
+                              <Wrench className="w-3 h-3 text-[#007cc0]" />
                               <span>پیچ / مهره جوشی</span>
                             </span>
                           )}
                           {comp.componentType === 'RUBBER_SEAL' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                              <Boxes className="w-3 h-3 text-purple-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9]">
+                              <Boxes className="w-3 h-3 text-[#666666]" />
                               <span>لاستیک / دمپر</span>
                             </span>
                           )}
                           {comp.componentType === 'WIP_SUB_PART' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                              <Layers className="w-3 h-3 text-teal-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#ebf7ef] text-[#107e3e] border border-[#a9dfbf]">
+                              <Layers className="w-3 h-3 text-[#107e3e]" />
                               <span>نیمه‌ساخته پرسی</span>
                             </span>
                           )}
                         </td>
 
                         {/* Code & Name with Hierarchy Level Indentation */}
-                        <td className="py-3 px-3.5">
-                          <div className={`flex items-center gap-1.5 ${comp.level && comp.level > 1 ? 'pr-4 border-r-2 border-orange-300' : ''}`}>
+                        <td>
+                          <div className={`flex items-center gap-1.5 ${comp.level && comp.level > 1 ? 'pr-3 border-r-2 border-[#007cc0]' : ''}`}>
                             {comp.level && comp.level > 1 && (
-                              <span className="text-[10px] font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200 shrink-0">
+                              <span className="text-[10px] font-bold text-[#007cc0] bg-[#e5f3fa] px-1.5 py-0.5 rounded-sm border border-[#b3ddf2] shrink-0">
                                 ↳ سطح {toPersianDigits(comp.level)}
                               </span>
                             )}
                             <div>
-                              <span className="font-mono font-bold text-slate-900 block text-xs">
+                              <button
+                                type="button"
+                                onClick={() => traceDocument(comp.componentPartCode, 'INVENTORY_LEDGER')}
+                                className="sap-doc-link font-mono font-bold block text-xs"
+                                title="رهگیری این قطعه در کاردکس انبار"
+                              >
                                 {comp.componentPartCode}
-                              </span>
-                              <span className="text-[11px] text-slate-600 block mt-0.5">
+                              </button>
+                              <span className="text-[11px] text-[#333333] block mt-0.5">
                                 {comp.componentPartName}
                               </span>
                               {comp.parentCode && (
-                                <span className="text-[10px] font-semibold text-orange-800 block mt-0.5">
+                                <span className="text-[10px] font-semibold text-[#e9730c] block mt-0.5">
                                   متصل به زیرمجموعه: {comp.parentCode} ({comp.parentName})
                                 </span>
                               )}
                               {comp.notes && (
-                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                <span className="text-[10px] text-[#666666] block mt-0.5">
                                   {comp.notes}
                                 </span>
                               )}
@@ -677,38 +705,38 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                         </td>
 
                         {/* Quantity */}
-                        <td className="py-3 px-3.5 whitespace-nowrap text-center">
-                          <span className="font-bold text-slate-900 font-mono text-sm">
+                        <td className="whitespace-nowrap text-center tabular-nums">
+                          <span className="font-bold text-[#333333] font-mono text-xs">
                             {toPersianDigits(comp.quantityPerAssembly)}
                           </span>{' '}
-                          <span className="text-[11px] text-slate-500">
+                          <span className="text-[11px] text-[#666666]">
                             {comp.unit === 'PCS' ? 'عدد' : comp.unit === 'KG' ? 'کیلوگرم' : 'ست'}
                           </span>
                         </td>
 
                         {/* Weights */}
-                        <td className="py-3 px-3.5 whitespace-nowrap text-[11px]">
-                          <div>خالص: <strong className="font-mono text-slate-800">{toPersianDigits(comp.netWeightKg)} kg</strong></div>
-                          <div className="text-slate-500">ناخالص: <span className="font-mono">{toPersianDigits(comp.grossWeightKg)} kg</span></div>
+                        <td className="whitespace-nowrap text-[11px] tabular-nums">
+                          <div>خالص: <strong className="font-mono text-[#333333]">{toPersianDigits(comp.netWeightKg)} kg</strong></div>
+                          <div className="text-[#666666]">ناخالص: <span className="font-mono">{toPersianDigits(comp.grossWeightKg)} kg</span></div>
                         </td>
 
                         {/* Scrap % */}
-                        <td className="py-3 px-3.5 whitespace-nowrap text-center">
+                        <td className="whitespace-nowrap text-center tabular-nums">
                           {comp.scrapAllowancePercent > 0 ? (
-                            <span className="text-xs font-bold text-amber-800 font-mono bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            <span className="text-[11px] font-bold text-[#e9730c] font-mono bg-[#fff4e5] px-1.5 py-0.5 rounded-sm border border-[#f9d6a7]">
                               {toPersianDigits(comp.scrapAllowancePercent)}%
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-400 font-mono">۰%</span>
+                            <span className="text-[11px] text-[#666666] font-mono">۰%</span>
                           )}
                         </td>
 
                         {/* Joining Operation */}
-                        <td className="py-3 px-3.5 whitespace-nowrap text-[11px]">
-                          <span className="font-bold text-slate-800 block">
+                        <td className="whitespace-nowrap text-[11px]">
+                          <span className="font-bold text-[#333333] block">
                             مرحله {toPersianDigits(comp.stageJoinedStepNumber || 30)}
                           </span>
-                          <span className="text-[10px] text-slate-500 block">
+                          <span className="text-[10px] text-[#666666] block">
                             {comp.joiningProcess === 'SPOT_WELD' && 'پرس‌جوش مقاومتی'}
                             {comp.joiningProcess === 'CO2_WELD' && 'جوش تحت گاز CO2'}
                             {comp.joiningProcess === 'FASTENING' && 'بستن پیچ با ترک‌رنچ'}
@@ -718,41 +746,41 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                         </td>
 
                         {/* Sub-MO Required */}
-                        <td className="py-3 px-3.5 whitespace-nowrap">
+                        <td className="whitespace-nowrap">
                           {comp.subMoRequired ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                              <CheckCircle2 className="w-3 h-3 text-purple-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
+                              <CheckCircle2 className="w-3 h-3 text-[#007cc0]" />
                               <span>دستور ساخت مجزا</span>
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-400">تغذیه مستقیم خط</span>
+                            <span className="text-[11px] text-[#666666]">تغذیه مستقیم خط</span>
                           )}
                         </td>
 
                         {/* Supplier */}
-                        <td className="py-3 px-3.5 whitespace-nowrap text-[11px] text-slate-600">
+                        <td className="whitespace-nowrap text-[11px] text-[#666666]">
                           {comp.supplierSource === 'SAPCO_CONSIGNMENT' && 'امانی ساپکو'}
                           {comp.supplierSource === 'INTERNAL_FABRICATED' && 'تولید داخل کارخانه'}
                           {comp.supplierSource === 'PURCHASED_MARKET' && 'خرید بازار'}
                         </td>
 
                         {/* Actions: Edit, Sub-Component & Delete */}
-                        <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                        <td className="text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-1">
                             <button
                               type="button"
                               onClick={() => handleOpenAddComponent(comp.id)}
-                              className="px-2 py-1 bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center gap-0.5"
+                              className="px-2 py-0.5 bg-[#fff4e5] hover:bg-[#ffe8c7] text-[#e9730c] border border-[#f9d6a7] rounded-sm text-[10px] font-bold transition cursor-pointer flex items-center gap-0.5"
                               title="افزودن جزء متشکله فرعی زیر این قطعه"
                             >
-                              <Plus className="w-3 h-3 text-orange-600" />
+                              <Plus className="w-3 h-3 text-[#e9730c]" />
                               <span>زیر‌جزء</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => handleOpenEditComponent(comp)}
-                              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                              className="p-1 text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] rounded-sm transition cursor-pointer"
                               title="ویرایش مشخصات این جزء"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -760,7 +788,7 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleDeleteComponent(comp.id)}
-                              className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              className="p-1 text-[#bb0000] hover:bg-[#ffecec] rounded-sm transition cursor-pointer"
                               title="حذف این جزء از درخت محصول"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -770,7 +798,7 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                                 type="button"
                                 onClick={() => onOpenTraceabilityModal(comp.componentPartCode)}
                                 title="صدور کارت رهگیری و بچ برای این جزء"
-                                className="p-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition cursor-pointer"
+                                className="p-1 text-[#007cc0] hover:bg-[#e5f3fa] rounded-sm transition cursor-pointer"
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
@@ -789,17 +817,17 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
       {/* Modal 1: Create New BOM */}
       {isNewBomModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 shadow-xl space-y-4 text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <ListTree className="w-4 h-4 text-orange-600" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-lg w-full p-5 shadow-md space-y-4 text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <h3 className="font-bold text-sm text-[#333333] flex items-center gap-2">
+                <ListTree className="w-4 h-4 text-[#007cc0]" />
                 <span>تعریف درخت محصول جدید (New BOM)</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setIsNewBomModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -807,7 +835,7 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
             <form onSubmit={handleCreateNewBom} className="space-y-3 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 mb-1">
+                <label className="block font-medium text-[#333333] mb-1">
                   انتخاب محصول نهایی یا مجموعه از کاتالوگ قطعات *
                 </label>
                 <SearchableSelect
@@ -831,50 +859,50 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">نسخه مهندسی BOM *</label>
+                  <label className="block font-medium text-[#333333] mb-1">نسخه مهندسی BOM *</label>
                   <input
                     type="text"
                     required
                     value={newBomVersion}
                     onChange={e => setNewBomVersion(e.target.value)}
                     placeholder="V1.0 یا V2.0"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">مدل خودرو / خانواده محصول</label>
+                  <label className="block font-medium text-[#333333] mb-1">مدل خودرو / خانواده محصول</label>
                   <input
                     type="text"
                     value={newBomCarModel}
                     onChange={e => setNewBomCarModel(e.target.value)}
                     placeholder="مثال: تارا، پژو ۲۰۶، دنا پلاس"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">توضیحات و الزامات فنی مونتاژ</label>
+                <label className="block font-medium text-[#333333] mb-1">توضیحات و الزامات فنی مونتاژ</label>
                 <textarea
                   rows={2}
                   value={newBomNotes}
                   onChange={e => setNewBomNotes(e.target.value)}
                   placeholder="نکات جوشکاری مقاومتی، تست‌های گشتاور و استانداردهای ساپکو..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-white border border-[#bfbfbf] rounded p-2.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsNewBomModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 text-xs"
                 >
                   ایجاد درخت محصول
                 </button>
@@ -886,14 +914,14 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
       {/* Modal 2: Edit Active BOM */}
       {isEditBomModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 shadow-xl space-y-4 text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-sm text-slate-900">ویرایش مشخصات سند درخت محصول</h3>
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-md w-full p-5 shadow-md space-y-4 text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <h3 className="font-bold text-sm text-[#333333]">ویرایش مشخصات سند درخت محصول</h3>
               <button
                 type="button"
                 onClick={() => setIsEditBomModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -901,47 +929,47 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
             <form onSubmit={handleSaveEditBom} className="space-y-3 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 mb-1">نسخه مهندسی BOM</label>
+                <label className="block font-medium text-[#333333] mb-1">نسخه مهندسی BOM</label>
                 <input
                   type="text"
                   required
                   value={editBomVersion}
                   onChange={e => setEditBomVersion(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">مدل خودرو</label>
+                <label className="block font-medium text-[#333333] mb-1">مدل خودرو</label>
                 <input
                   type="text"
                   value={editBomCarModel}
                   onChange={e => setEditBomCarModel(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">توضیحات مهندسی</label>
+                <label className="block font-medium text-[#333333] mb-1">توضیحات مهندسی</label>
                 <textarea
                   rows={3}
                   value={editBomNotes}
                   onChange={e => setEditBomNotes(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm p-2 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsEditBomModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 text-xs"
                 >
                   ثبت تغییرات
                 </button>
@@ -953,16 +981,16 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
       {/* Modal 3: Add / Edit Component Modal */}
       {isComponentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-5 shadow-xl space-y-4 text-right max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-sm text-slate-900">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-xl w-full p-5 shadow-md space-y-4 text-right max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <h3 className="font-bold text-sm text-[#333333]">
                 {editingCompId ? 'ویرایش جزء متشکله درخت محصول' : `افزودن جزء جدید به BOM [${activeBom?.assemblyPartCode}]`}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsComponentModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -970,17 +998,17 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
             <form onSubmit={handleSaveComponent} className="space-y-3 text-xs">
               {/* Parent Component Selection for Multi-Level Tree */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                <label className="block font-bold text-slate-800 mb-1">
+              <div className="p-3 bg-[#f7f7f7] border border-[#d9d9d9] rounded-sm space-y-1">
+                <label className="block font-bold text-[#333333] mb-1">
                   موقعیت اتکا در درخت محصول (قطعه والد):
                 </label>
                 <select
                   value={compParentId}
                   onChange={e => setCompParentId(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-orange-500 cursor-pointer"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] font-semibold focus:outline-none focus:border-[#007cc0] cursor-pointer"
                 >
                   <option value="">
-                    🏢 مستقیماً متصل به مجموعه اصلی [{activeBom?.assemblyPartCode}] (سطح ۱)
+                    مستقیماً متصل به مجموعه اصلی [{activeBom?.assemblyPartCode}] (سطح ۱)
                   </option>
                   {activeBom?.components
                     .filter(c => c.id !== editingCompId)
@@ -990,13 +1018,13 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                       </option>
                     ))}
                 </select>
-                <span className="text-[10px] text-slate-500 block pt-0.5">
+                <span className="text-[10px] text-[#666666] block pt-0.5">
                   برای ایجاد ساختار چندسطحی (مانند متصل کردن صفحه اصلی یا مکمل به مجموعه و سپس اتصال پیچ/مهره به آن) قطعه والد را انتخاب کنید.
                 </span>
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">
+                <label className="block font-medium text-[#333333] mb-1">
                   انتخاب جزء از کاتالوگ قطعات یا مواد اولیه *
                 </label>
                 <SearchableSelect
@@ -1027,22 +1055,22 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">کد جزء *</label>
+                  <label className="block font-medium text-[#333333] mb-1">کد جزء *</label>
                   <input
                     type="text"
                     required
                     value={compPartCode}
                     onChange={e => setCompPartCode(e.target.value)}
                     placeholder="مثال: SHT-ST14-1.2 یا NUT-M8"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">دسته‌بندی نوع جزء *</label>
+                  <label className="block font-medium text-[#333333] mb-1">دسته‌بندی نوع جزء *</label>
                   <select
                     value={compType}
                     onChange={e => setCompType(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="RAW_SHEET">ورق خام اولیه (کویل/شیت)</option>
                     <option value="WIP_SUB_PART">قطعه نیمه‌ساخته پرسی</option>
@@ -1053,20 +1081,20 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">نام کامل مهندسی جزء *</label>
+                <label className="block font-medium text-[#333333] mb-1">نام کامل مهندسی جزء *</label>
                 <input
                   type="text"
                   required
                   value={compPartName}
                   onChange={e => setCompPartName(e.target.value)}
                   placeholder="شرح دقیق جزء متشکله"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">ضریب مصرف (تعداد) *</label>
+                  <label className="block font-medium text-[#333333] mb-1">ضریب مصرف (تعداد) *</label>
                   <input
                     type="number"
                     step="any"
@@ -1074,15 +1102,15 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                     required
                     value={compQty}
                     onChange={e => setCompQty(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">واحد سنجش</label>
+                  <label className="block font-medium text-[#333333] mb-1">واحد سنجش</label>
                   <select
                     value={compUnit}
                     onChange={e => setCompUnit(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="PCS">عدد (PCS)</option>
                     <option value="KG">کیلوگرم (KG)</option>
@@ -1090,71 +1118,71 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">روش اتصال در خط</label>
+                  <label className="block font-medium text-[#333333] mb-1">روش اتصال در خط</label>
                   <select
                     value={compJoining}
                     onChange={e => setCompJoining(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="SPOT_WELD">پرس‌جوش مقاومتی</option>
                     <option value="CO2_WELD">جوش تحت گاز CO2</option>
                     <option value="FASTENING">پیچ و مهره‌کاری</option>
                     <option value="HEMMING">همبربندی هیدرولیک</option>
-                    <option value="PRESS_FIT">جا زدن فشاری</option>
+                    <option value="PRESS_FIT">جا زدن فشاری بوش</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">وزن خالص (kg)</label>
+                  <label className="block font-medium text-[#333333] mb-1">وزن خالص (kg)</label>
                   <input
                     type="number"
                     step="any"
                     value={compNet}
                     onChange={e => setCompNet(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">وزن ناخالص (kg)</label>
+                  <label className="block font-medium text-[#333333] mb-1">وزن ناخالص (kg)</label>
                   <input
                     type="number"
                     step="any"
                     value={compGross}
                     onChange={e => setCompGross(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">درصد ضایعات (%)</label>
+                  <label className="block font-medium text-[#333333] mb-1">درصد ضایعات (%)</label>
                   <input
                     type="number"
                     step="any"
                     value={compScrap}
                     onChange={e => setCompScrap(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">مرحله اتصال (شماره گام)</label>
+                  <label className="block font-medium text-[#333333] mb-1">مرحله اتصال (شماره گام)</label>
                   <input
                     type="number"
                     step={10}
                     value={compStepJoined}
                     onChange={e => setCompStepJoined(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">منبع تأمین</label>
+                  <label className="block font-medium text-[#333333] mb-1">منبع تأمین</label>
                   <select
                     value={compSupplier}
                     onChange={e => setCompSupplier(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-[#ffffff] border border-[#bfbfbf] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="INTERNAL_FABRICATED">تولید داخل کارخانه</option>
                     <option value="SAPCO_CONSIGNMENT">امانی ساپکو</option>
@@ -1169,24 +1197,24 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
                   id="subMoCheck"
                   checked={compSubMo}
                   onChange={e => setCompSubMo(e.target.checked)}
-                  className="rounded text-orange-600 focus:ring-orange-500 w-4 h-4"
+                  className="rounded-sm text-[#007cc0] focus:ring-[#007cc0] w-4 h-4"
                 />
-                <label htmlFor="subMoCheck" className="text-xs text-slate-700 cursor-pointer font-medium">
+                <label htmlFor="subMoCheck" className="text-xs text-[#333333] cursor-pointer font-medium">
                   نیاز به صدور دستور ساخت فرعی مجزا (Sub-MO) در سالن پرس دارد
                 </label>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsComponentModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 text-xs"
                 >
                   {editingCompId ? 'ثبت تغییرات جزء' : 'افزودن به درخت محصول'}
                 </button>
@@ -1198,46 +1226,64 @@ export const AdvancedBomModuleView: React.FC<AdvancedBomModuleViewProps> = ({
 
       {/* Generated Sub-MOs Modal */}
       {subMoModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 shadow-xl space-y-4 text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm max-w-2xl w-full p-5 shadow-md space-y-4 text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
+              <div className="flex items-center gap-2 text-[#107e3e] font-bold text-sm">
+                <CheckCircle2 className="w-5 h-5 text-[#107e3e]" />
                 <span>دستورات ساخت فرعی با موفقیت در سیستم تولید صادر گردیدند</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSubMoModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-[#666666] leading-relaxed">
               بر اساس تیراژ مصوب <strong>{toPersianDigits(plannedQty)} عدد</strong> از مجموعه {activeBom?.assemblyPartName}، دستورهای ساخت قطعات زیر برای ایستگاه‌های پرس و برش فعال شدند:
             </p>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto divide-y divide-slate-100">
+            <div className="space-y-2 max-h-60 overflow-y-auto divide-y divide-[#e8e8e8]">
               {generatedSubMos.map((sub, i) => (
                 <div key={i} className="flex items-center justify-between py-2 text-xs">
-                  <div>
-                    <span className="font-bold font-mono text-purple-700">{sub.subMoNumber}</span>
-                    <span className="text-slate-700 mr-2 font-medium">{sub.componentPartName}</span>
-                    <span className="text-[11px] text-slate-400 mr-1 font-mono">({sub.componentPartCode})</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSubMoModalOpen(false);
+                        traceDocument(sub.subMoNumber, 'WIP_TRACEABILITY');
+                      }}
+                      className="sap-doc-link font-bold font-mono"
+                    >
+                      {sub.subMoNumber}
+                    </button>
+                    <span className="text-[#333333] font-medium">{sub.componentPartName}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSubMoModalOpen(false);
+                        traceDocument(sub.componentPartCode, 'INVENTORY_LEDGER');
+                      }}
+                      className="sap-doc-link text-[11px] font-mono"
+                    >
+                      ({sub.componentPartCode})
+                    </button>
                   </div>
-                  <div className="font-mono font-bold text-slate-900">
+                  <div className="font-mono font-bold text-[#333333] tabular-nums">
                     {toPersianDigits(sub.requiredQty)} {sub.unit === 'PCS' ? 'عدد' : 'kg'}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-100">
+            <div className="flex justify-end pt-3 border-t border-[#e8e8e8]">
               <button
                 type="button"
                 onClick={() => setSubMoModalOpen(false)}
-                className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold transition hover:bg-slate-800 cursor-pointer"
+                className="sap-btn-emphasized px-5 py-1.5 text-xs"
               >
                 تایید و بستن
               </button>

@@ -39,42 +39,46 @@ export const ErpSyncModal: React.FC<ErpSyncModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl p-6 shadow-2xl animate-in zoom-in-95">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4" dir="rtl">
+      <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-xl shadow-lg overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3.5 bg-white border-b border-[#d9d9d9]">
           <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-cyan-400" />
-            <h3 className="text-sm font-bold text-white">
+            <Cpu className="w-4 h-4 text-[#007cc0]" />
+            <h3 className="text-sm font-bold text-[#333333]">
               درگاه اتصال به SQL Server و ERP صنعتی ساپکو
             </h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#666666] hover:text-[#333333] p-1 rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="mt-4 space-y-4 text-xs text-slate-300">
-          <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2">
+        <div className="p-5 space-y-4 text-xs text-[#333333]">
+          <div className="p-3.5 rounded bg-[#f7f7f7] border border-[#d9d9d9] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">وضعیت رابط ماژولار:</span>
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
+              <span className="text-[#666666]">وضعیت رابط ماژولار:</span>
+              <span className="text-[#107e3e] font-bold flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 آماده اتصال به پایگاه‌های رابطه‌ای (SQL Server / SAP)
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">موتور بک‌اند:</span>
-              <span className="font-mono text-white">Node.js Express Ledger Engine (/api/*)</span>
+              <span className="text-[#666666]">موتور بک‌اند:</span>
+              <span className="font-mono text-[#333333]">Node.js Express Ledger Engine (/api/*)</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">ذخیره‌سازی ابری:</span>
-              <span className="font-mono text-amber-400">Google Cloud Firestore & Firebase Auth</span>
+              <span className="text-[#666666]">ذخیره‌سازی ابری:</span>
+              <span className="font-mono text-[#e9730c] font-semibold">Google Cloud Firestore & Firebase Auth</span>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <h4 className="font-bold text-white text-xs">پروتکل‌های تبادل داده استاندارد پشتیبانی شده:</h4>
-            <ul className="space-y-1 text-[11px] text-slate-400 list-disc list-inside">
+            <h4 className="font-bold text-[#333333] text-xs">پروتکل‌های تبادل داده استاندارد پشتیبانی شده:</h4>
+            <ul className="space-y-1 text-[11px] text-[#666666] list-disc list-inside">
               <li>تبادل بارنامه الکترونیک و رسید محموله کویل ساپکو (EDI ASN 856)</li>
               <li>انتقال سرفصل دفاتر انبار و بهای تمام‌شده قطعات به SQL Server همکاران سیستم / رایورز</li>
               <li>صدور خروجی مکانیزه حواله انبار برای سیستم جامع تولید ایران‌خودرو و سایپا</li>
@@ -82,21 +86,21 @@ export const ErpSyncModal: React.FC<ErpSyncModalProps> = ({
           </div>
 
           {syncStatus && (
-            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3 rounded bg-[#eef8f2] border border-[#b2dfc4] text-[#107e3e] text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
               <span>{syncStatus}</span>
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-            <div className="text-[11px] text-slate-500 font-mono">
+          <div className="flex items-center justify-between pt-3.5 border-t border-[#e8e8e8]">
+            <div className="text-[11px] text-[#666666] font-mono">
               GET /api/health (200 OK)
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium transition-colors"
+                className="sap-btn-standard text-xs"
               >
                 بستن
               </button>
@@ -104,7 +108,7 @@ export const ErpSyncModal: React.FC<ErpSyncModalProps> = ({
                 type="button"
                 onClick={handleSimulateSync}
                 disabled={syncing}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-all shadow-md shadow-cyan-900/30 flex items-center gap-1.5"
+                className="sap-btn-emphasized text-xs flex items-center gap-1.5 disabled:opacity-60"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
                 <span>{syncing ? 'در حال ارسال به ERP...' : 'تست تبادل داده با ERP'}</span>

@@ -59,6 +59,7 @@ import { TraceabilityTagModal } from './wip/TraceabilityTagModal';
 import { toPersianDigits } from '../utils/formatters';
 import { MasterDataSkeleton } from './ui/Skeleton';
 import { useEnterpriseUx } from '../context/EnterpriseUxContext';
+import { useErpRouter } from '../context/RouterContext';
 
 export type MasterSubSection =
   | 'HUB'
@@ -297,6 +298,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
   }, []);
 
   const { requestConfirm } = useEnterpriseUx();
+  const { traceDocument } = useErpRouter();
   const [masterBanner, setMasterBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const notifyMaster = (type: 'success' | 'error', message: string) => {
     setMasterBanner({ type, message });
@@ -1107,36 +1109,36 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
           </button>
         </div>
       )}
-      {/* Grafana-Inspired Header & Flat Section Selector (Zero Nested Tabs) */}
-      <div className="bg-white border border-slate-200/60 rounded-xl p-4 space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* SAP Fiori Dynamic Page Header & Launchpad Section Bar */}
+      <div className="sap-card overflow-hidden">
+        <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#D9DFE5]">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 text-slate-600 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-[#EBF5FF] border border-[#B3D7FF] text-[#0070F2] flex items-center justify-center shrink-0">
               <Boxes className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-sm font-medium text-slate-800">اطلاعات پایه کارخانه</h1>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h1 className="text-sm font-semibold text-[#1D2D3E]">اطلاعات پایه کارخانه (SAP Master Data)</h1>
+              <p className="text-xs text-[#556B82] mt-0.5">
                 مدیریت یکپارچه قطعات، ورق‌ها، درخت محصول (BOM)، مسیر تولید، ماشین‌آلات، انبارها و مشتریان
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
-            <div className="inline-flex items-center bg-slate-100/80 p-1 rounded-lg border border-slate-200/60">
+            <div className="inline-flex items-center bg-[#F2F4F7] p-1 rounded-md border border-[#D9DFE5]">
               <button
                 type="button"
                 onClick={() => {
                   setViewMode('CARDS_HUB');
                   setActiveSection('HUB');
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                   viewMode === 'CARDS_HUB' && activeSection === 'HUB'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#0070F2] text-white'
+                    : 'text-[#556B82] hover:text-[#1D2D3E]'
                 }`}
               >
-                <LayoutGrid className="w-3.5 h-3.5 text-slate-600" />
+                <LayoutGrid className="w-3.5 h-3.5" />
                 <span>فهرست کارتی</span>
               </button>
               <button
@@ -1145,13 +1147,13 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   setViewMode('SEGMENTED_TABS');
                   if (activeSection === 'HUB') setActiveSection('RAW_MATERIALS');
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                   activeSection !== 'HUB'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#0070F2] text-white'
+                    : 'text-[#556B82] hover:text-[#1D2D3E]'
                 }`}
               >
-                <Table2 className="w-3.5 h-3.5 text-slate-600" />
+                <Table2 className="w-3.5 h-3.5" />
                 <span>نمای جدولی مستقیم</span>
               </button>
             </div>
@@ -1159,19 +1161,19 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
             <button
               type="button"
               onClick={onRefresh}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/70 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+              <RefreshCw className="w-3.5 h-3.5" />
               <span>به‌روزرسانی</span>
             </button>
           </div>
         </div>
 
-        {/* Single Flat Section Selector Bar */}
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200/60 rounded-lg px-3 py-1.5">
-              <span className="text-slate-500 font-normal">انتخاب جدول پایه:</span>
+        {/* SAP Fiori IconTabBar & Master Table Selector */}
+        <div className="px-3 flex flex-wrap items-center justify-between gap-2 text-xs bg-white">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
+            <div className="inline-flex items-center gap-2 bg-[#F5F6F7] border border-[#D9DFE5] rounded-md px-2.5 py-1 my-1.5">
+              <span className="text-[#556B82] font-normal">جدول:</span>
               <select
                 value={activeSection}
                 onChange={e => {
@@ -1179,7 +1181,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   setActiveSection(val);
                   if (val !== 'HUB') setViewMode('SEGMENTED_TABS');
                 }}
-                className="bg-transparent font-medium text-slate-800 focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold text-[#1D2D3E] focus:outline-none cursor-pointer"
               >
                 <option value="HUB">پیشخوان همه جداول اطلاعات پایه (۱۳ بخش)</option>
                 {segmentedTabs.map(t => (
@@ -1192,7 +1194,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
               </select>
             </div>
 
-            <div className="flex items-center gap-1 overflow-x-auto bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
+            <div className="sap-icon-tab-bar border-b-0 flex-1">
               {[
                 { id: 'PARTS', label: 'قطعات' },
                 { id: 'RAW_MATERIALS', label: 'ورق و کویل' },
@@ -1209,11 +1211,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                     setActiveSection(tab.id as MasterSubSection);
                     setViewMode('SEGMENTED_TABS');
                   }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] transition-all whitespace-nowrap cursor-pointer ${
-                    activeSection === tab.id
-                      ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`sap-icon-tab ${activeSection === tab.id ? 'sap-icon-tab-active' : ''}`}
                 >
                   {tab.label}
                 </button>
@@ -1228,7 +1226,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                 setViewMode('CARDS_HUB');
                 setActiveSection('HUB');
               }}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[#0064D9] hover:underline cursor-pointer py-1.5"
             >
               <ArrowRight className="w-3.5 h-3.5" />
               <span>بازگشت به فهرست کارتی</span>
@@ -1237,9 +1235,9 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         </div>
       </div>
 
-      {/* MODE 1: WORKSPACE CARD HUB */}
+      {/* MODE 1: SAP FIORI LAUNCHPAD TILES HUB */}
       {activeSection === 'HUB' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs">
+        <div className="sap-card p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {hubCards.map(card => {
               const Icon = card.icon;
@@ -1250,34 +1248,34 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                     setActiveSection(card.id);
                     setViewMode('SEGMENTED_TABS');
                   }}
-                  className="group bg-white hover:bg-slate-50/60 border border-slate-200/90 hover:border-orange-300 rounded-xl p-5 flex flex-col justify-between transition-all cursor-pointer shadow-2xs"
+                  className="group bg-white hover:bg-[#F5F6F7]/70 border border-[#D9DFE5] hover:border-[#0070F2] rounded-lg p-4 flex flex-col justify-between transition-all cursor-pointer shadow-2xs"
                 >
                   <div>
-                    <div className="flex items-center justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-orange-50 border border-orange-200/60 text-orange-600 flex items-center justify-center shrink-0">
+                    <div className="flex items-center justify-between gap-3 mb-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-[#EBF5FF] border border-[#B3D7FF] text-[#0070F2] flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4" />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-700 transition-colors">
+                        <h3 className="text-sm font-semibold text-[#1D2D3E] group-hover:text-[#0064D9] transition-colors">
                           {card.title}
                         </h3>
                       </div>
                     </div>
 
-                    <p className="text-xs text-slate-500 leading-relaxed min-h-[38px]">
+                    <p className="text-xs text-[#556B82] leading-relaxed min-h-[38px]">
                       {card.description}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="mt-3.5 pt-2.5 border-t border-[#EAECEF] flex items-center justify-between">
                     {card.countBadge ? (
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-slate-600">
+                      <span className="px-2 py-0.5 rounded bg-[#F2F4F7] border border-[#D9DFE5] text-[10px] font-medium text-[#556B82]">
                         {card.countBadge}
                       </span>
                     ) : (
                       <span />
                     )}
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 group-hover:text-orange-600 transition-colors">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0064D9] group-hover:underline">
                       <span>مشاهده</span>
                       <ArrowLeft className="w-3.5 h-3.5" />
                     </span>
@@ -1296,29 +1294,28 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
       {/* 1. RAW MATERIALS & SHEET SPECS (Matches Table in Image 2: 2_5080a2ed.jpg) */}
       {activeSection === 'RAW_MATERIALS' && (
         <div className="space-y-3">
-          {/* Informative banner addressing user domain question */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl flex items-start justify-between gap-3 text-xs">
+          <div className="sap-card p-3.5 bg-[#F5F6F7] flex items-start justify-between gap-3 text-xs">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">🔗 اتصال و یکپارچگی مواد اولیه با انبار قطعات (Master Item Catalog):</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                <span className="font-semibold text-[#1D2D3E]">اتصال و یکپارچگی مواد اولیه با انبار قطعات (Master Item Catalog):</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#EBF5EC] text-[#107E3E] border border-[#B7DFBF]">
                   {toPersianDigits(parts.filter(p => p.category === 'RAW_MATERIAL').length)} قلم ماده اولیه در انبار کالا
                 </span>
               </div>
-              <p className="text-slate-600 text-[11px] leading-relaxed">
+              <p className="text-[#556B82] text-[11px] leading-relaxed">
                 در خطوط پرسکاری بدنه خودرو، کلیه اجناس اعم از <strong>مواد اولیه (ورق و رول)</strong>، <strong>قطعات نیمه‌ساخته (WIP)</strong> و <strong>محصول نهایی</strong> دارای هویت واحد به عنوان کالا هستند. این جدول مشخصات مهندسی ابعاد شیت (ضخامت، طول/عرض برش و وزن هر برگ برای موازنه خطوط پرس) را تنظیم می‌کند و هر ردیف آن مستقیماً با کاتالوگ قطعات همگام است.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setActiveSection('PARTS')}
-              className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl font-bold text-[11px] whitespace-nowrap cursor-pointer shrink-0"
+              className="sap-btn-standard px-3 py-1.5 text-[11px] whitespace-nowrap shrink-0"
             >
               مشاهده در انبار قطعات ←
             </button>
           </div>
 
-          {/* Action Row above table matching Image 2 */}
+          {/* Action Row above table */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <button
@@ -1338,32 +1335,32 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   });
                   setIsNewSheetModalOpen(true);
                 }}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer ${themeMeta.buttonPrimaryClass}`}
+                className="sap-btn-emphasized inline-flex items-center gap-1.5 px-4 py-2 text-xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>ماده اولیه جدید</span>
               </button>
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-medium text-[#556B82]">
                 {toPersianDigits(filteredRawSheets.length)} ماده
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-[#556B82] absolute right-3 top-2.5 pointer-events-none" />
                 <input
                   type="text"
                   value={sheetSearch}
                   onChange={e => setSheetSearch(e.target.value)}
                   placeholder="جستجوی کد ورق، گرید (ST12/ST13) یا ضخامت..."
-                  className="bg-white border border-slate-200 rounded-xl pr-8 pl-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-600 w-64"
+                  className="bg-white border border-[#BCC6D0] rounded-md pr-8 pl-3 py-1.5 text-xs text-[#1D2D3E] focus:outline-none focus:border-[#0070F2] w-64"
                 />
               </div>
               {onNavigateToInventoryCoils && (
                 <button
                   type="button"
                   onClick={onNavigateToInventoryCoils}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                  className="sap-btn-standard px-3 py-1.5 text-xs"
                 >
                   رهگیری کویل‌پک‌ها در انبار ({toPersianDigits(coils.length)} رول) ←
                 </button>
@@ -1371,60 +1368,67 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
             </div>
           </div>
 
-          {/* High-Contrast Right-Bordered Table exactly like Image 2 */}
-          <div
-            className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs ${themeMeta.borderAccentClass}`}
-          >
+          {/* SAP ALV Table */}
+          <div className="sap-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold">
+              <table className="sap-table-compact w-full text-right text-xs">
+                <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
                   <tr>
-                    <th className="py-3.5 px-4">کد ماده</th>
-                    <th className="py-3.5 px-4">نام</th>
-                    <th className="py-3.5 px-4">گرید</th>
-                    <th className="py-3.5 px-4">ضخامت (mm)</th>
-                    <th className="py-3.5 px-4">ابعاد ورق (mm)</th>
-                    <th className="py-3.5 px-4">وزن ورق (kg)</th>
-                    <th className="py-3.5 px-4">واحد</th>
-                    <th className="py-3.5 px-4">قراردادها</th>
-                    <th className="py-3.5 px-4">وضعیت</th>
-                    <th className="py-3.5 px-4 text-center">عملیات</th>
+                    <th>کد ماده</th>
+                    <th>نام</th>
+                    <th>گرید</th>
+                    <th>ضخامت (mm)</th>
+                    <th>ابعاد ورق (mm)</th>
+                    <th>وزن ورق (kg)</th>
+                    <th>واحد</th>
+                    <th>قراردادها</th>
+                    <th>وضعیت</th>
+                    <th className="text-center">عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-800">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                   {filteredRawSheets.map(sheet => (
                     <tr
                       key={sheet.id}
-                      className="hover:bg-slate-50/80 transition-colors"
+                      className="hover:bg-[#e5f3fa]/55 transition-colors"
                     >
-                      <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
-                        {sheet.code}
+                      <td className="font-mono font-semibold tabular-nums">
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(sheet.code, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link"
+                          title="رهگیری موجودی و کاردکس این ورق در انبار"
+                        >
+                          {sheet.code}
+                        </button>
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-800">
+                      <td className="font-medium text-[#333333]">
                         {sheet.name}
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-700">
+                      <td className="font-semibold text-[#333333]">
                         {sheet.grade}
                       </td>
-                      <td className="py-3.5 px-4 tabular-nums font-medium">
+                      <td className="tabular-nums font-medium">
                         {toPersianDigits(sheet.thicknessMm.toString().replace('.', '/'))}
                       </td>
-                      <td className="py-3.5 px-4 tabular-nums text-slate-600">
+                      <td className="tabular-nums text-[#666666]">
                         {sheet.dimensionsMm}
                       </td>
-                      <td className="py-3.5 px-4 tabular-nums font-semibold text-slate-800">
+                      <td className="tabular-nums font-semibold text-[#333333]">
                         {toPersianDigits(sheet.sheetWeightKg.toFixed(1).replace('.', '/'))}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-600">{sheet.unit}</td>
-                      <td className="py-3.5 px-4 tabular-nums font-bold text-slate-700">
+                      <td className="text-[#666666]">{sheet.unit}</td>
+                      <td className="tabular-nums font-semibold text-[#333333]">
                         {toPersianDigits(sheet.contractsCount)}
                       </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-600 text-white">
+                      <td>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold ${
+                          sheet.active ? 'bg-[#eefaf2] text-[#107e3e] border border-[#b6e4c8]' : 'bg-[#f0f0f0] text-[#666666] border border-[#d9d9d9]'
+                        }`}>
                           {sheet.active ? 'فعال' : 'غیرفعال'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="text-center">
                         <button
                           type="button"
                           onClick={() => {
@@ -1432,7 +1436,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                             setSheetForm(sheet);
                             setIsNewSheetModalOpen(true);
                           }}
-                          className="inline-flex items-center gap-1 text-slate-600 hover:text-emerald-700 font-semibold cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[#007cc0] hover:text-[#006299] font-semibold cursor-pointer"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>ویرایش</span>
@@ -1487,18 +1491,18 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 4.5 FACTORY HALLS (سالن‌های تولید و استقرار خطوط) */}
       {activeSection === 'FACTORY_HALLS' && (
-        <div className={`bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs ${themeMeta.borderAccentClass}`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="sap-card p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#EAECEF]">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-semibold text-[#1D2D3E]">
                   سالن‌های تولید و موقعیت‌های استقرار ماشین‌آلات (Factory Production Halls)
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EBF5FF] text-[#0064D9] border border-[#D1E8FF]">
                   {toPersianDigits(hallsList.length)} سالن تولید
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#556B82] mt-0.5">
                 تعریف، ویرایش و مدیریت سالن‌های پرس سنگین، پرس متوسط، جوشکاری رباتیک، خط رنگ کاتافورز ED، مونتاژ و انبارها
               </p>
             </div>
@@ -1517,7 +1521,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                 });
                 setIsHallModalOpen(true);
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer text-white shadow-xs ${themeMeta.buttonPrimaryClass}`}
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs"
             >
               <Plus className="w-4 h-4" />
               <span>تعریف سالن تولید جدید</span>
@@ -1526,32 +1530,32 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
           {/* Search Bar */}
           <div className="relative max-w-md">
-            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[#556B82]" />
             <input
               type="text"
               placeholder="جستجو در کد، نام سالن، سرپرست یا مشخصات..."
               value={hallSearch}
               onChange={e => setHallSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500 transition-colors"
+              className="w-full bg-white border border-[#BCC6D0] rounded-md pr-9 pl-3 py-2 text-xs text-[#1D2D3E] placeholder:text-[#89919A] focus:outline-none focus:border-[#0070F2] transition-colors"
             />
           </div>
 
           {/* Halls Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+          <div className="overflow-x-auto border border-[#d9d9d9] rounded-sm">
+            <table className="sap-table-compact w-full text-right text-xs">
+              <thead className="bg-[#ffffff] text-[#333333] font-semibold border-b border-[#d9d9d9]">
                 <tr>
-                  <th className="py-2.5 px-3 text-center">کد سالن</th>
-                  <th className="py-2.5 px-3">نام و عنوان سالن تولید</th>
-                  <th className="py-2.5 px-3">نوع فرآیند کارگاهی</th>
-                  <th className="py-2.5 px-3">سرپرست / مسئول سالن</th>
-                  <th className="py-2.5 px-3">ظرفیت و تجهیزات مستقر</th>
-                  <th className="py-2.5 px-3 text-center">پرس‌ها و ماشین‌های مستقر</th>
-                  <th className="py-2.5 px-3 text-center">وضعیت</th>
-                  <th className="py-2.5 px-3 text-center">عملیات</th>
+                  <th className="text-center">کد سالن</th>
+                  <th>نام و عنوان سالن تولید</th>
+                  <th>نوع فرآیند کارگاهی</th>
+                  <th>سرپرست / مسئول سالن</th>
+                  <th>ظرفیت و تجهیزات مستقر</th>
+                  <th className="text-center">پرس‌ها و ماشین‌های مستقر</th>
+                  <th className="text-center">وضعیت</th>
+                  <th className="text-center">عملیات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-800">
+              <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                 {hallsList
                   .filter(h =>
                     !hallSearch.trim() ||
@@ -1565,51 +1569,51 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                       m => m.hallId === hall.id || m.location === hall.name || m.location?.includes(hall.name)
                     );
                     return (
-                      <tr key={hall.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3 px-3 text-center font-mono font-bold text-slate-900">
-                          <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
+                      <tr key={hall.id} className="hover:bg-[#e5f3fa]/55 transition-colors">
+                        <td className="text-center font-mono font-bold text-[#333333]">
+                          <span className="px-2 py-0.5 rounded-sm bg-[#f0f0f0] border border-[#d9d9d9]">
                             {hall.code}
                           </span>
                         </td>
-                        <td className="py-3 px-3 font-bold text-slate-900">
+                        <td className="font-bold text-[#333333]">
                           <div className="flex items-center gap-1.5">
-                            <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
+                            <Building2 className="w-4 h-4 text-[#007cc0] shrink-0" />
                             <span>{hall.name}</span>
                           </div>
                           {hall.description && (
-                            <p className="text-[11px] text-slate-500 font-normal mt-0.5 line-clamp-1">
+                            <p className="text-[11px] text-[#666666] font-normal mt-0.5 line-clamp-1">
                               {hall.description}
                             </p>
                           )}
                         </td>
-                        <td className="py-3 px-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
+                        <td>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-bold bg-[#f0f0f0] text-[#333333]">
                             {hall.type === 'STAMPING' ? 'پرسکاری و کشش' :
                              hall.type === 'WELDING' ? 'جوشکاری و مونتاژ' :
                              hall.type === 'PAINT' ? 'خط رنگ و کاتافورز' :
                              hall.type === 'ASSEMBLY' ? 'مونتاژ نهایی' : 'انبار و لجستیک'}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-slate-700">
+                        <td className="text-[#333333]">
                           {hall.supervisorName || 'تعیین‌نشده'}
                         </td>
-                        <td className="py-3 px-3 text-slate-600 max-w-xs truncate" title={hall.capacityDesc}>
+                        <td className="text-[#666666] max-w-xs truncate" title={hall.capacityDesc}>
                           {hall.capacityDesc || '—'}
                         </td>
-                        <td className="py-3 px-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] bg-blue-50 text-blue-700 border border-blue-200">
-                            <Cpu className="w-3 h-3 text-blue-500" />
+                        <td className="text-center">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-bold text-[11px] bg-[#e5f3fa] text-[#007cc0] border border-[#b3d7ff]">
+                            <Cpu className="w-3 h-3 text-[#007cc0]" />
                             {toPersianDigits(machinesInHall.length)} ماشین
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            hall.active !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                        <td className="text-center">
+                          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold ${
+                            hall.active !== false ? 'bg-[#eefaf2] text-[#107e3e] border border-[#b6e4c8]' : 'bg-[#f0f0f0] text-[#666666]'
                           }`}>
                             {hall.active !== false ? 'فعال' : 'غیرفعال'}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-center">
+                        <td className="text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               type="button"
@@ -1618,14 +1622,14 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                                 setHallForm({ ...hall });
                                 setIsHallModalOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer"
+                              className="px-2 py-0.5 rounded-sm text-[11px] font-semibold text-[#007cc0] bg-[#e5f3fa] hover:bg-[#d1ecfa] transition-colors cursor-pointer"
                             >
                               ویرایش
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteHall(hall.id)}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
+                              className="px-2 py-0.5 rounded-sm text-[11px] font-semibold text-[#bb0000] bg-[#fff2f2] hover:bg-[#ffe5e5] transition-colors cursor-pointer"
                             >
                               حذف
                             </button>
@@ -1660,22 +1664,20 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
         />
       )}
 
-      {/* 6. OPERATIONS (عملیات تولید استاندارد - کاملاً پویا با قابلیت افزودن، ویرایش و حذف) */}
+      {/* 6. OPERATIONS (عملیات تولید استاندارد) */}
       {activeSection === 'OPERATIONS' && (
-        <div
-          className={`bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs ${themeMeta.borderAccentClass}`}
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="sap-card p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#EAECEF]">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-semibold text-[#1D2D3E]">
                   ایستگاه‌ها و عملیات استاندارد تولید (Standard Operations)
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EBF5FF] text-[#0064D9] border border-[#D1E8FF]">
                   {toPersianDigits(operationsList.length)} عملیات تعریف‌شده
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#556B82] mt-0.5">
                 بانک اطلاعاتی عملیات استاندارد برش رول، بلنکینگ، کشش، خم، پرس‌جوش مهره، جوش CO2، پوشش الکتروفورز (ED) و بازرسی نهایی
               </p>
             </div>
@@ -1695,7 +1697,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                 });
                 setIsOperationModalOpen(true);
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer text-white shadow-xs ${themeMeta.buttonPrimaryClass}`}
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs"
             >
               <Plus className="w-4 h-4" />
               <span>تعریف عملیات جدید</span>
@@ -1705,19 +1707,19 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
           {/* Search & Filter Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
               <input
                 type="text"
                 placeholder="جستجو در کد، نام عملیات، ایستگاه یا توضیحات..."
                 value={operationSearch}
                 onChange={e => setOperationSearch(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 transition-colors"
+                className="w-full bg-white border border-[#d9d9d9] rounded-sm pr-9 pl-3 py-1.5 text-xs text-[#333333] placeholder:text-[#666666] focus:outline-none focus:border-[#007cc0] transition-colors"
               />
               {operationSearch && (
                 <button
                   type="button"
                   onClick={() => setOperationSearch('')}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#333333]"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -1738,10 +1740,10 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   key={cat.id}
                   type="button"
                   onClick={() => setOperationCategoryFilter(cat.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-all cursor-pointer border ${
                     operationCategoryFilter === cat.id
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[#007cc0] text-white border-[#007cc0]'
+                      : 'bg-white text-[#666666] border-[#d9d9d9] hover:bg-[#e5f3fa]'
                   }`}
                 >
                   {cat.label}
@@ -1751,21 +1753,21 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
           </div>
 
           {/* Operations Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+          <div className="overflow-x-auto border border-[#d9d9d9] rounded-sm">
+            <table className="sap-table-compact w-full text-right text-xs">
+              <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-bold">
                 <tr>
-                  <th className="py-3 px-4">کد عملیات</th>
-                  <th className="py-3 px-4">عنوان عملیات</th>
-                  <th className="py-3 px-4">نوع ایستگاه / تجهیزات</th>
-                  <th className="py-3 px-4">دسته فرآیندی</th>
-                  <th className="py-3 px-4">زمان چرخه (ثانیه)</th>
-                  <th className="py-3 px-4">زمان تعویض قالب (دقیقه)</th>
-                  <th className="py-3 px-4">وضعیت</th>
-                  <th className="py-3 px-4 text-center">اقدامات</th>
+                  <th>کد عملیات</th>
+                  <th>عنوان عملیات</th>
+                  <th>نوع ایستگاه / تجهیزات</th>
+                  <th>دسته فرآیندی</th>
+                  <th>زمان چرخه (ثانیه)</th>
+                  <th>زمان تعویض قالب (دقیقه)</th>
+                  <th>وضعیت</th>
+                  <th className="text-center">اقدامات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-[#e8e8e8] bg-white">
                 {operationsList
                   .filter(op => {
                     const matchCat =
@@ -1781,48 +1783,48 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   })
                   .map(op => {
                     const categoryLabels: Record<string, { label: string; color: string }> = {
-                      SHEARING: { label: 'برشکاری', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-                      STAMPING: { label: 'پرسکاری', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-                      BENDING: { label: 'خم‌کاری', color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-                      WELDING: { label: 'جوشکاری', color: 'bg-orange-50 text-orange-700 border-orange-200' },
-                      SURFACE_FINISH: { label: 'رنگ و پوشش', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-                      QC_PACK: { label: 'کنترل و بسته‌بندی', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                      SHEARING: { label: 'برشکاری', color: 'bg-[#fff7eb] text-[#e9730c] border-[#f5d29c]' },
+                      STAMPING: { label: 'پرسکاری', color: 'bg-[#e5f3fa] text-[#007cc0] border-[#b3d7ff]' },
+                      BENDING: { label: 'خم‌کاری', color: 'bg-[#e5f3fa] text-[#007cc0] border-[#b3d7ff]' },
+                      WELDING: { label: 'جوشکاری', color: 'bg-[#fff7eb] text-[#e9730c] border-[#f5d29c]' },
+                      SURFACE_FINISH: { label: 'رنگ و پوشش', color: 'bg-[#f0f0f0] text-[#333333] border-[#d9d9d9]' },
+                      QC_PACK: { label: 'کنترل و بسته‌بندی', color: 'bg-[#eefaf2] text-[#107e3e] border-[#b6e4c8]' },
                     };
-                    const catMeta = categoryLabels[op.category] || { label: op.category, color: 'bg-slate-100 text-slate-700 border-slate-200' };
+                    const catMeta = categoryLabels[op.category] || { label: op.category, color: 'bg-[#f0f0f0] text-[#333333] border-[#d9d9d9]' };
 
                     return (
-                      <tr key={op.id || op.code} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-900">{op.code}</td>
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-900">{op.name}</div>
+                      <tr key={op.id || op.code} className="hover:bg-[#e5f3fa]/55 transition-colors">
+                        <td className="font-mono font-bold text-[#333333]">{op.code}</td>
+                        <td>
+                          <div className="font-semibold text-[#333333]">{op.name}</div>
                           {op.description && (
-                            <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{op.description}</div>
+                            <div className="text-[11px] text-[#666666] mt-0.5 line-clamp-1">{op.description}</div>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-slate-700 font-medium">{op.stationType}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${catMeta.color}`}>
+                        <td className="text-[#333333] font-medium">{op.stationType}</td>
+                        <td>
+                          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border ${catMeta.color}`}>
                             {catMeta.label}
                           </span>
                         </td>
-                        <td className="py-3 px-4 tabular-nums font-bold text-slate-900">
+                        <td className="tabular-nums font-bold text-[#333333]">
                           {toPersianDigits(op.cycleTimeSec)} ثانیه
                         </td>
-                        <td className="py-3 px-4 tabular-nums text-slate-700">
+                        <td className="tabular-nums text-[#666666]">
                           {toPersianDigits(op.setupTimeMin)} دقیقه
                         </td>
-                        <td className="py-3 px-4">
+                        <td>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            className={`px-2 py-0.5 rounded-sm text-[10px] font-bold ${
                               op.active !== false
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-slate-200 text-slate-600'
+                                ? 'bg-[#eefaf2] text-[#107e3e] border border-[#b6e4c8]'
+                                : 'bg-[#f0f0f0] text-[#666666]'
                             }`}
                           >
                             {op.active !== false ? 'فعال' : 'غیرفعال'}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td>
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               type="button"
@@ -1831,7 +1833,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                                 setOperationForm({ ...op });
                                 setIsOperationModalOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer"
+                              className="px-2 py-0.5 rounded-sm text-[11px] font-semibold text-[#007cc0] bg-[#e5f3fa] hover:bg-[#d1ecfa] transition-colors cursor-pointer"
                             >
                               ویرایش
                             </button>
@@ -1847,7 +1849,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                                 });
                                 setIsOperationModalOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white inline-flex items-center gap-1 transition-colors cursor-pointer"
+                              className="sap-btn-standard px-2 py-0.5 rounded-sm text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
                               title="کپی‌گیری سریع (Duplicate) برای ایجاد عملیات مشابه"
                             >
                               <Copy className="w-3 h-3" />
@@ -1856,7 +1858,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleDeleteOperation(op.id || op.code)}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
+                              className="px-2 py-0.5 rounded-sm text-[11px] font-semibold text-[#bb0000] bg-[#fff2f2] hover:bg-[#ffe5e5] transition-colors cursor-pointer"
                             >
                               حذف
                             </button>
@@ -1867,7 +1869,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   })}
                 {operationsList.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-slate-400">
+                    <td colSpan={8} className="py-8 text-center text-[#666666]">
                       عملیاتی یافت نشد. جهت تعریف مرحله جدید دکمه «تعریف عملیات جدید» را بزنید.
                     </td>
                   </tr>
@@ -2200,45 +2202,45 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
               </div>
 
               {/* Car Models Table */}
-              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+              <div className="border border-[#d9d9d9] rounded-sm overflow-hidden bg-white">
+                <table className="sap-table-compact w-full text-right text-xs">
+                  <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-bold">
                     <tr>
-                      <th className="py-3 px-4">کد شناسه</th>
-                      <th className="py-3 px-4">نام مدل خودرو</th>
-                      <th className="py-3 px-4">خودروساز / OEM</th>
-                      <th className="py-3 px-4">توضیحات و پلتفرم</th>
-                      <th className="py-3 px-4 text-center">قطعات متصل در کاتالوگ</th>
-                      <th className="py-3 px-4 text-center">وضعیت</th>
-                      <th className="py-3 px-4 text-center">عملیات</th>
+                      <th>کد شناسه</th>
+                      <th>نام مدل خودرو</th>
+                      <th>خودروساز / OEM</th>
+                      <th>توضیحات و پلتفرم</th>
+                      <th className="text-center">قطعات متصل در کاتالوگ</th>
+                      <th className="text-center">وضعیت</th>
+                      <th className="text-center">عملیات</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-800">
+                  <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
                     {carModelsList.map(m => {
                       const connectedPartsCount = parts.filter(
                         p => p.carModel === m.name || p.carModel?.includes(m.name)
                       ).length;
                       return (
-                        <tr key={m.id || m.code} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-4 font-mono font-bold text-slate-900">{m.code}</td>
-                          <td className="py-3 px-4 font-bold text-slate-900">{m.name}</td>
-                          <td className="py-3 px-4 font-semibold text-slate-700">{m.oem}</td>
-                          <td className="py-3 px-4 text-slate-600">{m.description || '—'}</td>
-                          <td className="py-3 px-4 text-center">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                        <tr key={m.id || m.code} className="hover:bg-[#e5f3fa]/55 transition-colors">
+                          <td className="font-mono font-bold text-[#333333]">{m.code}</td>
+                          <td className="font-bold text-[#333333]">{m.name}</td>
+                          <td className="font-semibold text-[#666666]">{m.oem}</td>
+                          <td className="text-[#666666]">{m.description || '—'}</td>
+                          <td className="text-center">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-bold bg-[#f0f0f0] text-[#333333]">
                               {toPersianDigits(connectedPartsCount)} قطعه
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="text-center">
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                                m.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                              className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-bold ${
+                                m.active ? 'bg-[#eefaf2] text-[#107e3e] border border-[#b6e4c8]' : 'bg-[#f0f0f0] text-[#666666]'
                               }`}
                             >
                               {m.active ? 'فعال' : 'غیرفعال'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 type="button"
@@ -2247,14 +2249,14 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                                   setCarModelForm({ ...m });
                                   setIsCarModelModalOpen(true);
                                 }}
-                                className="text-slate-600 hover:text-emerald-700 font-semibold cursor-pointer"
+                                className="text-[#007cc0] hover:text-[#006299] font-semibold cursor-pointer"
                               >
                                 ویرایش
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteCarModel(m.id || m.code)}
-                                className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+                                className="text-[#bb0000] hover:underline font-semibold cursor-pointer"
                               >
                                 حذف
                               </button>
@@ -2354,8 +2356,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* Modal for Adding / Editing Raw Sheet Spec */}
       {isNewSheetModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md max-w-md w-full p-5 space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingSheet ? 'ویرایش مشخصات ورق / ماده اولیه' : 'تعریف ماده اولیه و ورق جدید'}
@@ -2468,8 +2470,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 8. Warehouse Modal */}
       {isWarehouseModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-5 shadow-xl text-right">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-lg p-5 shadow-xl text-right">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingWarehouse ? 'ویرایش مشخصات انبار' : 'تعریف انبار جدید'}
@@ -2567,8 +2569,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 9. Unit Modal */}
       {isUnitModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 shadow-xl text-right">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-md p-5 shadow-xl text-right">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingUnit ? 'ویرایش واحد سنجش' : 'تعریف واحد سنجش جدید'}
@@ -2659,8 +2661,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 10. Customer Modal */}
       {isCustomerModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 shadow-xl text-right">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-md p-5 shadow-xl text-right">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingCustomer ? 'ویرایش مشتری' : 'تعریف مشتری جدید'}
@@ -2759,8 +2761,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 11. Shift Modal */}
       {isShiftModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-5 shadow-xl text-right">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-lg p-5 shadow-xl text-right">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingShift ? 'ویرایش شیفت کاری و زمان‌بندی' : 'تعریف شیفت کاری جدید'}
@@ -2914,8 +2916,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 12. Car Model Modal */}
       {isCarModelModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 shadow-xl text-right">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-md p-5 shadow-xl text-right">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingCarModel ? 'ویرایش مدل خودرو' : 'تعریف مدل خودرو جدید'}
@@ -3006,8 +3008,8 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 13. Operation Modal */}
       {isOperationModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-5 shadow-xl text-right">
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-lg p-5 shadow-xl text-right">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingOperation ? 'ویرایش عملیات استاندارد تولید' : 'تعریف عملیات استاندارد تولید جدید'}
@@ -3039,7 +3041,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsProcessCategoryModalOpen(true)}
-                      className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200"
+                      className="text-[10px] font-bold text-[#007cc0] hover:text-[#006299] flex items-center gap-0.5 cursor-pointer bg-[#e5f3fa] px-1.5 py-0.5 rounded-sm border border-[#b3d7ff]"
                       title="تعریف و ویرایش دسته‌بندی‌های فرآیندی"
                     >
                       <Plus className="w-3 h-3" />
@@ -3054,7 +3056,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                         category: e.target.value as any,
                       })
                     }
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white font-medium"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                   >
                     {processCategories.map(cat => (
                       <option key={cat.code} value={cat.code}>
@@ -3066,39 +3068,39 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">عنوان کامل عملیات *</label>
+                <label className="block text-[#333333] font-semibold mb-1">عنوان کامل عملیات *</label>
                 <input
                   type="text"
                   required
                   placeholder="مثلاً بلنک و سوراخ‌کاری ورق، پرس‌جوش مهره، خم لبه‌ها..."
                   value={operationForm.name || ''}
                   onChange={e => setOperationForm({ ...operationForm, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white font-medium"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                 />
               </div>
 
               {/* Workstation Type Field with Persian Guidance & Rationale */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-slate-700 font-semibold">نوع ایستگاه کاری / دستگاه مورد استفاده *</label>
+                  <label className="text-[#333333] font-semibold">نوع ایستگاه کاری / دستگاه مورد استفاده *</label>
                   <button
                     type="button"
                     onClick={() => setIsWorkstationHelpOpen(!isWorkstationHelpOpen)}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 transition cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#e9730c] bg-[#fff7eb] hover:bg-[#ffedd5] px-2 py-0.5 rounded-sm border border-[#f5d29c] transition cursor-pointer"
                     title="مشاهده راهنمای کارکرد این فیلد در MRP و ظرفیت‌سنجی"
                   >
-                    <Sparkles className="w-3 h-3 text-amber-600" />
+                    <Sparkles className="w-3 h-3 text-[#e9730c]" />
                     <span>کارکرد این فیلد چیه؟</span>
                   </button>
                 </div>
 
                 {isWorkstationHelpOpen && (
-                  <div className="p-3 bg-amber-50/90 border border-amber-300 rounded-xl text-[11px] text-amber-950 space-y-1.5 leading-relaxed shadow-2xs">
-                    <div className="font-bold flex items-center gap-1.5 text-amber-900">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <div className="p-3 bg-[#fff7eb] border border-[#f5d29c] rounded-sm text-[11px] text-[#333333] space-y-1.5 leading-relaxed">
+                    <div className="font-bold flex items-center gap-1.5 text-[#e9730c]">
+                      <Sparkles className="w-3.5 h-3.5 text-[#e9730c]" />
                       <span>کارکرد ایستگاه کاری در سیستم هوشمند برنامه‌ریزی تولید (MRP & Capacity Planning):</span>
                     </div>
-                    <ul className="list-disc list-inside space-y-1 text-slate-700 pr-1">
+                    <ul className="list-disc list-inside space-y-1 text-[#333333] pr-1">
                       <li>
                         <strong>تطبیق خودکار پرس با عملیات:</strong> سیستم مشخص می‌کند این مرحله روی کدام رده از دستگاه‌ها (پرس‌های هیدرولیک، پرس ضربه‌ای شولر، خط برش، پرس‌جوش یا خط رنگ) قابل اجراست.
                       </li>
@@ -3118,12 +3120,12 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   placeholder="مثلاً خط برش کویل، پرس ضربه‌ای ۲۵۰ تن، دستگاه پرس‌جوش M6، ایستگاه جوش CO2..."
                   value={operationForm.stationType || ''}
                   onChange={e => setOperationForm({ ...operationForm, stationType: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
 
                 {/* Quick Suggestion Pills */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                  <span className="text-[10px] text-slate-400">پیشنهاد سریع:</span>
+                  <span className="text-[10px] text-[#666666]">پیشنهاد سریع:</span>
                   {[
                     'خط برش و نواربری رول',
                     'پرس مکانیکی ضربه‌ای شولر ۴۰۰ تن',
@@ -3138,7 +3140,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => setOperationForm({ ...operationForm, stationType: st })}
-                      className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-medium transition cursor-pointer"
+                      className="px-2 py-0.5 rounded-sm bg-[#f0f0f0] hover:bg-[#e5f3fa] text-[#333333] text-[10px] font-medium transition cursor-pointer"
                     >
                       {st}
                     </button>
@@ -3148,7 +3150,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">زمان چرخه استاندارد هر ضرب (ثانیه) *</label>
+                  <label className="block text-[#333333] font-semibold mb-1">زمان چرخه استاندارد هر ضرب (ثانیه) *</label>
                   <input
                     type="number"
                     step="0.1"
@@ -3161,11 +3163,11 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                         cycleTimeSec: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:bg-white"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">زمان ستاپ / تعویض قالب (دقیقه) *</label>
+                  <label className="block text-[#333333] font-semibold mb-1">زمان ستاپ / تعویض قالب (دقیقه) *</label>
                   <input
                     type="number"
                     min="0"
@@ -3177,19 +3179,19 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                         setupTimeMin: parseInt(e.target.value, 10) || 0,
                       })
                     }
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:bg-white"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">دستورالعمل و توضیحات فرآیندی</label>
+                <label className="block text-[#333333] font-semibold mb-1">دستورالعمل و توضیحات فرآیندی</label>
                 <textarea
                   rows={2}
                   placeholder="شرح نکات کنترلی، تلرانس ابعادی، فیکسچر مورد استفاده و پارامترهای فنی..."
                   value={operationForm.description || ''}
                   onChange={e => setOperationForm({ ...operationForm, description: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white resize-none"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] resize-none"
                 />
               </div>
 
@@ -3199,24 +3201,24 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   id="isOperationActiveCheck"
                   checked={operationForm.active !== false}
                   onChange={e => setOperationForm({ ...operationForm, active: e.target.checked })}
-                  className="w-4 h-4 text-emerald-600 rounded"
+                  className="w-4 h-4 accent-[#007cc0] rounded-sm"
                 />
-                <label htmlFor="isOperationActiveCheck" className="text-slate-800 font-medium">
+                <label htmlFor="isOperationActiveCheck" className="text-[#333333] font-medium">
                   عملیات فعال در تقویم ظرفیت و مسیرهای تولید
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsOperationModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className={`px-5 py-2 rounded-xl font-bold text-white cursor-pointer ${themeMeta.buttonPrimaryClass}`}
+                  className="sap-btn-emphasized px-5 py-1.5 cursor-pointer"
                 >
                   {editingOperation ? 'ثبت تغییرات عملیات' : 'ایجاد عملیات جدید'}
                 </button>
@@ -3228,17 +3230,17 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 14. Factory Hall Modal (کشوی ثبت و ویرایش سالن تولید) */}
       {isHallModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-5 shadow-xl text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-amber-600" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-lg p-5 shadow-xl text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8] mb-4">
+              <h3 className="text-sm font-bold text-[#333333] flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#007cc0]" />
                 <span>{editingHall ? 'ویرایش شناسنامه سالن تولید' : 'تعریف سالن تولید و استقرار جدید'}</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setIsHallModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -3246,22 +3248,22 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
             <form onSubmit={handleSaveHall} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">کد شناسایی سالن *</label>
+                  <label className="block text-[#333333] font-semibold mb-1">کد شناسایی سالن *</label>
                   <input
                     type="text"
                     required
                     placeholder="مثلاً HALL-01 یا HALL-HEAVY"
                     value={hallForm.code || ''}
                     onChange={e => setHallForm({ ...hallForm, code: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 focus:outline-none focus:bg-white"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">نوع کاربری سالن *</label>
+                  <label className="block text-[#333333] font-semibold mb-1">نوع کاربری سالن *</label>
                   <select
                     value={hallForm.type || 'STAMPING'}
                     onChange={e => setHallForm({ ...hallForm, type: e.target.value as any })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white font-medium"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                   >
                     <option value="STAMPING">پرسکاری و فرم‌دهی (Stamping)</option>
                     <option value="WELDING">جوشکاری و مونتاژ بدنه (Welding)</option>
@@ -3273,47 +3275,47 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">نام و عنوان کامل سالن تولید *</label>
+                <label className="block text-[#333333] font-semibold mb-1">نام و عنوان کامل سالن تولید *</label>
                 <input
                   type="text"
                   required
                   placeholder="مثلاً سالن پرس‌های سنگین (۸۰۰ و ۴۰۰ تن)، سالن جوشکاری رباتیک..."
                   value={hallForm.name || ''}
                   onChange={e => setHallForm({ ...hallForm, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white font-medium"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] font-medium"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">سرپرست / مسئول سالن</label>
+                <label className="block text-[#333333] font-semibold mb-1">سرپرست / مسئول سالن</label>
                 <input
                   type="text"
                   placeholder="نام و نام خانوادگی سرپرست سالن..."
                   value={hallForm.supervisorName || ''}
                   onChange={e => setHallForm({ ...hallForm, supervisorName: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">ظرفیت، تجهیزات و مشخصات فنی مستقر</label>
+                <label className="block text-[#333333] font-semibold mb-1">ظرفیت، تجهیزات و مشخصات فنی مستقر</label>
                 <input
                   type="text"
                   placeholder="مثلاً خطوط پرس شولر، جرثقیل سقفی ۲۰ تن، ایستگاه شستشو..."
                   value={hallForm.capacityDesc || ''}
                   onChange={e => setHallForm({ ...hallForm, capacityDesc: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">توضیحات و نکات ایمنی سالن</label>
+                <label className="block text-[#333333] font-semibold mb-1">توضیحات و نکات ایمنی سالن</label>
                 <textarea
                   rows={2}
                   placeholder="ملاحظات لجستیکی، ورودی و خروجی لیفتراک، انبارک پای خط..."
                   value={hallForm.description || ''}
                   onChange={e => setHallForm({ ...hallForm, description: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:bg-white resize-none"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] focus:outline-none focus:border-[#007cc0] resize-none"
                 />
               </div>
 
@@ -3323,24 +3325,24 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
                   id="isHallActiveCheck"
                   checked={hallForm.active !== false}
                   onChange={e => setHallForm({ ...hallForm, active: e.target.checked })}
-                  className="w-4 h-4 text-emerald-600 rounded"
+                  className="w-4 h-4 accent-[#007cc0] rounded-sm"
                 />
-                <label htmlFor="isHallActiveCheck" className="text-slate-800 font-medium">
+                <label htmlFor="isHallActiveCheck" className="text-[#333333] font-medium">
                   سالن فعال در برنامه‌ریزی تولید و تخصیص پرس‌ها
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setIsHallModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className={`px-5 py-2 rounded-xl font-bold text-white cursor-pointer ${themeMeta.buttonPrimaryClass}`}
+                  className="sap-btn-emphasized px-5 py-1.5 cursor-pointer"
                 >
                   {editingHall ? 'ثبت تغییرات سالن' : 'ایجاد سالن جدید'}
                 </button>
@@ -3352,39 +3354,39 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 15. Process Category Modal (مدیریت و تعریف دسته‌های فرآیندی) */}
       {isProcessCategoryModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 shadow-xl text-right">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Settings2 className="w-4 h-4 text-indigo-600" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-md p-5 shadow-xl text-right">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8] mb-4">
+              <h3 className="text-sm font-bold text-[#333333] flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-[#007cc0]" />
                 <span>مدیریت دسته‌های فرآیندی کارخانه (Process Categories)</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setIsProcessCategoryModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Existing Categories List */}
-            <div className="space-y-1.5 max-h-52 overflow-y-auto mb-4 border border-slate-200 rounded-xl p-2 bg-slate-50/50">
+            <div className="space-y-1.5 max-h-52 overflow-y-auto mb-4 border border-[#d9d9d9] rounded-sm p-2 bg-[#f7f9fa]">
               {processCategories.map(cat => (
                 <div
                   key={cat.code}
-                  className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/80 text-xs"
+                  className="flex items-center justify-between p-2 rounded-sm bg-white border border-[#d9d9d9] text-xs"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    <span className="font-mono text-[10px] font-bold text-[#007cc0] bg-[#e5f3fa] px-2 py-0.5 rounded-sm border border-[#b3d7ff]">
                       {cat.code}
                     </span>
-                    <span className="font-medium text-slate-800">{cat.name}</span>
+                    <span className="font-medium text-[#333333]">{cat.name}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleDeleteProcessCategory(cat.code)}
-                    className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition cursor-pointer"
+                    className="text-[#bb0000] p-1 rounded-sm hover:bg-[#fff2f2] transition cursor-pointer"
                     title="حذف دسته فرآیندی"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

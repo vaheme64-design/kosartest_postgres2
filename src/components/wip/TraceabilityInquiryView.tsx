@@ -14,12 +14,14 @@ import { Part, Machine, DieMold, Operator } from '../../types/inventory';
 import { toPersianDigits, formatNumber } from '../../utils/formatters';
 import { formatToJalali } from '../../utils/jalali';
 import { TraceabilityTagModal } from './TraceabilityTagModal';
+import { useErpRouter } from '../../context/RouterContext';
 
 interface TraceabilityInquiryViewProps {
   parts: Part[];
   machines: Machine[];
   dies?: DieMold[];
   operators?: Operator[];
+  initialQuery?: string;
 }
 
 interface TraceabilityDocumentChainRow {
@@ -44,8 +46,10 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
   machines,
   dies = [],
   operators = [],
+  initialQuery = '',
 }) => {
-  const [trackingQuery, setTrackingQuery] = useState('');
+  const router = useErpRouter();
+  const [trackingQuery, setTrackingQuery] = useState(initialQuery);
   const [loading, setLoading] = useState(true);
   const [coils, setCoils] = useState<any[]>([]);
   const [documentChain, setDocumentChain] = useState<TraceabilityDocumentChainRow[]>([]);
@@ -53,6 +57,12 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
   const [issuedTags, setIssuedTags] = useState<any[]>([]);
   const [selectedMoId, setSelectedMoId] = useState<string>('');
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialQuery) {
+      setTrackingQuery(initialQuery);
+    }
+  }, [initialQuery]);
 
   const loadLiveTraceability = useCallback(async () => {
     setLoading(true);
@@ -145,19 +155,19 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
   };
 
   return (
-    <div className="space-y-5" dir="rtl">
+    <div className="space-y-4" dir="rtl">
       {/* Search Header Banner */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
+      <div className="bg-white p-4 rounded-md border border-[#d9d9d9] shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-600 shrink-0">
-              <QrCode className="w-6 h-6" />
+            <div className="p-2 rounded bg-[#e5f3fa] border border-[#b3ddf5] text-[#007cc0] shrink-0">
+              <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              <h2 className="text-base font-semibold text-[#333333]">
                 سامانه شناسایی و رهگیری سرتاسری مواد، ذوب و دستور کار (Live Traceability)
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 ردیابی زنده شجره‌نامه قطعات از ورود رول و شماره ذوب (Heat No) تا مراحل تولید WIP، اسناد کاردکس و تحویل
               </p>
             </div>
@@ -168,7 +178,7 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
               type="button"
               onClick={loadLiveTraceability}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>بروزرسانی</span>
@@ -176,32 +186,35 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
             <button
               type="button"
               onClick={() => setIsTagModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-orange-400" />
+              <Plus className="w-3.5 h-3.5" />
               <span>صدور کارت ردیابی پالت</span>
             </button>
           </div>
         </div>
 
         {/* Live Search + Quick Chips */}
-        <form onSubmit={handleSearchSubmit} className="space-y-2.5 pt-2 border-t border-slate-100">
+        <form onSubmit={handleSearchSubmit} className="space-y-2 pt-2 border-t border-[#e8e8e8]">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
               <input
                 type="text"
                 value={trackingQuery}
                 onChange={e => setTrackingQuery(e.target.value)}
                 placeholder="جستجوی زنده با شماره سند، کلاف (COIL-ECU-001)، شماره ذوب (Heat No)، کد قطعه یا شماره دستور کار (MO)..."
-                className="w-full pr-9 pl-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-500 font-mono text-slate-900"
+                className="w-full pr-9 pl-4 py-1.5 text-xs bg-[#f7f7f7] border border-[#bfbfbf] rounded focus:outline-none focus:bg-white focus:border-[#007cc0] font-mono text-[#333333]"
               />
             </div>
             {trackingQuery && (
               <button
                 type="button"
-                onClick={() => setTrackingQuery('')}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer"
+                onClick={() => {
+                  setTrackingQuery('');
+                  router.clearDocQuery();
+                }}
+                className="px-3 py-1.5 bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#333333] border border-[#d9d9d9] rounded text-xs font-medium cursor-pointer"
               >
                 پاک کردن
               </button>
@@ -210,7 +223,7 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
 
           {wipOrders.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
-              <span className="text-slate-500 font-medium">انتخاب سریع دستور کار:</span>
+              <span className="text-[#666666] font-medium">انتخاب سریع دستور کار:</span>
               {wipOrders.map(mo => (
                 <button
                   key={mo.id}
@@ -219,10 +232,10 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
                     setSelectedMoId(mo.id);
                     setTrackingQuery('');
                   }}
-                  className={`px-2.5 py-1 rounded-md border font-mono transition cursor-pointer ${
+                  className={`px-2.5 py-1 rounded border font-mono transition cursor-pointer ${
                     activeMo?.id === mo.id && !trackingQuery
-                      ? 'bg-slate-900 text-white border-slate-900 font-bold'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      ? 'bg-[#007cc0] text-white border-[#007cc0] font-semibold'
+                      : 'bg-[#f7f7f7] hover:bg-[#e5f3fa] text-[#333333] border-[#d9d9d9]'
                   }`}
                 >
                   {mo.moNumber} ({mo.partCode})
@@ -234,24 +247,36 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
       </div>
 
       {/* Live Source Material & MO Genealogy Summary */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+      <div className="bg-white border border-[#d9d9d9] rounded-md p-4 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#e8e8e8] gap-2">
           <div className="flex items-center gap-2.5">
-            <span className="font-mono text-xs font-bold text-orange-800 bg-orange-50 border border-orange-200 px-3 py-1 rounded-lg">
+            <span className="font-mono text-xs font-semibold text-[#007cc0] bg-[#e5f3fa] border border-[#b3ddf5] px-2.5 py-1 rounded">
               {activeMo ? activeMo.moNumber : 'بدون دستور کار فعال'}
             </span>
-            <span className="text-xs font-bold text-slate-800">
+            <span className="text-xs font-semibold text-[#333333]">
               {activeMo ? activeMo.partName : 'لطفاً یک کد کلاف، ذوب یا سند را جستجو کنید'}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsTagModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>چاپ لیبل ردیابی</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {activeMo?.moNumber && (
+              <button
+                type="button"
+                onClick={() => router.traceDocument(activeMo.moNumber, 'INVENTORY_LEDGER')}
+                className="sap-btn-standard flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>اسناد کاردکس این دستور کار</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsTagModalOpen(true)}
+              className="sap-btn-standard flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>چاپ لیبل ردیابی</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -298,56 +323,56 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
         {/* Live Routing Operations Progress for Active MO */}
         {activeMo && Array.isArray(activeMo.operations) && (
           <div>
-            <h3 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-orange-600" />
+            <h3 className="text-xs font-semibold text-[#333333] mb-2 flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-[#007cc0]" />
               <span>وضعیت زنده عبور قطعه در مراحل عملیات ({activeMo.moNumber}):</span>
             </h3>
-            <div className="overflow-x-auto rounded-xl border border-slate-200/90">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+            <div className="overflow-x-auto rounded border border-[#d9d9d9]">
+              <table className="w-full text-right text-xs sap-table-compact">
+                <thead className="bg-white border-b border-[#d9d9d9] text-[#333333] font-semibold">
                   <tr>
-                    <th className="py-2.5 px-3">کد مرحله</th>
-                    <th className="py-2.5 px-3">عنوان عملیات</th>
-                    <th className="py-2.5 px-3">ایستگاه / دستگاه</th>
-                    <th className="py-2.5 px-3 text-center">در صف ورودی</th>
-                    <th className="py-2.5 px-3 text-center">در جریان / آماده</th>
-                    <th className="py-2.5 px-3 text-center">تولید سالم</th>
-                    <th className="py-2.5 px-3 text-center">ضایعات</th>
-                    <th className="py-2.5 px-3 text-center">وضعیت مرحله</th>
+                    <th className="py-1.5 px-2.5">کد مرحله</th>
+                    <th className="py-1.5 px-2.5">عنوان عملیات</th>
+                    <th className="py-1.5 px-2.5">ایستگاه / دستگاه</th>
+                    <th className="py-1.5 px-2.5 text-center">در صف ورودی</th>
+                    <th className="py-1.5 px-2.5 text-center">در جریان / آماده</th>
+                    <th className="py-1.5 px-2.5 text-center">تولید سالم</th>
+                    <th className="py-1.5 px-2.5 text-center">ضایعات</th>
+                    <th className="py-1.5 px-2.5 text-center">وضعیت مرحله</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-mono tabular-nums">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333] font-mono tabular-nums">
                   {activeMo.operations.map((st: any) => (
                     <tr
                       key={st.id}
                       className={
                         st.status === 'IN_PROGRESS' || st.status === 'READY'
-                          ? 'bg-amber-50/40 font-semibold'
+                          ? 'bg-[#e5f3fa]/50 font-semibold'
                           : st.status === 'COMPLETED'
-                          ? 'hover:bg-slate-50/70'
-                          : 'opacity-75 bg-slate-50/30'
+                          ? 'hover:bg-[#e5f3fa]/70'
+                          : 'opacity-75 bg-[#fafafa]'
                       }
                     >
-                      <td className="py-2.5 px-3 font-bold text-slate-900">{st.stepCode}</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold text-slate-900">{st.stepName}</td>
-                      <td className="py-2.5 px-3 text-slate-700 font-sans">{st.machineName || '—'}</td>
-                      <td className="py-2.5 px-3 text-center">{formatNumber(st.waitingInputQty || 0)}</td>
-                      <td className="py-2.5 px-3 text-center text-indigo-700">
+                      <td className="py-1.5 px-2.5 font-semibold text-[#333333]">{st.stepCode}</td>
+                      <td className="py-1.5 px-2.5 font-sans font-medium text-[#333333]">{st.stepName}</td>
+                      <td className="py-1.5 px-2.5 text-[#666666] font-sans">{st.machineName || '—'}</td>
+                      <td className="py-1.5 px-2.5 text-center">{formatNumber(st.waitingInputQty || 0)}</td>
+                      <td className="py-1.5 px-2.5 text-center text-[#007cc0]">
                         {formatNumber((st.inProgressQty || 0) + (st.readyForTransferQty || 0))}
                       </td>
-                      <td className="py-2.5 px-3 text-center font-bold text-emerald-700">
+                      <td className="py-1.5 px-2.5 text-center font-semibold text-[#107e3e]">
                         {formatNumber(st.goodOutputQty || 0)}
                       </td>
-                      <td className="py-2.5 px-3 text-center text-rose-600">
+                      <td className="py-1.5 px-2.5 text-center text-[#bb0000]">
                         {formatNumber(st.scrapQty || 0)}
                       </td>
-                      <td className="py-2.5 px-3 text-center font-sans">
+                      <td className="py-1.5 px-2.5 text-center font-sans">
                         {st.status === 'COMPLETED' ? (
-                          <span className="text-[11px] font-bold text-emerald-700">تکمیل شده</span>
+                          <span className="text-[11px] font-semibold text-[#107e3e]">تکمیل شده</span>
                         ) : st.status === 'IN_PROGRESS' || st.status === 'READY' ? (
-                          <span className="text-[11px] font-bold text-amber-700">ایستگاه فعال</span>
+                          <span className="text-[11px] font-semibold text-[#007cc0]">ایستگاه فعال</span>
                         ) : (
-                          <span className="text-[11px] text-slate-500">در انتظار</span>
+                          <span className="text-[11px] text-[#666666]">در انتظار</span>
                         )}
                       </td>
                     </tr>
@@ -360,46 +385,77 @@ export const TraceabilityInquiryView: React.FC<TraceabilityInquiryViewProps> = (
 
         {/* Live Document & Lot Traceability Ledger */}
         <div>
-          <h3 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-            <FileText className="w-4 h-4 text-emerald-700" />
+          <h3 className="text-xs font-semibold text-[#333333] mb-2 flex items-center gap-1.5">
+            <FileText className="w-4 h-4 text-[#007cc0]" />
             <span>زنجیره زنده اسناد انبار و ردیابی لوت/ذوب (از ورود تا مصرف و محصول):</span>
           </h3>
           {matchingDocuments.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="p-6 text-center text-xs text-[#666666] bg-[#f7f7f7] rounded border border-[#d9d9d9]">
               سندی با این کلیدواژه یافت نشد.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200/90">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+            <div className="overflow-x-auto rounded border border-[#d9d9d9]">
+              <table className="w-full text-right text-xs sap-table-compact">
+                <thead className="bg-white border-b border-[#d9d9d9] text-[#333333] font-semibold">
                   <tr>
-                    <th className="py-2.5 px-3">شماره سند</th>
-                    <th className="py-2.5 px-3">تاریخ</th>
-                    <th className="py-2.5 px-3">نوع تراکنش</th>
-                    <th className="py-2.5 px-3">کد و نام کالا</th>
-                    <th className="py-2.5 px-3 text-center">مقدار / وزن</th>
-                    <th className="py-2.5 px-3">کلاف / لوت</th>
-                    <th className="py-2.5 px-3">شماره ذوب</th>
-                    <th className="py-2.5 px-3">مرجع / MO</th>
+                    <th className="py-1.5 px-2.5">شماره سند</th>
+                    <th className="py-1.5 px-2.5">تاریخ</th>
+                    <th className="py-1.5 px-2.5">نوع تراکنش</th>
+                    <th className="py-1.5 px-2.5">کد و نام کالا</th>
+                    <th className="py-1.5 px-2.5 text-center">مقدار / وزن</th>
+                    <th className="py-1.5 px-2.5">کلاف / لوت</th>
+                    <th className="py-1.5 px-2.5">شماره ذوب</th>
+                    <th className="py-1.5 px-2.5">مرجع / MO</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 tabular-nums">
+                <tbody className="divide-y divide-[#e8e8e8] text-[#333333] tabular-nums">
                   {matchingDocuments.slice(0, 30).map(row => (
-                    <tr key={row.id} className="hover:bg-slate-50">
-                      <td className="py-2 px-3 font-mono font-bold text-slate-900">{row.documentNumber}</td>
-                      <td className="py-2 px-3 font-mono text-slate-600">{row.docDate || formatToJalali(new Date())}</td>
-                      <td className="py-2 px-3">{row.docType}</td>
-                      <td className="py-2 px-3">
-                        <span className="font-mono font-semibold text-slate-800">{row.partCode}</span>
-                        <span className="text-slate-400 mx-1">·</span>
+                    <tr key={row.id} className="hover:bg-[#e5f3fa]/70">
+                      <td className="py-1.5 px-2.5">
+                        <button
+                          type="button"
+                          onClick={() => router.traceDocument(row.documentNumber, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link"
+                          title="مشاهده اصل سند در کاردکس انبار"
+                        >
+                          {row.documentNumber}
+                        </button>
+                      </td>
+                      <td className="py-1.5 px-2.5 font-mono text-[#666666]">{row.docDate || formatToJalali(new Date())}</td>
+                      <td className="py-1.5 px-2.5">{row.docType}</td>
+                      <td className="py-1.5 px-2.5">
+                        <span className="font-mono font-semibold text-[#333333]">{row.partCode}</span>
+                        <span className="text-[#999999] mx-1">·</span>
                         <span>{row.partName}</span>
                       </td>
-                      <td className="py-2 px-3 text-center font-mono font-bold text-emerald-800">
-                        {formatNumber(row.qty)} <span className="text-[10px] text-slate-500">({formatNumber(row.weightKg)} kg)</span>
+                      <td className="py-1.5 px-2.5 text-center font-mono font-semibold text-[#107e3e]">
+                        {formatNumber(row.qty)} <span className="text-[10px] text-[#666666]">({formatNumber(row.weightKg)} kg)</span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-slate-700">{row.coilId || '—'}</td>
-                      <td className="py-2 px-3 font-mono text-slate-700">{row.heatNumber || '—'}</td>
-                      <td className="py-2 px-3 font-mono text-slate-600">{row.referenceNumber || '—'}</td>
+                      <td className="py-1.5 px-2.5 font-mono">
+                        {row.coilId ? (
+                          <button
+                            type="button"
+                            onClick={() => router.traceDocument(row.coilId, 'COILS')}
+                            className="sap-doc-link"
+                            title="مشاهده وضعیت رول/کلاف در انبار ورق"
+                          >
+                            {row.coilId}
+                          </button>
+                        ) : '—'}
+                      </td>
+                      <td className="py-1.5 px-2.5 font-mono text-[#333333]">{row.heatNumber || '—'}</td>
+                      <td className="py-1.5 px-2.5 font-mono">
+                        {row.referenceNumber ? (
+                          <button
+                            type="button"
+                            onClick={() => setTrackingQuery(row.referenceNumber)}
+                            className="sap-doc-link"
+                            title="فیلتر بر اساس مرجع / دستور کار"
+                          >
+                            {row.referenceNumber}
+                          </button>
+                        ) : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

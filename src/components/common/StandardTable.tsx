@@ -14,9 +14,9 @@ export const StandardTable: React.FC<StandardTableProps> = ({
 }) => {
   return (
     <div
-      className={`overflow-x-auto rounded-xl border ${UNIFIED_COLOR_CONFIG.borderDefault} ${UNIFIED_COLOR_CONFIG.surface} ${UNIFIED_COLOR_CONFIG.cardBorder} ${containerClassName}`}
+      className={`overflow-x-auto rounded-md border ${UNIFIED_COLOR_CONFIG.borderDefault} ${UNIFIED_COLOR_CONFIG.surface} ${containerClassName}`}
     >
-      <table className={`w-full text-right text-xs border-collapse ${className}`} {...props}>
+      <table className={`w-full text-right text-xs border-collapse sap-table-compact ${className}`} {...props}>
         {children}
       </table>
     </div>
@@ -58,12 +58,13 @@ export const StandardTableRow: React.FC<StandardTableRowProps> = ({
   return (
     <tr
       className={`
+        h-8
         ${UNIFIED_COLOR_CONFIG.tableRowBase}
         ${striped ? UNIFIED_COLOR_CONFIG.tableRowStripe : ''}
         ${UNIFIED_COLOR_CONFIG.tableRowHover}
         ${UNIFIED_COLOR_CONFIG.tableRowText}
         border-b ${UNIFIED_COLOR_CONFIG.borderSubtle}
-        ${isClickable ? 'cursor-pointer active:bg-slate-100' : ''}
+        ${isClickable ? 'cursor-pointer active:bg-[#e5f3fa]' : ''}
         ${className}
       `}
       {...props}
@@ -89,7 +90,7 @@ export const StandardTableCell: React.FC<StandardTableCellProps> = ({
   const alignClass = align === 'center' ? 'text-center' : align === 'left' ? 'text-left' : 'text-right';
   return (
     <td
-      className={`py-3 px-3.5 text-slate-800 ${alignClass} ${isMono ? 'font-mono text-slate-900 font-medium' : ''} ${className}`}
+      className={`py-1.5 px-2.5 text-[#333333] ${alignClass} ${isMono ? 'font-mono text-[#333333] font-medium tabular-nums' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -111,7 +112,7 @@ export const StandardTableHeadCell: React.FC<StandardTableHeadCellProps> = ({
   const alignClass = align === 'center' ? 'text-center' : align === 'left' ? 'text-left' : 'text-right';
   return (
     <th
-      className={`py-3 px-3.5 font-bold text-slate-700 whitespace-nowrap ${alignClass} ${className}`}
+      className={`py-1.5 px-2.5 bg-white font-semibold text-[#333333] whitespace-nowrap border-b border-[#d9d9d9] ${alignClass} ${className}`}
       {...props}
     >
       {children}

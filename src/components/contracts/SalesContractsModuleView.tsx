@@ -28,6 +28,7 @@ import { CustomerOrder } from '../../types/productionPlanning';
 import { ContractsManagementView } from '../inventory/ContractsManagementView';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 
 export type ContractsSubTab = 'CONTRACTS_QUOTAS' | 'CUSTOMER_ORDERS';
 
@@ -52,7 +53,9 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
   onNavigateToInventoryLedger,
 }) => {
   const { requestConfirm, showUndoToast, recordAudit } = useEnterpriseUx();
+  const { route, navigate, traceDocument, clearDocQuery } = useErpRouter();
   const [activeTab, setActiveTab] = useState<ContractsSubTab>(initialSubTab);
+  const [orderSearchQuery, setOrderSearchQuery] = useState<string>('');
   const [contracts, setContracts] = useState<SapcoContract[]>([]);
   const [coils, setCoils] = useState<PhysicalCoil[]>([]);
   const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
@@ -103,6 +106,38 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
   useEffect(() => {
     setActiveTab(initialSubTab);
   }, [initialSubTab]);
+
+  useEffect(() => {
+    if (route.docQuery) {
+      const q = route.docQuery.trim().toLowerCase();
+      setOrderSearchQuery(route.docQuery);
+      const matchesContract = contracts.some(
+        c => c.contractNumber.toLowerCase().includes(q) || c.title.toLowerCase().includes(q)
+      );
+      const matchesOrder = customerOrders.some(
+        o => o.orderNumber.toLowerCase().includes(q) || o.contractNumber.toLowerCase().includes(q)
+      );
+      if (matchesOrder && !matchesContract) {
+        setActiveTab('CUSTOMER_ORDERS');
+      } else if (matchesContract) {
+        setActiveTab('CONTRACTS_QUOTAS');
+      }
+    }
+  }, [route.docQuery, contracts, customerOrders]);
+
+  const filteredCustomerOrders = useMemo(() => {
+    const q = orderSearchQuery.trim().toLowerCase();
+    if (!q) return customerOrders;
+    return customerOrders.filter(
+      o =>
+        o.orderNumber.toLowerCase().includes(q) ||
+        o.contractNumber.toLowerCase().includes(q) ||
+        o.customerName.toLowerCase().includes(q) ||
+        (o.lines || []).some(
+          l => l.partCode.toLowerCase().includes(q) || l.partName.toLowerCase().includes(q)
+        )
+    );
+  }, [customerOrders, orderSearchQuery]);
 
   const finishedParts = parts.filter(p => p.category === 'FINISHED_GOOD');
 
@@ -323,62 +358,70 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
   return (
     <div className="space-y-4" dir="rtl">
       {/* Unified Commercial Header & Sub-Navigation */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 text-[11px] font-semibold">
-              مدیریت بازرگانی، قراردادها و سفارشات مشتریان
-            </span>
+      <div className="sap-card overflow-hidden">
+        <div className="px-4 py-3 bg-[#ffffff] border-b border-[#d9d9d9] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] text-[11px] font-semibold">
+                مدیریت بازرگانی، قراردادها و سفارشات مشتریان
+              </span>
+              {route.docQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderSearchQuery('');
+                    clearDocQuery();
+                  }}
+                  className="px-2 py-0.5 rounded bg-[#fff8e6] text-[#8a5300] border border-[#f0cf85] text-[11px] font-mono inline-flex items-center gap-1 cursor-pointer"
+                  title="پاک کردن فیلتر رهگیری سند"
+                >
+                  <span>فیلتر سند: {route.docQuery}</span>
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            <h1 className="text-base font-semibold text-[#333333]">
+              مرکز یکپارچه قراردادهای ساپکو، سهمیه ورق و سفارشات فروش
+            </h1>
+            <p className="text-xs text-[#666666]">
+              ثبت و ویرایش کامل قراردادها، پیگیری تاریخچه تغییرات تیراژ (Revisions) و اتصال مستقیم اسناد به کاردکس و تولید
+            </p>
           </div>
-          <h1 className="text-lg font-bold text-slate-900">
-            مرکز یکپارچه قراردادهای ساپکو، سهمیه ورق و سفارشات فروش
-          </h1>
-          <p className="text-xs text-slate-500">
-            ثبت و ویرایش کامل قراردادها (فعال / معلق / خاتمه‌یافته)، پیگیری تاریخچه تغییرات تیراژ (Revisions) و سفارشات تحویل محصول
-          </p>
         </div>
 
-        {/* Sub-module Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+        {/* Sub-module SAP IconTabBar */}
+        <div className="sap-icon-tab-bar px-3">
           <button
             type="button"
             onClick={() => setActiveTab('CONTRACTS_QUOTAS')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === 'CONTRACTS_QUOTAS'
-                ? 'bg-slate-900 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-            }`}
+            className={`sap-icon-tab ${activeTab === 'CONTRACTS_QUOTAS' ? 'sap-icon-tab-active' : ''}`}
           >
-            <FileSignature className="w-4 h-4 text-amber-400" />
+            <FileSignature className="w-3.5 h-3.5" />
             <span>قراردادها و سهمیه ورق ({toPersianDigits(contracts.length)})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('CUSTOMER_ORDERS')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === 'CUSTOMER_ORDERS'
-                ? 'bg-slate-900 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-            }`}
+            className={`sap-icon-tab ${activeTab === 'CUSTOMER_ORDERS' ? 'sap-icon-tab-active' : ''}`}
           >
-            <ShoppingBag className="w-4 h-4 text-emerald-400" />
+            <ShoppingBag className="w-3.5 h-3.5" />
             <span>سفارشات فروش و تعهدات تحویل ({toPersianDigits(customerOrders.length)})</span>
           </button>
         </div>
       </div>
 
       {orderSuccessMsg && (
-        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+        <div className="p-3 rounded bg-[#f2f8f4] border border-[#b7dfc7] text-[#107e3e] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
             <span className="font-medium">{orderSuccessMsg}</span>
           </div>
           {onNavigateToPlanning && (
             <button
               type="button"
               onClick={onNavigateToPlanning}
-              className="px-3 py-1 rounded-lg bg-emerald-700 text-white text-[11px] font-semibold hover:bg-emerald-800 flex items-center gap-1 cursor-pointer"
+              className="sap-btn-emphasized px-3 py-1 text-[11px] flex items-center gap-1 cursor-pointer"
             >
               <span>مشاهده در برنامه‌ریزی و MRP</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -395,7 +438,15 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
           coils={coils}
           loading={loading}
           onRefresh={fetchAllData}
-          onViewContractLedger={onNavigateToInventoryLedger}
+          initialSearchQuery={route.docQuery || undefined}
+          onViewContractLedger={contractId => {
+            const matched = contracts.find(c => c.id === contractId || c.contractNumber === contractId);
+            if (onNavigateToInventoryLedger) {
+              onNavigateToInventoryLedger(matched?.contractNumber || contractId);
+            } else {
+              traceDocument(matched?.contractNumber || contractId, 'INVENTORY_LEDGER');
+            }
+          }}
           currentUser={{
             uid: currentUser?.uid || 'USR-COMM-01',
             displayName: currentUser?.displayName || 'مدیر بازرگانی و قراردادها',
@@ -406,25 +457,32 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
 
       {/* TAB 2: CUSTOMER ORDERS */}
       {activeTab === 'CUSTOMER_ORDERS' && (
-        <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-3">
+          <div className="sap-card p-3.5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-sm font-semibold text-[#333333] flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-[#007cc0]" />
                 <span>فهرست سفارشات قطعی مشتریان (Customer Sales Orders) با قابلیت ویرایش و تاریخچه تیراژ</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                هر سفارش ثبت یا ویرایش‌شده در این بخش مستقیماً به عنوان تقاضای ناخالص (Gross Demand) وارد محاسبات MRP و برنامه تولید می‌شود
+              <p className="text-xs text-[#666666] mt-0.5">
+                هر سفارش ثبت یا ویرایش‌شده مستقیماً به عنوان تقاضای ناخالص وارد MRP و برنامه تولید می‌شود
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={orderSearchQuery}
+                onChange={e => setOrderSearchQuery(e.target.value)}
+                placeholder="فیلتر شماره سفارش، قرارداد، قطعه..."
+                className="px-2.5 py-1.5 bg-[#ffffff] border border-[#d9d9d9] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
+              />
               <button
                 type="button"
                 onClick={() => setShowOrderModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
               >
-                <Plus className="w-4 h-4 text-emerald-400" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>ثبت سفارش جدید مشتری</span>
               </button>
 
@@ -432,7 +490,7 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                 <button
                   type="button"
                   onClick={onNavigateToPlanning}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-semibold cursor-pointer"
+                  className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
                 >
                   <span>بررسی پوشش مواد در MRP</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -442,7 +500,7 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
               <button
                 type="button"
                 onClick={fetchAllData}
-                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer"
+                className="sap-btn-standard p-1.5 cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
@@ -450,7 +508,7 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
           </div>
 
           <div className="grid grid-cols-1 gap-3">
-            {customerOrders.map(order => {
+            {filteredCustomerOrders.map(order => {
               const revs = orderRevisionsMap[order.id] || order.revisions || [];
               const isSuspended = order.status === 'SUSPENDED';
               const isTerminated =
@@ -459,24 +517,29 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
               return (
                 <div
                   key={order.id}
-                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3"
+                  className="sap-card p-3.5 space-y-2.5"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8e8e8] pb-2.5">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         type="button"
                         onClick={() => openOrderEditDrawer(order, 'EDIT')}
-                        className="font-mono text-xs font-bold px-2.5 py-1 bg-slate-900 hover:bg-indigo-700 text-white rounded-md cursor-pointer"
+                        className="font-mono text-xs font-semibold px-2.5 py-1 bg-[#007cc0] hover:bg-[#006299] text-white rounded cursor-pointer"
                       >
                         {order.orderNumber}
                       </button>
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs font-semibold text-[#333333] flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5 text-[#666666]" />
                         {order.customerName}
                       </span>
-                      <span className="text-[11px] font-mono px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(order.contractNumber, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] px-2 py-0.5 bg-[#e5f3fa] border border-[#b3ddf2] rounded"
+                        title="رهگیری اسناد و کاردکس قرارداد در انبار"
+                      >
                         قرارداد: {order.contractNumber}
-                      </span>
+                      </button>
                       <span
                         className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
                           order.priority === 1
@@ -503,7 +566,7 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                         <button
                           type="button"
                           onClick={() => openOrderEditDrawer(order, 'REVISIONS')}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] text-[10px] font-semibold cursor-pointer"
                         >
                           <History className="w-3 h-3" />
                           <span>{toPersianDigits(revs.length)} ویرایش تیراژ</span>
@@ -511,68 +574,102 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 text-xs text-[#666666] flex-wrap">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        موعد تحویل: <strong className="font-mono text-slate-800">{order.dueDate}</strong>
+                        <Calendar className="w-3.5 h-3.5 text-[#666666]" />
+                        موعد تحویل: <strong className="font-mono text-[#333333]">{order.dueDate}</strong>
                       </span>
 
                       <button
                         type="button"
-                        onClick={() => openOrderEditDrawer(order, 'EDIT')}
-                        className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        onClick={() => traceDocument(order.contractNumber, 'INVENTORY_LEDGER')}
+                        className="sap-btn-standard px-2 py-1 text-[11px] flex items-center gap-1 cursor-pointer"
                       >
-                        <Edit3 className="w-3 h-3 text-amber-400" />
+                        <span>کاردکس و تحویل</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(order.lines?.[0]?.partCode || order.orderNumber, 'WIP_TRACEABILITY')}
+                        className="sap-btn-standard px-2 py-1 text-[11px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>رهگیری WIP</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate({ tab: 'planning', planningSubTab: 'mrp', docQuery: order.orderNumber })}
+                        className="sap-btn-standard px-2 py-1 text-[11px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>بررسی MRP</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openOrderEditDrawer(order, 'EDIT')}
+                        className="sap-btn-emphasized px-2.5 py-1 text-xs flex items-center gap-1 cursor-pointer"
+                      >
+                        <Edit3 className="w-3 h-3" />
                         <span>ویرایش سفارش</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => openOrderEditDrawer(order, 'REVISIONS')}
-                        className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        className="sap-btn-standard px-2.5 py-1 text-xs flex items-center gap-1 cursor-pointer"
                       >
-                        <History className="w-3 h-3 text-indigo-600" />
+                        <History className="w-3 h-3" />
                         <span>تاریخچه تیراژ</span>
                       </button>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-right">
-                      <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                  <div className="overflow-x-auto border border-[#d9d9d9] rounded">
+                    <table className="w-full text-xs text-right sap-table-compact">
+                      <thead className="bg-[#ffffff] text-[#333333] border-b border-[#d9d9d9]">
                         <tr>
-                          <th className="py-2 px-3">کد قطعه</th>
-                          <th className="py-2 px-3">نام قطعه خودرویی</th>
-                          <th className="py-2 px-3">تیراژ سفارش</th>
-                          <th className="py-2 px-3">تحویل شده</th>
-                          <th className="py-2 px-3">مانده تعهد</th>
-                          <th className="py-2 px-3">درصد تحقق</th>
+                          <th className="py-1.5 px-2.5">کد قطعه</th>
+                          <th className="py-1.5 px-2.5">نام قطعه خودرویی</th>
+                          <th className="py-1.5 px-2.5">تیراژ سفارش</th>
+                          <th className="py-1.5 px-2.5">تحویل شده</th>
+                          <th className="py-1.5 px-2.5">مانده تعهد</th>
+                          <th className="py-1.5 px-2.5">درصد تحقق</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-[#e8e8e8]">
                         {(order.lines || []).map(line => {
                           const pct =
                             line.orderedQuantity > 0
                               ? Math.min(100, Math.round((line.deliveredQuantity / line.orderedQuantity) * 100))
                               : 0;
                           return (
-                            <tr key={line.id} className="hover:bg-slate-50/70">
-                              <td className="py-2.5 px-3 font-mono text-slate-700">{line.partCode}</td>
-                              <td className="py-2.5 px-3 font-bold text-slate-900">{line.partName}</td>
-                              <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                            <tr key={line.id} className="hover:bg-[#e5f3fa]">
+                              <td className="py-1.5 px-2.5 font-mono">
+                                <button
+                                  type="button"
+                                  onClick={() => traceDocument(line.partCode, 'WIP_TRACEABILITY')}
+                                  className="sap-doc-link"
+                                  title="رهگیری قطعه در کارگاه و انبار"
+                                >
+                                  {line.partCode}
+                                </button>
+                              </td>
+                              <td className="py-1.5 px-2.5 font-semibold text-[#333333]">{line.partName}</td>
+                              <td className="py-1.5 px-2.5 font-mono font-semibold text-[#333333]">
                                 {formatNumber(line.orderedQuantity)} عدد
                               </td>
-                              <td className="py-2.5 px-3 font-mono text-emerald-700">
+                              <td className="py-1.5 px-2.5 font-mono text-[#107e3e]">
                                 {formatNumber(line.deliveredQuantity)} عدد
                               </td>
-                              <td className="py-2.5 px-3 font-mono font-bold text-amber-800">
+                              <td className="py-1.5 px-2.5 font-mono font-semibold text-[#e9730c]">
                                 {formatNumber(line.remainingQuantity)} عدد
                               </td>
-                              <td className="py-2.5 px-3">
+                              <td className="py-1.5 px-2.5">
                                 <div className="flex items-center gap-2 font-mono text-[11px]">
-                                  <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                  <div className="w-20 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden border border-[#d9d9d9]">
                                     <div
-                                      className="h-full bg-emerald-600 rounded-full"
+                                      className="h-full bg-[#107e3e] rounded-full"
                                       style={{ width: `${pct}%` }}
                                     />
                                   </div>
@@ -597,55 +694,57 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
       {/* ==================================================================== */}
       {activeDrawerOrder && (
         <div
-          className="fixed inset-0 z-50 flex justify-end bg-slate-950/50 backdrop-blur-[2px] animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex justify-end bg-[#333333]/40 backdrop-blur-[1px] animate-in fade-in duration-150"
           dir="rtl"
           onClick={() => setEditingOrderId(null)}
         >
           <div
-            className="w-full max-w-xl bg-white h-full shadow-2xl border-r border-slate-200 flex flex-col overflow-hidden"
+            className="w-full max-w-xl bg-[#ffffff] h-full shadow-2xl border-r border-[#d9d9d9] flex flex-col overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+            <div className="bg-[#ffffff] text-[#333333] px-5 py-3.5 flex items-center justify-between border-b border-[#d9d9d9]">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-emerald-400 text-slate-950 font-mono text-xs font-bold">
+                  <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono text-xs font-semibold">
                     {activeDrawerOrder.orderNumber}
                   </span>
-                  <h3 className="text-sm font-bold">ویرایش سفارش مشتری و تاریخچه تغییرات تیراژ</h3>
+                  <h3 className="text-sm font-semibold text-[#333333]">ویرایش سفارش مشتری و تاریخچه تغییرات تیراژ</h3>
                 </div>
-                <p className="text-[11px] text-slate-300 mt-1">
-                  مشتری: {activeDrawerOrder.customerName} · قرارداد: {activeDrawerOrder.contractNumber}
+                <p className="text-[11px] text-[#666666] mt-1">
+                  مشتری: {activeDrawerOrder.customerName} · قرارداد:{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingOrderId(null);
+                      traceDocument(activeDrawerOrder.contractNumber, 'INVENTORY_LEDGER');
+                    }}
+                    className="sap-doc-link"
+                  >
+                    {activeDrawerOrder.contractNumber}
+                  </button>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingOrderId(null)}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                className="p-1.5 rounded bg-[#f5f5f5] hover:bg-[#e5f3fa] text-[#333333] border border-[#d9d9d9] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-2.5 flex items-center gap-2">
+            <div className="sap-icon-tab-bar px-5">
               <button
                 type="button"
                 onClick={() => setOrderDrawerTab('EDIT')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
-                  orderDrawerTab === 'EDIT'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-white text-slate-700 border border-slate-200'
-                }`}
+                className={`sap-icon-tab ${orderDrawerTab === 'EDIT' ? 'sap-icon-tab-active' : ''}`}
               >
                 ۱. ویرایش سفارش و وضعیت
               </button>
               <button
                 type="button"
                 onClick={() => setOrderDrawerTab('REVISIONS')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
-                  orderDrawerTab === 'REVISIONS'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-white text-slate-700 border border-slate-200'
-                }`}
+                className={`sap-icon-tab ${orderDrawerTab === 'REVISIONS' ? 'sap-icon-tab-active' : ''}`}
               >
                 ۲. تاریخچه تغییرات تیراژ (Revisions) (
                 {toPersianDigits((orderRevisionsMap[activeDrawerOrder.id] || activeDrawerOrder.revisions || []).length)})
@@ -685,10 +784,10 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                       <button
                         type="button"
                         onClick={() => setEditOrderStatus('TERMINATED')}
-                        className={`p-2.5 rounded-lg border font-bold flex items-center justify-center gap-1 cursor-pointer ${
+                        className={`p-2 rounded border font-bold flex items-center justify-center gap-1 cursor-pointer ${
                           editOrderStatus === 'TERMINATED'
-                            ? 'bg-slate-800 text-white border-slate-800'
-                            : 'bg-white text-slate-700 border-slate-200'
+                            ? 'bg-[#333333] text-white border-[#333333]'
+                            : 'bg-white text-[#333333] border-[#d9d9d9] hover:bg-[#f5f5f5]'
                         }`}
                       >
                         <Ban className="w-3.5 h-3.5" />
@@ -741,7 +840,7 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                                 prev.map((l, i) => (i === idx ? { ...l, orderedQuantity: val } : l))
                               );
                             }}
-                            className="w-28 px-2.5 py-1.5 rounded-lg border border-indigo-300 bg-white font-mono font-bold text-slate-900"
+                            className="w-28 px-2.5 py-1.5 rounded border border-[#007cc0] bg-white font-mono font-semibold text-[#333333]"
                           />
                         </div>
                       </div>
@@ -749,37 +848,37 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-800 mb-1">علت تغییر تیراژ (ثبت در تاریخچه Revisions):</label>
+                    <label className="block font-semibold text-[#333333] mb-1">علت تغییر تیراژ (ثبت در تاریخچه Revisions):</label>
                     <input
                       type="text"
                       value={editOrderRevReason}
                       onChange={e => setEditOrderRevReason(e.target.value)}
                       placeholder="مثلاً: اصلاح برنامه هفتگی ساپکو..."
-                      className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-amber-50/40"
+                      className="w-full px-3 py-2 rounded border border-[#d9d9d9] bg-[#fffcf5] focus:outline-none focus:border-[#007cc0]"
                     />
                   </div>
                 </>
               ) : (
                 <div className="space-y-3">
                   {(orderRevisionsMap[activeDrawerOrder.id] || activeDrawerOrder.revisions || []).length === 0 ? (
-                    <div className="p-6 text-center text-slate-500 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="p-6 text-center text-[#666666] bg-[#f5f5f5] rounded border border-[#d9d9d9]">
                       هنوز ویرایشی روی تیراژ این سفارش ثبت نشده است.
                     </div>
                   ) : (
                     (orderRevisionsMap[activeDrawerOrder.id] || activeDrawerOrder.revisions || []).map((rev, i) => (
-                      <div key={rev.id || i} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                          <span className="px-2 py-0.5 rounded bg-indigo-900 text-white font-mono text-[10px] font-bold">
+                      <div key={rev.id || i} className="p-3.5 rounded border border-[#d9d9d9] bg-white space-y-2">
+                        <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-1.5">
+                          <span className="px-2 py-0.5 rounded bg-[#007cc0] text-white font-mono text-[10px] font-semibold">
                             Rev #{toPersianDigits(rev.revisionNumber || i + 1)}
                           </span>
-                          <span className="font-mono text-[11px] text-slate-500">{rev.timestamp}</span>
+                          <span className="font-mono text-[11px] text-[#666666]">{rev.timestamp}</span>
                         </div>
-                        <div className="flex items-center justify-between font-mono text-xs bg-slate-50 p-2.5 rounded-lg">
+                        <div className="flex items-center justify-between font-mono text-xs bg-[#f5f5f5] p-2.5 rounded">
                           <span>قبلی: {formatNumber(rev.oldQty)} عدد</span>
                           <span>⬅</span>
-                          <strong className="text-indigo-700">جدید: {formatNumber(rev.newQty)} عدد</strong>
+                          <strong className="text-[#007cc0]">جدید: {formatNumber(rev.newQty)} عدد</strong>
                         </div>
-                        <div className="text-[11px] text-slate-600">
+                        <div className="text-[11px] text-[#666666]">
                           علت: {rev.reasonFa} ({rev.actor})
                         </div>
                       </div>
@@ -789,11 +888,11 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
               )}
             </div>
 
-            <div className="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-between">
+            <div className="bg-[#f5f5f5] border-t border-[#d9d9d9] px-5 py-3 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setEditingOrderId(null)}
-                className="px-4 py-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold cursor-pointer"
+                className="sap-btn-standard px-4 py-1.5 text-xs cursor-pointer"
               >
                 بستن
               </button>
@@ -801,9 +900,9 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                 <button
                   type="button"
                   onClick={handleSaveOrderEdit}
-                  className="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Save className="w-3.5 h-3.5 text-amber-400" />
+                  <Save className="w-3.5 h-3.5" />
                   <span>ذخیره تغییرات سفارش</span>
                 </button>
               )}
@@ -814,40 +913,40 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
 
       {/* Modal for Creating New Customer Order */}
       {showOrderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <PackageCheck className="w-4 h-4 text-emerald-600" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-[1px]">
+          <div className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-lg overflow-hidden shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#d9d9d9] bg-[#ffffff] px-5 py-3">
+              <h3 className="text-sm font-semibold text-[#333333] flex items-center gap-2">
+                <PackageCheck className="w-4 h-4 text-[#007cc0]" />
                 <span>ثبت سفارش جدید مشتری (متصل به قرارداد)</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowOrderModal(false)}
-                className="text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] text-xs cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreateOrder} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateOrder} className="p-5 space-y-3 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">شماره سفارش فروش</label>
+                  <label className="block text-[#333333] font-medium mb-1">شماره سفارش فروش</label>
                   <input
                     type="text"
                     value={orderNumber}
                     onChange={e => setOrderNumber(e.target.value)}
                     placeholder="مثلاً SO-SAPCO-1405-25"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">مشتری / خودروساز</label>
+                  <label className="block text-[#333333] font-medium mb-1">مشتری / خودروساز</label>
                   <select
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     <option value="ساپکو (ایران‌خودرو)">ساپکو (ایران‌خودرو)</option>
                     <option value="سازه‌گستر سایپا">سازه‌گستر سایپا</option>
@@ -859,11 +958,11 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">قرارداد مرجع</label>
+                  <label className="block text-[#333333] font-medium mb-1">قرارداد مرجع</label>
                   <select
                     value={contractNumber}
                     onChange={e => setContractNumber(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     {contracts.map(c => (
                       <option key={c.id} value={c.contractNumber}>
@@ -873,23 +972,23 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">موعد تحویل</label>
+                  <label className="block text-[#333333] font-medium mb-1">موعد تحویل</label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={e => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">قطعه مورد سفارش</label>
+                  <label className="block text-[#333333] font-medium mb-1">قطعه مورد سفارش</label>
                   <select
                     value={selectedPartId}
                     onChange={e => setSelectedPartId(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
+                    className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   >
                     {finishedParts.map(p => (
                       <option key={p.id} value={p.id}>
@@ -899,23 +998,23 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">تیراژ سفارش (عدد)</label>
+                  <label className="block text-[#333333] font-medium mb-1">تیراژ سفارش (عدد)</label>
                   <input
                     type="number"
                     min={1}
                     value={orderQuantity}
                     onChange={e => setOrderQuantity(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                    className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded font-mono text-[#333333] focus:outline-none focus:border-[#007cc0]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">اولویت سفارش</label>
+                <label className="block text-[#333333] font-medium mb-1">اولویت سفارش</label>
                 <select
                   value={priority}
                   onChange={e => setPriority(Number(e.target.value) as 1 | 2 | 3)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
+                  className="w-full px-3 py-1.5 bg-white border border-[#bfbfbf] rounded text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 >
                   <option value={1}>اولویت ۱ - بحرانی / خط خودروساز</option>
                   <option value={2}>اولویت ۲ - برنامه عادی ماهیانه</option>
@@ -923,17 +1022,17 @@ export const SalesContractsModuleView: React.FC<SalesContractsModuleViewProps> =
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#d9d9d9]">
                 <button
                   type="button"
                   onClick={() => setShowOrderModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg cursor-pointer"
+                  className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                 >
                   ثبت سفارش و ارسال به برنامه‌ریزی
                 </button>

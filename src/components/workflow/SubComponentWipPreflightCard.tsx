@@ -12,7 +12,8 @@ import {
   Check,
 } from 'lucide-react';
 import { HighwayPartScenario } from './FactoryHighwayWorkbench';
-import { formatNumber, toPersianDigits } from '../../utils/formatters';
+import { formatNumber } from '../../utils/formatters';
+import { useErpRouter } from '../../context/RouterContext';
 
 interface SubComponentWipPreflightCardProps {
   order: HighwayPartScenario;
@@ -25,6 +26,7 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
   onOpenFullInspectionModal,
   onQuickIssueSubMo,
 }) => {
+  const { traceDocument } = useErpRouter();
   const isEcuBracket =
     order.partCode?.includes('ECU') ||
     order.partName?.includes('ECU') ||
@@ -36,15 +38,15 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
   // If this part doesn't have sub-components, return simple helper
   if (!isEcuBracket && !isTaraBracket && !order.bomSubComponents?.length) {
     return (
-      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+      <div className="p-3 rounded bg-[#f5f5f5] border border-[#d9d9d9] text-xs text-[#666666] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-slate-400" />
+          <Layers className="w-4 h-4 text-[#666666]" />
           <span>تولید تک‌مرحله‌ای (فاقد قطعات پیش‌ساخته فرعی)</span>
         </div>
         <button
           type="button"
           onClick={onOpenFullInspectionModal}
-          className="text-indigo-600 hover:text-indigo-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+          className="text-[#007cc0] hover:underline font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
         >
           <span>بررسی جریان بین‌مراحل (WIP)</span>
           <ExternalLink className="w-3 h-3" />
@@ -66,18 +68,18 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
   const hasShortage = mainShortage > 0 || compShortage > 0;
 
   return (
-    <div className="p-3.5 rounded-xl bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 border border-indigo-200 text-xs space-y-3 shadow-xs">
+    <div className="p-3 rounded bg-[#e5f3fa]/40 border border-[#b3ddf2] text-xs space-y-2.5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1 rounded-md bg-indigo-600 text-white">
+          <span className="p-1.5 rounded bg-[#007cc0] text-[#ffffff]">
             <Boxes className="w-3.5 h-3.5" />
           </span>
           <div>
-            <span className="font-bold text-slate-900 block text-xs">
+            <span className="font-semibold text-[#333333] block text-xs">
               موجودی قطعات پیش‌ساخته و موجودی بین‌مراحل (WIP Pre-Flight)
             </span>
-            <span className="text-[10px] text-slate-500">
+            <span className="text-[10px] text-[#666666]">
               ارزیابی برخط بدون نیاز به مراجعه به سایر بخش‌های نرم‌افزار
             </span>
           </div>
@@ -86,7 +88,7 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
         <button
           type="button"
           onClick={onOpenFullInspectionModal}
-          className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+          className="sap-btn-emphasized px-2.5 py-1 text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap"
         >
           <span>فرم جامع ارزیابی بین‌مراحل</span>
           <ExternalLink className="w-3 h-3" />
@@ -96,37 +98,41 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
       {/* Sub-Components Quick Matrix */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {/* Component 1: Main Plate */}
-        <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1.5 shadow-2xs">
+        <div className="p-2.5 rounded bg-[#ffffff] border border-[#d9d9d9] space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="font-bold text-slate-900 text-[11px]">
-              ۱. صفحه براکت اصلی (WIP-ECU-MAIN)
-            </span>
-            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-700 font-mono">
+            <button
+              type="button"
+              onClick={() => traceDocument('WIP-ECU-MAIN-BRK', 'WIP_TRACEABILITY')}
+              className="sap-doc-link font-semibold text-[11px] cursor-pointer text-right"
+            >
+              ۱. صفحه براکت اصلی (WIP-ECU-MAIN-BRK)
+            </button>
+            <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#f5f5f5] border border-[#d9d9d9] text-[#333333] font-mono">
               ۱ در هر مجموعه
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center">
-            <div className="bg-slate-50 p-1.5 rounded">
-              <span className="text-slate-400 block">نیاز بچ:</span>
-              <span className="font-bold text-slate-900">{formatNumber(mainPartRequired)}</span>
+          <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center tabular-nums">
+            <div className="bg-[#f5f5f5] p-1.5 rounded">
+              <span className="text-[#666666] block font-sans">نیاز بچ:</span>
+              <span className="font-semibold text-[#333333]">{formatNumber(mainPartRequired)}</span>
             </div>
-            <div className="bg-slate-50 p-1.5 rounded">
-              <span className="text-slate-400 block">موجود (انبار+پای خط):</span>
-              <span className="font-bold text-indigo-700">{formatNumber(mainPartAvail)}</span>
+            <div className="bg-[#f5f5f5] p-1.5 rounded">
+              <span className="text-[#666666] block font-sans">موجود (انبار+پای خط):</span>
+              <span className="font-semibold text-[#007cc0]">{formatNumber(mainPartAvail)}</span>
             </div>
-            <div className="bg-slate-50 p-1.5 rounded">
-              <span className="text-slate-400 block">وضعیت:</span>
+            <div className="bg-[#f5f5f5] p-1.5 rounded">
+              <span className="text-[#666666] block font-sans">وضعیت:</span>
               {mainShortage === 0 ? (
-                <span className="font-bold text-emerald-700">تکمیل 🟢</span>
+                <span className="font-semibold text-[#107e3e]">تکمیل</span>
               ) : (
-                <span className="font-bold text-rose-600">کسری: {formatNumber(mainShortage)}</span>
+                <span className="font-semibold text-[#bb0000]">کسری: {formatNumber(mainShortage)}</span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px]">
-            <span className="text-slate-500 font-mono">
+          <div className="flex items-center justify-between pt-1 border-t border-[#e8e8e8] text-[10px]">
+            <span className="text-[#666666] font-mono">
               بافر پای پرس‌جوش: <strong>۱,۵۰۰ عدد</strong>
             </span>
             {mainShortage > 0 && onQuickIssueSubMo && (
@@ -139,9 +145,9 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
                     mainShortage
                   )
                 }
-                className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 cursor-pointer"
+                className="text-[#007cc0] hover:underline font-semibold flex items-center gap-0.5 cursor-pointer"
               >
-                <Zap className="w-3 h-3 text-amber-500" />
+                <Zap className="w-3 h-3 text-[#e9730c]" />
                 <span>صدور Sub-MO</span>
               </button>
             )}
@@ -149,37 +155,41 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
         </div>
 
         {/* Component 2: Complementary Plate */}
-        <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1.5 shadow-2xs">
+        <div className="p-2.5 rounded bg-[#ffffff] border border-[#d9d9d9] space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="font-bold text-slate-900 text-[11px]">
-              ۲. مکمل براکت ضدسرقت (WIP-ECU-COMP)
-            </span>
-            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-700 font-mono">
+            <button
+              type="button"
+              onClick={() => traceDocument('WIP-ECU-COMP-BRK', 'WIP_TRACEABILITY')}
+              className="sap-doc-link font-semibold text-[11px] cursor-pointer text-right"
+            >
+              ۲. مکمل براکت ضدسرقت (WIP-ECU-COMP-BRK)
+            </button>
+            <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#f5f5f5] border border-[#d9d9d9] text-[#333333] font-mono">
               ۱ در هر مجموعه
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center">
-            <div className="bg-slate-50 p-1.5 rounded">
-              <span className="text-slate-400 block">نیاز بچ:</span>
-              <span className="font-bold text-slate-900">{formatNumber(compPartRequired)}</span>
+          <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center tabular-nums">
+            <div className="bg-[#f5f5f5] p-1.5 rounded">
+              <span className="text-[#666666] block font-sans">نیاز بچ:</span>
+              <span className="font-semibold text-[#333333]">{formatNumber(compPartRequired)}</span>
             </div>
-            <div className="bg-slate-50 p-1.5 rounded">
-              <span className="text-slate-400 block">موجود (انبار+پای خط):</span>
-              <span className="font-bold text-indigo-700">{formatNumber(compPartAvail)}</span>
+            <div className="bg-[#f5f5f5] p-1.5 rounded">
+              <span className="text-[#666666] block font-sans">موجود (انبار+پای خط):</span>
+              <span className="font-semibold text-[#007cc0]">{formatNumber(compPartAvail)}</span>
             </div>
-            <div className="bg-slate-50 p-1.5 rounded">
-              <span className="text-slate-400 block">وضعیت:</span>
+            <div className="bg-[#f5f5f5] p-1.5 rounded">
+              <span className="text-[#666666] block font-sans">وضعیت:</span>
               {compShortage === 0 ? (
-                <span className="font-bold text-emerald-700">تکمیل 🟢</span>
+                <span className="font-semibold text-[#107e3e]">تکمیل</span>
               ) : (
-                <span className="font-bold text-rose-600">کسری: {formatNumber(compShortage)}</span>
+                <span className="font-semibold text-[#bb0000]">کسری: {formatNumber(compShortage)}</span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px]">
-            <span className="text-slate-500 font-mono">
+          <div className="flex items-center justify-between pt-1 border-t border-[#e8e8e8] text-[10px]">
+            <span className="text-[#666666] font-mono">
               بافر پای پرس‌جوش: <strong>۸۰۰ عدد</strong>
             </span>
             {compShortage > 0 && onQuickIssueSubMo && (
@@ -192,9 +202,9 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
                     compShortage
                   )
                 }
-                className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 cursor-pointer"
+                className="text-[#007cc0] hover:underline font-semibold flex items-center gap-0.5 cursor-pointer"
               >
-                <Zap className="w-3 h-3 text-amber-500" />
+                <Zap className="w-3 h-3 text-[#e9730c]" />
                 <span>صدور Sub-MO</span>
               </button>
             )}
@@ -203,27 +213,34 @@ export const SubComponentWipPreflightCard: React.FC<SubComponentWipPreflightCard
       </div>
 
       {/* Raw Material + Fasteners Summary Line */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-indigo-100 text-[11px]">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500">مواد و اتصالات:</span>
-          <span className="font-mono text-slate-700">
-            ورق DC01A ذوب <strong className="text-amber-800">{order.heatNumber || 'HT-99412-MOB'}</strong> (موجود:{' '}
-            {formatNumber(order.warehouseAvailableKg || 18500)} ک.گ)
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#b3ddf2] text-[11px]">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[#666666]">مواد و اتصالات:</span>
+          <span className="font-mono text-[#333333]">
+            ورق DC01A ذوب{' '}
+            <button
+              type="button"
+              onClick={() => traceDocument(order.heatNumber || 'HT-99412-MOB', 'COILS')}
+              className="sap-doc-link font-mono font-semibold cursor-pointer"
+            >
+              {order.heatNumber || 'HT-99412-MOB'}
+            </button>{' '}
+            (موجود: {formatNumber(order.warehouseAvailableKg || 18500)} ک.گ)
           </span>
-          <span className="text-slate-300">|</span>
-          <span className="font-mono text-emerald-700 font-semibold">
-            مهره M6: ۴۵,۰۰۰ عدد 🟢
+          <span className="text-[#d9d9d9]">|</span>
+          <span className="font-mono text-[#107e3e] font-semibold">
+            مهره M6: ۴۵,۰۰۰ عدد
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
           {hasShortage ? (
-            <span className="text-amber-700 font-bold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+            <span className="text-[#e9730c] font-semibold flex items-center gap-1 bg-[#fff4e5] px-2 py-0.5 rounded border border-[#f5cba7]">
               <AlertTriangle className="w-3 h-3" />
               <span>کسری قطعه پیش‌ساخته برای تیراژ کامل</span>
             </span>
           ) : (
-            <span className="text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            <span className="text-[#107e3e] font-semibold flex items-center gap-1 bg-[#ebf5ec] px-2 py-0.5 rounded border border-[#b7dfbf]">
               <CheckCircle2 className="w-3 h-3" />
               <span>پوشش کامل قطعات پیش‌ساخته</span>
             </span>

@@ -117,6 +117,7 @@ import {
   planSuggestionsStore,
   clearCustomerOrdersAndPlans,
   reseedCustomerOrdersAndPlans,
+  registerPlanningRuntimeProvider,
 } from './productionPlanningEngine';
 import { CustomerOrder } from '../types/productionPlanning';
 import {
@@ -145,6 +146,9 @@ import {
   autoReserveMoMaterials,
   serverQcHoldStore,
   serverVipPartsStore,
+  registerMrpRuntimeProvider,
+  mrpPurchaseRequisitionsStore,
+  MrpPurchaseRequisition,
 } from './mrpEngine';
 import { ReportFilterParams } from '../types/managementReports';
 import {
@@ -292,6 +296,28 @@ export const INITIAL_PHYSICAL_COILS: PhysicalCoil[] = [
 let physicalCoilsStore: PhysicalCoil[] = [...INITIAL_PHYSICAL_COILS];
 let coilIssueRecordsStore: CoilIssueReturnRecord[] = [];
 
+// Register live runtime stores for MRP and Production Planning engines (prevents stale INITIAL_* snapshots)
+registerMrpRuntimeProvider(() => ({
+  parts: partsStore,
+  routings: routingsStore,
+  coils: coilsStore,
+  physicalCoils: physicalCoilsStore,
+  contracts: contractsStore,
+  inventoryDocs: inventoryDocsStore,
+  reservations: reservationsStore,
+  coilIssueRecords: coilIssueRecordsStore,
+}));
+
+registerPlanningRuntimeProvider(() => ({
+  parts: partsStore,
+  machines: machinesStore,
+  dies: diesStore,
+  routings: routingsStore,
+  inventoryDocs: inventoryDocsStore,
+  reservations: reservationsStore,
+  qcHolds: serverQcHoldStore,
+}));
+
 // Dynamic Master Data Stores (CRUD Supported)
 let warehousesStore: WarehouseDefinition[] = [...WAREHOUSES_LIST];
 
@@ -389,6 +415,7 @@ export async function persistInventoryAppState(): Promise<void> {
     inventoryDocuments: inventoryDocsStore,
     auditLogs: auditLogsStore,
     qcHolds: serverQcHoldStore,
+    purchaseRequisitions: mrpPurchaseRequisitionsStore,
   }));
 
   const task = inventoryStateQueue.catch(() => undefined).then(async () => {
@@ -421,6 +448,7 @@ export async function loadInventoryAppState(): Promise<void> {
       inventoryDocuments?: InventoryDocument[];
       auditLogs?: AuditRecord[];
       qcHolds?: Record<string, any>;
+      purchaseRequisitions?: MrpPurchaseRequisition[];
     };
     if (
       !payload ||
@@ -439,6 +467,9 @@ export async function loadInventoryAppState(): Promise<void> {
     auditLogsStore.splice(0, auditLogsStore.length, ...payload.auditLogs);
     for (const key of Object.keys(serverQcHoldStore)) delete serverQcHoldStore[key];
     Object.assign(serverQcHoldStore, payload.qcHolds);
+    if (Array.isArray(payload.purchaseRequisitions)) {
+      mrpPurchaseRequisitionsStore.splice(0, mrpPurchaseRequisitionsStore.length, ...payload.purchaseRequisitions);
+    }
   } else if (process.env.NODE_ENV === 'production') {
     // Do not expose hard-coded sample contracts/coils as live production inventory.
     contractsStore.splice(0);
@@ -447,6 +478,7 @@ export async function loadInventoryAppState(): Promise<void> {
     reservationsStore.splice(0);
     inventoryDocsStore.splice(0);
     auditLogsStore.splice(0);
+    mrpPurchaseRequisitionsStore.splice(0);
     for (const key of Object.keys(serverQcHoldStore)) delete serverQcHoldStore[key];
     await persistInventoryAppState();
   }
@@ -2272,6 +2304,208 @@ apiRouter.get('/inventory/documents/:id', (req: Request, res: Response) => {
 });
 
 /**
+ * Synchronize posted inventory documents with physical coils, SAPCO coils ledger,
+ * and open Customer Order fulfillment progress (both on auto-post and draft->post).
+ */
+function applyPostedDocumentSideEffects(doc: InventoryDocument): void {
+  const now = doc.postedAt || doc.documentDate || new Date().toISOString();
+  if (doc.documentType === 'RECEIPT_RAW_MATERIAL' || doc.documentType === 'OPENING_BALANCE') {
+    for (const line of doc.lines) {
+      const partObj = partsStore.find(p => p.id === line.partId || p.code === line.partCode);
+      const isRawOrCoil =
+        !partObj ||
+        partObj.category === 'RAW_MATERIAL' ||
+        line.unit === 'KG' ||
+        Boolean(line.lotNumber);
+      if (!isRawOrCoil) continue;
+
+      const lotCode = line.lotNumber || `COIL-${doc.documentNumber}-${line.lineNumber}`;
+      const existingCoil = physicalCoilsStore.find(
+        c => c.coilId === lotCode || c.coilPackNumber === lotCode
+      );
+      const weightKg = Number(line.quantityKg || line.quantity || 0);
+
+      if (existingCoil) {
+        existingCoil.remainingWeightKg += weightKg;
+        existingCoil.originalWeightKg = Math.max(
+          existingCoil.originalWeightKg,
+          existingCoil.remainingWeightKg
+        );
+        existingCoil.physicalStatus =
+          existingCoil.remainingWeightKg >= existingCoil.originalWeightKg - 0.01
+            ? 'AVAILABLE'
+            : 'PARTIALLY_ISSUED';
+      } else {
+        const contractObj = contractsStore.find(
+          c => c.id === line.contractId || c.contractNumber === line.contractNumber
+        );
+        physicalCoilsStore.unshift({
+          id: `COIL-DOC-${Date.now()}-${line.lineNumber}`,
+          coilId: lotCode,
+          coilPackNumber: doc.referenceNumber || lotCode,
+          partId: line.partId,
+          partCode: line.partCode,
+          partName: line.partName,
+          materialGrade: partObj?.materialGrade || 'DC01A',
+          heatNumber: line.heatNumber || `HT-${Math.floor(1000 + Math.random() * 9000)}`,
+          thicknessMm: partObj?.thicknessMm || 2.0,
+          widthMm: 1140,
+          originalWeightKg: weightKg,
+          remainingWeightKg: weightKg,
+          warehouseId: doc.warehouseId || 'WH-RAW',
+          warehouseName: doc.warehouseName || 'انبار مرکزی رول و ورق ساپکو',
+          warehouseLocationCode: line.locationCode || 'LOC-RAW-A1',
+          ownership: line.ownership || doc.ownership || 'SAPCO_SUPPLIER_OWNED',
+          qualityStatus: 'AVAILABLE',
+          physicalStatus: 'AVAILABLE',
+          supplierName: contractObj?.customerName || 'ساپکو',
+          receiptDate: doc.documentDate || now,
+          allocations:
+            line.contractId || line.contractNumber
+              ? ([
+                  {
+                    id: `ALLOC-${Date.now()}`,
+                    coilId: lotCode,
+                    contractId: line.contractId || line.contractNumber || '',
+                    contractNumber: line.contractNumber || contractObj?.contractNumber || '',
+                    allocatedWeightKg: weightKg,
+                  },
+                ] as any)
+              : [],
+        });
+      }
+
+      const sapcoCoil = coilsStore.find(c => c.coilNumber === lotCode || c.heatNumber === line.heatNumber);
+      if (sapcoCoil) {
+        sapcoCoil.receivedWeightKg = Number((sapcoCoil.receivedWeightKg + weightKg).toFixed(2));
+        sapcoCoil.status = 'IN_STOCK';
+      }
+    }
+  } else if (doc.documentType === 'ISSUE_RAW_MATERIAL') {
+    for (const line of doc.lines) {
+      if (!line.lotNumber) continue;
+      const issuedKg = Number(line.quantityKg || line.quantity || 0);
+      const existingCoil = physicalCoilsStore.find(
+        c => c.coilId === line.lotNumber || c.coilPackNumber === line.lotNumber
+      );
+      if (existingCoil) {
+        existingCoil.remainingWeightKg = Math.max(0, existingCoil.remainingWeightKg - issuedKg);
+        existingCoil.physicalStatus =
+          existingCoil.remainingWeightKg <= 0 ? 'CONSUMED' : 'PARTIALLY_ISSUED';
+      }
+      const sapcoCoil = coilsStore.find(
+        c => c.coilNumber === line.lotNumber || (line.heatNumber && c.heatNumber === line.heatNumber)
+      );
+      if (sapcoCoil) {
+        sapcoCoil.consumedWeightKg = Number((sapcoCoil.consumedWeightKg + issuedKg).toFixed(2));
+        sapcoCoil.status = sapcoCoil.consumedWeightKg >= sapcoCoil.receivedWeightKg - 0.01 ? 'DEPLETED' : 'IN_CUTTING';
+      }
+    }
+  } else if (doc.documentType === 'DELIVERY_CUSTOMER' || doc.documentType === 'SHIPMENT_CUSTOMER') {
+    for (const line of doc.lines) {
+      let remainingToAllocate = Number(line.quantity || 0);
+      if (remainingToAllocate <= 0) continue;
+
+      const candidateOrders = customerOrdersStore.filter(
+        ord =>
+          ord.status !== 'CANCELLED' &&
+          ord.status !== 'TERMINATED' &&
+          (!doc.referenceNumber ||
+            ord.orderNumber === doc.referenceNumber ||
+            ord.id === doc.referenceNumber ||
+            ord.contractNumber === doc.contractNumber)
+      );
+
+      for (const ord of candidateOrders) {
+        if (remainingToAllocate <= 0) break;
+        for (const oLine of ord.lines) {
+          if (remainingToAllocate <= 0) break;
+          if (oLine.partId !== line.partId && oLine.partCode !== line.partCode) continue;
+          if (oLine.remainingQuantity <= 0) continue;
+
+          const deliverQty = Math.min(oLine.remainingQuantity, remainingToAllocate);
+          oLine.deliveredQuantity = Number((oLine.deliveredQuantity + deliverQty).toFixed(3));
+          oLine.remainingQuantity = Math.max(0, Number((oLine.orderedQuantity - oLine.deliveredQuantity).toFixed(3)));
+          remainingToAllocate = Number((remainingToAllocate - deliverQty).toFixed(3));
+        }
+
+        const allFulfilled = ord.lines.every(l => l.remainingQuantity <= 0.001);
+        const anyDelivered = ord.lines.some(l => l.deliveredQuantity > 0);
+        if (allFulfilled) ord.status = 'FULFILLED';
+        else if (anyDelivered) ord.status = 'PARTIALLY_FULFILLED';
+      }
+    }
+  }
+}
+
+function reverseDocumentSideEffects(targetDoc: InventoryDocument): void {
+  if (targetDoc.documentType === 'ISSUE_RAW_MATERIAL') {
+    for (const line of targetDoc.lines) {
+      if (!line.lotNumber) continue;
+      const restoredKg = Number(line.quantityKg || line.quantity || 0);
+      const coil = physicalCoilsStore.find(c => c.coilId === line.lotNumber || c.coilPackNumber === line.lotNumber);
+      if (coil) {
+        coil.remainingWeightKg = Math.min(coil.originalWeightKg, coil.remainingWeightKg + restoredKg);
+        coil.physicalStatus =
+          coil.remainingWeightKg >= coil.originalWeightKg - 0.01 ? 'AVAILABLE' : 'PARTIALLY_ISSUED';
+      }
+      const sapcoCoil = coilsStore.find(
+        c => c.coilNumber === line.lotNumber || (line.heatNumber && c.heatNumber === line.heatNumber)
+      );
+      if (sapcoCoil) {
+        sapcoCoil.consumedWeightKg = Math.max(0, Number((sapcoCoil.consumedWeightKg - restoredKg).toFixed(2)));
+        sapcoCoil.status = sapcoCoil.consumedWeightKg > 0 ? 'IN_CUTTING' : 'IN_STOCK';
+      }
+    }
+  } else if (targetDoc.documentType === 'RECEIPT_RAW_MATERIAL' || targetDoc.documentType === 'OPENING_BALANCE') {
+    for (const line of targetDoc.lines) {
+      const lotCode = line.lotNumber || `COIL-${targetDoc.documentNumber}-${line.lineNumber}`;
+      const deductedKg = Number(line.quantityKg || line.quantity || 0);
+      const coil = physicalCoilsStore.find(c => c.coilId === lotCode || c.coilPackNumber === lotCode);
+      if (coil) {
+        coil.remainingWeightKg = Math.max(0, coil.remainingWeightKg - deductedKg);
+        coil.physicalStatus = coil.remainingWeightKg <= 0.01 ? 'CONSUMED' : 'PARTIALLY_ISSUED';
+      }
+      const sapcoCoil = coilsStore.find(c => c.coilNumber === lotCode);
+      if (sapcoCoil) {
+        sapcoCoil.receivedWeightKg = Math.max(0, Number((sapcoCoil.receivedWeightKg - deductedKg).toFixed(2)));
+      }
+    }
+  } else if (targetDoc.documentType === 'DELIVERY_CUSTOMER' || targetDoc.documentType === 'SHIPMENT_CUSTOMER') {
+    for (const line of targetDoc.lines) {
+      let qtyToRestore = Number(line.quantity || 0);
+      if (qtyToRestore <= 0) continue;
+
+      const candidateOrders = customerOrdersStore.filter(
+        ord =>
+          ord.status !== 'CANCELLED' &&
+          (!targetDoc.referenceNumber ||
+            ord.orderNumber === targetDoc.referenceNumber ||
+            ord.id === targetDoc.referenceNumber ||
+            ord.contractNumber === targetDoc.contractNumber)
+      );
+
+      for (const ord of candidateOrders) {
+        if (qtyToRestore <= 0) break;
+        for (const oLine of ord.lines) {
+          if (qtyToRestore <= 0) break;
+          if (oLine.partId !== line.partId && oLine.partCode !== line.partCode) continue;
+          if (oLine.deliveredQuantity <= 0) continue;
+
+          const revQty = Math.min(oLine.deliveredQuantity, qtyToRestore);
+          oLine.deliveredQuantity = Math.max(0, Number((oLine.deliveredQuantity - revQty).toFixed(3)));
+          oLine.remainingQuantity = Number((oLine.orderedQuantity - oLine.deliveredQuantity).toFixed(3));
+          qtyToRestore = Number((qtyToRestore - revQty).toFixed(3));
+        }
+
+        const anyDelivered = ord.lines.some(l => l.deliveredQuantity > 0);
+        ord.status = anyDelivered ? 'PARTIALLY_FULFILLED' : 'OPEN';
+      }
+    }
+  }
+}
+
+/**
  * 16.5. Create Inventory Document (Draft or Auto-post)
  */
 apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
@@ -2290,7 +2524,7 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
     const warehouse = warehousesStore.find(w => w.id === payload.warehouseId);
     const targetWarehouse = payload.targetWarehouseId ? warehousesStore.find(w => w.id === payload.targetWarehouseId) : undefined;
 
-    // Generate Document Number if not supplied
+    // Generate Document Number if not supplied, and enforce uniqueness (SAP MM MIGO duplicate guard)
     const prefixMap: Record<string, string> = {
       OPENING_BALANCE: 'OB',
       RECEIPT_RAW_MATERIAL: 'REC-MAT',
@@ -2306,7 +2540,17 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
     const prefix = prefixMap[payload.documentType] || 'DOC';
     const rand = Math.floor(1000 + Math.random() * 9000);
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-    const docNumber = payload.documentNumber || `${prefix}-1403-${dateStr}-${rand}`;
+    const docNumber = payload.documentNumber ? String(payload.documentNumber).trim() : `${prefix}-1403-${dateStr}-${rand}`;
+
+    const duplicateDoc = inventoryDocsStore.find(
+      d => d.documentNumber === docNumber && d.documentStatus !== 'CANCELLED'
+    );
+    if (duplicateDoc) {
+      return res.status(409).json({
+        success: false,
+        error: `شماره سند «${docNumber}» تکراری است و قبلاً در سیستم ثبت شده است.`,
+      });
+    }
 
     const now = new Date().toISOString();
     let totalQty = 0;
@@ -2403,86 +2647,7 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
         auditLogsStore.unshift(postResult.auditRecord);
       }
 
-      // Synchronize posted document lines with physicalCoilsStore so CustomReportsView & PhysicalCoilsView stay in sync
-      if (
-        newDoc.documentType === 'RECEIPT_RAW_MATERIAL' ||
-        newDoc.documentType === 'OPENING_BALANCE'
-      ) {
-        for (const line of newDoc.lines) {
-          const partObj = partsStore.find(p => p.id === line.partId || p.code === line.partCode);
-          const isRawOrCoil =
-            !partObj ||
-            partObj.category === 'RAW_MATERIAL' ||
-            line.unit === 'KG' ||
-            Boolean(line.lotNumber);
-          if (!isRawOrCoil) continue;
-
-          const lotCode = line.lotNumber || `COIL-${newDoc.documentNumber}-${line.lineNumber}`;
-          const existingCoil = physicalCoilsStore.find(
-            c => c.coilId === lotCode || c.coilPackNumber === lotCode
-          );
-          const weightKg = Number(line.quantityKg || line.quantity || 0);
-
-          if (existingCoil) {
-            existingCoil.remainingWeightKg += weightKg;
-            existingCoil.originalWeightKg = Math.max(
-              existingCoil.originalWeightKg,
-              existingCoil.remainingWeightKg
-            );
-          } else {
-            const contractObj = contractsStore.find(
-              c => c.id === line.contractId || c.contractNumber === line.contractNumber
-            );
-            physicalCoilsStore.unshift({
-              id: `COIL-DOC-${Date.now()}-${line.lineNumber}`,
-              coilId: lotCode,
-              coilPackNumber: newDoc.referenceNumber || lotCode,
-              partId: line.partId,
-              partCode: line.partCode,
-              partName: line.partName,
-              materialGrade: partObj?.materialGrade || 'DC01A',
-              heatNumber: line.heatNumber || `HT-${Math.floor(1000 + Math.random() * 9000)}`,
-              thicknessMm: partObj?.thicknessMm || 2.0,
-              widthMm: 1140,
-              originalWeightKg: weightKg,
-              remainingWeightKg: weightKg,
-              warehouseId: newDoc.warehouseId || 'WH-RAW',
-              warehouseName: newDoc.warehouseName || 'انبار مرکزی رول و ورق ساپکو',
-              warehouseLocationCode: line.locationCode || 'LOC-RAW-A1',
-              ownership: line.ownership || newDoc.ownership || 'SAPCO_SUPPLIER_OWNED',
-              qualityStatus: 'AVAILABLE',
-              physicalStatus: 'AVAILABLE',
-              supplierName: contractObj?.customerName || 'ساپکو',
-              receiptDate: newDoc.documentDate || now,
-              allocations:
-                line.contractId || line.contractNumber
-                  ? ([
-                      {
-                        id: `ALLOC-${Date.now()}`,
-                        coilId: lotCode,
-                        contractId: line.contractId || line.contractNumber || '',
-                        contractNumber: line.contractNumber || contractObj?.contractNumber || '',
-                        allocatedWeightKg: weightKg,
-                      },
-                    ] as any)
-                  : [],
-            });
-          }
-        }
-      } else if (newDoc.documentType === 'ISSUE_RAW_MATERIAL') {
-        for (const line of newDoc.lines) {
-          if (!line.lotNumber) continue;
-          const existingCoil = physicalCoilsStore.find(
-            c => c.coilId === line.lotNumber || c.coilPackNumber === line.lotNumber
-          );
-          if (existingCoil) {
-            const issuedKg = Number(line.quantityKg || line.quantity || 0);
-            existingCoil.remainingWeightKg = Math.max(0, existingCoil.remainingWeightKg - issuedKg);
-            existingCoil.physicalStatus =
-              existingCoil.remainingWeightKg <= 0 ? 'CONSUMED' : 'PARTIALLY_ISSUED';
-          }
-        }
-      }
+      applyPostedDocumentSideEffects(newDoc);
 
       await persistInventoryAppState();
 
@@ -2559,6 +2724,8 @@ apiRouter.post('/inventory/documents/:id/post', async (req: Request, res: Respon
       }
     }
 
+    applyPostedDocumentSideEffects(doc);
+
     if (postResult.auditRecord) {
       auditLogsStore.unshift(postResult.auditRecord);
     }
@@ -2625,29 +2792,8 @@ apiRouter.post('/inventory/documents/:id/reverse', async (req: Request, res: Res
       }
     }
 
-    // Reconcile physical coil weights when reversing a raw coil issue or receipt
-    if (targetDoc.documentType === 'ISSUE_RAW_MATERIAL') {
-      for (const line of targetDoc.lines) {
-        if (!line.lotNumber) continue;
-        const coil = physicalCoilsStore.find(c => c.coilId === line.lotNumber || c.coilPackNumber === line.lotNumber);
-        if (coil) {
-          const restoredKg = Number(line.quantityKg || line.quantity || 0);
-          coil.remainingWeightKg = Math.min(coil.originalWeightKg, coil.remainingWeightKg + restoredKg);
-          coil.physicalStatus =
-            coil.remainingWeightKg >= coil.originalWeightKg - 0.01 ? 'AVAILABLE' : 'PARTIALLY_ISSUED';
-        }
-      }
-    } else if (targetDoc.documentType === 'RECEIPT_RAW_MATERIAL' || targetDoc.documentType === 'OPENING_BALANCE') {
-      for (const line of targetDoc.lines) {
-        const lotCode = line.lotNumber || `COIL-${targetDoc.documentNumber}-${line.lineNumber}`;
-        const coil = physicalCoilsStore.find(c => c.coilId === lotCode || c.coilPackNumber === lotCode);
-        if (coil) {
-          const deductedKg = Number(line.quantityKg || line.quantity || 0);
-          coil.remainingWeightKg = Math.max(0, coil.remainingWeightKg - deductedKg);
-          coil.physicalStatus = coil.remainingWeightKg <= 0.01 ? 'CONSUMED' : 'PARTIALLY_ISSUED';
-        }
-      }
-    }
+    // Reconcile physical coil weights & customer orders when reversing
+    reverseDocumentSideEffects(targetDoc);
 
     inventoryDocsStore.unshift(reversalResult.reversalDocument);
     if (reversalResult.auditRecord) {
@@ -5493,37 +5639,132 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
           );
         }
       }
+      // Case D: Dynamic BOM / Grade Fallback for any custom parts defined via BOM Master or MRP Drawer
+      else if (matchedPart && (Number(opNo) === 10 || opCode === 'OP10')) {
+        const dynamicBom = getBomByPartId(matchedPart.id) || getBomByPartId(matchedPart.code);
+        const grossPieces = deltaQty + Math.max(0, Number(scrapQty) || 0);
+        if (dynamicBom && dynamicBom.components.length > 0) {
+          dynamicBom.components.forEach((comp, idx) => {
+            const reqQty = Number(
+              (grossPieces * (comp.quantityPerAssembly || 1) * (1 + (comp.scrapAllowancePercent || 0) / 100)).toFixed(3)
+            );
+            const rawPart = partsStore.find(
+              p => p.id === comp.componentPartId || p.code === comp.componentPartCode
+            );
+            const isKg = comp.unit === 'KG' || rawPart?.unit === 'KG';
+            const weightKg = isKg
+              ? reqQty
+              : Number((reqQty * (comp.grossWeightKg || rawPart?.weightPerUnitKg || 0.05)).toFixed(3));
+            issueLines.push({
+              id: `LINE-BF-${docSuffix}-D${idx + 1}`,
+              documentId: `DOC-BF-${docSuffix}`,
+              lineNumber: idx + 1,
+              partId: rawPart?.id || comp.componentPartId,
+              partCode: rawPart?.code || comp.componentPartCode,
+              partName: rawPart?.name || comp.componentPartName,
+              lotNumber: isKg ? coilNumber : undefined,
+              heatNumber: isKg ? heatNumber : undefined,
+              ownership: comp.supplierSource === 'SAPCO_CONSIGNMENT' ? 'SAPCO_SUPPLIER_OWNED' : 'COMPANY_OWNED',
+              quantity: reqQty,
+              unit: comp.unit || rawPart?.unit || 'PCS',
+              quantityKg: weightKg,
+              qualityStatus: 'AVAILABLE',
+              notes: `مصرف خودکار BOM در ${opCode} (${opTitle}) برای دستور کار ${orderCode}`,
+            });
+            consumedItemsSummary.push({
+              code: rawPart?.code || comp.componentPartCode,
+              name: rawPart?.name || comp.componentPartName,
+              qty: reqQty,
+              unit: comp.unit || rawPart?.unit || 'PCS',
+            });
+          });
+        } else if (matchedPart.materialGrade) {
+          const matchingRaw = partsStore.find(
+            p =>
+              p.category === 'RAW_MATERIAL' &&
+              p.materialGrade?.toLowerCase() === matchedPart.materialGrade?.toLowerCase()
+          );
+          if (matchingRaw) {
+            const consumedKg = Number((grossPieces * (matchedPart.weightPerUnitKg || 1) * 1.12).toFixed(2));
+            issueLines.push({
+              id: `LINE-BF-${docSuffix}-G1`,
+              documentId: `DOC-BF-${docSuffix}`,
+              lineNumber: 1,
+              partId: matchingRaw.id,
+              partCode: matchingRaw.code,
+              partName: matchingRaw.name,
+              lotNumber: coilNumber,
+              heatNumber,
+              ownership: 'COMPANY_OWNED',
+              locationCode: 'LOC-RAW-A1',
+              quantity: consumedKg,
+              unit: 'KG',
+              quantityKg: consumedKg,
+              qualityStatus: 'AVAILABLE',
+              notes: `مصرف خودکار ورق (${matchedPart.materialGrade}) در ${opCode} دستور کار ${orderCode}`,
+            });
+            consumedItemsSummary.push({
+              code: matchingRaw.code,
+              name: matchingRaw.name,
+              qty: consumedKg,
+              unit: 'KG',
+            });
+          }
+        }
+      }
 
       if (issueLines.length > 0) {
         backflushIssueDocNumber = `ISS-BF-${docSuffix}`;
         const totalQty = issueLines.reduce((s, l) => s + l.quantity, 0);
         const totalKg = issueLines.reduce((s, l) => s + l.quantityKg, 0);
-        inventoryDocsStore.unshift({
+        const bfUser = {
+          uid: 'USR-ADMIN',
+          displayName: 'سیستم اتوماتیک تولید و انبار (ERP Backflush)',
+        };
+        const bfDoc: InventoryDocument = {
           id: `DOC-BF-${docSuffix}`,
           documentNumber: backflushIssueDocNumber,
           documentType: 'ISSUE_RAW_MATERIAL',
           documentDate: nowIso,
-          documentStatus: 'CONFIRMED',
-          postingStatus: 'POSTED',
+          documentStatus: 'DRAFT',
+          postingStatus: 'UNPOSTED',
           warehouseId: sourceWarehouseId,
           warehouseName: sourceWarehouseName,
           ownership: issueLines[0].ownership,
-          contractId: 'CNT-SAPCO-ECU-BRK',
-          contractNumber: 'CNT-SAPCO-ECU-BRK',
+          contractId: issueLines[0].contractId || 'CNT-SAPCO-ECU-BRK',
+          contractNumber: issueLines[0].contractNumber || 'CNT-SAPCO-ECU-BRK',
           referenceType: 'MANUFACTURING_ORDER',
           referenceNumber: orderCode,
           lines: issueLines,
           totalQuantity: totalQty,
           totalWeightKg: totalKg,
-          auditNote: `حواله مصرف خودکار (BOM Backflush) بابت اجرای ${opCode} (${opTitle}) قطعه ${partName} - ذوب ${heatNumber}`,
-          createdByUid: 'USR-ADMIN',
-          createdByName: 'سیستم اتوماتیک تولید و انبار (ERP Backflush)',
-          postedByUid: 'USR-ADMIN',
-          postedByName: 'سیستم اتوماتیک تولید و انبار (ERP Backflush)',
-          postedAt: nowIso,
+          auditNote: `حواله مصرف خودکار (BOM Backflush) بابت اجرای ${opCode} (${opTitle}) قطعه ${partName || matchedPart?.name || ''} - ذوب ${heatNumber}`,
+          createdByUid: bfUser.uid,
+          createdByName: bfUser.displayName,
           createdAt: nowIso,
           updatedAt: nowIso,
-        });
+        };
+
+        // Atomic SAP MM-IM stock check before deducting coils or writing posted ledger doc (prevents negative stock)
+        const bfPostResult = atomicPostDocument(
+          bfDoc,
+          inventoryDocsStore,
+          reservationsStore,
+          partsStore,
+          bfUser
+        );
+        if (!bfPostResult.success) {
+          return res.status(400).json({
+            success: false,
+            error: `ثبت مصرف خودکار (Backflush) ممکن نیست: ${bfPostResult.error}`,
+          });
+        }
+
+        inventoryDocsStore.unshift(bfDoc);
+        if (bfPostResult.auditRecord) {
+          auditLogsStore.unshift(bfPostResult.auditRecord);
+        }
+        applyPostedDocumentSideEffects(bfDoc);
 
         // Also record in transactionsStore so Stage Kardex is 100% synced
         for (const l of issueLines) {
@@ -5573,13 +5814,13 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
       receiptDocNumber = isWipSubAssembly ? `RCV-WIP-${docSuffix}` : `RCV-FG-${docSuffix}`;
       const recWeightKg = Number((deltaQty * (matchedPart.weightPerUnitKg || 1.0)).toFixed(2));
 
-      inventoryDocsStore.unshift({
+      const rcvDoc: InventoryDocument = {
         id: `DOC-RCV-${docSuffix}`,
         documentNumber: receiptDocNumber,
         documentType: 'RECEIPT_FINISHED_GOODS',
         documentDate: nowIso,
-        documentStatus: 'CONFIRMED',
-        postingStatus: 'POSTED',
+        documentStatus: 'DRAFT',
+        postingStatus: 'UNPOSTED',
         warehouseId: targetWhId,
         warehouseName: targetWhName,
         ownership: 'COMPANY_OWNED',
@@ -5613,12 +5854,23 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
         auditNote: `رسید خودکار ${isWipSubAssembly ? 'نیمه‌ساخته پای خط (WIP)' : 'محصول نهایی'} از دستور کار ${orderCode}`,
         createdByUid: 'USR-ADMIN',
         createdByName: 'سیستم اتوماتیک تولید و انبار',
-        postedByUid: 'USR-ADMIN',
-        postedByName: 'سیستم اتوماتیک تولید و انبار',
-        postedAt: nowIso,
         createdAt: nowIso,
         updatedAt: nowIso,
-      });
+      };
+
+      const rcvPostResult = atomicPostDocument(
+        rcvDoc,
+        inventoryDocsStore,
+        reservationsStore,
+        partsStore,
+        { uid: 'USR-ADMIN', displayName: 'سیستم اتوماتیک تولید و انبار' }
+      );
+      if (rcvPostResult.success) {
+        inventoryDocsStore.unshift(rcvDoc);
+        if (rcvPostResult.auditRecord) {
+          auditLogsStore.unshift(rcvPostResult.auditRecord);
+        }
+      }
 
       transactionsStore.unshift({
         id: `TX-RCV-${docSuffix}`,
@@ -10278,13 +10530,125 @@ apiRouter.get('/mrp/mos/:id/check', (req: Request, res: Response) => {
   }
 });
 
-// 20.5 Auto-Reserve materials for an MO from ATP
-apiRouter.post('/mrp/mos/:id/reserve', (req: Request, res: Response) => {
+// 20.5 Auto-Reserve materials for an MO from ATP (Persisted to snapshot)
+apiRouter.post('/mrp/mos/:id/reserve', async (req: Request, res: Response) => {
   try {
     const result = autoReserveMoMaterials(req.params.id);
+    await persistInventoryAppState();
     res.json({ success: true, message: 'رزرو خودکار مواد با موفقیت انجام شد.', data: result });
   } catch (error) {
     res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'خطا در رزرو خودکار مواد' });
+  }
+});
+
+// 20.6 MRP Purchase Requisitions (PR) CRUD & Server Persistence
+apiRouter.get('/mrp/purchase-requisitions', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    count: mrpPurchaseRequisitionsStore.length,
+    data: mrpPurchaseRequisitionsStore,
+  });
+});
+
+apiRouter.post('/mrp/purchase-requisitions', async (req: Request, res: Response) => {
+  try {
+    const { prNumber, materialCode, materialName, materialGrade, quantity, unit, notes, requestedBy } = req.body || {};
+    const numQty = Number(quantity) || 0;
+    if (!materialCode || !materialName || numQty <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'کد ماده، عنوان ماده و مقدار مثبت برای صدور درخواست خرید (PR) الزامی هستند.',
+      });
+    }
+
+    const finalPrNumber =
+      (prNumber && String(prNumber).trim()) ||
+      `PR-1404-${Math.floor(1000 + Math.random() * 8999)}`;
+
+    const existing = mrpPurchaseRequisitionsStore.find(
+      p => p.prNumber === finalPrNumber || (p.materialCode === materialCode && p.status === 'OPEN')
+    );
+
+    const nowIso = new Date().toISOString();
+    const record: MrpPurchaseRequisition = existing
+      ? {
+          ...existing,
+          quantity: numQty,
+          unit: unit || existing.unit,
+          materialGrade: materialGrade || existing.materialGrade,
+          notes: notes || existing.notes,
+        }
+      : {
+          id: `PR-${Date.now()}`,
+          prNumber: finalPrNumber,
+          materialCode: String(materialCode),
+          materialName: String(materialName),
+          materialGrade: materialGrade ? String(materialGrade) : undefined,
+          quantity: numQty,
+          unit: unit || 'KG',
+          status: 'OPEN',
+          requestedBy: requestedBy || 'برنامه‌ریز تولید و MRP',
+          createdAt: nowIso,
+          createdAtFa: formatToJalali(new Date()),
+          notes: notes || 'صادره از موازنه کسری مواد (MRP)',
+        };
+
+    if (!existing) {
+      mrpPurchaseRequisitionsStore.unshift(record);
+    } else {
+      Object.assign(existing, record);
+    }
+
+    auditLogsStore.unshift({
+      id: `AUD-PR-${Date.now()}`,
+      action: 'ISSUE_PR',
+      entityName: 'PURCHASE_REQUISITION',
+      entityId: record.id,
+      user: { uid: 'USR-ADMIN', displayName: record.requestedBy },
+      details: `صدور درخواست خرید ${record.prNumber} برای ${record.materialCode} به مقدار ${record.quantity} ${record.unit}`,
+      timestamp: nowIso,
+    });
+
+    await persistInventoryAppState();
+    res.status(201).json({
+      success: true,
+      message: `درخواست خرید ${record.prNumber} با موفقیت ثبت و ذخیره شد.`,
+      data: record,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'خطا در صدور درخواست خرید (PR)',
+    });
+  }
+});
+
+apiRouter.delete('/mrp/purchase-requisitions/:prNumber', async (req: Request, res: Response) => {
+  try {
+    const key = decodeURIComponent(req.params.prNumber);
+    const idx = mrpPurchaseRequisitionsStore.findIndex(
+      p => p.prNumber === key || p.id === key || p.materialCode === key
+    );
+    if (idx === -1) {
+      return res.status(404).json({ success: false, error: 'درخواست خرید یافت نشد.' });
+    }
+    const [removed] = mrpPurchaseRequisitionsStore.splice(idx, 1);
+    auditLogsStore.unshift({
+      id: `AUD-PR-DEL-${Date.now()}`,
+      action: 'CANCEL_PR',
+      entityName: 'PURCHASE_REQUISITION',
+      entityId: removed.id,
+      user: { uid: 'USR-ADMIN', displayName: 'برنامه‌ریز تولید و MRP' },
+      details: `لغو درخواست خرید ${removed.prNumber} (${removed.materialCode})`,
+      timestamp: new Date().toISOString(),
+    });
+    await persistInventoryAppState();
+    res.json({ success: true, message: `درخواست خرید ${removed.prNumber} لغو شد.` });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'خطا در لغو درخواست خرید',
+    });
   }
 });
 

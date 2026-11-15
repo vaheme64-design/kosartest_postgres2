@@ -306,10 +306,10 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
         setQPartName('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت کالا');
+        setErrorMessage(data.error || 'خطا در ثبت کالا');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -338,10 +338,10 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
         setQCustName('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت مشتری');
+        setErrorMessage(data.error || 'خطا در ثبت مشتری');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -371,10 +371,10 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
         setQWhName('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت انبار');
+        setErrorMessage(data.error || 'خطا در ثبت انبار');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -408,10 +408,10 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
         setQCntTitle('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت قرارداد');
+        setErrorMessage(data.error || 'خطا در ثبت قرارداد');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -501,21 +501,21 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-white backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden my-6 text-right" dir="rtl">
+    <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white border border-[#d9d9d9] w-full max-w-3xl rounded-md shadow-xl overflow-hidden my-6 text-right" dir="rtl">
         {/* Header */}
-        <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-5 py-3.5 bg-[#ffffff] border-b border-[#d9d9d9] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-amber-600 text-white rounded-xl">
-              <ArrowUpRight className="w-5 h-5" />
+            <span className="p-2 bg-[#fff5eb] border border-[#f5d0a9] text-[#e9730c] rounded">
+              <ArrowUpRight className="w-4 h-4" />
             </span>
             <div>
-              <h3 className="text-sm lg:text-base font-bold text-slate-900">
+              <h3 className="text-sm font-semibold text-[#333333]">
                 {issuePurpose === 'CUSTOMER_DELIVERY'
                   ? 'صدور حواله خروج و تحویل محصول نهایی به مشتری / خودروساز'
                   : 'صدور حواله خروج کالا و ارسال رول / متریال به خط تولید'}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] text-[#666666] mt-0.5">
                 ثبت بدون وقفه خروج‌ها، ثبت درجا مشتری/کالا/انبار/قرارداد، و کسر هوشمند از کاردکس موجودی
               </p>
             </div>
@@ -523,23 +523,23 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+            className="p-1.5 text-[#666666] hover:text-[#333333] rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Stepper */}
-        <div className="px-6 py-3 bg-white border-b border-slate-100 flex items-center gap-4 text-xs">
-          <div className={`flex items-center gap-2 font-semibold ${step === 1 ? 'text-slate-900' : 'text-emerald-700'}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step === 1 ? 'bg-white text-white' : 'bg-emerald-600 text-white'}`}>
+        <div className="px-6 py-2.5 bg-[#f7f7f7] border-b border-[#d9d9d9] flex items-center gap-4 text-xs">
+          <div className={`flex items-center gap-2 font-semibold ${step === 1 ? 'text-[#007cc0]' : 'text-[#107e3e]'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step === 1 ? 'bg-[#007cc0] text-white' : 'bg-[#107e3e] text-white'}`}>
               ۱
             </span>
             <span>انتخاب هدف خروج، کالا و مقدار</span>
           </div>
-          <span className="text-slate-700">───</span>
-          <div className={`flex items-center gap-2 font-semibold ${step === 2 ? 'text-slate-900' : 'text-slate-400'}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step === 2 ? 'bg-white text-slate-900' : 'bg-slate-200 text-slate-600'}`}>
+          <span className="text-[#bfbfbf]">───</span>
+          <div className={`flex items-center gap-2 font-semibold ${step === 2 ? 'text-[#007cc0]' : 'text-[#666666]'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step === 2 ? 'bg-[#007cc0] text-white' : 'bg-[#e8e8e8] text-[#333333]'}`}>
               ۲
             </span>
             <span>پیش‌نمایش و ثبت قطعی / موقت</span>
@@ -690,7 +690,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setReferenceNumber(generateSuggestedMoNumber())}
-                        className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 cursor-pointer"
+                        className="text-[10px] font-semibold text-[#007cc0] hover:text-[#006299] bg-[#e5f3fa] px-2 py-0.5 rounded border border-[#b3ddf2] cursor-pointer"
                       >
                         پیشنهاد کد جدید
                       </button>
@@ -701,11 +701,11 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                     value={referenceNumber}
                     onChange={e => setReferenceNumber(e.target.value)}
                     placeholder={issuePurpose === 'CUSTOMER_DELIVERY' ? 'مثلاً SHP-1404-8820' : 'مثلاً MO-1404-1025'}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold focus:outline-none focus:bg-white focus:border-slate-900"
+                    className="w-full bg-white border border-[#bfbfbf] rounded px-3 py-2 text-[#333333] font-mono font-bold focus:outline-none focus:border-[#007cc0]"
                   />
                   {issuePurpose !== 'CUSTOMER_DELIVERY' && (
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap text-[10px]">
-                      <span className="text-slate-500">دستورات فعال:</span>
+                      <span className="text-[#666666]">دستورات فعال:</span>
                       {['MO-1404-1001', 'MO-1404-1002', 'MO-1404-5000'].map(moCode => (
                         <button
                           key={moCode}
@@ -713,8 +713,8 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                           onClick={() => setReferenceNumber(moCode)}
                           className={`px-2 py-0.5 rounded font-mono border cursor-pointer ${
                             referenceNumber === moCode
-                              ? 'bg-slate-900 text-white border-slate-900 font-bold'
-                              : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                              ? 'bg-[#007cc0] text-white border-[#007cc0] font-bold'
+                              : 'bg-[#f7f7f7] text-[#333333] border-[#d9d9d9] hover:bg-[#e5f3fa] hover:border-[#007cc0]'
                           }`}
                         >
                           {moCode}
@@ -1016,13 +1016,13 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
           )}
 
           {/* Footer Buttons */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-between gap-2">
+          <div className="pt-4 border-t border-[#d9d9d9] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors cursor-pointer"
+                className="sap-btn-standard px-4 py-1.5 cursor-pointer"
               >
                 انصراف
               </button>
@@ -1031,7 +1031,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                   type="button"
                   onClick={() => setStep(1)}
                   disabled={loading}
-                  className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-medium transition-colors cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 cursor-pointer"
                 >
                   بازگشت
                 </button>
@@ -1043,7 +1043,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                 <button
                   type="button"
                   onClick={handleProceedToReview}
-                  className="px-5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>پیش‌نمایش حواله خروج</span>
                   <ArrowLeft className="w-4 h-4" />
@@ -1054,7 +1054,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                     type="button"
                     disabled={loading}
                     onClick={() => handleFinalSubmit(false)}
-                    className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-4 py-1.5 bg-[#fff5eb] hover:bg-[#fde8d2] text-[#e9730c] border border-[#f5d0a9] rounded font-semibold transition-colors cursor-pointer disabled:opacity-50"
                   >
                     ثبت موقت (پیش‌نویس)
                   </button>
@@ -1062,7 +1062,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                     type="button"
                     disabled={loading}
                     onClick={() => handleFinalSubmit(true)}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="px-5 py-1.5 bg-[#107e3e] hover:bg-[#0d6833] text-white rounded font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{loading ? 'در حال خروج...' : 'ثبت قطعی و کسر از کاردکس'}</span>
@@ -1076,7 +1076,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
 
       {/* QUICK PART CREATION SUB-MODAL */}
       {isQuickPartOpen && (
-        <div className="fixed inset-0 z-60 bg-white backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 text-right shadow-2xl">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
               <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -1162,7 +1162,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
 
       {/* QUICK CUSTOMER CREATION SUB-MODAL */}
       {isQuickCustomerOpen && (
-        <div className="fixed inset-0 z-60 bg-white backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 text-right shadow-2xl">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
               <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -1222,7 +1222,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
 
       {/* QUICK WAREHOUSE CREATION SUB-MODAL */}
       {isQuickWarehouseOpen && (
-        <div className="fixed inset-0 z-60 bg-white backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 text-right shadow-2xl">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
               <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -1282,7 +1282,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
 
       {/* QUICK CONTRACT CREATION SUB-MODAL */}
       {isQuickContractOpen && (
-        <div className="fixed inset-0 z-60 bg-white backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-[#333333]/40 backdrop-blur-[1px] flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 text-right shadow-2xl">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
               <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">

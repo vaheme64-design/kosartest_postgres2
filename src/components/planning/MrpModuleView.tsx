@@ -42,6 +42,7 @@ import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { ReportModuleSkeleton } from '../common/Skeleton';
 import { FormulaTooltip } from '../common/FormulaTooltip';
 import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 import {
   loadQcHoldMap,
   loadVipPartsMap,
@@ -83,6 +84,7 @@ interface MrpModuleViewProps {
 
 export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal }) => {
   const { requestConfirm, showUndoToast, recordAudit } = useEnterpriseUx();
+  const { traceDocument } = useErpRouter();
   const [activeTab, setActiveTab] = useState<'materials' | 'pre_issue' | 'parts' | 'simulation'>('materials');
   const [rawMrpData, setMrpData] = useState<MrpRunResult | null>(null);
   const [qcHoldMap, setQcHoldMap] = useState<Record<string, QcHoldRecord>>(() => loadQcHoldMap());
@@ -185,13 +187,14 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           const matchName = h.partName && m.materialGrade && h.partName.toLowerCase().includes(m.materialGrade.toLowerCase());
           return Boolean(matchCode || matchName);
         })
-        .reduce((s, h) => s + (h.heldWeightKg || h.heldQty || 0), 0);
+        .reduce((s, h) => s + (m.unitCode === 'KG' ? (h.heldWeightKg || h.heldQty || 0) : (h.heldQty || h.heldWeightKg || 0)), 0);
 
       const effectiveQuarantined = Math.max(m.onHandQuarantined || 0, extraHoldKg);
       const totalPhysical = (m.onHandOwned || 0) + (simIncludeConsignment ? m.onHandConsignment || 0 : 0);
       // Direct subtraction of QC Hold (onHandQuarantined) from Free Available (ATP):
       const netAvailable = Math.max(0, totalPhysical - (m.reservedActive || 0) - effectiveQuarantined);
-      const shortageQuantity = Math.max(0, Math.round((m.requiredWeightKg - netAvailable) * 10) / 10);
+      const targetRequired = m.unitCode === 'KG' ? m.requiredWeightKg : m.requiredQuantity;
+      const shortageQuantity = Math.max(0, Math.round((targetRequired - netAvailable) * 10) / 10);
       const coveredByContract = Math.min(shortageQuantity, m.openContractQuantity || 0);
       const hardShortageQuantity = Math.max(0, Math.round((shortageQuantity - coveredByContract) * 10) / 10);
 
@@ -287,8 +290,50 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
       // ignore
     }
 
-    // Also persist to backend APIs if available
+    // Persist Part, Routing AND Advanced BOM to backend APIs so server MRP/Backflush stay synced
     try {
+      const rawMaterialCode = `RM-SHEET-${resolution.materialGrade}-${resolution.thicknessMm}`;
+      const grossWeight = Number(
+        (resolution.unitWeightKg * (1 + resolution.scrapAllowancePct / 100)).toFixed(3)
+      );
+      const bomComponents: Array<Record<string, unknown>> = [
+        {
+          id: `BOM-CMP-${resolution.partCode}-RAW`,
+          componentPartId: rawMaterialCode,
+          componentPartCode: rawMaterialCode,
+          componentPartName: `ورق خام گرید ${resolution.materialGrade} ضخامت ${resolution.thicknessMm}mm`,
+          componentType: 'RAW_SHEET',
+          quantityPerAssembly: 1,
+          unit: 'PCS',
+          grossWeightKg: grossWeight,
+          netWeightKg: resolution.unitWeightKg,
+          scrapAllowancePercent: resolution.scrapAllowancePct,
+          joiningProcess: 'STAMPING',
+          subMoRequired: false,
+          stageJoinedStepNumber: 10,
+          supplierSource: 'COMPANY_PURCHASED',
+        },
+      ];
+
+      if (resolution.hardwareComponentName && (resolution.hardwareQtyPerUnit || 0) > 0) {
+        bomComponents.push({
+          id: `BOM-CMP-${resolution.partCode}-HW`,
+          componentPartId: `HW-${resolution.partCode}`,
+          componentPartCode: `HW-${resolution.partCode}`,
+          componentPartName: resolution.hardwareComponentName,
+          componentType: 'FASTENER_HARDWARE',
+          quantityPerAssembly: resolution.hardwareQtyPerUnit,
+          unit: 'PCS',
+          grossWeightKg: Number(((resolution.hardwareQtyPerUnit || 1) * 0.008).toFixed(3)),
+          netWeightKg: Number(((resolution.hardwareQtyPerUnit || 1) * 0.008).toFixed(3)),
+          scrapAllowancePercent: 0,
+          joiningProcess: 'SPOT_WELD',
+          subMoRequired: false,
+          stageJoinedStepNumber: 30,
+          supplierSource: 'COMPANY_PURCHASED',
+        });
+      }
+
       await Promise.all([
         fetch('/api/parts', {
           method: 'POST',
@@ -321,7 +366,21 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
             })),
           }),
         }).catch(() => {}),
+        fetch('/api/production/boms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `BOM-${bomRoutingDrawerPart.partCode}`,
+            assemblyPartId: bomRoutingDrawerPart.partId,
+            assemblyPartCode: bomRoutingDrawerPart.partCode,
+            assemblyPartName: bomRoutingDrawerPart.partName,
+            version: 'V1.0',
+            isActive: true,
+            components: bomComponents,
+          }),
+        }).catch(() => {}),
       ]);
+      await loadMrp();
       if (onRefreshGlobal) await onRefreshGlobal();
     } catch {
       // local state updated
@@ -373,50 +432,76 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
       ],
       confirmLabel: 'تأیید و صدور درخواست خرید (PR)',
       variant: 'indigo',
-      onConfirm: () => {
+      onConfirm: async () => {
         const prevPrs = { ...issuedPrMap };
-        const prNumber = `PR-1404-${Math.floor(1000 + Math.random() * 8999)}`;
-        const newPr: IssuedPrRecord = {
-          prNumber,
-          materialCode,
-          materialName,
-          quantity: reqQty,
-          unit,
-          createdAt: new Date().toLocaleString('fa-IR'),
-        };
-        const nextPrs = { ...issuedPrMap, [materialCode]: newPr };
-        setIssuedPrMap(nextPrs);
+        const proposedPrNumber = `PR-1404-${Math.floor(1000 + Math.random() * 8999)}`;
         try {
-          localStorage.setItem('kpims_mrp_issued_prs_v1', JSON.stringify(nextPrs));
-        } catch {
-          // ignore
+          const res = await fetch('/api/mrp/purchase-requisitions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prNumber: proposedPrNumber,
+              materialCode,
+              materialName,
+              materialGrade: grade,
+              quantity: reqQty,
+              unit,
+            }),
+          });
+          const json = await res.json();
+          if (!res.ok || !json.success) {
+            setError(json.error || 'خطا در صدور درخواست خرید (PR)');
+            return;
+          }
+          const saved = json.data;
+          const finalPrNumber = saved?.prNumber || proposedPrNumber;
+          const newPr: IssuedPrRecord = {
+            prNumber: finalPrNumber,
+            materialCode,
+            materialName,
+            quantity: saved?.quantity || reqQty,
+            unit: saved?.unit || unit,
+            createdAt: saved?.createdAtFa || new Date().toLocaleString('fa-IR'),
+          };
+          const nextPrs = { ...issuedPrMap, [materialCode]: newPr };
+          setIssuedPrMap(nextPrs);
+          try {
+            localStorage.setItem('kpims_mrp_issued_prs_v1', JSON.stringify(nextPrs));
+          } catch {
+            // ignore
+          }
+
+          recordAudit({
+            actionType: 'CREATE',
+            module: 'ماژول برنامه‌ریزی و MRP (تدارکات و خرید)',
+            entityId: finalPrNumber,
+            entityCode: materialCode,
+            summaryFa: `صدور درخواست خرید (${finalPrNumber}) برای «${materialName}» (${grade || materialCode}) به مقدار ${formatNumber(reqQty)} ${unit}`,
+          });
+
+          setNotice(
+            `درخواست خرید شماره ${finalPrNumber} برای «${materialName}» به مقدار ${formatNumber(reqQty)} ${unit} با موفقیت در سرور ثبت و به واحد تدارکات/ساپکو ارسال شد.`
+          );
+
+          showUndoToast({
+            title: `🛒 درخواست خرید ${finalPrNumber} صادر شد`,
+            description: `مقدار ${formatNumber(reqQty)} ${unit} «${materialName}» در صف تامین بازرگانی ثبت گردید.`,
+            variant: 'success',
+            onUndo: async () => {
+              await fetch(`/api/mrp/purchase-requisitions/${encodeURIComponent(finalPrNumber)}`, {
+                method: 'DELETE',
+              }).catch(() => {});
+              setIssuedPrMap(prevPrs);
+              try {
+                localStorage.setItem('kpims_mrp_issued_prs_v1', JSON.stringify(prevPrs));
+              } catch {
+                // ignore
+              }
+            },
+          });
+        } catch (err: any) {
+          setError(err?.message || 'خطا در ارتباط با سرور برای صدور درخواست خرید');
         }
-
-        recordAudit({
-          actionType: 'CREATE',
-          module: 'ماژول برنامه‌ریزی و MRP (تدارکات و خرید)',
-          entityId: prNumber,
-          entityCode: materialCode,
-          summaryFa: `صدور درخواست خرید (${prNumber}) برای «${materialName}» (${grade || materialCode}) به مقدار ${formatNumber(reqQty)} ${unit}`,
-        });
-
-        setNotice(
-          `درخواست خرید شماره ${prNumber} برای «${materialName}» به مقدار ${formatNumber(reqQty)} ${unit} با موفقیت صادر و به واحد تدارکات/ساپکو ارسال شد.`
-        );
-
-        showUndoToast({
-          title: `🛒 درخواست خرید ${prNumber} صادر شد`,
-          description: `مقدار ${formatNumber(reqQty)} ${unit} «${materialName}» در صف تامین بازرگانی ثبت گردید.`,
-          variant: 'success',
-          onUndo: () => {
-            setIssuedPrMap(prevPrs);
-            try {
-              localStorage.setItem('kpims_mrp_issued_prs_v1', JSON.stringify(prevPrs));
-            } catch {
-              // ignore
-            }
-          },
-        });
       },
     });
   };
@@ -478,10 +563,36 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
     }
   }, [selectedMoId]);
 
+  const loadPurchaseRequisitions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/mrp/purchase-requisitions');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        const serverMap: Record<string, IssuedPrRecord> = {};
+        for (const r of json.data) {
+          if (r.status !== 'CANCELLED') {
+            serverMap[r.materialCode] = {
+              prNumber: r.prNumber,
+              materialCode: r.materialCode,
+              materialName: r.materialName,
+              quantity: r.quantity,
+              unit: r.unit,
+              createdAt: r.createdAtFa || r.createdAt,
+            };
+          }
+        }
+        setIssuedPrMap(prev => ({ ...prev, ...serverMap }));
+      }
+    } catch {
+      // keep local fallback
+    }
+  }, []);
+
   useEffect(() => {
     loadMrp();
     loadMoList();
-  }, [loadMrp, loadMoList]);
+    loadPurchaseRequisitions();
+  }, [loadMrp, loadMoList, loadPurchaseRequisitions]);
 
   // Run Pre-issue check when selected MO changes
   const runMoCheck = async (moIdToTest?: string) => {
@@ -620,22 +731,22 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
   });
 
   return (
-    <div className="space-y-5 print:space-y-3">
-      {/* Unified Light Header & Dropdown List Selector */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4 no-print">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200 shrink-0">
-              <Calculator className="w-5 h-5" />
+    <div className="space-y-4 print:space-y-3">
+      {/* SAP HANA Fiori Header & IconTabBar */}
+      <div className="sap-card overflow-hidden no-print">
+        <div className="px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#d9d9d9]">
+          <div className="flex items-start gap-2.5">
+            <span className="p-2 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] shrink-0">
+              <Calculator className="w-4 h-4" />
             </span>
             <div>
-              <h1 className="text-base lg:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+              <h1 className="text-sm font-semibold text-[#333333] flex items-center gap-2 flex-wrap">
                 پیش‌بینی نیازمندی مواد و موازنه کلاف (MRP)
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                   ATP & BOM Explosion
                 </span>
               </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 انفجار درخت محصول (BOM)، کسر موجودی آزاد ملکی و امانی ساپکو، حذف قرنطینه و پیش‌بینی پوشش قراردادها
               </p>
             </div>
@@ -643,34 +754,34 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
           <div className="flex items-center flex-wrap gap-2">
             {mrpData && (
-              <div className="text-[11px] text-slate-500 font-mono hidden lg:flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              <div className="text-[11px] text-[#666666] font-mono hidden lg:flex items-center gap-1.5 bg-[#f5f5f5] px-2.5 py-1 rounded border border-[#d9d9d9]">
+                <Clock className="w-3.5 h-3.5 text-[#007cc0]" />
                 <span>آخرین محاسبه:</span>
-                <span className="text-slate-900 font-bold">{mrpData.ranAtFa}</span>
+                <span className="text-[#333333] font-semibold">{mrpData.ranAtFa}</span>
               </div>
             )}
 
             <button
               onClick={() => loadMrp()}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 border border-slate-200 transition cursor-pointer disabled:opacity-50"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-indigo-600' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007cc0]' : ''}`} />
               <span>محاسبه مجدد</span>
             </button>
 
             <button
               onClick={handleExportCsv}
               disabled={!mrpData}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 border border-slate-200 transition cursor-pointer disabled:opacity-50"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <Download className="w-3.5 h-3.5 text-[#107e3e]" />
               <span>خروجی اکسل</span>
             </button>
 
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white transition cursor-pointer shadow-2xs"
+              className="sap-btn-emphasized flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>چاپ رسمی</span>
@@ -678,66 +789,43 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           </div>
         </div>
 
-        {/* Unified Dropdown List Selector + Quick Chips */}
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-              <Layers className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="text-[11px] font-semibold text-slate-500">زیربخش MRP:</span>
-              <select
-                value={activeTab}
-                onChange={e => setActiveTab(e.target.value as any)}
-                className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-1 pl-4 py-0.5"
-              >
-                <option value="materials">۱. موازنه و کسری مواد اولیه و کلاف‌ها ({toPersianDigits(mrpData?.materials.length || 0)})</option>
-                <option value="pre_issue">۲. بررسی پیش از حواله دستور کار (Pre-Issue ATP)</option>
-                <option value="parts">۳. موازنه تقاضای قطعات خودرویی ({toPersianDigits(mrpData?.parts.length || 0)})</option>
-                <option value="simulation">۴. شبیه‌ساز سناریوی تقاضا (What-If)</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {[
-                { id: 'materials', label: 'موازنه کلاف‌ها' },
-                { id: 'pre_issue', label: 'کنترل پیش از حواله (ATP)' },
-                { id: 'parts', label: 'تقاضای قطعات' },
-                { id: 'simulation', label: 'شبیه‌ساز What-If' },
-              ].map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setActiveTab(t.id as any)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition cursor-pointer border ${
-                    activeTab === t.id
-                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-bold'
-                      : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="sap-icon-tab-bar px-2 border-b-0">
+          {[
+            { id: 'materials', label: `۱. موازنه کلاف‌ها و مواد اولیه (${toPersianDigits(mrpData?.materials.length || 0)})` },
+            { id: 'pre_issue', label: '۲. کنترل پیش از حواله دستور کار (Pre-Issue ATP)' },
+            { id: 'parts', label: `۳. موازنه تقاضای قطعات (${toPersianDigits(mrpData?.parts.length || 0)})` },
+            { id: 'simulation', label: '۴. شبیه‌ساز What-If' },
+          ].map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActiveTab(t.id as any)}
+              className={`sap-icon-tab ${activeTab === t.id ? 'sap-icon-tab-active' : ''}`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Error & Notice Banners */}
       {error && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between">
+        <div className="p-3 rounded bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[#bb0000]" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError(null)} className="text-rose-600 hover:text-rose-800 text-xs cursor-pointer">بستن</button>
+          <button onClick={() => setError(null)} className="text-[#bb0000] hover:underline text-xs cursor-pointer">بستن</button>
         </div>
       )}
 
       {notice && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+        <div className="p-3 rounded bg-[#ebf5ec] border border-[#b7dfbf] text-[#107e3e] text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#107e3e]" />
             <span>{notice}</span>
           </div>
-          <button onClick={() => setNotice(null)} className="text-emerald-600 hover:text-emerald-800 text-xs cursor-pointer">بستن</button>
+          <button onClick={() => setNotice(null)} className="text-[#107e3e] hover:underline text-xs cursor-pointer">بستن</button>
         </div>
       )}
 
@@ -748,62 +836,62 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
       {/* KPI Cards Summary */}
       {mrpData && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 text-right shadow-2xs">
-            <span className="text-[11px] text-slate-500 font-semibold block font-sans">تعداد مواد و کلاف‌ها</span>
-            <div className="text-xl font-black text-slate-900 font-mono mt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="sap-card p-3 text-right">
+            <span className="text-[11px] text-[#666666] font-semibold block">تعداد مواد و کلاف‌ها</span>
+            <div className="text-lg font-bold text-[#333333] font-mono mt-0.5 tabular-nums">
               {toPersianDigits(mrpData.summary.materialsConsidered)}
             </div>
-            <span className="text-[10px] text-slate-500 mt-1 block">اقلام فعال در BOM</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">اقلام فعال در BOM</span>
           </div>
 
-          <div className="bg-white border border-emerald-200 rounded-xl p-3.5 text-right shadow-2xs">
-            <span className="text-[11px] text-emerald-700 font-semibold block font-sans flex items-center gap-1">
+          <div className="sap-card p-3 text-right border-r-2 border-r-[#107e3e]">
+            <span className="text-[11px] text-[#107e3e] font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               پوشش کامل با موجودی
             </span>
-            <div className="text-xl font-black text-emerald-700 font-mono mt-1">
+            <div className="text-lg font-bold text-[#107e3e] font-mono mt-0.5 tabular-nums">
               {toPersianDigits(mrpData.summary.ok)}
             </div>
-            <span className="text-[10px] text-slate-500 mt-1 block">تأمین تضمین‌شده</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">تأمین تضمین‌شده</span>
           </div>
 
-          <div className="bg-white border border-amber-200 rounded-xl p-3.5 text-right shadow-2xs">
-            <span className="text-[11px] text-amber-700 font-semibold block font-sans flex items-center gap-1">
+          <div className="sap-card p-3 text-right border-r-2 border-r-[#e9730c]">
+            <span className="text-[11px] text-[#e9730c] font-semibold flex items-center gap-1">
               <Info className="w-3.5 h-3.5" />
               پوشش با قرارداد باز
             </span>
-            <div className="text-xl font-black text-amber-700 font-mono mt-1">
+            <div className="text-lg font-bold text-[#e9730c] font-mono mt-0.5 tabular-nums">
               {toPersianDigits(mrpData.summary.contractCovered)}
             </div>
-            <span className="text-[10px] text-slate-500 mt-1 block">در انتظار تحویل سهمیه</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">در انتظار تحویل سهمیه</span>
           </div>
 
-          <div className="bg-white border border-rose-200 rounded-xl p-3.5 text-right shadow-2xs">
-            <span className="text-[11px] text-rose-700 font-semibold block font-sans flex items-center gap-1">
+          <div className="sap-card p-3 text-right border-r-2 border-r-[#bb0000]">
+            <span className="text-[11px] text-[#bb0000] font-semibold flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5" />
               کسری قطعی مواد
             </span>
-            <div className="text-xl font-black text-rose-600 font-mono mt-1">
+            <div className="text-lg font-bold text-[#bb0000] font-mono mt-0.5 tabular-nums">
               {toPersianDigits(mrpData.summary.hardShortages)}
             </div>
-            <span className="text-[10px] text-rose-600 mt-1 block font-bold">هشدار توقف پرس</span>
+            <span className="text-[10px] text-[#bb0000] mt-0.5 block font-semibold">هشدار توقف پرس</span>
           </div>
 
-          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 text-right shadow-2xs">
-            <span className="text-[11px] text-slate-500 font-semibold block font-sans">کل وزن ناخالص مواد</span>
-            <div className="text-lg font-black text-slate-900 font-mono mt-1">
-              {formatNumber(mrpData.summary.totalGrossWeightKg)} <span className="text-xs font-normal text-slate-500">kg</span>
+          <div className="sap-card p-3 text-right">
+            <span className="text-[11px] text-[#666666] font-semibold block">کل وزن ناخالص مواد</span>
+            <div className="text-base font-bold text-[#333333] font-mono mt-0.5 tabular-nums">
+              {formatNumber(mrpData.summary.totalGrossWeightKg)} <span className="text-xs font-normal text-[#666666]">kg</span>
             </div>
-            <span className="text-[10px] text-slate-500 mt-1 block">شامل نرم ضایعات</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">شامل نرم ضایعات</span>
           </div>
 
-          <div className="bg-white border border-rose-200 rounded-xl p-3.5 text-right shadow-2xs">
-            <span className="text-[11px] text-rose-700 font-semibold block font-sans">کسری وزنی کل کلاف‌ها</span>
-            <div className="text-lg font-black text-rose-600 font-mono mt-1">
-              {formatNumber(mrpData.summary.totalShortageWeightKg)} <span className="text-xs font-normal text-rose-600">kg</span>
+          <div className="sap-card p-3 text-right border-r-2 border-r-[#bb0000]">
+            <span className="text-[11px] text-[#bb0000] font-semibold block">کسری وزنی کل کلاف‌ها</span>
+            <div className="text-base font-bold text-[#bb0000] font-mono mt-0.5 tabular-nums">
+              {formatNumber(mrpData.summary.totalShortageWeightKg)} <span className="text-xs font-normal text-[#bb0000]">kg</span>
             </div>
-            <span className="text-[10px] text-slate-500 mt-1 block">نیاز به خرید / حواله</span>
+            <span className="text-[10px] text-[#666666] mt-0.5 block">نیاز به خرید / حواله</span>
           </div>
         </div>
       )}
@@ -812,25 +900,25 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           TAB 1: MATERIALS NETTING MATRIX
           ========================================================================= */}
       {activeTab === 'materials' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Filters Bar */}
-          <div className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 no-print">
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="sap-card p-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 no-print">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
-                <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-[#666666] absolute right-2.5 top-2" />
                 <input
                   type="text"
                   placeholder="جستجو در کد، نام کلاف یا گرید..."
                   value={materialSearch}
                   onChange={e => setMaterialSearch(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-9 pl-3 py-1.5 text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#f5f5f5] border border-[#bfbfbf] rounded pr-8 pl-3 py-1 text-xs text-[#333333] placeholder-[#888888] focus:bg-[#ffffff] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
               <select
                 value={gradeFilter}
                 onChange={e => setGradeFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-indigo-500"
+                className="bg-[#ffffff] border border-[#bfbfbf] rounded px-2.5 py-1 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
               >
                 <option value="ALL">همه گریدها</option>
                 <option value="DC04">DC04 (کشش عمیق)</option>
@@ -841,13 +929,13 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
             </div>
 
             <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-[11px] text-slate-400 font-sans ml-1">فیلتر وضعیت:</span>
+              <span className="text-[11px] text-[#666666] ml-1">فیلتر وضعیت:</span>
               <button
                 onClick={() => setSeverityFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition ${
+                className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition ${
                   severityFilter === 'ALL'
-                    ? 'bg-slate-700 text-white font-bold'
-                    : 'bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
+                    ? 'bg-[#007cc0] text-[#ffffff]'
+                    : 'bg-[#ffffff] text-[#333333] hover:bg-[#e5f3fa] border border-[#d9d9d9]'
                 }`}
               >
                 همه ({toPersianDigits(mrpData?.materials.length || 0)})
@@ -855,10 +943,10 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
               <button
                 onClick={() => setSeverityFilter('HARD_SHORTAGE')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition flex items-center gap-1 ${
                   severityFilter === 'HARD_SHORTAGE'
-                    ? 'bg-rose-500 text-white font-bold'
-                    : 'bg-slate-50 text-rose-600 hover:bg-rose-50 border border-rose-200'
+                    ? 'bg-[#bb0000] text-[#ffffff]'
+                    : 'bg-[#ffffff] text-[#bb0000] hover:bg-[#ffecec] border border-[#f5b7b1]'
                 }`}
               >
                 <ShieldAlert className="w-3 h-3" />
@@ -867,10 +955,10 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
               <button
                 onClick={() => setSeverityFilter('SHORTAGE_COVERED_BY_CONTRACT')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition flex items-center gap-1 ${
                   severityFilter === 'SHORTAGE_COVERED_BY_CONTRACT'
-                    ? 'bg-amber-500 text-slate-950 font-bold'
-                    : 'bg-slate-50 text-amber-700 hover:bg-amber-50 border border-amber-200'
+                    ? 'bg-[#e9730c] text-[#ffffff]'
+                    : 'bg-[#ffffff] text-[#e9730c] hover:bg-[#fff4e5] border border-[#f5cba7]'
                 }`}
               >
                 <Info className="w-3 h-3" />
@@ -879,10 +967,10 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
               <button
                 onClick={() => setSeverityFilter('OK')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition flex items-center gap-1 ${
                   severityFilter === 'OK'
-                    ? 'bg-emerald-600 text-white font-bold'
-                    : 'bg-slate-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200'
+                    ? 'bg-[#107e3e] text-[#ffffff]'
+                    : 'bg-[#ffffff] text-[#107e3e] hover:bg-[#ebf5ec] border border-[#b7dfbf]'
                 }`}
               >
                 <CheckCircle2 className="w-3 h-3" />
@@ -892,21 +980,21 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl printable-area">
+          <div className="sap-card overflow-hidden printable-area">
             {/* Print Header shown only during print */}
-            <div className="hidden print:block p-4 border-b border-slate-300 text-center">
-              <span className="text-xs text-slate-600 block">شرکت تولیدی قطعات خودرو (زنجیره تامین ساپکو)</span>
-              <h2 className="text-base font-bold text-slate-900 mt-1">گزارش رسمی پیش‌بینی نیازمندی مواد و موازنه کلاف (MRP)</h2>
-              <span className="text-[10px] text-slate-500 font-mono">تاریخ موازنه: {mrpData?.ranAtFa || 'امروز'}</span>
+            <div className="hidden print:block p-4 border-b border-[#d9d9d9] text-center">
+              <span className="text-xs text-[#666666] block">شرکت تولیدی قطعات خودرو (زنجیره تامین ساپکو)</span>
+              <h2 className="text-base font-bold text-[#333333] mt-1">گزارش رسمی پیش‌بینی نیازمندی مواد و موازنه کلاف (MRP)</h2>
+              <span className="text-[10px] text-[#666666] font-mono">تاریخ موازنه: {mrpData?.ranAtFa || 'امروز'}</span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 font-bold text-[11px]">
+              <table className="sap-table-compact w-full text-right">
+                <thead>
                   <tr>
-                    <th className="py-3 px-3">کد و عنوان ماده اولیه</th>
-                    <th className="py-3 px-3 text-center">گرید و ضخامت</th>
-                    <th className="py-3 px-3 text-center text-indigo-700 font-bold">
+                    <th className="py-1.5 px-2.5">کد و عنوان ماده اولیه</th>
+                    <th className="py-1.5 px-2.5 text-center">گرید و ضخامت</th>
+                    <th className="py-1.5 px-2.5 text-center text-[#007cc0]">
                       <span className="inline-flex items-center">
                         <span>نیاز کل (kg)</span>
                         <FormulaTooltip
@@ -917,11 +1005,11 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                         />
                       </span>
                     </th>
-                    <th className="py-3 px-3 text-center text-slate-800">موجودی ملکی</th>
-                    <th className="py-3 px-3 text-center text-emerald-700">امانی ساپکو</th>
-                    <th className="py-3 px-3 text-center text-rose-600">قرنطینه (QC Hold)</th>
-                    <th className="py-3 px-3 text-center text-amber-700">رزرو فعال</th>
-                    <th className="py-3 px-3 text-center text-emerald-800 font-bold">
+                    <th className="py-1.5 px-2.5 text-center">موجودی ملکی</th>
+                    <th className="py-1.5 px-2.5 text-center text-[#107e3e]">امانی ساپکو</th>
+                    <th className="py-1.5 px-2.5 text-center text-[#bb0000]">قرنطینه (QC Hold)</th>
+                    <th className="py-1.5 px-2.5 text-center text-[#e9730c]">رزرو فعال</th>
+                    <th className="py-1.5 px-2.5 text-center text-[#107e3e]">
                       <span className="inline-flex items-center">
                         <span>موجودی آزاد (ATP)</span>
                         <FormulaTooltip
@@ -932,8 +1020,8 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                         />
                       </span>
                     </th>
-                    <th className="py-3 px-3 text-center text-indigo-700">قرارداد باز</th>
-                    <th className="py-3 px-3 text-center text-rose-700 font-black">
+                    <th className="py-1.5 px-2.5 text-center text-[#007cc0]">قرارداد باز</th>
+                    <th className="py-1.5 px-2.5 text-center text-[#bb0000]">
                       <span className="inline-flex items-center">
                         <span>کسری قطعی</span>
                         <FormulaTooltip
@@ -944,12 +1032,12 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                         />
                       </span>
                     </th>
-                    <th className="py-3 px-3 text-center">وضعیت تأمین</th>
-                    <th className="py-3 px-3 text-center no-print">اکشن سریع تدارکات (PR)</th>
-                    <th className="py-3 px-3 text-center no-print">قطعات متقاضی</th>
+                    <th className="py-1.5 px-2.5 text-center">وضعیت تأمین</th>
+                    <th className="py-1.5 px-2.5 text-center no-print">اکشن سریع تدارکات (PR)</th>
+                    <th className="py-1.5 px-2.5 text-center no-print">قطعات متقاضی</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-mono">
+                <tbody className="font-mono tabular-nums">
                   {filteredMaterials.map(m => {
                     const isExpanded = expandedMaterialCode === m.materialCode;
                     const hasVipDemand = m.demandedByParts.some(dp => vipMap[dp.partId] || vipMap[dp.partCode]);
@@ -959,94 +1047,100 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                       <React.Fragment key={m.materialId}>
                         <tr
                           className={`transition ${
-                            hasVipDemand ? 'bg-amber-50/45 hover:bg-amber-50/80' : 'hover:bg-slate-100'
+                            hasVipDemand ? 'bg-[#fff9f0] hover:bg-[#fff4e5]' : 'hover:bg-[#e5f3fa]'
                           }`}
                         >
-                          <td className="py-3 px-3 font-sans">
-                            <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                          <td className="py-1.5 px-2.5 font-sans">
+                            <div className="font-semibold text-[#333333] flex items-center gap-1.5 flex-wrap">
                               <span>{m.materialName}</span>
                               {hasVipDemand && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 text-[9px] font-extrabold">
-                                  <Pin className="w-2.5 h-2.5 fill-slate-950" />
-                                  مورد نیاز قطعه VIP
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7] text-[9px] font-semibold">
+                                  <Pin className="w-2.5 h-2.5 fill-[#e9730c]" />
+                                  VIP
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono">{m.materialCode}</div>
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(m.materialCode, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link text-[11px] font-mono cursor-pointer"
+                            >
+                              {m.materialCode}
+                            </button>
                           </td>
-                          <td className="py-3 px-3 text-center">
-                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[11px]">
+                          <td className="py-1.5 px-2.5 text-center">
+                            <span className="px-1.5 py-0.5 rounded bg-[#f5f5f5] border border-[#d9d9d9] text-[#333333] font-semibold text-[11px]">
                               {m.materialGrade}
                             </span>
                             {m.thicknessMm > 0 && (
-                              <span className="block text-[10px] text-slate-400 font-mono mt-0.5">
+                              <span className="block text-[10px] text-[#666666] font-mono mt-0.5">
                                 {toPersianDigits(m.thicknessMm)} mm
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center text-indigo-400 font-bold text-sm">
+                          <td className="py-1.5 px-2.5 text-center text-[#007cc0] font-semibold">
                             {formatNumber(m.requiredWeightKg)}
                           </td>
-                          <td className="py-3 px-3 text-center text-slate-700">
+                          <td className="py-1.5 px-2.5 text-center text-[#333333]">
                             {formatNumber(m.onHandOwned)}
                           </td>
-                          <td className="py-3 px-3 text-center text-emerald-400 font-bold">
+                          <td className="py-1.5 px-2.5 text-center text-[#107e3e] font-semibold">
                             {formatNumber(m.onHandConsignment)}
                           </td>
-                          <td className="py-3 px-3 text-center text-rose-400/80">
+                          <td className="py-1.5 px-2.5 text-center text-[#bb0000]">
                             {m.onHandQuarantined > 0 ? (
-                              <span className="text-rose-400 font-bold underline" title="خارج از چرخه تخصیص">
+                              <span className="text-[#bb0000] font-semibold underline" title="خارج از چرخه تخصیص">
                                 {formatNumber(m.onHandQuarantined)}
                               </span>
                             ) : (
                               '۰'
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center text-amber-400">
+                          <td className="py-1.5 px-2.5 text-center text-[#e9730c]">
                             {formatNumber(m.reservedActive)}
                           </td>
-                          <td className="py-3 px-3 text-center text-emerald-700 font-bold text-sm bg-emerald-950/20">
+                          <td className="py-1.5 px-2.5 text-center text-[#107e3e] font-bold bg-[#ebf5ec]">
                             {formatNumber(m.netAvailable)}
                           </td>
-                          <td className="py-3 px-3 text-center text-indigo-700">
+                          <td className="py-1.5 px-2.5 text-center text-[#007cc0]">
                             {formatNumber(m.openContractQuantity)}
                           </td>
-                          <td className="py-3 px-3 text-center font-black text-sm">
+                          <td className="py-1.5 px-2.5 text-center font-bold">
                             {m.hardShortageQuantity > 0 ? (
-                              <span className="text-rose-400 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                              <span className="text-[#bb0000] px-1.5 py-0.5 rounded bg-[#ffecec] border border-[#f5b7b1]">
                                 {formatNumber(m.hardShortageQuantity)}
                               </span>
                             ) : (
-                              <span className="text-slate-500">-</span>
+                              <span className="text-[#666666]">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans">
+                          <td className="py-1.5 px-2.5 text-center font-sans">
                             {m.severity === 'OK' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] inline-flex items-center gap-1 whitespace-nowrap">
                                 <CheckCircle2 className="w-3 h-3" />
                                 پوشش کامل
                               </span>
                             )}
                             {m.severity === 'SHORTAGE_COVERED_BY_CONTRACT' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7] inline-flex items-center gap-1 whitespace-nowrap">
                                 <Info className="w-3 h-3" />
                                 پوشش قرارداد
                               </span>
                             )}
                             {m.severity === 'HARD_SHORTAGE' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1] inline-flex items-center gap-1 whitespace-nowrap">
                                 <ShieldAlert className="w-3 h-3" />
                                 کسری قطعی
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans no-print">
+                          <td className="py-1.5 px-2.5 text-center font-sans no-print">
                             {issuedPr ? (
                               <div className="inline-flex flex-col items-center gap-0.5">
-                                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono text-[10px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono text-[10px] font-semibold">
                                   ✓ {issuedPr.prNumber}
                                 </span>
-                                <span className="text-[9px] text-slate-400">
+                                <span className="text-[9px] text-[#666666]">
                                   {formatNumber(issuedPr.quantity)} {issuedPr.unit}
                                 </span>
                               </div>
@@ -1063,19 +1157,19 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                                   )
                                 }
                                 title="صدور فوری درخواست خرید (Purchase Requisition) برای جبران کسری"
-                                className="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer whitespace-nowrap"
+                                className="px-2.5 py-1 rounded bg-[#bb0000] hover:bg-[#990000] text-[#ffffff] text-[11px] font-semibold inline-flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
                               >
-                                <ShoppingCart className="w-3.5 h-3.5" />
+                                <ShoppingCart className="w-3 h-3" />
                                 <span>صدور درخواست خرید (PR)</span>
                               </button>
                             ) : (
-                              <span className="text-[10px] text-slate-400">نیاز ندارد</span>
+                              <span className="text-[10px] text-[#888888]">نیاز ندارد</span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center">
+                          <td className="py-1.5 px-2.5 text-center">
                             <button
                               onClick={() => setExpandedMaterialCode(isExpanded ? null : m.materialCode)}
-                              className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-100 text-slate-700 text-[11px] font-sans inline-flex items-center gap-1 cursor-pointer transition"
+                              className="sap-btn-standard px-2 py-0.5 text-[11px] font-sans inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
                             >
                               <span>{toPersianDigits(m.demandedByParts.length)} قطعه</span>
                               {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -1085,30 +1179,36 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
                         {/* Expanded Drawer for Demanded Parts & Matching Coils */}
                         {isExpanded && (
-                          <tr className="bg-slate-50 border-b border-slate-200 font-sans">
-                            <td colSpan={13} className="p-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                          <tr className="bg-[#f5f5f5] border-b border-[#d9d9d9] font-sans">
+                            <td colSpan={13} className="p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                                 {/* Demanded by Parts */}
-                                <div className="bg-white border border-slate-200 rounded-xl p-3">
-                                  <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                                    <Boxes className="w-4 h-4 text-indigo-400" />
+                                <div className="bg-[#ffffff] border border-[#d9d9d9] rounded p-3">
+                                  <h4 className="font-semibold text-[#333333] mb-2 flex items-center gap-2">
+                                    <Boxes className="w-4 h-4 text-[#007cc0]" />
                                     قطعات متقاضی این متریال در برنامه:
                                   </h4>
-                                  <div className="space-y-2">
+                                  <div className="space-y-1.5">
                                     {m.demandedByParts.map((dp, idx) => (
                                       <div
                                         key={idx}
-                                        className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200"
+                                        className="flex items-center justify-between p-2 rounded bg-[#f7f7f7] border border-[#e8e8e8]"
                                       >
                                         <div>
-                                          <div className="font-bold text-slate-700">{dp.partName}</div>
-                                          <div className="text-[10px] text-slate-500 font-mono">{dp.partCode}</div>
+                                          <div className="font-semibold text-[#333333]">{dp.partName}</div>
+                                          <button
+                                            type="button"
+                                            onClick={() => traceDocument(dp.partCode, 'INVENTORY_LEDGER')}
+                                            className="sap-doc-link text-[10px] font-mono cursor-pointer"
+                                          >
+                                            {dp.partCode}
+                                          </button>
                                         </div>
                                         <div className="text-left font-mono">
-                                          <div className="text-indigo-400 font-bold">
-                                            {formatNumber(dp.weightKg)} <span className="text-[10px] font-sans text-slate-400">kg</span>
+                                          <div className="text-[#007cc0] font-semibold">
+                                            {formatNumber(dp.weightKg)} <span className="text-[10px] font-sans text-[#666666]">kg</span>
                                           </div>
-                                          <div className="text-[10px] text-slate-500">
+                                          <div className="text-[10px] text-[#666666]">
                                             ({formatNumber(dp.requiredQuantity)} عدد)
                                           </div>
                                         </div>
@@ -1118,29 +1218,35 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                                 </div>
 
                                 {/* Physical Matching Coils in Plant */}
-                                <div className="bg-white border border-slate-200 rounded-xl p-3">
-                                  <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                                    <Layers className="w-4 h-4 text-emerald-400" />
+                                <div className="bg-[#ffffff] border border-[#d9d9d9] rounded p-3">
+                                  <h4 className="font-semibold text-[#333333] mb-2 flex items-center gap-2">
+                                    <Layers className="w-4 h-4 text-[#107e3e]" />
                                     کلاف‌ها و رول‌های فیزیکی منطبق پای پرس:
                                   </h4>
                                   {m.matchingCoils.length > 0 ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5">
                                       {m.matchingCoils.map((c, idx) => (
                                         <div
                                           key={idx}
-                                          className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200"
+                                          className="flex items-center justify-between p-2 rounded bg-[#f7f7f7] border border-[#e8e8e8]"
                                         >
                                           <div>
-                                            <div className="font-bold text-slate-700 font-mono">{c.coilNumber}</div>
-                                            <div className="text-[10px] text-slate-500">
+                                            <button
+                                              type="button"
+                                              onClick={() => traceDocument(c.coilNumber, 'COILS')}
+                                              className="sap-doc-link font-semibold font-mono cursor-pointer"
+                                            >
+                                              {c.coilNumber}
+                                            </button>
+                                            <div className="text-[10px] text-[#666666]">
                                               {c.ownership === 'SAPCO_CONSIGNMENT' ? 'امانی ساپکو' : 'ملکی کارخانه'} • {c.warehouseLocation}
                                             </div>
                                           </div>
                                           <div className="text-left font-mono">
-                                            <span className="text-emerald-400 font-bold text-sm">
+                                            <span className="text-[#107e3e] font-semibold text-xs">
                                               {formatNumber(c.remainingWeightKg)} kg
                                             </span>
-                                            <span className="block text-[10px] text-slate-400">
+                                            <span className="block text-[10px] text-[#666666]">
                                               ضخامت {toPersianDigits(c.thicknessMm)}mm
                                             </span>
                                           </div>
@@ -1148,7 +1254,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                                       ))}
                                     </div>
                                   ) : (
-                                    <div className="text-slate-500 text-[11px] p-3 text-center bg-slate-50 rounded-lg">
+                                    <div className="text-[#666666] text-[11px] p-3 text-center bg-[#f7f7f7] rounded">
                                       هیچ رول فیزیکی با این مشخصات در انبار ثبت نشده است.
                                     </div>
                                   )}
@@ -1171,19 +1277,19 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           TAB 2: PRE-ISSUE CHECK & AUTO-RESERVE (بررسی پیش از حواله)
           ========================================================================= */}
       {activeTab === 'pre_issue' && (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* MO Selector & ATP Status Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xl">
+          <div className="sap-card p-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex-1">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-[#333333] mb-1.5">
                   انتخاب دستور کار ساخت (MO) جهت بررسی موجودی مواد پیش از صدور حواله:
                 </label>
                 <div className="flex items-center gap-2">
                   <select
                     value={selectedMoId}
                     onChange={e => setSelectedMoId(e.target.value)}
-                    className="flex-1 max-w-xl bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
+                    className="flex-1 max-w-xl bg-[#ffffff] border border-[#bfbfbf] rounded px-3 py-1.5 text-xs text-[#333333] font-medium focus:outline-none focus:border-[#007cc0]"
                   >
                     {moList.map(mo => (
                       <option key={mo.id} value={mo.id}>
@@ -1195,9 +1301,9 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                   <button
                     onClick={() => runMoCheck(selectedMoId)}
                     disabled={checkingMo}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-100 text-xs font-bold text-slate-900 border border-slate-200 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                    className="sap-btn-standard px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${checkingMo ? 'animate-spin text-emerald-400' : ''}`} />
+                    <RefreshCw className={`w-3.5 h-3.5 ${checkingMo ? 'animate-spin text-[#007cc0]' : ''}`} />
                     <span>بررسی در لحظه</span>
                   </button>
                 </div>
@@ -1205,25 +1311,25 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
               {moCheckResult && (
                 <div className="flex items-center gap-3">
-                  <div className={`p-4 rounded-xl border ${
+                  <div className={`p-3 rounded border ${
                     moCheckResult.readyToIssue
-                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-700'
-                      : 'bg-rose-950/40 border-rose-500/40 text-rose-700'
+                      ? 'bg-[#ebf5ec] border-[#b7dfbf] text-[#107e3e]'
+                      : 'bg-[#ffecec] border-[#f5b7b1] text-[#bb0000]'
                   }`}>
-                    <div className="flex items-center gap-2 font-bold text-sm">
+                    <div className="flex items-center gap-2 font-semibold text-xs">
                       {moCheckResult.readyToIssue ? (
                         <>
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                          <CheckCircle2 className="w-4 h-4 text-[#107e3e]" />
                           <span>آماده صدور حواله خروج پای پرس</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="w-5 h-5 text-rose-400" />
+                          <XCircle className="w-4 h-4 text-[#bb0000]" />
                           <span>دارای کسری مواد / عدم امکان حواله</span>
                         </>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1">
+                    <p className="text-[11px] text-[#666666] mt-0.5">
                       {moCheckResult.readyToIssue
                         ? 'کلیه ورق‌ها و قطعات این دستور کار در انبار آزاد و موجود است.'
                         : 'یک یا چند قلم متریال در انبار آزاد نبوده و نیازمند حواله یا تأمین است.'}
@@ -1233,13 +1339,13 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                   <button
                     onClick={handleAutoReserve}
                     disabled={reservingMo}
-                    className="px-5 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-black text-white shadow-lg shadow-emerald-600/30 transition cursor-pointer disabled:opacity-50 flex flex-col items-center justify-center gap-1 text-center"
+                    className="sap-btn-emphasized px-4 py-2 text-xs font-semibold transition cursor-pointer disabled:opacity-50 flex flex-col items-center justify-center gap-0.5 text-center whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
-                      <Lock className="w-4 h-4" />
+                      <Lock className="w-3.5 h-3.5" />
                       <span>رزرو خودکار موجودی آزاد (ATP)</span>
                     </div>
-                    <span className="text-[10px] text-emerald-100 font-normal">
+                    <span className="text-[10px] opacity-90 font-normal">
                       قفل کردن مواد در انبار برای این دستور کار
                     </span>
                   </button>
@@ -1250,90 +1356,104 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
           {/* BOM Materials Availability Table */}
           {moCheckResult && (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="sap-card overflow-hidden">
+              <div className="px-4 py-2.5 bg-[#ffffff] border-b border-[#d9d9d9] flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-xs font-bold text-slate-900">
-                    جدول موازنه اقلام BOM دستور کار {moCheckResult.moNumber} ({moCheckResult.partName})
+                  <FileCheck className="w-4 h-4 text-[#107e3e]" />
+                  <h3 className="text-xs font-semibold text-[#333333]">
+                    جدول موازنه اقلام BOM دستور کار{' '}
+                    <button
+                      type="button"
+                      onClick={() => traceDocument(moCheckResult.moNumber, 'WIP_TRACEABILITY')}
+                      className="sap-doc-link font-mono cursor-pointer"
+                    >
+                      {moCheckResult.moNumber}
+                    </button>{' '}
+                    ({moCheckResult.partName})
                   </h3>
                 </div>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className="text-xs text-[#666666] font-mono tabular-nums">
                   تیراژ مصوب: {formatNumber(moCheckResult.targetQuantity)} عدد
                 </span>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-400 border-b border-slate-200 font-mono text-[11px]">
+                <table className="sap-table-compact w-full text-right">
+                  <thead>
                     <tr>
-                      <th className="py-3 px-3">کد و عنوان قطعه / ماده در BOM</th>
-                      <th className="py-3 px-3 text-center">واحد</th>
-                      <th className="py-3 px-3 text-center text-indigo-400">کل نیاز سفارش</th>
-                      <th className="py-3 px-3 text-center text-slate-400">حواله شده قبلی</th>
-                      <th className="py-3 px-3 text-center text-slate-900 font-bold">باقیمانده نیاز</th>
-                      <th className="py-3 px-3 text-center text-slate-700">موجودی انبار</th>
-                      <th className="py-3 px-3 text-center text-amber-400">رزرو همین MO</th>
-                      <th className="py-3 px-3 text-center text-rose-400/80">رزرو سایر MOها</th>
-                      <th className="py-3 px-3 text-center text-emerald-700 font-bold">آزاد برای این MO</th>
-                      <th className="py-3 px-3 text-center text-rose-400 font-black">کسری</th>
-                      <th className="py-3 px-3 text-center">وضعیت ردیف</th>
-                      <th className="py-3 px-3 text-center">اکشن سریع خرید (PR)</th>
+                      <th className="py-1.5 px-2.5">کد و عنوان قطعه / ماده در BOM</th>
+                      <th className="py-1.5 px-2.5 text-center">واحد</th>
+                      <th className="py-1.5 px-2.5 text-center text-[#007cc0]">کل نیاز سفارش</th>
+                      <th className="py-1.5 px-2.5 text-center">حواله شده قبلی</th>
+                      <th className="py-1.5 px-2.5 text-center">باقیمانده نیاز</th>
+                      <th className="py-1.5 px-2.5 text-center">موجودی انبار</th>
+                      <th className="py-1.5 px-2.5 text-center text-[#e9730c]">رزرو همین MO</th>
+                      <th className="py-1.5 px-2.5 text-center text-[#bb0000]">رزرو سایر MOها</th>
+                      <th className="py-1.5 px-2.5 text-center text-[#107e3e]">آزاد برای این MO</th>
+                      <th className="py-1.5 px-2.5 text-center text-[#bb0000]">کسری</th>
+                      <th className="py-1.5 px-2.5 text-center">وضعیت ردیف</th>
+                      <th className="py-1.5 px-2.5 text-center">اکشن سریع خرید (PR)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono">
+                  <tbody className="font-mono tabular-nums">
                     {moCheckResult.lines.map((l, idx) => {
                       const linePr = issuedPrMap[l.materialCode];
                       return (
-                        <tr key={idx} className="hover:bg-slate-100 transition">
-                          <td className="py-3 px-3 font-sans">
-                            <div className="font-bold text-slate-900">{l.materialName}</div>
-                            <div className="text-[11px] text-slate-400 font-mono">{l.materialCode}</div>
+                        <tr key={idx} className="hover:bg-[#e5f3fa] transition">
+                          <td className="py-1.5 px-2.5 font-sans">
+                            <div className="font-semibold text-[#333333]">{l.materialName}</div>
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(l.materialCode, 'INVENTORY_LEDGER')}
+                              className="sap-doc-link text-[11px] font-mono cursor-pointer"
+                            >
+                              {l.materialCode}
+                            </button>
                             {l.notes.length > 0 && (
-                              <div className="text-[10px] text-slate-500 mt-0.5">{l.notes.join(' • ')}</div>
+                              <div className="text-[10px] text-[#666666] mt-0.5">{l.notes.join(' • ')}</div>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center text-slate-400">{l.unitCode}</td>
-                          <td className="py-3 px-3 text-center text-indigo-400 font-bold">{formatNumber(l.requiredQuantity)}</td>
-                          <td className="py-3 px-3 text-center text-slate-400">{formatNumber(l.alreadyIssuedQuantity)}</td>
-                          <td className="py-3 px-3 text-center text-slate-900 font-bold">{formatNumber(l.remainingRequired)}</td>
-                          <td className="py-3 px-3 text-center text-slate-700">{formatNumber(l.onHandApproved)}</td>
-                          <td className="py-3 px-3 text-center text-amber-400 font-bold">{formatNumber(l.reservedForThisMo)}</td>
-                          <td className="py-3 px-3 text-center text-rose-400/80">{formatNumber(l.reservedForOthers)}</td>
-                          <td className="py-3 px-3 text-center text-emerald-700 font-bold text-sm bg-emerald-950/20">
+                          <td className="py-1.5 px-2.5 text-center text-[#666666]">{l.unitCode}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#007cc0] font-semibold">{formatNumber(l.requiredQuantity)}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#666666]">{formatNumber(l.alreadyIssuedQuantity)}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#333333] font-semibold">{formatNumber(l.remainingRequired)}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#333333]">{formatNumber(l.onHandApproved)}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#e9730c] font-semibold">{formatNumber(l.reservedForThisMo)}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#bb0000]">{formatNumber(l.reservedForOthers)}</td>
+                          <td className="py-1.5 px-2.5 text-center text-[#107e3e] font-bold bg-[#ebf5ec]">
                             {formatNumber(l.availableForThisMo)}
                           </td>
-                          <td className="py-3 px-3 text-center font-black">
+                          <td className="py-1.5 px-2.5 text-center font-bold">
                             {l.shortageQuantity > 0 ? (
-                              <span className="text-rose-400 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                              <span className="text-[#bb0000] px-1.5 py-0.5 rounded bg-[#ffecec] border border-[#f5b7b1]">
                                 {formatNumber(l.shortageQuantity)}
                               </span>
                             ) : (
-                              <span className="text-slate-500">۰</span>
+                              <span className="text-[#666666]">۰</span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans">
+                          <td className="py-1.5 px-2.5 text-center font-sans">
                             {l.status === 'READY' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] inline-flex items-center gap-1 whitespace-nowrap">
                                 <CheckCircle2 className="w-3 h-3" />
                                 آماده حواله
                               </span>
                             )}
                             {l.status === 'SHORTAGE' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1] inline-flex items-center gap-1 whitespace-nowrap">
                                 <AlertTriangle className="w-3 h-3" />
                                 کسری موجودی
                               </span>
                             )}
                             {l.status === 'NOT_REQUIRED' && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-400 border border-slate-200">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f5f5f5] text-[#666666] border border-[#d9d9d9] whitespace-nowrap">
                                 تأمین کامل شده
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center font-sans">
+                          <td className="py-1.5 px-2.5 text-center font-sans">
                             {linePr ? (
-                              <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono text-[10px] font-bold">
+                              <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono text-[10px] font-semibold">
                                 ✓ {linePr.prNumber}
                               </span>
                             ) : l.shortageQuantity > 0 ? (
@@ -1347,13 +1467,13 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                                     l.unitCode
                                   )
                                 }
-                                className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition whitespace-nowrap"
+                                className="px-2.5 py-1 rounded bg-[#bb0000] hover:bg-[#990000] text-[#ffffff] text-[10px] font-semibold inline-flex items-center gap-1 cursor-pointer transition whitespace-nowrap"
                               >
                                 <ShoppingCart className="w-3 h-3" />
                                 <span>صدور درخواست خرید (PR)</span>
                               </button>
                             ) : (
-                              <span className="text-[10px] text-slate-400">—</span>
+                              <span className="text-[10px] text-[#888888]">—</span>
                             )}
                           </td>
                         </tr>
@@ -1371,83 +1491,89 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           TAB 3: PARTS DEMAND NETTING (موازنه تقاضای قطعات - با دکمه کشوی تعریف درجا BOM/مسیر)
           ========================================================================= */}
       {activeTab === 'parts' && mrpData && (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
-          <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div className="sap-card overflow-hidden">
+          <div className="px-4 py-3 bg-[#ffffff] border-b border-[#d9d9d9] flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                <Boxes className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-xs font-semibold text-[#333333] flex items-center gap-2">
+                <Boxes className="w-4 h-4 text-[#007cc0]" />
                 موازنه تیراژ قطعات نهایی خودرویی (تقاضای باز مشتریان نسبت به موجودی و WIP)
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                بر روی وضعیت‌های <strong className="text-rose-600">«فاقد BOM»</strong> یا <strong className="text-amber-600">«فاقد مسیر»</strong> کلیک کنید تا کشوی جانبی تعریف سریع مستندات فنی باز شود (بدون خروج از ماژول MRP).
+              <p className="text-[11px] text-[#666666] mt-0.5">
+                بر روی وضعیت‌های <strong className="text-[#bb0000]">«فاقد BOM»</strong> یا <strong className="text-[#e9730c]">«فاقد مسیر»</strong> کلیک کنید تا کشوی جانبی تعریف سریع مستندات فنی باز شود (بدون خروج از ماژول MRP).
               </p>
             </div>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-[#666666] font-mono">
               {toPersianDigits(mrpData.parts.length)} محصول
             </span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-400 border-b border-slate-200 font-mono text-[11px]">
+            <table className="sap-table-compact w-full text-right">
+              <thead>
                 <tr>
-                  <th className="py-3 px-3">کد و نام قطعه خودرویی</th>
-                  <th className="py-3 px-3">خودرو</th>
-                  <th className="py-3 px-3 text-center text-indigo-400 font-bold">تقاضای ناخالص</th>
-                  <th className="py-3 px-3 text-center text-emerald-400">موجودی محصول نهایی</th>
-                  <th className="py-3 px-3 text-center text-amber-400">رزرو محصول</th>
-                  <th className="py-3 px-3 text-center text-purple-400">کار در جریان (WIP)</th>
-                  <th className="py-3 px-3 text-center text-blue-400">دستور کار باز (MO)</th>
-                  <th className="py-3 px-3 text-center text-rose-400 font-black">نیاز خالص تولید</th>
-                  <th className="py-3 px-3 text-center">وضعیت مستندات فنی (کلیک برای تکمیل در کشو)</th>
+                  <th className="py-1.5 px-2.5">کد و نام قطعه خودرویی</th>
+                  <th className="py-1.5 px-2.5">خودرو</th>
+                  <th className="py-1.5 px-2.5 text-center text-[#007cc0]">تقاضای ناخالص</th>
+                  <th className="py-1.5 px-2.5 text-center text-[#107e3e]">موجودی محصول نهایی</th>
+                  <th className="py-1.5 px-2.5 text-center text-[#e9730c]">رزرو محصول</th>
+                  <th className="py-1.5 px-2.5 text-center text-[#007cc0]">کار در جریان (WIP)</th>
+                  <th className="py-1.5 px-2.5 text-center text-[#007cc0]">دستور کار باز (MO)</th>
+                  <th className="py-1.5 px-2.5 text-center text-[#bb0000]">نیاز خالص تولید</th>
+                  <th className="py-1.5 px-2.5 text-center">وضعیت مستندات فنی (کلیک برای تکمیل در کشو)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono">
+              <tbody className="font-mono tabular-nums">
                 {mrpData.parts.map(p => (
                   <tr
                     key={p.partId}
                     className={`transition ${
-                      p.isVIP ? 'bg-amber-50/60 hover:bg-amber-100/60' : 'hover:bg-slate-100'
+                      p.isVIP ? 'bg-[#fff9f0] hover:bg-[#fff4e5]' : 'hover:bg-[#e5f3fa]'
                     }`}
                   >
-                    <td className="py-3 px-3 font-sans">
-                      <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                    <td className="py-1.5 px-2.5 font-sans">
+                      <div className="font-semibold text-[#333333] flex items-center gap-1.5 flex-wrap">
                         <span>{p.partName}</span>
                         {p.isVIP && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold border border-amber-500">
-                            <Pin className="w-2.5 h-2.5 fill-slate-950" />
-                            قطعه کلیدی (VIP)
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-[#fff4e5] text-[#e9730c] text-[10px] font-semibold border border-[#f5cba7]">
+                            <Pin className="w-2.5 h-2.5 fill-[#e9730c]" />
+                            VIP
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono">{p.partCode}</div>
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(p.partCode, 'INVENTORY_LEDGER')}
+                        className="sap-doc-link text-[11px] font-mono cursor-pointer"
+                      >
+                        {p.partCode}
+                      </button>
                     </td>
-                    <td className="py-3 px-3 font-sans text-slate-700">{p.carModel || '-'}</td>
-                    <td className="py-3 px-3 text-center text-indigo-400 font-bold text-sm">
+                    <td className="py-1.5 px-2.5 font-sans text-[#333333]">{p.carModel || '-'}</td>
+                    <td className="py-1.5 px-2.5 text-center text-[#007cc0] font-semibold">
                       {formatNumber(p.grossDemand)}
                     </td>
-                    <td className="py-3 px-3 text-center text-emerald-400 font-bold">
+                    <td className="py-1.5 px-2.5 text-center text-[#107e3e] font-semibold">
                       {formatNumber(p.coveredByFgStock)}
                     </td>
-                    <td className="py-3 px-3 text-center text-amber-400">
+                    <td className="py-1.5 px-2.5 text-center text-[#e9730c]">
                       {formatNumber(p.coveredByFgReservations)}
                     </td>
-                    <td className="py-3 px-3 text-center text-purple-400 font-bold">
+                    <td className="py-1.5 px-2.5 text-center text-[#007cc0] font-semibold">
                       {formatNumber(p.coveredByWip)}
                     </td>
-                    <td className="py-3 px-3 text-center text-blue-400">
+                    <td className="py-1.5 px-2.5 text-center text-[#007cc0]">
                       {formatNumber(p.coveredByActiveMos)}
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-sm">
+                    <td className="py-1.5 px-2.5 text-center font-bold">
                       {p.netRequirement > 0 ? (
-                        <span className="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <span className="px-2 py-0.5 rounded bg-[#ffecec] text-[#bb0000] border border-[#f5b7b1]">
                           {formatNumber(p.netRequirement)}
                         </span>
                       ) : (
-                        <span className="text-emerald-400 font-bold">پوشش کامل (۰)</span>
+                        <span className="text-[#107e3e] font-semibold">پوشش کامل (۰)</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-center font-sans">
+                    <td className="py-1.5 px-2.5 text-center font-sans">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
@@ -1457,10 +1583,10 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                               ? 'مشاهده یا ویرایش درخت محصول (BOM) در کشوی جانبی'
                               : 'کلیک جهت تعریف سریع BOM در کشوی جانبی بدون خروج از MRP'
                           }
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 transition cursor-pointer ${
+                          className={`px-2 py-1 rounded text-[10px] font-semibold inline-flex items-center gap-1 transition cursor-pointer whitespace-nowrap ${
                             p.hasBom
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-rose-600 hover:bg-rose-500 text-white border border-rose-700 shadow-2xs animate-pulse'
+                              ? 'bg-[#ebf5ec] text-[#107e3e] border border-[#b7dfbf] hover:bg-[#d8eedb]'
+                              : 'bg-[#bb0000] hover:bg-[#990000] text-[#ffffff] border border-[#bb0000]'
                           }`}
                         >
                           <Edit3 className="w-2.5 h-2.5" />
@@ -1475,10 +1601,10 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                               ? 'مشاهده یا ویرایش مسیر تولید (Routing) در کشوی جانبی'
                               : 'کلیک جهت تعریف سریع مسیر تولید در کشوی جانبی بدون خروج از MRP'
                           }
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 transition cursor-pointer ${
+                          className={`px-2 py-1 rounded text-[10px] font-semibold inline-flex items-center gap-1 transition cursor-pointer whitespace-nowrap ${
                             p.hasRouting
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
-                              : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-600 shadow-2xs'
+                              ? 'bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] hover:bg-[#d1eafa]'
+                              : 'bg-[#e9730c] hover:bg-[#c85f05] text-[#ffffff] border border-[#e9730c]'
                           }`}
                         >
                           <GitBranch className="w-2.5 h-2.5" />
@@ -1498,31 +1624,31 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           TAB 4: DEMAND SIMULATION (شبیه‌ساز سناریوی تقاضا)
           ========================================================================= */}
       {activeTab === 'simulation' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="sap-card p-5 space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-400" />
+            <h3 className="text-sm font-semibold text-[#333333] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#007cc0]" />
               شبیه‌ساز پیش‌بینی نیازمندی مواد و سناریوی رشد تقاضا (What-If Simulation)
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#666666] mt-0.5">
               تنظیم سناریوهای رشد تقاضای ساپکو، افق زمانی برنامه‌ریزی، و سنجش میزان کسری کلاف قبل از تعهد تجاری
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="bg-[#f5f5f5] border border-[#d9d9d9] rounded p-3.5">
+              <label className="block text-xs font-semibold text-[#333333] mb-2">
                 درصد رشد تقاضای سفارشات:
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {[0, 15, 25, 50].map(pct => (
                   <button
                     key={pct}
                     onClick={() => setSimGrowth(pct)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    className={`flex-1 py-1.5 rounded text-xs font-semibold transition cursor-pointer ${
                       simGrowth === pct
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                        : 'bg-white text-slate-400 hover:text-slate-900 border border-slate-200'
+                        ? 'bg-[#007cc0] text-[#ffffff]'
+                        : 'bg-[#ffffff] text-[#666666] hover:text-[#333333] border border-[#d9d9d9]'
                     }`}
                   >
                     {pct === 0 ? 'مبنا (۰٪)' : `+${toPersianDigits(pct)}٪`}
@@ -1531,19 +1657,19 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+            <div className="bg-[#f5f5f5] border border-[#d9d9d9] rounded p-3.5">
+              <label className="block text-xs font-semibold text-[#333333] mb-2">
                 افق زمانی برنامه‌ریزی:
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {[7, 14, 30, 90].map(days => (
                   <button
                     key={days}
                     onClick={() => setSimHorizon(days)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    className={`flex-1 py-1.5 rounded text-xs font-semibold transition cursor-pointer ${
                       simHorizon === days
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'bg-white text-slate-400 hover:text-slate-900 border border-slate-200'
+                        ? 'bg-[#007cc0] text-[#ffffff]'
+                        : 'bg-[#ffffff] text-[#666666] hover:text-[#333333] border border-[#d9d9d9]'
                     }`}
                   >
                     {toPersianDigits(days)} روزه
@@ -1552,26 +1678,26 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+            <div className="bg-[#f5f5f5] border border-[#d9d9d9] rounded p-3.5 flex flex-col justify-between">
+              <label className="block text-xs font-semibold text-[#333333] mb-2">
                 ملاحظات چرخه ساخت و موجودی:
               </label>
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-[#333333] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={simIncludeWip}
                     onChange={e => setSimIncludeWip(e.target.checked)}
-                    className="accent-purple-600 rounded"
+                    className="accent-[#007cc0] rounded"
                   />
                   <span>لحاظ کردن موجودی کار در جریان (WIP)</span>
                 </label>
-                <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-[#333333] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={simIncludeConsignment}
                     onChange={e => setSimIncludeConsignment(e.target.checked)}
-                    className="accent-purple-600 rounded"
+                    className="accent-[#007cc0] rounded"
                   />
                   <span>شمارش موجودی امانی ساپکو</span>
                 </label>
@@ -1582,7 +1708,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
               <button
                 onClick={handleRunSimulation}
                 disabled={simulating}
-                className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-black text-white shadow-lg shadow-purple-600/30 transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="sap-btn-emphasized w-full py-3 text-xs font-semibold transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>اجرای شبیه‌سازی سناریو</span>
@@ -1597,46 +1723,42 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
           ========================================================================= */}
       {bomRoutingDrawerPart && (
         <div
-          className="fixed inset-0 z-[85] flex justify-end bg-slate-900/45 backdrop-blur-[2px] animate-in fade-in"
+          className="fixed inset-0 z-[85] flex justify-end bg-[#333333]/40"
           dir="rtl"
           onClick={() => setBomRoutingDrawerPart(null)}
         >
           <div
-            className="relative w-full max-w-xl bg-white h-full shadow-2xl border-r border-slate-200 flex flex-col justify-between overflow-y-auto"
+            className="relative w-full max-w-xl bg-[#ffffff] h-full shadow-xl border-r border-[#d9d9d9] flex flex-col justify-between overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Sticky Header */}
-            <div className="sticky top-0 z-20 p-5 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+            <div className="sticky top-0 z-20 p-4 border-b border-[#d9d9d9] bg-[#ffffff] flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-block mb-1">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] inline-block mb-1">
                   حل بن‌بست فنی درجا (Inline MRP Technical Resolution)
                 </span>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-semibold text-[#333333]">
                   تعریف BOM و مسیر تولید: {bomRoutingDrawerPart.partName}
                 </h3>
-                <p className="text-[11px] text-slate-300 font-mono mt-0.5">
+                <p className="text-[11px] text-[#666666] font-mono mt-0.5">
                   {bomRoutingDrawerPart.partCode} | تقاضای خالص: {formatNumber(bomRoutingDrawerPart.netRequirement)} عدد
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setBomRoutingDrawerPart(null)}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white cursor-pointer"
+                className="p-1.5 rounded border border-[#d9d9d9] bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Section Switcher Tabs */}
-            <div className="px-5 pt-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2 text-xs">
+            <div className="sap-icon-tab-bar px-4 bg-[#f7f7f7]">
               <button
                 type="button"
                 onClick={() => setDrawerFocusSection('BOM')}
-                className={`px-3.5 py-2 rounded-t-xl font-bold border-b-2 transition cursor-pointer flex items-center gap-1.5 ${
-                  drawerFocusSection === 'BOM'
-                    ? 'border-indigo-600 text-indigo-700 bg-white'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
+                className={`sap-icon-tab ${drawerFocusSection === 'BOM' ? 'sap-icon-tab-active' : ''}`}
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>۱. ساختار درخت محصول (BOM ورق و اقلام)</span>
@@ -1644,11 +1766,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
               <button
                 type="button"
                 onClick={() => setDrawerFocusSection('ROUTING')}
-                className={`px-3.5 py-2 rounded-t-xl font-bold border-b-2 transition cursor-pointer flex items-center gap-1.5 ${
-                  drawerFocusSection === 'ROUTING'
-                    ? 'border-indigo-600 text-indigo-700 bg-white'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
+                className={`sap-icon-tab ${drawerFocusSection === 'ROUTING' ? 'sap-icon-tab-active' : ''}`}
               >
                 <GitBranch className="w-3.5 h-3.5" />
                 <span>۲. مسیر تولید و ایستگاه‌ها (Routing / OP)</span>
@@ -1656,32 +1774,32 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
             </div>
 
             {/* Form Body */}
-            <form onSubmit={handleSaveBomRoutingFromDrawer} className="flex-1 p-5 space-y-5 text-xs">
+            <form onSubmit={handleSaveBomRoutingFromDrawer} className="flex-1 p-4 space-y-4 text-xs">
               {/* BOM Section */}
               <div
-                className={`p-4 rounded-2xl border space-y-3.5 ${
+                className={`p-3.5 rounded border space-y-3 ${
                   drawerFocusSection === 'BOM'
-                    ? 'bg-indigo-50/40 border-indigo-200 ring-1 ring-indigo-200'
-                    : 'bg-slate-50 border-slate-200'
+                    ? 'bg-[#e5f3fa]/50 border-[#007cc0]'
+                    : 'bg-[#f7f7f7] border-[#d9d9d9]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-indigo-600" />
+                  <span className="font-semibold text-[#333333] flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-[#007cc0]" />
                     <span>مشخصات ماده اولیه و درخت محصول (BOM)</span>
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-indigo-700 border border-indigo-200">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#ffffff] text-[#007cc0] border border-[#b3ddf2]">
                     انفجار خودکار در MRP
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">گرید ورق فولادی (Grade):</label>
+                    <label className="block font-semibold text-[#333333] mb-1">گرید ورق فولادی (Grade):</label>
                     <select
                       value={drawerBomGrade}
                       onChange={e => setDrawerBomGrade(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 font-bold"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-semibold focus:border-[#007cc0] focus:outline-none"
                     >
                       <option value="DC04">DC04 (ورق روغنی کشش عمیق ساپکو)</option>
                       <option value="ST14">ST14 (ورق روغنی فوق کشش)</option>
@@ -1692,7 +1810,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">ضخامت ورق (mm):</label>
+                    <label className="block font-semibold text-[#333333] mb-1">ضخامت ورق (mm):</label>
                     <input
                       type="number"
                       step="0.1"
@@ -1700,26 +1818,26 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                       max="6.0"
                       value={drawerBomThickness}
                       onChange={e => setDrawerBomThickness(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 font-mono"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-mono tabular-nums focus:border-[#007cc0] focus:outline-none"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">وزن خالص قطعه (kg):</label>
+                    <label className="block font-semibold text-[#333333] mb-1">وزن خالص قطعه (kg):</label>
                     <input
                       type="number"
                       step="0.01"
                       min="0.05"
                       value={drawerBomUnitWeight}
                       onChange={e => setDrawerBomUnitWeight(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 font-mono"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-mono tabular-nums focus:border-[#007cc0] focus:outline-none"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">ضریب پرت و ضایعات برش (%):</label>
+                    <label className="block font-semibold text-[#333333] mb-1">ضریب پرت و ضایعات برش (%):</label>
                     <input
                       type="number"
                       step="0.5"
@@ -1727,30 +1845,30 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                       max="40"
                       value={drawerBomScrapPct}
                       onChange={e => setDrawerBomScrapPct(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 font-mono"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-mono tabular-nums focus:border-[#007cc0] focus:outline-none"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200/80">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[#e8e8e8]">
                   <div className="sm:col-span-2">
-                    <label className="block font-bold text-slate-700 mb-1">قطعه/یراق مونتاژی فرعی (Sub-Component):</label>
+                    <label className="block font-semibold text-[#333333] mb-1">قطعه/یراق مونتاژی فرعی (Sub-Component):</label>
                     <input
                       type="text"
                       value={drawerBomHardware}
                       onChange={e => setDrawerBomHardware(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] text-[#333333] focus:border-[#007cc0] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">ضریب مصرف در واحد:</label>
+                    <label className="block font-semibold text-[#333333] mb-1">ضریب مصرف در واحد:</label>
                     <input
                       type="number"
                       min="0"
                       value={drawerBomHardwareQty}
                       onChange={e => setDrawerBomHardwareQty(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 font-mono"
+                      className="w-full px-2.5 py-1.5 rounded bg-[#ffffff] border border-[#bfbfbf] text-[#333333] font-mono tabular-nums focus:border-[#007cc0] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1758,15 +1876,15 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
 
               {/* Routing Section */}
               <div
-                className={`p-4 rounded-2xl border space-y-3.5 ${
+                className={`p-3.5 rounded border space-y-3 ${
                   drawerFocusSection === 'ROUTING'
-                    ? 'bg-blue-50/40 border-blue-200 ring-1 ring-blue-200'
-                    : 'bg-slate-50 border-slate-200'
+                    ? 'bg-[#e5f3fa]/50 border-[#007cc0]'
+                    : 'bg-[#f7f7f7] border-[#d9d9d9]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <GitBranch className="w-4 h-4 text-blue-600" />
+                  <span className="font-semibold text-[#333333] flex items-center gap-1.5">
+                    <GitBranch className="w-4 h-4 text-[#007cc0]" />
                     <span>ایستگاه‌های مسیر تولید (Routing Operations)</span>
                   </span>
                   <button
@@ -1782,9 +1900,9 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                         },
                       ])
                     }
-                    className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                    className="sap-btn-emphasized px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer"
                   >
-                    <Plus className="w-3 h-3 text-emerald-400" />
+                    <Plus className="w-3 h-3" />
                     <span>افزودن ایستگاه OP</span>
                   </button>
                 </div>
@@ -1793,7 +1911,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                   {drawerOps.map((op, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-white border border-slate-200 grid grid-cols-12 gap-2 items-center"
+                      className="p-2 rounded bg-[#ffffff] border border-[#d9d9d9] grid grid-cols-12 gap-2 items-center"
                     >
                       <div className="col-span-2">
                         <input
@@ -1804,7 +1922,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                               prev.map((item, i) => (i === idx ? { ...item, stepCode: e.target.value } : item))
                             )
                           }
-                          className="w-full px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] font-bold text-indigo-700"
+                          className="w-full px-2 py-1 rounded bg-[#f5f5f5] border border-[#d9d9d9] font-mono text-[11px] font-semibold text-[#007cc0]"
                         />
                       </div>
                       <div className="col-span-4">
@@ -1817,7 +1935,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                             )
                           }
                           placeholder="شرح عملیات"
-                          className="w-full px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px]"
+                          className="w-full px-2 py-1 rounded bg-[#f5f5f5] border border-[#d9d9d9] text-[11px]"
                         />
                       </div>
                       <div className="col-span-4">
@@ -1830,7 +1948,7 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                             )
                           }
                           placeholder="ماشین / پرس"
-                          className="w-full px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px]"
+                          className="w-full px-2 py-1 rounded bg-[#f5f5f5] border border-[#d9d9d9] text-[11px]"
                         />
                       </div>
                       <div className="col-span-2 flex items-center justify-end gap-1">
@@ -1846,13 +1964,13 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
                             )
                           }
                           title="زمان سیکل (ثانیه)"
-                          className="w-12 px-1.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-center"
+                          className="w-12 px-1.5 py-1 rounded bg-[#f5f5f5] border border-[#d9d9d9] font-mono text-[11px] text-center"
                         />
                         {drawerOps.length > 1 && (
                           <button
                             type="button"
                             onClick={() => setDrawerOps(prev => prev.filter((_, i) => i !== idx))}
-                            className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
+                            className="p-1 text-[#666666] hover:text-[#bb0000] cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1864,17 +1982,17 @@ export const MrpModuleView: React.FC<MrpModuleViewProps> = ({ onRefreshGlobal })
               </div>
 
               {/* Sticky Footer */}
-              <div className="sticky bottom-0 pt-4 pb-2 bg-white border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="sticky bottom-0 pt-3 pb-2 bg-[#ffffff] border-t border-[#d9d9d9] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setBomRoutingDrawerPart(null)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer shadow-sm"
+                  className="sap-btn-emphasized px-4 py-1.5 text-xs cursor-pointer"
                 >
                   ذخیره مستندات فنی و بروزرسانی درجا در MRP
                 </button>

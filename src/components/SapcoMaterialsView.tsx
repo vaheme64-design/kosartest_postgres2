@@ -30,6 +30,7 @@ import {
 import { InventoryModuleSkeleton } from './ui/Skeleton';
 import { SearchableSelect } from './common/SearchableSelect';
 import { formatToJalali } from '../utils/jalali';
+import { useErpRouter } from '../context/RouterContext';
 
 interface SapcoMaterialsViewProps {
   coils: SapcoCoilReceipt[];
@@ -94,6 +95,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
   onRefresh,
   loading,
 }) => {
+  const { traceDocument } = useErpRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [gradeFilter, setGradeFilter] = useState('ALL');
   const [showModal, setShowModal] = useState(false);
@@ -613,15 +615,15 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
   return (
     <div className="space-y-5 font-sans text-right" dir="rtl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200">
+      <div className="sap-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
         <div>
           <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-slate-900" />
-            <h2 className="text-base font-bold text-slate-900">
+            <Layers className="w-5 h-5 text-[#007cc0]" />
+            <h2 className="text-base font-bold text-[#333333]">
               رهگیری کلاف‌های ساپکو، شماره ذوب (Heat No) و اتصال به بچ‌های تولید
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#666666] mt-0.5">
             ثبت شماره ذوب فولاد مبارکه، شماره بچ ورود کلاف و پیوند مستقیم ماده اولیه با بچ‌های ساخت (MO) در خط تولید
           </p>
         </div>
@@ -629,9 +631,9 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
           <button
             type="button"
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-[#007cc0]" />
             <span>خروجی اکسل ردیابی ذوب</span>
           </button>
           <button
@@ -644,9 +646,9 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               if (rawParts[0] && !selectedPartId) setSelectedPartId(rawParts[0].id);
               setShowModal(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs cursor-pointer"
+            className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-emerald-400" />
+            <Plus className="w-3.5 h-3.5" />
             <span>ثبت رسید کلاف و شماره ذوب</span>
           </button>
         </div>
@@ -654,9 +656,9 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
 
       {/* Toast Feedback */}
       {toastNotice && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs flex items-center justify-between gap-3">
+        <div className="p-3 rounded-sm bg-[#eefaf2] border border-[#b6e4c8] text-[#107e3e] text-xs flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
             <div>
               <span className="font-bold">{toastNotice.title}: </span>
               <span>{toastNotice.detail}</span>
@@ -665,7 +667,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
           <button
             type="button"
             onClick={() => setToastNotice(null)}
-            className="px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-600 font-semibold cursor-pointer"
+            className="sap-btn-standard px-2.5 py-1 text-xs cursor-pointer"
           >
             بستن
           </button>
@@ -674,57 +676,57 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
 
       {/* Minimal Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-[#666666]">
             <span>کلاف‌های دارای شناسنامه ذوب</span>
-            <Tag className="w-3.5 h-3.5 text-slate-400" />
+            <Tag className="w-3.5 h-3.5 text-[#007cc0]" />
           </div>
-          <div className="text-lg font-bold text-slate-900 font-mono mt-1 tabular-nums">
+          <div className="text-lg font-bold text-[#333333] font-mono mt-1 tabular-nums">
             {toPersianDigits(enrichedCoils.length)} رول ورق
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-[#666666]">
             <span>مجموع وزن ورودی ساپکو</span>
-            <Scale className="w-3.5 h-3.5 text-slate-400" />
+            <Scale className="w-3.5 h-3.5 text-[#007cc0]" />
           </div>
-          <div className="text-lg font-bold text-slate-900 font-mono mt-1 tabular-nums">
+          <div className="text-lg font-bold text-[#333333] font-mono mt-1 tabular-nums">
             {formatWeightKg(totalReceivedKg)}
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-[#666666]">
             <span>مانده خالص در انبار ورق</span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#107e3e]" />
           </div>
-          <div className="text-lg font-bold text-emerald-700 font-mono mt-1 tabular-nums">
+          <div className="text-lg font-bold text-[#107e3e] font-mono mt-1 tabular-nums">
             {formatWeightKg(remainingKg)}
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200">
-          <div className="flex items-center justify-between text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-[#666666]">
             <span>بچ‌های تولید متصل به شماره ذوب</span>
-            <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
+            <GitBranch className="w-3.5 h-3.5 text-[#007cc0]" />
           </div>
-          <div className="text-lg font-bold text-indigo-700 font-mono mt-1 tabular-nums">
+          <div className="text-lg font-bold text-[#007cc0] font-mono mt-1 tabular-nums">
             {toPersianDigits(totalLinkedBatchesCount)} بچ ساخت (MO)
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200">
+      <div className="sap-card flex flex-col sm:flex-row gap-3 items-center justify-between p-3">
         <div className="relative w-full sm:w-96">
-          <Search className="w-4 h-4 absolute right-3 top-2.5 text-slate-400" />
+          <Search className="w-4 h-4 absolute right-3 top-2 text-[#666666]" />
           <input
             type="text"
             placeholder="جستجوی شماره ذوب (HT-...)، بچ کلاف، سریال کویل یا دستور تولید (MO)..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pr-9 pl-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors"
+            className="w-full bg-[#ffffff] border border-[#d9d9d9] rounded-sm pr-9 pl-3 py-1.5 text-xs text-[#333333] placeholder-[#666666] focus:outline-none focus:border-[#007cc0] transition-colors"
           />
         </div>
 
@@ -734,10 +736,10 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               key={grade}
               type="button"
               onClick={() => setGradeFilter(grade)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+              className={`px-3 py-1 rounded-sm text-xs font-semibold transition-colors cursor-pointer shrink-0 border ${
                 gradeFilter === grade
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  ? 'bg-[#007cc0] text-white border-[#007cc0]'
+                  : 'bg-white hover:bg-[#e5f3fa] text-[#333333] border-[#d9d9d9]'
               }`}
             >
               {grade === 'ALL' ? 'همه گریدها' : `گرید ${grade}`}
@@ -747,20 +749,20 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
       </div>
 
       {/* Coils & Heat/Batch Traceability Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="sap-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold">
+          <table className="sap-table-compact w-full text-right text-xs">
+            <thead className="bg-[#ffffff] text-[#333333] border-b border-[#d9d9d9] font-semibold">
               <tr>
-                <th className="p-3.5">شماره رسید و سریال کویل</th>
-                <th className="p-3.5">شماره ذوب (Heat No) و بچ ورود</th>
-                <th className="p-3.5">مشخصات ورق و گرید</th>
-                <th className="p-3.5">وزن دریافتی / مانده</th>
-                <th className="p-3.5">بچ‌های تولید متصل (Production Batches)</th>
-                <th className="p-3.5 text-left">ردیابی و اتصال به تولید</th>
+                <th>شماره رسید و سریال کویل</th>
+                <th>شماره ذوب (Heat No) و بچ ورود</th>
+                <th>مشخصات ورق و گرید</th>
+                <th>وزن دریافتی / مانده</th>
+                <th>بچ‌های تولید متصل (Production Batches)</th>
+                <th className="text-left">ردیابی و اتصال به تولید</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 text-slate-700">
+            <tbody className="divide-y divide-[#e8e8e8] text-[#333333]">
               {filteredCoils.map(coil => {
                 const rem = Math.max(0, coil.receivedWeightKg - coil.consumedWeightKg);
                 const remPercent = Math.round(
@@ -769,43 +771,57 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                 const linkedBatches = coil.linkedProductionBatches || [];
 
                 return (
-                  <tr key={coil.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="p-3.5 whitespace-nowrap">
-                      <div className="font-mono font-bold text-slate-900">{coil.coilNumber}</div>
-                      <div className="text-[11px] font-mono text-slate-500 mt-0.5">
-                        رسید: {coil.receiptNumber}
+                  <tr key={coil.id} className="hover:bg-[#e5f3fa]/55 transition-colors">
+                    <td className="whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => traceDocument(coil.coilNumber, 'COILS')}
+                        className="sap-doc-link font-mono font-bold"
+                        title="رهگیری سریال کویل در موجودی رول‌ها"
+                      >
+                        {coil.coilNumber}
+                      </button>
+                      <div className="text-[11px] font-mono text-[#666666] mt-0.5">
+                        رسید:{' '}
+                        <button
+                          type="button"
+                          onClick={() => traceDocument(coil.receiptNumber, 'INVENTORY_LEDGER')}
+                          className="sap-doc-link"
+                        >
+                          {coil.receiptNumber}
+                        </button>
                       </div>
                     </td>
 
-                    <td className="p-3.5 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-mono font-bold text-[11px]">
+                    <td className="whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#fff7eb] text-[#e9730c] border border-[#f5d29c] font-mono font-bold text-[11px]">
                         <span>ذوب: {coil.heatNumber || '—'}</span>
                       </div>
-                      <div className="text-[11px] font-mono text-slate-500 mt-1">
+                      <div className="text-[11px] font-mono text-[#666666] mt-0.5">
                         بچ ورود: {coil.batchNumber || '—'}
                       </div>
                     </td>
 
-                    <td className="p-3.5">
-                      <div className="font-bold text-slate-900">{coil.partName}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
+                    <td>
+                      <div className="font-bold text-[#333333]">{coil.partName}</div>
+                      <div className="text-[11px] text-[#666666] mt-0.5 font-mono">
                         گرید {coil.materialGrade} · ضخامت {toPersianDigits(coil.thicknessMm)} × عرض{' '}
                         {toPersianDigits(coil.widthMm)} mm
                       </div>
                     </td>
 
-                    <td className="p-3.5 whitespace-nowrap font-mono">
-                      <div className="font-bold text-emerald-700">
+                    <td className="whitespace-nowrap font-mono">
+                      <div className="font-bold text-[#107e3e]">
                         مانده: {formatWeightKg(rem)} ({toPersianDigits(remPercent)}٪)
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-[#666666] mt-0.5">
                         ورودی اولیه: {formatWeightKg(coil.receivedWeightKg)}
                       </div>
                     </td>
 
-                    <td className="p-3.5">
+                    <td>
                       {linkedBatches.length === 0 ? (
-                        <span className="text-slate-400 text-[11px]">
+                        <span className="text-[#666666] text-[11px]">
                           هنوز به بچ تولید متصل نشده
                         </span>
                       ) : (
@@ -813,23 +829,28 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                           {linkedBatches.map(b => (
                             <span
                               key={b.batchCode + b.moCode}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-800 text-[11px]"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#f0f0f0] border border-[#d9d9d9] text-[#333333] text-[11px]"
                             >
-                              <span className="font-mono font-bold text-slate-900">
+                              <span className="font-mono font-bold text-[#333333]">
                                 {b.batchCode}
                               </span>
-                              <span className="text-slate-400">|</span>
-                              <span className="font-mono text-indigo-700 font-semibold">
+                              <span className="text-[#666666]">|</span>
+                              <button
+                                type="button"
+                                onClick={() => traceDocument(b.moCode, 'WIP_TRACEABILITY')}
+                                className="sap-doc-link font-mono font-semibold"
+                                title="رهگیری دستور ساخت در جریان تولید (WIP)"
+                              >
                                 {b.moCode}
-                              </span>
-                              <span className="text-slate-500">({b.partName})</span>
+                              </button>
+                              <span className="text-[#666666]">({b.partName})</span>
                             </span>
                           ))}
                         </div>
                       )}
                     </td>
 
-                    <td className="p-3.5 text-left whitespace-nowrap">
+                    <td className="text-left whitespace-nowrap">
                       <div className="inline-flex items-center gap-1.5">
                         <button
                           type="button"
@@ -843,18 +864,18 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                             );
                             setLinkAllocatedKg('2500');
                           }}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer flex items-center gap-1"
+                          className="sap-btn-emphasized px-2.5 py-1 text-xs cursor-pointer flex items-center gap-1"
                         >
-                          <Link2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <Link2 className="w-3.5 h-3.5" />
                           <span>اتصال به بچ تولید</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setTraceabilityCoil(coil)}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold cursor-pointer flex items-center gap-1"
+                          className="sap-btn-standard px-2.5 py-1 text-xs cursor-pointer flex items-center gap-1"
                         >
-                          <Compass className="w-3.5 h-3.5 text-slate-600" />
+                          <Compass className="w-3.5 h-3.5 text-[#007cc0]" />
                           <span>شجره‌نامه ذوب</span>
                         </button>
                       </div>
@@ -871,28 +892,28 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
       {/* MODAL 1: NEW SAPCO COIL RECEIPT WITH HEAT & BATCH TRACKING           */}
       {/* ==================================================================== */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-5 space-y-4 shadow-xl my-8">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-xl p-5 space-y-4 shadow-xl my-8">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-[#333333]">
                   ثبت رسید ورود کلاف ساپکو با شماره ذوب (Heat No) و بچ تولید
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-[#666666] mt-0.5">
                   اطلاعات ذوب و بچ کلاف مستقیماً در کاردکس انبار و شناسنامه بچ‌های تولید ثبت می‌شود.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+              <div className="p-3 bg-[#fff2f2] border border-[#f5bcbc] text-[#bb0000] text-xs rounded-sm">
                 {errorMsg}
               </div>
             )}
@@ -900,7 +921,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
             <form onSubmit={handleCreateCoil} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-[#333333] font-semibold mb-1">
                     شماره رسید حواله ساپکو *
                   </label>
                   <input
@@ -909,11 +930,11 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     placeholder="مثال: SAP-RC-98520"
                     value={receiptNumber}
                     onChange={e => setReceiptNumber(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-[#333333] font-semibold mb-1">
                     شماره سریال کویل فولاد مبارکه *
                   </label>
                   <input
@@ -922,15 +943,15 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     placeholder="مثال: MOB-2025-DC04-912"
                     value={coilNumber}
                     onChange={e => setCoilNumber(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Heat Number & Batch Number Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-amber-50/60 border border-amber-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-sm bg-[#fff7eb] border border-[#f5d29c]">
                 <div>
-                  <label className="block text-amber-950 font-bold mb-1">
+                  <label className="block text-[#333333] font-bold mb-1">
                     شماره ذوب فولاد (Heat Number) *
                   </label>
                   <input
@@ -939,11 +960,11 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     placeholder="مثال: HT-99412-MOB"
                     value={heatNumber}
                     onChange={e => setHeatNumber(e.target.value)}
-                    className="w-full bg-white border border-amber-300 rounded-lg px-3 py-2 font-mono font-bold text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-amber-950 font-bold mb-1">
+                  <label className="block text-[#333333] font-bold mb-1">
                     شماره بچ محموله ورودی (Batch No) *
                   </label>
                   <input
@@ -952,13 +973,13 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     placeholder="مثال: BCH-SAP-1404-105"
                     value={batchNumber}
                     onChange={e => setBatchNumber(e.target.value)}
-                    className="w-full bg-white border border-amber-300 rounded-lg px-3 py-2 font-mono font-bold text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">
+                <label className="block text-[#333333] font-semibold mb-1">
                   ماده اولیه مرتبط در کاتالوگ (متصل به اطلاعات پایه) *
                 </label>
                 <SearchableSelect
@@ -979,11 +1000,11 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-700 font-semibold">گرید آلیاژ</label>
+                    <label className="text-[#333333] font-semibold">گرید آلیاژ</label>
                     <button
                       type="button"
                       onClick={() => setIsGradeModalOpen(true)}
-                      className="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"
+                      className="text-[10px] text-[#007cc0] hover:text-[#006299] font-semibold cursor-pointer"
                     >
                       + گرید جدید
                     </button>
@@ -991,7 +1012,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                   <select
                     value={materialGrade}
                     onChange={e => setMaterialGrade(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 font-mono font-semibold text-slate-900 cursor-pointer"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-2.5 py-1.5 font-mono font-semibold text-[#333333] cursor-pointer focus:border-[#007cc0] focus:outline-none"
                   >
                     {materialGradesList.map(g => (
                       <option key={g.code} value={g.code}>
@@ -1001,31 +1022,31 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">ضخامت (mm)</label>
+                  <label className="block text-[#333333] font-semibold mb-1">ضخامت (mm)</label>
                   <input
                     type="number"
                     step="0.05"
                     min={0.1}
                     value={thicknessMm}
                     onChange={e => setThicknessMm(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">عرض کویل (mm)</label>
+                  <label className="block text-[#333333] font-semibold mb-1">عرض کویل (mm)</label>
                   <input
                     type="number"
                     min={100}
                     value={widthMm}
                     onChange={e => setWidthMm(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-[#333333] font-semibold mb-1">
                     وزن دریافتی کلاف (کیلوگرم) *
                   </label>
                   <input
@@ -1034,17 +1055,17 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     min={100}
                     value={receivedWeightKg}
                     onChange={e => setReceivedWeightKg(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-mono font-bold text-slate-900"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 font-mono font-bold text-[#333333] focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-[#333333] font-semibold mb-1">
                     اتصال مستقیم به دستور تولید فعال (اختیاری):
                   </label>
                   <select
                     value={initialLinkedMoCode}
                     onChange={e => setInitialLinkedMoCode(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 cursor-pointer"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-3 py-1.5 text-[#333333] cursor-pointer focus:border-[#007cc0] focus:outline-none"
                   >
                     <option value="">-- بدون تخصیص اولیه (مانده آزاد در انبار) --</option>
                     {activeManufacturingOrders.map((mo: any) => (
@@ -1056,18 +1077,18 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold rounded-lg cursor-pointer"
+                  className="sap-btn-emphasized px-5 py-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? 'در حال ثبت...' : 'ثبت رسید کلاف و شناسنامه ذوب'}
                 </button>
@@ -1081,16 +1102,16 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
       {/* MODAL 2: LINK COIL HEAT NUMBER DIRECTLY TO A PRODUCTION BATCH (MO)   */}
       {/* ==================================================================== */}
       {linkingCoil && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-xl text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-xs">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-md p-5 space-y-4 shadow-xl text-xs">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-[#333333]">
                   اتصال شماره ذوب کلاف به بچ تولید (Production Batch)
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-[#666666] mt-0.5">
                   کلاف {linkingCoil.coilNumber} · شماره ذوب:{' '}
-                  <strong className="font-mono text-slate-800">
+                  <strong className="font-mono text-[#333333]">
                     {linkingCoil.heatNumber}
                   </strong>
                 </p>
@@ -1098,7 +1119,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setLinkingCoil(null)}
-                className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -1106,7 +1127,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
 
             <form onSubmit={handleSaveProductionBatchLink} className="space-y-3.5">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
+                <label className="block font-semibold text-[#333333] mb-1">
                   انتخاب دستور تولید (MO) در جریان کارگاه:
                 </label>
                 <select
@@ -1116,7 +1137,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     setSelectedMoForLink(moCode);
                     setLinkProductionBatchCode(`BCH-PRD-${moCode.replace('MO-', '')}`);
                   }}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 font-semibold text-slate-900 cursor-pointer"
+                  className="w-full px-3 py-1.5 rounded-sm bg-white border border-[#d9d9d9] font-semibold text-[#333333] cursor-pointer focus:border-[#007cc0] focus:outline-none"
                 >
                   {activeManufacturingOrders.map((mo: any) => (
                     <option key={mo.orderCode} value={mo.orderCode}>
@@ -1127,7 +1148,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
+                <label className="block font-semibold text-[#333333] mb-1">
                   شماره بچ تولیدی اختصاص‌یافته (Production Batch Code):
                 </label>
                 <input
@@ -1135,12 +1156,12 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                   required
                   value={linkProductionBatchCode}
                   onChange={e => setLinkProductionBatchCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 font-mono font-bold text-slate-900"
+                  className="w-full px-3 py-1.5 rounded-sm bg-white border border-[#d9d9d9] font-mono font-bold text-[#333333] focus:border-[#007cc0] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
+                <label className="block font-semibold text-[#333333] mb-1">
                   وزن ورق تخصیص‌یافته از این ذوب به بچ تولید (کیلوگرم):
                 </label>
                 <input
@@ -1150,21 +1171,21 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                   required
                   value={linkAllocatedKg}
                   onChange={e => setLinkAllocatedKg(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 font-mono font-bold text-slate-900"
+                  className="w-full px-3 py-1.5 rounded-sm bg-white border border-[#d9d9d9] font-mono font-bold text-[#333333] focus:border-[#007cc0] focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setLinkingCoil(null)}
-                  className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                  className="sap-btn-standard px-3.5 py-1.5 cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                  className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
                 >
                   ثبت اتصال ذوب به بچ تولید
                 </button>
@@ -1178,18 +1199,18 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
       {/* MODAL 3: END-TO-END HEAT & BATCH TRACEABILITY TREE                   */}
       {/* ==================================================================== */}
       {traceabilityCoil && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-5 space-y-4 shadow-xl text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-xs">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-xl p-5 space-y-4 shadow-xl text-xs">
+            <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center">
-                  <Compass className="w-4 h-4 text-emerald-400" />
+                <div className="w-8 h-8 rounded-sm bg-[#e5f3fa] border border-[#b3d7ff] text-[#007cc0] flex items-center justify-center">
+                  <Compass className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-bold text-[#333333]">
                     شجره‌نامه ردیابی شماره ذوب {traceabilityCoil.heatNumber}
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[#666666]">
                     ردیابی کامل از رسید ساپکو تا بچ‌های ساخت محصول نهایی
                   </p>
                 </div>
@@ -1197,52 +1218,68 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setTraceabilityCoil(null)}
-                className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {/* Step 1: Raw Coil & Heat Certificate */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="font-bold text-slate-900">
+            <div className="p-3.5 rounded-sm bg-[#f7f9fa] border border-[#d9d9d9] space-y-2">
+              <div className="font-bold text-[#333333]">
                 ۱. شناسنامه ورود کلاف و آنالیز ذوب (فولاد مبارکه / ساپکو)
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
                 <div>
-                  <span className="text-slate-500">شماره ذوب (Heat No): </span>
-                  <strong className="font-mono text-amber-800">
+                  <span className="text-[#666666]">شماره ذوب (Heat No): </span>
+                  <strong className="font-mono text-[#e9730c]">
                     {traceabilityCoil.heatNumber}
                   </strong>
                 </div>
                 <div>
-                  <span className="text-slate-500">شماره بچ ورود: </span>
-                  <strong className="font-mono text-slate-900">
+                  <span className="text-[#666666]">شماره بچ ورود: </span>
+                  <strong className="font-mono text-[#333333]">
                     {traceabilityCoil.batchNumber}
                   </strong>
                 </div>
                 <div>
-                  <span className="text-slate-500">سریال کلاف: </span>
-                  <strong className="font-mono text-slate-900">
+                  <span className="text-[#666666]">سریال کلاف: </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cNum = traceabilityCoil.coilNumber;
+                      setTraceabilityCoil(null);
+                      traceDocument(cNum, 'COILS');
+                    }}
+                    className="sap-doc-link font-mono font-bold"
+                  >
                     {traceabilityCoil.coilNumber}
-                  </strong>
+                  </button>
                 </div>
                 <div>
-                  <span className="text-slate-500">شماره رسید ساپکو: </span>
-                  <strong className="font-mono text-slate-900">
+                  <span className="text-[#666666]">شماره رسید ساپکو: </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rNum = traceabilityCoil.receiptNumber;
+                      setTraceabilityCoil(null);
+                      traceDocument(rNum, 'INVENTORY_LEDGER');
+                    }}
+                    className="sap-doc-link font-mono font-bold"
+                  >
                     {traceabilityCoil.receiptNumber}
-                  </strong>
+                  </button>
                 </div>
                 <div>
-                  <span className="text-slate-500">گرید و ابعاد: </span>
-                  <strong className="font-mono text-slate-900">
+                  <span className="text-[#666666]">گرید و ابعاد: </span>
+                  <strong className="font-mono text-[#333333]">
                     {traceabilityCoil.materialGrade} ({traceabilityCoil.thicknessMm}×
                     {traceabilityCoil.widthMm})
                   </strong>
                 </div>
                 <div>
-                  <span className="text-slate-500">وزن کل کلاف: </span>
-                  <strong className="font-mono text-slate-900">
+                  <span className="text-[#666666]">وزن کل کلاف: </span>
+                  <strong className="font-mono text-[#333333]">
                     {formatWeightKg(traceabilityCoil.receivedWeightKg)}
                   </strong>
                 </div>
@@ -1250,14 +1287,14 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
             </div>
 
             {/* Step 2: Linked Production Batches */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-50 px-3.5 py-2 border-b border-slate-200 font-bold text-slate-800 flex items-center gap-1.5">
-                <FileCheck2 className="w-4 h-4 text-emerald-600" />
+            <div className="border border-[#d9d9d9] rounded-sm overflow-hidden">
+              <div className="bg-[#f0f0f0] px-3.5 py-2 border-b border-[#d9d9d9] font-bold text-[#333333] flex items-center gap-1.5">
+                <FileCheck2 className="w-4 h-4 text-[#107e3e]" />
                 <span>۲. بچ‌های تولید و قطعات ساخته‌شده از این شماره ذوب:</span>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-[#e8e8e8]">
                 {(traceabilityCoil.linkedProductionBatches || []).length === 0 ? (
-                  <div className="p-4 text-center text-slate-400">
+                  <div className="p-4 text-center text-[#666666]">
                     هیچ بچ تولیدی به این شماره ذوب متصل نشده است.
                   </div>
                 ) : (
@@ -1268,23 +1305,41 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono font-bold text-[11px]">
+                          <span className="px-2 py-0.5 rounded-sm bg-[#007cc0] text-white font-mono font-bold text-[11px]">
                             {batch.batchCode}
                           </span>
-                          <span className="font-mono font-bold text-indigo-700">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTraceabilityCoil(null);
+                              traceDocument(batch.moCode, 'WIP_TRACEABILITY');
+                            }}
+                            className="sap-doc-link font-mono font-bold"
+                          >
                             {batch.moCode}
-                          </span>
-                          <span className="font-bold text-slate-900">{batch.partName}</span>
+                          </button>
+                          <span className="font-bold text-[#333333]">{batch.partName}</span>
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-1 font-mono">
-                          کد فنی محصول: {batch.partCode} · تاریخ تخصیص: {batch.linkedAt}
+                        <div className="text-[11px] text-[#666666] mt-1 font-mono">
+                          کد فنی محصول:{' '}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTraceabilityCoil(null);
+                              traceDocument(batch.partCode, 'INVENTORY_LEDGER');
+                            }}
+                            className="sap-doc-link"
+                          >
+                            {batch.partCode}
+                          </button>{' '}
+                          · تاریخ تخصیص: {batch.linkedAt}
                         </div>
                       </div>
                       <div className="text-left font-mono">
-                        <div className="font-bold text-slate-900">
+                        <div className="font-bold text-[#333333]">
                           ورق مصرفی: {formatNumber(batch.allocatedKg)} ک.گ
                         </div>
-                        <div className="text-[11px] text-emerald-700">
+                        <div className="text-[11px] text-[#107e3e]">
                           تیراژ هدف: {formatNumber(batch.targetQtyPcs)} عدد
                         </div>
                       </div>
@@ -1298,7 +1353,7 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setTraceabilityCoil(null)}
-                className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                className="sap-btn-emphasized px-4 py-1.5 cursor-pointer"
               >
                 بستن شجره‌نامه
               </button>
@@ -1309,35 +1364,35 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
 
       {/* Dynamic Steel Grades Management Modal */}
       {isGradeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#333333]/40 backdrop-blur-xs">
+          <div className="bg-white border border-[#d9d9d9] rounded-sm w-full max-w-md p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e8e8e8]">
               <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-slate-700" />
-                <h3 className="text-sm font-bold text-slate-900">
+                <Settings className="w-4 h-4 text-[#007cc0]" />
+                <h3 className="text-sm font-bold text-[#333333]">
                   مدیریت گریدهای آلیاژ فولاد ساپکو
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsGradeModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-[#666666] hover:text-[#333333] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-1.5 max-h-48 overflow-y-auto divide-y divide-slate-100">
+            <div className="space-y-1.5 max-h-48 overflow-y-auto divide-y divide-[#e8e8e8]">
               {materialGradesList.map(g => (
                 <div key={g.code} className="flex items-center justify-between py-2 px-1 text-xs">
                   <div>
-                    <span className="font-bold text-slate-900 font-mono">{g.code}</span>
-                    <span className="text-slate-500 mr-2 text-[11px]">{g.name}</span>
+                    <span className="font-bold text-[#333333] font-mono">{g.code}</span>
+                    <span className="text-[#666666] mr-2 text-[11px]">{g.name}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleDeleteGrade(g.code)}
-                    className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 cursor-pointer"
+                    className="text-[#bb0000] hover:bg-[#fff2f2] p-1 rounded-sm cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1345,39 +1400,39 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
               ))}
             </div>
 
-            <form onSubmit={handleAddGrade} className="pt-3 border-t border-slate-100 space-y-2.5 text-xs">
+            <form onSubmit={handleAddGrade} className="pt-3 border-t border-[#e8e8e8] space-y-2.5 text-xs">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">کد گرید *</label>
+                  <label className="text-[10px] text-[#666666] block mb-0.5">کد گرید *</label>
                   <input
                     type="text"
                     required
                     placeholder="مثال: CR240"
                     value={newGradeCode}
                     onChange={e => setNewGradeCode(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-mono text-xs uppercase"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-2.5 py-1.5 font-mono text-xs uppercase focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">استاندارد مرجع</label>
+                  <label className="text-[10px] text-[#666666] block mb-0.5">استاندارد مرجع</label>
                   <input
                     type="text"
                     placeholder="DIN 1623"
                     value={newGradeStandard}
                     onChange={e => setNewGradeStandard(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
+                    className="w-full bg-white border border-[#d9d9d9] rounded-sm px-2.5 py-1.5 text-xs focus:border-[#007cc0] focus:outline-none"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 block mb-0.5">عنوان فارسی *</label>
+                <label className="text-[10px] text-[#666666] block mb-0.5">عنوان فارسی *</label>
                 <input
                   type="text"
                   required
                   placeholder="مثال: ورق استحکام بالا"
                   value={newGradeName}
                   onChange={e => setNewGradeName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
+                  className="w-full bg-white border border-[#d9d9d9] rounded-sm px-2.5 py-1.5 text-xs focus:border-[#007cc0] focus:outline-none"
                 />
               </div>
 
@@ -1385,13 +1440,13 @@ export const SapcoMaterialsView: React.FC<SapcoMaterialsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsGradeModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs cursor-pointer"
+                  className="sap-btn-standard px-3 py-1.5 text-xs cursor-pointer"
                 >
                   بستن
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs cursor-pointer"
+                  className="sap-btn-emphasized px-4 py-1.5 text-xs cursor-pointer"
                 >
                   + ذخیره گرید
                 </button>

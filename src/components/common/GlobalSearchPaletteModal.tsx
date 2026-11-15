@@ -166,52 +166,52 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4 bg-[#333333]/40 backdrop-blur-[1px] transition-opacity"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
+        className="w-full max-w-4xl bg-white rounded-md shadow-xl border border-[#d9d9d9] overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         {/* Search Header Bar */}
-        <div className="relative flex items-center border-b border-slate-200 px-4 py-3 bg-slate-50/80">
-          <Search className="w-5 h-5 text-slate-400 shrink-0 ml-3" />
+        <div className="relative flex items-center border-b border-[#d9d9d9] px-4 py-3 bg-[#ffffff]">
+          <Search className="w-5 h-5 text-[#007cc0] shrink-0 ml-3" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="جستجو در تمام کالاها، کویل‌ها، قراردادها، سفارشات، دستور ساخت، اسناد و ماشین‌آلات… (Ctrl+K)"
-            className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-sm focus:outline-none"
+            className="w-full bg-transparent text-[#333333] placeholder-[#888888] text-sm focus:outline-none"
           />
           {loading && (
-            <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0 ml-3" />
+            <div className="w-4 h-4 border-2 border-[#007cc0] border-t-transparent rounded-full animate-spin shrink-0 ml-3" />
           )}
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors ml-2 cursor-pointer"
+              className="p-1 rounded text-[#666666] hover:text-[#333333] hover:bg-[#f0f0f0] transition-colors ml-2 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-mono text-slate-500 bg-white border border-slate-200 rounded shadow-2xs mr-2">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-mono text-[#666666] bg-[#f7f7f7] border border-[#d9d9d9] rounded mr-2">
             ESC
           </kbd>
         </div>
 
         {/* Category Filters Bar */}
-        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-slate-100 bg-white overflow-x-auto text-xs">
+        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-[#e8e8e8] bg-[#f7f7f7] overflow-x-auto text-xs">
           <button
             onClick={() => {
               setActiveCategory('ALL');
               setSelectedIndex(0);
             }}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer whitespace-nowrap ${
               activeCategory === 'ALL'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-[#007cc0] text-white'
+                : 'text-[#333333] hover:bg-[#e5f3fa]'
             }`}
           >
             همه موارد
@@ -234,19 +234,19 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
                   setActiveCategory(cat.id);
                   setSelectedIndex(0);
                 }}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                   activeCategory === cat.id
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[#007cc0] text-white'
                     : hasMatches
-                    ? 'text-slate-700 hover:bg-slate-100'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'text-[#333333] hover:bg-[#e5f3fa]'
+                    : 'text-[#888888] hover:text-[#333333]'
                 }`}
               >
                 <span>{cat.label}</span>
                 {hasMatches && (
                   <span
-                    className={`text-[10px] px-1 py-0.2 rounded-full ${
-                      activeCategory === cat.id ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-700'
+                    className={`text-[10px] px-1.5 py-0.2 rounded ${
+                      activeCategory === cat.id ? 'bg-[#006299] text-white' : 'bg-[#e8e8e8] text-[#333333]'
                     }`}
                   >
                     {groups.find(g => g.type === cat.id)?.count}
@@ -262,13 +262,13 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
           {/* Results List */}
           <div
             ref={listRef}
-            className="md:col-span-7 overflow-y-auto p-2 divide-y divide-slate-100 max-h-[55vh]"
+            className="md:col-span-7 overflow-y-auto p-2 divide-y divide-[#e8e8e8] max-h-[55vh]"
           >
             {flattenedItems.length === 0 ? (
-              <div className="py-16 text-center text-slate-400">
-                <Search className="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-400" />
-                <p className="text-sm font-medium">هیچ رکوردی منطبق با جستجو یافت نشد</p>
-                <p className="text-xs text-slate-400 mt-1">
+              <div className="py-16 text-center text-[#666666]">
+                <Search className="w-10 h-10 mx-auto mb-3 opacity-30 text-[#666666]" />
+                <p className="text-sm font-medium text-[#333333]">هیچ رکوردی منطبق با جستجو یافت نشد</p>
+                <p className="text-xs text-[#666666] mt-1">
                   می‌توانید کد کالا، شماره کویل، نام خودرو یا شماره دستور کار را جستجو نمایید.
                 </p>
               </div>
@@ -281,18 +281,18 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
                     key={`${item.type}-${item.id}-${idx}`}
                     onClick={() => handleSelectItem(item)}
                     onMouseEnter={() => setSelectedIndex(idx)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl transition-all cursor-pointer ${
+                    className={`flex items-center justify-between p-2.5 rounded transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-indigo-50/90 text-indigo-950 border border-indigo-200/80 shadow-xs'
-                        : 'hover:bg-slate-50 text-slate-700 border border-transparent'
+                        ? 'bg-[#e5f3fa] text-[#333333] border border-[#007cc0]'
+                        : 'hover:bg-[#f7f7f7] text-[#333333] border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        className={`w-8 h-8 rounded flex items-center justify-center shrink-0 ${
                           isSelected
-                            ? 'bg-indigo-600 text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-600'
+                            ? 'bg-[#007cc0] text-white'
+                            : 'bg-[#f0f0f0] text-[#666666]'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -302,23 +302,23 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
                           <span className="font-semibold text-xs truncate">{item.title}</span>
                           {item.badge && (
                             <span
-                              className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
+                              className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
                                 item.badgeColor === 'emerald'
-                                  ? 'bg-emerald-100 text-emerald-800'
+                                  ? 'bg-[#eef8f2] text-[#107e3e]'
                                   : item.badgeColor === 'blue'
-                                  ? 'bg-blue-100 text-blue-800'
+                                  ? 'bg-[#e5f3fa] text-[#007cc0]'
                                   : item.badgeColor === 'amber'
-                                  ? 'bg-amber-100 text-amber-800'
+                                  ? 'bg-[#fff5eb] text-[#e9730c]'
                                   : item.badgeColor === 'purple'
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-slate-100 text-slate-700'
+                                  ? 'bg-[#e5f3fa] text-[#007cc0]'
+                                  : 'bg-[#f0f0f0] text-[#333333]'
                               }`}
                             >
                               {item.badge}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                        <p className="text-[11px] text-[#666666] truncate mt-0.5">
                           {item.subtitle}
                         </p>
                       </div>
@@ -328,15 +328,15 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
                       <button
                         title="کپی شناسه"
                         onClick={e => handleCopy(item.code, e)}
-                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition-colors cursor-pointer"
+                        className="p-1 rounded text-[#666666] hover:text-[#333333] hover:bg-[#e8e8e8] transition-colors cursor-pointer"
                       >
                         {copiedId === item.code ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-3.5 h-3.5 text-[#107e3e]" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
                       </button>
-                      <ArrowRight className="w-4 h-4 text-slate-400 rotate-180" />
+                      <ArrowRight className="w-4 h-4 text-[#666666] rotate-180" />
                     </div>
                   </div>
                 );
@@ -345,43 +345,43 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
           </div>
 
           {/* Right/Side Item Live Inspector Pane */}
-          <div className="hidden md:flex md:col-span-5 bg-slate-50/70 border-r border-slate-200/80 p-4 flex-col justify-between">
+          <div className="hidden md:flex md:col-span-5 bg-[#f7f7f7] border-r border-[#d9d9d9] p-4 flex-col justify-between">
             {activeItem ? (
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-100/70 px-2 py-0.5 rounded">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#007cc0] bg-[#e5f3fa] border border-[#b3ddf2] px-2 py-0.5 rounded">
                       پیش‌نمایش سریع
                     </span>
                     <button
                       onClick={e => handleCopy(activeItem.code, e)}
-                      className="text-xs text-slate-500 hover:text-indigo-600 flex items-center gap-1 cursor-pointer font-mono"
+                      className="text-xs text-[#666666] hover:text-[#007cc0] flex items-center gap-1 cursor-pointer font-mono"
                     >
                       {activeItem.code}
                       {copiedId === activeItem.code ? (
-                        <Check className="w-3 h-3 text-emerald-600" />
+                        <Check className="w-3 h-3 text-[#107e3e]" />
                       ) : (
                         <Copy className="w-3 h-3" />
                       )}
                     </button>
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm leading-snug">
+                  <h3 className="font-bold text-[#333333] text-sm leading-snug">
                     {activeItem.title}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">{activeItem.subtitle}</p>
+                  <p className="text-xs text-[#666666] mt-1">{activeItem.subtitle}</p>
                 </div>
 
                 {activeItem.meta && Object.keys(activeItem.meta).length > 0 && (
-                  <div className="bg-white rounded-xl p-3 border border-slate-200/90 shadow-2xs space-y-2 text-xs">
-                    <div className="text-[11px] font-semibold text-slate-700 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
-                      <Filter className="w-3.5 h-3.5 text-slate-400" />
+                  <div className="bg-white rounded p-3 border border-[#d9d9d9] space-y-2 text-xs">
+                    <div className="text-[11px] font-semibold text-[#333333] border-b border-[#e8e8e8] pb-1.5 flex items-center gap-1.5">
+                      <Filter className="w-3.5 h-3.5 text-[#007cc0]" />
                       <span>مشخصات و متاداده ثبت‌شده</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       {Object.entries(activeItem.meta).map(([key, val]) => (
-                        <div key={key} className="bg-slate-50 p-2 rounded-lg">
-                          <span className="text-[10px] text-slate-400 block">{key}</span>
-                          <span className="font-semibold text-slate-800 text-[11px]">
+                        <div key={key} className="bg-[#f7f7f7] p-2 rounded border border-[#e8e8e8]">
+                          <span className="text-[10px] text-[#666666] block">{key}</span>
+                          <span className="font-semibold text-[#333333] text-[11px]">
                             {val !== null && val !== undefined ? String(val) : '—'}
                           </span>
                         </div>
@@ -390,18 +390,18 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
                   </div>
                 )}
 
-                <div className="bg-indigo-50/60 rounded-xl p-3 border border-indigo-100/80 text-[11px] text-indigo-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold">
-                    <Zap className="w-3.5 h-3.5 text-indigo-600" />
+                <div className="bg-[#e5f3fa] rounded p-3 border border-[#b3ddf2] text-[11px] text-[#333333] space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-[#007cc0]">
+                    <Zap className="w-3.5 h-3.5" />
                     <span>عملکرد سریع:</span>
                   </div>
-                  <p className="text-slate-600">
-                    با کلیک روی گزینه یا زدن دکمه <kbd className="font-mono bg-white px-1 py-0.5 rounded border border-indigo-200">Enter</kbd>، مستقیماً به صفحه مربوطه منتقل می‌شوید.
+                  <p className="text-[#333333]">
+                    با کلیک روی گزینه یا زدن دکمه <kbd className="font-mono bg-white px-1 py-0.5 rounded border border-[#b3ddf2]">Enter</kbd>، مستقیماً به صفحه مربوطه منتقل می‌شوید.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">
+              <div className="h-full flex items-center justify-center text-xs text-[#666666]">
                 یک گزینه را انتخاب کنید
               </div>
             )}
@@ -409,7 +409,7 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
             {activeItem && (
               <button
                 onClick={() => handleSelectItem(activeItem)}
-                className="w-full mt-4 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                className="sap-btn-emphasized w-full mt-4 flex items-center justify-center gap-2 py-2 px-3 text-xs cursor-pointer"
               >
                 <span>باز کردن و مدیریت در سیستم</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -419,16 +419,16 @@ export const GlobalSearchPaletteModal: React.FC<GlobalSearchPaletteModalProps> =
         </div>
 
         {/* Footer Shortcut Bar */}
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-100/80 border-t border-slate-200 text-[11px] text-slate-500">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#ffffff] border-t border-[#d9d9d9] text-[11px] text-[#666666]">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <CornerDownLeft className="w-3 h-3 text-slate-400" /> باز کردن: Enter
+              <CornerDownLeft className="w-3 h-3 text-[#666666]" /> باز کردن: Enter
             </span>
             <span>جابه‌جایی: ↑ / ↓</span>
             <span>بستن: Esc</span>
           </div>
-          <div className="text-[10px] text-slate-400 font-medium">
-            موتور جستجوی یکپارچه صنعتی KPIMS (الهام‌گرفته از Odoo و Kosar)
+          <div className="text-[10px] text-[#666666] font-medium">
+            موتور جستجوی یکپارچه صنعتی KPIMS
           </div>
         </div>
       </div>

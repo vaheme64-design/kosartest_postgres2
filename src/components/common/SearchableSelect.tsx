@@ -121,42 +121,42 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100/70 border rounded-xl text-xs transition-colors cursor-pointer text-right ${
-          isOpen ? 'border-orange-500 ring-2 ring-orange-500/20 bg-white' : 'border-slate-200'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 bg-white hover:bg-[#f7f7f7] border rounded text-xs transition-colors cursor-pointer text-right ${
+          isOpen ? 'border-[#007cc0] ring-1 ring-[#007cc0]/30' : 'border-[#bfbfbf]'
+        } ${disabled ? 'opacity-50 cursor-not-allowed bg-[#f0f0f0]' : ''}`}
       >
         <div className="flex-1 truncate">
           {selectedOption ? (
             <div className="flex items-center gap-1.5 truncate">
-              <span className="font-semibold text-slate-900 truncate">{selectedOption.label}</span>
+              <span className="font-semibold text-[#333333] truncate">{selectedOption.label}</span>
               {selectedOption.sublabel && (
-                <span className="text-[11px] text-slate-500 font-mono truncate">
+                <span className="text-[11px] text-[#666666] font-mono truncate">
                   ({selectedOption.sublabel})
                 </span>
               )}
               {selectedOption.badge && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9] font-medium">
                   {selectedOption.badge}
                 </span>
               )}
             </div>
           ) : (
-            <span className="text-slate-400 font-normal">{placeholder}</span>
+            <span className="text-[#888888] font-normal">{placeholder}</span>
           )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0 text-slate-400">
+        <div className="flex items-center gap-1 shrink-0 text-[#666666]">
           {allowClear && selectedOption && (
             <button
               type="button"
               onClick={handleClear}
-              className="p-0.5 hover:text-rose-600 rounded cursor-pointer"
+              className="p-0.5 hover:text-[#bb0000] rounded cursor-pointer"
               title="پاک کردن"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180 text-orange-600' : ''}`} />
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180 text-[#007cc0]' : ''}`} />
         </div>
       </button>
 
@@ -174,11 +174,11 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full min-w-[260px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in-50 zoom-in-95">
+        <div className="absolute z-50 mt-1 w-full min-w-[260px] bg-white border border-[#d9d9d9] rounded-md shadow-xl overflow-hidden animate-in fade-in-50 zoom-in-95">
           {/* Live Search Input */}
-          <div className="p-2 border-b border-slate-100 bg-slate-50/70">
+          <div className="p-2 border-b border-[#e8e8e8] bg-[#f7f7f7]">
             <div className="relative flex items-center">
-              <Search className="w-3.5 h-3.5 absolute right-2.5 text-slate-400 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 absolute right-2.5 text-[#666666] pointer-events-none" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -189,13 +189,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder={searchPlaceholder}
-                className="w-full pl-7 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-orange-500 placeholder:text-slate-400 font-sans"
+                className="w-full pl-7 pr-8 py-1.5 bg-white border border-[#bfbfbf] rounded text-xs text-[#333333] focus:outline-none focus:border-[#007cc0] placeholder:text-[#888888] font-sans"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute left-2.5 text-slate-400 hover:text-slate-600"
+                  className="absolute left-2.5 text-[#666666] hover:text-[#333333]"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -204,9 +204,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </div>
 
           {/* Options List */}
-          <div className="max-h-56 overflow-y-auto divide-y divide-slate-50 p-1">
+          <div className="max-h-56 overflow-y-auto divide-y divide-[#e8e8e8] p-1">
             {filteredOptions.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-400">
+              <div className="py-6 text-center text-xs text-[#666666]">
                 موردی با عنوان «{searchTerm}» یافت نشد
               </div>
             ) : (
@@ -219,31 +219,31 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     key={opt.value}
                     onClick={() => handleSelect(opt)}
                     onMouseEnter={() => setHighlightedIndex(idx)}
-                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                    className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded text-xs cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-orange-50/80 text-orange-950 font-bold'
+                        ? 'bg-[#e5f3fa] text-[#007cc0] font-bold'
                         : isHighlighted
-                        ? 'bg-slate-100/80 text-slate-900'
-                        : 'text-slate-700 hover:bg-slate-50'
+                        ? 'bg-[#f7f7f7] text-[#333333]'
+                        : 'text-[#333333] hover:bg-[#f7f7f7]'
                     }`}
                   >
                     <div className="flex-1 truncate">
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="truncate">{opt.label}</span>
                         {opt.badge && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-medium">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#f0f0f0] text-[#333333] font-medium">
                             {opt.badge}
                           </span>
                         )}
                       </div>
                       {opt.sublabel && (
-                        <div className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+                        <div className="text-[11px] text-[#666666] font-mono mt-0.5 truncate">
                           {opt.sublabel}
                         </div>
                       )}
                     </div>
 
-                    {isSelected && <Check className="w-4 h-4 text-orange-600 shrink-0" />}
+                    {isSelected && <Check className="w-4 h-4 text-[#007cc0] shrink-0" />}
                   </div>
                 );
               })
@@ -252,14 +252,14 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
           {/* Quick Add Action Button (if provided) */}
           {onAddNew && (
-            <div className="p-1.5 bg-slate-50 border-t border-slate-100">
+            <div className="p-1.5 bg-[#f7f7f7] border-t border-[#e8e8e8]">
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
                   onAddNew();
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-colors cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#107e3e] bg-[#eef8f2] hover:bg-[#ddf1e4] border border-[#b5e0c6] rounded transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>{addNewText}</span>

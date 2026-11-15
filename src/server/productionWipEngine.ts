@@ -444,21 +444,21 @@ export function createManufacturingOrder(params: {
     return { success: false, error: 'قطعه مورد نظر در سیستم یافت نشد.' };
   }
 
-  // Find approved routing for this part
-  let routing = params.routingId
+  // Find approved routing for this part (never substitute an unrelated part's routing)
+  const routing = params.routingId
     ? INITIAL_ROUTINGS.find(r => r.id === params.routingId)
     : INITIAL_ROUTINGS.find(r => r.partId === part.id || r.partCode === part.code);
 
-  if (!routing) {
-    // If no direct routing found, pick first compatible routing as baseline
-    routing = INITIAL_ROUTINGS[0];
+  if (!routing || !routing.operations.length) {
+    return { success: false, error: `مسیر تولید مصوب (Routing) برای قطعه «${part.code}» تعریف نشده است.` };
   }
 
   const moId = `MO-2026-${String(manufacturingOrdersStore.length + 1).padStart(3, '0')}`;
   const now = new Date().toISOString();
-  const initialInput = params.initialInputQuantity && params.initialInputQuantity > 0
-    ? params.initialInputQuantity
-    : params.targetQuantity;
+  const initialInput =
+    params.initialInputQuantity !== undefined
+      ? Math.max(0, Number(params.initialInputQuantity) || 0)
+      : params.targetQuantity;
 
   // Generate operations from approved route version
   const operations: ManufacturingOperation[] = routing.operations.map((op, idx) => ({

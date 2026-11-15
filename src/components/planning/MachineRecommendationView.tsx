@@ -430,10 +430,10 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
 
   if (!activePlan && suggestions.length === 0) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-400">
-        <Cpu className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-slate-900">هیچ برنامه تولید پیشنهادی یافت نشد</h3>
-        <p className="text-sm mt-1 text-slate-400">
+      <div className="sap-card p-12 text-center text-[#666666]">
+        <Cpu className="w-12 h-12 text-[#666666] mx-auto mb-3" />
+        <h3 className="text-base font-bold text-[#333333]">هیچ برنامه تولید پیشنهادی یافت نشد</h3>
+        <p className="text-xs mt-1 text-[#666666]">
           برای ایجاد برنامه‌های پیشنهادی، سفارشات مشتریان را ثبت کرده یا دکمه «محاسبه مجدد تقاضا و برنامه‌ریزی هوشمند» را بزنید.
         </p>
       </div>
@@ -441,19 +441,19 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Engineering Role & Action Buttons Guide Banner */}
-      <div className="bg-gradient-to-l from-indigo-50/90 via-white to-amber-50/60 border border-indigo-200/80 rounded-xl p-4 shadow-2xs">
+      <div className="bg-[#e5f3fa]/50 border border-[#b3d7ff] rounded-md p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-indigo-600 text-white shrink-0">
+            <div className="p-2 rounded bg-[#007cc0] text-white shrink-0">
               <HelpCircle className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-black text-slate-900">
+              <h3 className="text-xs sm:text-sm font-bold text-[#333333]">
                 راهنمای مهندسی: این صفحه در فرآیند برنامه‌ریزی چه کاری انجام می‌دهد و تفاوت دکمه‌ها چیست؟
               </h3>
-              <p className="text-[11px] text-slate-600 mt-0.5">
+              <p className="text-[11px] text-[#666666] mt-0.5">
                 شفاف‌سازی وظیفه موتور تطبیق پرس (APS) و تفاوت «تصویب برنامه» با «ارسال مستقیم به سالن تولید»
               </p>
             </div>
@@ -461,40 +461,40 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
           <button
             type="button"
             onClick={() => setShowWorkflowGuide(prev => !prev)}
-            className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 cursor-pointer shrink-0"
+            className="sap-btn-standard text-xs font-bold px-2.5 py-1 cursor-pointer shrink-0"
           >
             {showWorkflowGuide ? 'بستن راهنما' : 'نمایش راهنما'}
           </button>
         </div>
 
         {showWorkflowGuide && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3.5 pt-3.5 border-t border-indigo-100 text-xs">
-            <div className="bg-white p-3 rounded-lg border border-slate-200/90 space-y-1">
-              <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-amber-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-[#b3d7ff] text-xs">
+            <div className="bg-white p-3 rounded border border-[#d9d9d9] space-y-1">
+              <div className="font-bold text-[#333333] flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-[#e9730c]" />
                 <span>۱. وظیفه این صفحه (تطبیق و انتخاب پرس)</span>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[11px] text-[#666666] leading-relaxed">
                 سیستم برای هر مرحله عملیات قطعه (OP10، OP20 و ...) تمام پرس‌های کارخانه را از نظر <strong>تناژ الزامی قالب</strong>، <strong>سازگاری ابعاد میز</strong> و <strong>ساعت آزاد شیفت</strong> بررسی کرده و بهترین پرس را پیشنهاد می‌دهد. شما می‌توانید در هر مرحله، پرس پیشنهادی را <strong>به صورت دستی تغییر دهید</strong>.
               </p>
             </div>
 
-            <div className="bg-white p-3 rounded-lg border border-emerald-200/90 space-y-1">
-              <div className="font-bold text-emerald-900 flex items-center gap-1.5">
-                <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="bg-white p-3 rounded border border-[#b7dfc5] space-y-1">
+              <div className="font-bold text-[#107e3e] flex items-center gap-1.5">
+                <FileCheck className="w-3.5 h-3.5 text-[#107e3e]" />
                 <span>۲. دکمه «تأیید و تصویب برنامه»</span>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[11px] text-[#666666] leading-relaxed">
                 فقط وضعیت برنامه را در واحد برنامه‌ریزی از «پیش‌نویس» به <strong>«مصوب مدیر تولید»</strong> تغییر می‌دهد و ظرفیت پرس و کلاف ورق را رزرو می‌کند، اما <strong>هنوز کاری به شیت روزانه سرپرست سالن ارسال نمی‌کند</strong>.
               </p>
             </div>
 
-            <div className="bg-white p-3 rounded-lg border border-indigo-200/90 space-y-1">
-              <div className="font-bold text-indigo-900 flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="bg-white p-3 rounded border border-[#b3d7ff] space-y-1">
+              <div className="font-bold text-[#007cc0] flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5 text-[#007cc0]" />
                 <span>۳. دکمه «تایید پیشنهاد و ارسال به سالن»</span>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[11px] text-[#666666] leading-relaxed">
                 پس از نمایش <strong>پنجره تایید مشخصات</strong>، دستور کار را با ورق اختصاصی همان قطعه و پرس‌های انتخابی مستقیماً وارد <strong>«ماتریس برنامه‌ریزی OP»</strong> و <strong>«برنامه روزانه شیفت (امروز)»</strong> می‌کند و در هر زمان از همین صفحه <strong>قابل لغو و حذف</strong> است.
               </p>
             </div>
@@ -505,17 +505,17 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
       {/* Feedback Alert */}
       {feedbackMsg && (
         <div
-          className={`p-4 rounded-xl border flex items-center justify-between text-xs font-medium ${
+          className={`p-3.5 rounded border flex items-center justify-between text-xs font-medium ${
             feedbackMsg.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              : 'bg-rose-50 border-rose-300 text-rose-900'
+              ? 'bg-[#eef8f2] border-[#b7dfc5] text-[#107e3e]'
+              : 'bg-[#fde8e8] border-[#f5b8b8] text-[#bb0000]'
           }`}
         >
           <div className="flex items-center gap-2">
             {feedbackMsg.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
             ) : (
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0" />
             )}
             <span>{feedbackMsg.text}</span>
           </div>
@@ -530,21 +530,28 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
 
       {/* Dispatched Status & Recall Banner if already sent to shop floor */}
       {dispatchedScheduleItem && (
-        <div className="bg-emerald-50/90 border border-emerald-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="bg-[#eef8f2] border border-[#b7dfc5] rounded-md p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-emerald-600 text-white shrink-0 mt-0.5">
+            <div className="p-2 rounded bg-[#107e3e] text-white shrink-0 mt-0.5">
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-black text-emerald-950">
+                <span className="text-xs font-bold text-[#107e3e]">
                   این برنامه قبلاً به سالن تولید ارسال شده است
                 </span>
-                <span className="px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-300 font-mono text-[11px] font-bold">
-                  شماره دستور کار: {dispatchedScheduleItem.orderCode}
+                <span className="px-2 py-0.5 rounded bg-white text-[#107e3e] border border-[#b7dfc5] font-mono text-[11px] font-bold flex items-center gap-1">
+                  <span>شماره دستور کار:</span>
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(dispatchedScheduleItem.orderCode, 'WIP_TRACEABILITY')}
+                    className="sap-doc-link font-mono"
+                  >
+                    {dispatchedScheduleItem.orderCode}
+                  </button>
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-800 mt-1">
+              <p className="text-[11px] text-[#333333] mt-1">
                 ورق اختصاص‌یافته: <strong>{dispatchedScheduleItem.rawMaterialName}</strong> • تیراژ هدف:{' '}
                 <strong>{formatNumber(dispatchedScheduleItem.weeklyTargetQty)} عدد</strong> • تعداد ایستگاه:{' '}
                 <strong>{toPersianDigits(dispatchedScheduleItem.ops.length)} مرحله OP</strong>
@@ -562,7 +569,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                   productionModuleTab: 'DAILY_DISPATCH_SHEET',
                 })
               }
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-bold transition cursor-pointer"
+              className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold cursor-pointer"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>مشاهده در برنامه روزانه سالن</span>
@@ -570,7 +577,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
             <button
               type="button"
               onClick={handleRecallFromShopFloor}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#bb0000] hover:bg-[#990000] text-white rounded text-xs font-bold transition cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>لغو ارسال و حذف از برنامه سالن</span>
@@ -580,22 +587,22 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
       )}
 
       {/* Plan Selector & Quick Actions Top Bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+      <div className="sap-card p-4">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-600">
+            <div className="p-2.5 bg-[#e5f3fa] border border-[#b3d7ff] rounded text-[#007cc0]">
               <Cpu className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-sm sm:text-base font-bold text-[#333333]">
                   موتور تطبیق و اولویت‌بندی ماشین‌آلات پرس و تجهیزات
                 </h2>
-                <span className="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700 border border-slate-200 font-mono">
+                <span className="px-2 py-0.5 rounded text-xs bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] font-mono">
                   {toPersianDigits(suggestions.length)} پیشنهاد فعال
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 تخصیص هوشمند مراحل مسیر تولید براساس تناژ، سازگاری قالب، وضعیت سلامت دستگاه و سقف ظرفیت شیفت
               </p>
             </div>
@@ -603,11 +610,11 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
 
           {/* Plan Selector Dropdown */}
           <div className="w-full lg:w-auto flex flex-wrap items-center gap-2.5">
-            <label className="text-xs font-bold text-slate-600">انتخاب برنامه قطعه:</label>
+            <label className="text-xs font-bold text-[#666666]">انتخاب برنامه قطعه:</label>
             <select
               value={activePlan?.id || ''}
               onChange={e => onSelectSuggestion(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-slate-900 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="bg-white border border-[#bfbfbf] text-[#333333] text-xs font-bold rounded px-3 py-1.5 focus:outline-none focus:border-[#007cc0] cursor-pointer"
             >
               {suggestions.map(s => (
                 <option key={s.id} value={s.id}>
@@ -622,41 +629,51 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
       {activePlan && (
         <>
           {/* Active Plan Summary Card */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          <div className="sap-card p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3.5">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="text-lg font-black text-slate-900 font-mono tracking-tight">
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(activePlan.planNumber, 'WIP_TRACEABILITY')}
+                    className="sap-doc-link text-base font-bold font-mono tracking-tight"
+                  >
                     {activePlan.planNumber}
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-700 border border-amber-500/20 font-mono">
+                  </button>
+                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9] font-mono">
                     نسخه {toPersianDigits(activePlan.planVersion)}
                   </span>
                   {activePlan.approvalStatus === 'DRAFT_SUGGESTION' && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3d7ff] flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       پیش‌نویس موتور برنامه‌ریزی
                     </span>
                   )}
                   {activePlan.approvalStatus === 'APPROVED' && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b7dfc5] flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       مصوب مدیر تولید (رزرو ظرفیت)
                     </span>
                   )}
                   {activePlan.approvalStatus === 'CONVERTED_TO_MO' && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3d7ff] flex items-center gap-1">
                       <Send className="w-3 h-3" />
                       صادر شده به دستور کار کارگاهی
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-slate-700 font-medium mt-1.5 flex flex-wrap items-center gap-3">
+                <div className="text-sm text-[#333333] font-medium mt-1.5 flex flex-wrap items-center gap-3">
                   <span>
-                    قطعه: <strong className="text-slate-900 font-black">{activePlan.partName}</strong>
+                    قطعه: <strong className="text-[#333333] font-bold">{activePlan.partName}</strong>
                   </span>
-                  <span className="text-slate-500 font-mono text-xs">({activePlan.partCode})</span>
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(activePlan.partCode, 'INVENTORY_LEDGER')}
+                    className="sap-doc-link font-mono text-xs"
+                  >
+                    {activePlan.partCode}
+                  </button>
+                  <span className="text-xs text-[#666666] bg-[#f5f5f5] border border-[#e8e8e8] px-2 py-0.5 rounded">
                     موعد تحویل سفارشات: <strong>{formatToJalali(activePlan.targetDueDate)}</strong>
                   </span>
                 </div>
@@ -669,7 +686,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                     type="button"
                     onClick={handleApprove}
                     disabled={actionInProgress || !activePlan.overallFeasible}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#107e3e] hover:bg-[#0c6631] text-white rounded text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     title="تصویب برنامه در واحد برنامه‌ریزی و رزرو ظرفیت بدون ارسال فوری به شیت روزانه کف سالن"
                   >
                     <FileCheck className="w-4 h-4" />
@@ -681,7 +698,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                   type="button"
                   onClick={handleApproveAndDispatchToShopFloor}
                   disabled={actionInProgress || !activePlan.overallFeasible}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition disabled:opacity-50 shadow-sm cursor-pointer"
+                  className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold disabled:opacity-50 cursor-pointer"
                   title="مشاهده خلاصه تایید و ارسال عملیات‌ها به ماتریس OP و شیت برنامه روزانه سالن تولید"
                 >
                   <Send className="w-4 h-4" />
@@ -697,7 +714,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                     type="button"
                     onClick={handleRelease}
                     disabled={actionInProgress}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition disabled:opacity-50 shadow-sm cursor-pointer"
+                    className="sap-btn-emphasized flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold disabled:opacity-50 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                     صدور کد رسمی MO
@@ -708,9 +725,9 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                   type="button"
                   onClick={() => setShowRevisionModal(true)}
                   disabled={actionInProgress}
-                  className="flex items-center gap-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold border border-slate-200 transition cursor-pointer"
+                  className="sap-btn-standard flex items-center gap-1 px-3 py-1.5 text-xs font-bold cursor-pointer"
                 >
-                  <GitBranch className="w-3.5 h-3.5 text-amber-600" />
+                  <GitBranch className="w-3.5 h-3.5 text-[#e9730c]" />
                   ایجاد بازنگری (Revision)
                 </button>
               </div>
@@ -840,7 +857,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                               زمان خالص ضرب: <strong className="text-slate-900">{toPersianDigits(op.estimatedRunHours)}</strong> ساعت
                             </span>
                             {op.dieMoldName && (
-                              <span className="text-purple-700 font-medium">
+                              <span className="text-[#007cc0] font-medium">
                                 قالب اختصاصی: {op.dieMoldName} ({op.dieMoldCode})
                               </span>
                             )}
@@ -969,7 +986,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                           <button
                             type="button"
                             onClick={() => toggleAllCandidates(idx)}
-                            className="text-xs text-indigo-700 hover:text-indigo-900 font-bold flex items-center gap-1.5 transition cursor-pointer"
+                            className="text-xs text-[#007cc0] hover:underline font-bold flex items-center gap-1.5 transition cursor-pointer"
                           >
                             <Info className="w-4 h-4" />
                             {showCandidates
@@ -978,8 +995,8 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                           </button>
 
                           {showCandidates && (
-                            <div className="mt-3 space-y-2 border-t border-slate-200 pt-3">
-                              <div className="text-[11px] text-slate-500 mb-2">
+                            <div className="mt-3 space-y-2 border-t border-[#d9d9d9] pt-3">
+                              <div className="text-[11px] text-[#666666] mb-2">
                                 برای تغییر پرس این مرحله، روی دکمه <strong>«انتخاب این پرس برای مرحله»</strong> در کارت دستگاه‌های مجاز کلیک کنید:
                               </div>
 
@@ -990,61 +1007,61 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                                   return (
                                     <div
                                       key={cand.machineId}
-                                      className={`p-3 rounded-xl border text-xs space-y-2 transition ${
+                                      className={`p-3 rounded border text-xs space-y-2 transition ${
                                         isCurrentlySelected
-                                          ? 'bg-emerald-50/60 border-emerald-400 ring-1 ring-emerald-400'
+                                          ? 'bg-[#eef8f2] border-[#107e3e] ring-1 ring-[#107e3e]'
                                           : cand.isEligible
-                                          ? 'bg-white border-slate-200 text-slate-900 hover:border-indigo-300'
-                                          : 'bg-rose-50/40 border-rose-200 text-slate-600'
+                                          ? 'bg-white border-[#d9d9d9] text-[#333333] hover:border-[#007cc0]'
+                                          : 'bg-[#fde8e8]/60 border-[#f5b8b8] text-[#666666]'
                                       }`}
                                     >
                                       <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
-                                          <span className="font-bold text-slate-900">{cand.machineName}</span>
-                                          <span className="font-mono text-[10px] text-slate-500">({cand.machineCode})</span>
+                                          <span className="font-bold text-[#333333]">{cand.machineName}</span>
+                                          <span className="font-mono text-[10px] text-[#666666]">({cand.machineCode})</span>
                                         </div>
                                         {cand.isEligible ? (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b7dfc5]">
                                             رتبه {toPersianDigits(cand.recommendationRank)} (مجاز)
                                           </span>
                                         ) : (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fde8e8] text-[#bb0000] border border-[#f5b8b8]">
                                             رد صلاحیت فنی
                                           </span>
                                         )}
                                       </div>
 
                                       {/* Evaluation Criteria Checklist */}
-                                      <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
+                                      <div className="grid grid-cols-2 gap-1 text-[11px] text-[#666666] pt-1">
                                         <div className="flex items-center gap-1">
                                           {cand.supportsProcess ? (
-                                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                            <CheckCircle2 className="w-3 h-3 text-[#107e3e] shrink-0" />
                                           ) : (
-                                            <XCircle className="w-3 h-3 text-rose-500 shrink-0" />
+                                            <XCircle className="w-3 h-3 text-[#bb0000] shrink-0" />
                                           )}
                                           <span>پوشش فرایند: {cand.supportsProcess ? 'تأیید' : 'عدم تطابق'}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                           {cand.tonnageSufficient ? (
-                                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                            <CheckCircle2 className="w-3 h-3 text-[#107e3e] shrink-0" />
                                           ) : (
-                                            <XCircle className="w-3 h-3 text-rose-500 shrink-0" />
+                                            <XCircle className="w-3 h-3 text-[#bb0000] shrink-0" />
                                           )}
                                           <span>تناژ مجاز: {cand.tonnageSufficient ? 'کافی' : 'ناکافی'}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                           {cand.dieCompatible ? (
-                                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                            <CheckCircle2 className="w-3 h-3 text-[#107e3e] shrink-0" />
                                           ) : (
-                                            <XCircle className="w-3 h-3 text-rose-500 shrink-0" />
+                                            <XCircle className="w-3 h-3 text-[#bb0000] shrink-0" />
                                           )}
                                           <span>انطباق قالب: {cand.dieCompatible ? 'سازگار' : 'ناسازگار'}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                           {cand.isMachineActive ? (
-                                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                            <CheckCircle2 className="w-3 h-3 text-[#107e3e] shrink-0" />
                                           ) : (
-                                            <XCircle className="w-3 h-3 text-rose-500 shrink-0" />
+                                            <XCircle className="w-3 h-3 text-[#bb0000] shrink-0" />
                                           )}
                                           <span>وضعیت: {cand.isMachineActive ? 'آماده‌به‌کار' : 'متوقف / تعمیرات'}</span>
                                         </div>
@@ -1052,10 +1069,10 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
 
                                       {/* Ineligibility Reasons */}
                                       {!cand.isEligible && cand.ineligibilityReasons.length > 0 && (
-                                        <div className="text-[11px] text-rose-800 bg-rose-100/70 p-2 rounded border border-rose-200 space-y-0.5 mt-1">
+                                        <div className="text-[11px] text-[#bb0000] bg-[#fde8e8] p-2 rounded border border-[#f5b8b8] space-y-0.5 mt-1">
                                           {cand.ineligibilityReasons.map((r, ri) => (
                                             <div key={ri} className="flex items-center gap-1">
-                                              <span className="text-rose-600">•</span>
+                                              <span className="text-[#bb0000]">•</span>
                                               <span>{r}</span>
                                             </div>
                                           ))}
@@ -1063,17 +1080,17 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                                       )}
 
                                       {cand.isEligible && (
-                                        <div className="text-[11px] text-slate-700 pt-2 border-t border-slate-200 flex items-center justify-between gap-2">
+                                        <div className="text-[11px] text-[#333333] pt-2 border-t border-[#e8e8e8] flex items-center justify-between gap-2">
                                           <div className="flex items-center gap-3">
                                             <span>
                                               ساعت آزاد: <strong>{toPersianDigits(cand.availableHoursRemaining)}h</strong>
                                             </span>
                                             <span>
-                                              امتیاز: <strong className="text-emerald-700">{toPersianDigits(cand.suitabilityScore)}</strong>
+                                              امتیاز: <strong className="text-[#107e3e]">{toPersianDigits(cand.suitabilityScore)}</strong>
                                             </span>
                                           </div>
                                           {isCurrentlySelected ? (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold">
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#107e3e] text-white text-[10px] font-bold">
                                               <Check className="w-3 h-3" />
                                               ماشین انتخاب‌شده فعلی
                                             </span>
@@ -1088,7 +1105,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                                                   op.stepName
                                                 )
                                               }
-                                              className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 text-[10px] font-bold transition cursor-pointer"
+                                              className="sap-btn-standard px-2.5 py-1 text-[10px] font-bold cursor-pointer"
                                             >
                                               انتخاب این پرس برای مرحله
                                             </button>
@@ -1111,13 +1128,13 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
           </div>
 
           {/* Operational Workflow Chain Footer */}
-          <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+          <div className="bg-[#e5f3fa]/70 border border-[#b3d7ff] rounded-md p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-950">
-                <Cpu className="w-4 h-4 text-indigo-600" />
+              <div className="flex items-center gap-2 text-xs font-bold text-[#007cc0]">
+                <Cpu className="w-4 h-4 text-[#007cc0]" />
                 <span>زنجیره عملیاتی تجمیع برنامه و دیسپچ کارگاهی (APS → Daily Shop-Floor Dispatch)</span>
               </div>
-              <p className="text-[11px] text-indigo-800 leading-relaxed">
+              <p className="text-[11px] text-[#333333] leading-relaxed">
                 با کلیک روی دکمه روبرو، ابتدا پنجره تایید نهایی با جزئیات ورق مصرفی ({activePlan.materialStatus.requiredGrade}) و ایستگاه‌های OP نمایش داده می‌شود و پس از تایید شما، به شیت برنامه روزانه سالن تولید اضافه می‌گردد.
               </p>
             </div>
@@ -1127,7 +1144,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                 <button
                   type="button"
                   onClick={handleRecallFromShopFloor}
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 rounded-xl text-xs font-bold transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#fde8e8] text-[#bb0000] border border-[#f5b8b8] rounded text-xs font-bold transition cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>لغو ارسال و حذف از سالن</span>
@@ -1137,7 +1154,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                 type="button"
                 onClick={handleApproveAndDispatchToShopFloor}
                 disabled={actionInProgress || !activePlan.overallFeasible}
-                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer"
+                className="sap-btn-emphasized flex items-center gap-2 px-4 py-2 text-xs font-bold disabled:opacity-50 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>
@@ -1153,19 +1170,19 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
 
       {/* Revision Modal */}
       {showRevisionModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <GitBranch className="w-5 h-5 text-amber-500" />
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md max-w-md w-full p-5 shadow-2xl">
+            <h3 className="text-sm font-bold text-[#333333] flex items-center gap-2">
+              <GitBranch className="w-5 h-5 text-[#e9730c]" />
               ایجاد نسخه بازنگری شده برنامه (Revision)
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-[#666666] mt-1">
               نسخه فعلی ({activePlan?.planVersion}) بایگانی شده و نسخه جدیدی برای اعمال اصلاحات ایجاد می‌گردد.
             </p>
 
             <form onSubmit={handleCreateRevision} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-[#333333] mb-1">
                   علت بازنگری یا تغییر برنامه:
                 </label>
                 <textarea
@@ -1174,7 +1191,7 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                   placeholder="مثال: تغییر اولویت تحویل توسط ساپکو، خرابی پرس اصلی، کسری کلاف ورق..."
                   required
                   rows={3}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-white border border-[#bfbfbf] rounded p-2.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
 
@@ -1182,14 +1199,14 @@ export const MachineRecommendationView: React.FC<MachineRecommendationViewProps>
                 <button
                   type="button"
                   onClick={() => setShowRevisionModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold cursor-pointer"
+                  className="sap-btn-standard px-4 py-1.5 text-xs font-bold cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={actionInProgress || !revisionReason.trim()}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs disabled:opacity-50 cursor-pointer"
+                  className="sap-btn-emphasized px-4 py-1.5 font-bold text-xs disabled:opacity-50 cursor-pointer"
                 >
                   {actionInProgress ? 'در حال ثبت...' : 'ایجاد نسخه جدید'}
                 </button>

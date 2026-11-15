@@ -42,16 +42,9 @@ import { OperationTransferModal } from './OperationTransferModal';
 import { InventoryReportView } from '../InventoryReportView';
 import { WipModuleSkeleton, Skeleton } from '../ui/Skeleton';
 import { TraceabilityInquiryView } from './TraceabilityInquiryView';
+import { useErpRouter } from '../../context/RouterContext';
 
-interface ProductionWipModuleViewProps {
-  parts: Part[];
-  machines: Machine[];
-  operators: Operator[];
-  stageBalances: StageInventorySummary[];
-  onGlobalRefresh?: () => Promise<void>;
-}
-
-type WipViewMode =
+export type WipViewMode =
   | 'UNIFIED_DIRECTORY'
   | 'TRACEABILITY'
   | 'DASHBOARD'
@@ -59,14 +52,27 @@ type WipViewMode =
   | 'TRANSFERS'
   | 'STAGES';
 
+interface ProductionWipModuleViewProps {
+  parts: Part[];
+  machines: Machine[];
+  operators: Operator[];
+  stageBalances: StageInventorySummary[];
+  initialView?: WipViewMode;
+  initialTraceQuery?: string;
+  onGlobalRefresh?: () => Promise<void>;
+}
+
 export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = ({
   parts,
   machines,
   operators,
   stageBalances,
+  initialView,
+  initialTraceQuery,
   onGlobalRefresh,
 }) => {
-  const [activeView, setActiveView] = useState<WipViewMode>('UNIFIED_DIRECTORY');
+  const router = useErpRouter();
+  const [activeView, setActiveView] = useState<WipViewMode>(initialView || 'UNIFIED_DIRECTORY');
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
@@ -79,8 +85,8 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
   const [transfers, setTransfers] = useState<WipTransfer[]>([]);
   const [routings, setRoutings] = useState<Routing[]>([]);
 
-  // Unified Grafana-style Search & Filters
-  const [searchQuery, setSearchQuery] = useState('');
+  // Unified Search & Filters
+  const [searchQuery, setSearchQuery] = useState(initialTraceQuery || '');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [onlyActiveQueue, setOnlyActiveQueue] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -88,6 +94,18 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
     transfers_group: true,
   });
   const [expandedMoIds, setExpandedMoIds] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (initialView) {
+      setActiveView(initialView);
+    }
+  }, [initialView]);
+
+  useEffect(() => {
+    if (initialTraceQuery !== undefined && initialTraceQuery !== '') {
+      setSearchQuery(initialTraceQuery);
+    }
+  }, [initialTraceQuery]);
 
   // Action Modals State
   const [isCreateMoOpen, setIsCreateMoOpen] = useState(false);
@@ -325,27 +343,27 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
   };
 
   return (
-    <div className="space-y-5">
-      {/* Grafana-Inspired Clean Header + Single Unified Filter Bar (No Nested Sub-Tabs) */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200/70 text-orange-600 flex items-center justify-center shrink-0">
-              <GitBranch className="w-5 h-5" />
+    <div className="space-y-4">
+      {/* SAP HANA Fiori Header + Unified Filter Bar */}
+      <div className="bg-white border border-[#d9d9d9] rounded-md p-4 shadow-2xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-md bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] flex items-center justify-center shrink-0">
+              <GitBranch className="w-4.5 h-4.5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                <h1 className="text-base font-bold text-[#333333] tracking-tight">
                   قطعات در جریان ساخت و ایستگاه‌ها (WIP)
                 </h1>
                 {metrics?.overallConservationIntegrity && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#f1f8f3] text-[#107e3e] border border-[#b7dfc4]">
+                    <ShieldCheck className="w-3 h-3 text-[#107e3e]" />
                     <span>تراز پایستگی تایید شده</span>
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#666666] mt-0.5">
                 مدیریت یکپارچه دستورهای کار ساخت (MO)، صف ایستگاه‌های پرس و جوش، و حواله‌های انتقال بین مراحل
               </p>
             </div>
@@ -356,45 +374,44 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
               type="button"
               onClick={loadWipData}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+              className="sap-btn-standard inline-flex items-center gap-1.5 text-xs cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[#007cc0] ${loading ? 'animate-spin' : ''}`} />
               <span>به‌روزرسانی</span>
             </button>
             <button
               type="button"
               onClick={() => setIsCreateMoOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+              className="sap-btn-emphasized inline-flex items-center gap-1.5 text-xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-orange-400" />
+              <Plus className="w-3.5 h-3.5" />
               <span>دستور کار جدید (MO)</span>
             </button>
           </div>
         </div>
 
-        {/* Single Flat Search & View Filter Bar (Grafana Reference Style) */}
-        <div className="space-y-2.5 pt-2 border-t border-slate-100">
+        {/* Unified SAP Fiori Filter Bar */}
+        <div className="space-y-2 pt-2.5 border-t border-[#e5e5e5]">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#666666] absolute right-3 top-2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="جستجوی شماره دستور کار (MO)، کد قطعه، نام قطعه یا ایستگاه کاری..."
-              className="w-full bg-slate-50/70 focus:bg-white border border-slate-200/90 focus:border-slate-400 rounded-lg pr-9 pl-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors"
+              className="w-full bg-[#f5f5f5] focus:bg-white border border-[#d9d9d9] focus:border-[#007cc0] rounded pr-9 pl-3 py-1.5 text-xs text-[#333333] placeholder:text-[#767676] focus:outline-none transition-colors"
             />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-2">
-              {/* View / Section Filter Dropdown (Replaces Nested Sub-Tabs) */}
-              <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700">
-                <Boxes className="w-3.5 h-3.5 text-orange-600" />
-                <span className="text-slate-400">نمای بخش:</span>
+              <div className="inline-flex items-center gap-1.5 bg-white border border-[#d9d9d9] rounded px-2.5 py-1 text-[#333333]">
+                <Boxes className="w-3.5 h-3.5 text-[#007cc0]" />
+                <span className="text-[#666666]">نمای بخش:</span>
                 <select
                   value={activeView}
                   onChange={e => setActiveView(e.target.value as WipViewMode)}
-                  className="bg-transparent text-xs font-semibold text-slate-900 focus:outline-none cursor-pointer"
+                  className="bg-transparent text-xs font-semibold text-[#333333] focus:outline-none cursor-pointer"
                 >
                   <option value="UNIFIED_DIRECTORY">
                     نمای درختی یکپارچه (همه دستورات کار و ایستگاه‌ها)
@@ -413,13 +430,12 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                 </select>
               </div>
 
-              {/* Status Filter Dropdown */}
-              <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <div className="inline-flex items-center gap-1.5 bg-white border border-[#d9d9d9] rounded px-2.5 py-1 text-[#333333]">
+                <Filter className="w-3.5 h-3.5 text-[#666666]" />
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value)}
-                  className="bg-transparent text-xs font-medium text-slate-700 focus:outline-none cursor-pointer"
+                  className="bg-transparent text-xs font-medium text-[#333333] focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">وضعیت MO: همه</option>
                   <option value="IN_PROGRESS">در جریان ساخت</option>
@@ -428,12 +444,12 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                 </select>
               </div>
 
-              <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200/80 bg-white text-slate-600 cursor-pointer select-none hover:bg-slate-50">
+              <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-[#d9d9d9] bg-white text-[#333333] cursor-pointer select-none hover:bg-[#f5f5f5]">
                 <input
                   type="checkbox"
                   checked={onlyActiveQueue}
                   onChange={e => setOnlyActiveQueue(e.target.checked)}
-                  className="rounded border-slate-300 text-slate-900 focus:ring-0"
+                  className="rounded border-[#bfbfbf] text-[#007cc0] focus:ring-0"
                 />
                 <span>فقط دارای موجودی در صف</span>
               </label>
@@ -444,7 +460,7 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                 <button
                   type="button"
                   onClick={() => setActiveView('UNIFIED_DIRECTORY')}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold cursor-pointer"
+                  className="sap-btn-standard text-[11px] font-semibold cursor-pointer"
                 >
                   بازگشت به نمای درختی یکپارچه
                 </button>
@@ -480,13 +496,13 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
         </div>
       )}
 
-      {/* Compact 6-Stage Summary Strip (Uses shared Skeleton with block, circle, text during refresh) */}
+      {/* Compact 6-Stage Summary Strip */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {Array.from({ length: 6 }).map((_, idx) => (
             <div
               key={idx}
-              className="bg-white p-3.5 rounded-xl border border-slate-200/90 space-y-2"
+              className="bg-white p-3 rounded-md border border-[#d9d9d9] space-y-2"
             >
               <div className="flex items-center justify-between">
                 <Skeleton variant="text" className="w-20 h-3" />
@@ -498,63 +514,63 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="bg-white p-3 rounded-md border border-[#d9d9d9] shadow-2xs">
+            <div className="flex items-center justify-between text-[#666666] text-[11px]">
               <span>صف ورودی ایستگاه</span>
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <Clock className="w-3.5 h-3.5 text-[#007cc0]" />
             </div>
-            <div className="text-lg font-bold text-slate-900 font-mono mt-1">
+            <div className="text-base font-bold text-[#333333] font-mono tabular-nums mt-1">
               {formatNumber(metrics?.totalWaitingQty || 0)}
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+          <div className="bg-white p-3 rounded-md border border-[#d9d9d9] shadow-2xs">
+            <div className="flex items-center justify-between text-[#666666] text-[11px]">
               <span>در حال ساخت پای دستگاه</span>
-              <Play className="w-3.5 h-3.5 text-blue-500" />
+              <Play className="w-3.5 h-3.5 text-[#007cc0]" />
             </div>
-            <div className="text-lg font-bold text-slate-900 font-mono mt-1">
+            <div className="text-base font-bold text-[#007cc0] font-mono tabular-nums mt-1">
               {formatNumber(metrics?.totalInProgressQty || 0)}
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+          <div className="bg-white p-3 rounded-md border border-[#d9d9d9] shadow-2xs">
+            <div className="flex items-center justify-between text-[#666666] text-[11px]">
               <span>آماده انتقال به مرحله بعد</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#107e3e]" />
             </div>
-            <div className="text-lg font-bold text-emerald-700 font-mono mt-1">
+            <div className="text-base font-bold text-[#107e3e] font-mono tabular-nums mt-1">
               {formatNumber(metrics?.totalReadyForTransferQty || 0)}
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+          <div className="bg-white p-3 rounded-md border border-[#d9d9d9] shadow-2xs">
+            <div className="flex items-center justify-between text-[#666666] text-[11px]">
               <span>در حال انتقال (حواله باز)</span>
-              <ArrowRightLeft className="w-3.5 h-3.5 text-orange-500" />
+              <ArrowRightLeft className="w-3.5 h-3.5 text-[#e9730c]" />
             </div>
-            <div className="text-lg font-bold text-orange-700 font-mono mt-1">
+            <div className="text-base font-bold text-[#b85a00] font-mono tabular-nums mt-1">
               {formatNumber(metrics?.totalInTransitQty || 0)}
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+          <div className="bg-white p-3 rounded-md border border-[#d9d9d9] shadow-2xs">
+            <div className="flex items-center justify-between text-[#666666] text-[11px]">
               <span>محصول تکمیل‌شده</span>
-              <Layers className="w-3.5 h-3.5 text-slate-400" />
+              <Layers className="w-3.5 h-3.5 text-[#007cc0]" />
             </div>
-            <div className="text-lg font-bold text-slate-900 font-mono mt-1">
+            <div className="text-base font-bold text-[#333333] font-mono tabular-nums mt-1">
               {formatNumber(metrics?.totalCompletedQty || 0)}
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+          <div className="bg-white p-3 rounded-md border border-[#d9d9d9] shadow-2xs">
+            <div className="flex items-center justify-between text-[#666666] text-[11px]">
               <span>ضایعات و دوباره‌کاری</span>
-              <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+              <AlertCircle className="w-3.5 h-3.5 text-[#bb0000]" />
             </div>
-            <div className="text-lg font-bold text-rose-600 font-mono mt-1">
+            <div className="text-base font-bold text-[#bb0000] font-mono tabular-nums mt-1">
               {formatNumber(
                 (metrics?.totalScrapQty || 0) + (metrics?.totalReworkQty || 0)
               )}
@@ -569,41 +585,42 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
           parts={parts}
           machines={machines}
           operators={operators}
+          initialQuery={initialTraceQuery}
         />
       )}
 
-      {/* UNIFIED GRAFANA-STYLE DIRECTORY VIEW (Default — Zero Nested Tabs) */}
+      {/* UNIFIED SAP HANA DIRECTORY VIEW */}
       {activeView === 'UNIFIED_DIRECTORY' && (
-        <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
-          <div className="px-4 py-2.5 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between text-xs font-semibold text-slate-600">
+        <div className="bg-white border border-[#d9d9d9] rounded-md overflow-hidden shadow-2xs">
+          <div className="px-3.5 py-2 bg-white border-b border-[#d9d9d9] flex items-center justify-between text-xs font-semibold text-[#333333]">
             <span>نام دستور کار (MO) / مرحله عملیات و ایستگاه</span>
-            <span>تگ‌های وضعیت و عملیات سریع</span>
+            <span>تگ‌های وضعیت، اسناد مرتبط و عملیات سریع</span>
           </div>
 
-          <div className="divide-y divide-slate-100 text-xs">
+          <div className="divide-y divide-[#e5e5e5] text-xs">
             {/* Folder 1: Active Manufacturing Orders (Expandable inline) */}
             <div>
               <button
                 type="button"
                 onClick={() => toggleGroup('orders_group')}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/80 transition-colors cursor-pointer text-right"
+                className="w-full px-3.5 py-2 flex items-center justify-between hover:bg-[#e5f3fa]/50 transition-colors cursor-pointer text-right"
               >
-                <div className="flex items-center gap-2.5 font-semibold text-slate-800">
+                <div className="flex items-center gap-2 font-semibold text-[#333333]">
                   {expandedGroups.orders_group ? (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                    <ChevronDown className="w-4 h-4 text-[#007cc0]" />
                   ) : (
-                    <ChevronLeft className="w-4 h-4 text-slate-400" />
+                    <ChevronLeft className="w-4 h-4 text-[#666666]" />
                   )}
-                  <Folder className="w-4 h-4 text-slate-500" />
+                  <Folder className="w-4 h-4 text-[#007cc0]" />
                   <span>دستورهای کار تولید و مراحل ساخت (Manufacturing Orders)</span>
                 </div>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-[#666666]">
                   {toPersianDigits(filteredOrders.length)} دستور کار
                 </span>
               </button>
 
               {expandedGroups.orders_group && (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-[#e5e5e5]">
                   {filteredOrders.map(mo => {
                     const isExpanded = !!expandedMoIds[mo.id];
                     const completedOps = mo.operations.filter(
@@ -612,45 +629,61 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                     return (
                       <div key={mo.id} className="bg-white">
                         {/* MO Row */}
-                        <div className="pr-8 pl-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-slate-50/90 transition-colors">
+                        <div className="pr-7 pl-3.5 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-[#e5f3fa]/40 transition-colors">
                           <div
                             onClick={() => toggleMoRow(mo.id)}
-                            className="flex items-center gap-2.5 cursor-pointer flex-1"
+                            className="flex items-center gap-2 cursor-pointer flex-1"
                           >
                             {isExpanded ? (
-                              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <ChevronDown className="w-3.5 h-3.5 text-[#007cc0] shrink-0" />
                             ) : (
-                              <ChevronLeft className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <ChevronLeft className="w-3.5 h-3.5 text-[#666666] shrink-0" />
                             )}
-                            <Layers className="w-4 h-4 text-slate-500 shrink-0" />
+                            <Layers className="w-4 h-4 text-[#007cc0] shrink-0" />
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-mono font-bold text-slate-900">
+                                <button
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    router.traceDocument(mo.moNumber, 'WIP_TRACEABILITY');
+                                  }}
+                                  className="sap-doc-link font-mono font-bold text-xs cursor-pointer"
+                                  title="استعلام شجره‌نامه و شماره رهگیری این دستور کار"
+                                >
                                   {mo.moNumber}
-                                </span>
-                                <span className="font-semibold text-slate-800">
+                                </button>
+                                <span className="font-semibold text-[#333333]">
                                   {mo.partName}
                                 </span>
-                                <span className="text-slate-400 font-mono text-[11px]">
+                                <button
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    router.traceDocument(mo.partCode, 'INVENTORY_LEDGER');
+                                  }}
+                                  className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                                  title="مشاهده کاردکس انبار این قطعه"
+                                >
                                   ({mo.partCode})
-                                </span>
+                                </button>
                               </div>
-                              <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-3 flex-wrap">
+                              <div className="text-[11px] text-[#666666] mt-0.5 flex items-center gap-3 flex-wrap">
                                 <span>
                                   هدف ساخت:{' '}
-                                  <strong className="font-mono text-slate-800">
+                                  <strong className="font-mono text-[#333333] tabular-nums">
                                     {formatNumber(mo.targetQuantity)}
                                   </strong>
                                 </span>
                                 <span>
                                   تکمیل نهایی:{' '}
-                                  <strong className="font-mono text-emerald-700">
+                                  <strong className="font-mono text-[#107e3e] tabular-nums">
                                     {formatNumber(mo.completedQuantity)}
                                   </strong>
                                 </span>
                                 <span>
                                   ضایعات:{' '}
-                                  <strong className="font-mono text-rose-600">
+                                  <strong className="font-mono text-[#bb0000] tabular-nums">
                                     {formatNumber(mo.totalScrapQuantity)}
                                   </strong>
                                 </span>
@@ -658,12 +691,12 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 self-end md:self-center">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <div className="flex items-center gap-1.5 self-end md:self-center flex-wrap">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#f1f8f3] text-[#107e3e] border border-[#b7dfc4]">
                               {toPersianDigits(completedOps)} از{' '}
                               {toPersianDigits(mo.operations.length)} مرحله
                             </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-200">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2]">
                               {mo.status === 'IN_PROGRESS'
                                 ? 'در جریان ساخت'
                                 : mo.status === 'COMPLETED'
@@ -672,34 +705,41 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                             </span>
                             <button
                               type="button"
+                              onClick={() => router.traceDocument(mo.moNumber, 'INVENTORY_LEDGER')}
+                              className="sap-btn-standard text-[11px] py-0.5 px-2 cursor-pointer"
+                            >
+                              اسناد کاردکس
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setReconciliationMoId(mo.id)}
-                              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium cursor-pointer"
+                              className="sap-btn-standard text-[11px] py-0.5 px-2 cursor-pointer"
                             >
                               تراز پایستگی
                             </button>
                           </div>
                         </div>
 
-                        {/* Inline Operations Rows (Flat under the MO) */}
+                        {/* Inline Operations Rows (Compact SAP HANA) */}
                         {isExpanded && (
-                          <div className="bg-slate-50/60 border-t border-slate-100 divide-y divide-slate-100">
+                          <div className="bg-[#f8f9fa] border-t border-[#e5e5e5] divide-y divide-[#e5e5e5]">
                             {mo.operations.map(op => (
                               <div
                                 key={op.id}
-                                className="pr-14 pl-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                                className="pr-12 pl-3.5 py-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               >
-                                <div className="flex items-center gap-3">
-                                  <span className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px] font-bold text-slate-700">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="px-1.5 py-0.5 rounded bg-white border border-[#d9d9d9] font-mono text-[10px] font-bold text-[#007cc0]">
                                     {op.stepCode}
                                   </span>
                                   <div>
-                                    <span className="font-semibold text-slate-800">
+                                    <span className="font-semibold text-[#333333]">
                                       {op.stepName}
                                     </span>
-                                    <div className="text-[11px] text-slate-500 flex items-center gap-3 mt-0.5 font-mono">
+                                    <div className="text-[11px] text-[#666666] flex items-center gap-3 mt-0.5 font-mono tabular-nums">
                                       <span>صف: {formatNumber(op.waitingInputQty)}</span>
                                       <span>پای دستگاه: {formatNumber(op.inProgressQty)}</span>
-                                      <span className="text-emerald-700 font-bold">
+                                      <span className="text-[#107e3e] font-bold">
                                         آماده انتقال: {formatNumber(op.readyForTransferQty)}
                                       </span>
                                     </div>
@@ -710,14 +750,14 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                                   <button
                                     type="button"
                                     onClick={() => setInputModalOp(op)}
-                                    className="px-2.5 py-1 rounded-md bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium cursor-pointer"
+                                    className="sap-btn-standard text-[11px] py-0.5 px-2 cursor-pointer"
                                   >
                                     ثبت ورودی
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setProdModalOp(op)}
-                                    className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer"
+                                    className="px-2 py-0.5 rounded bg-[#107e3e] hover:bg-[#0d6832] text-white text-[11px] font-semibold cursor-pointer"
                                   >
                                     ثبت تولید / ضایعات
                                   </button>
@@ -727,7 +767,7 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                                       setTransferModalContext({ mo, op });
                                       setIsTransferModalOpen(true);
                                     }}
-                                    className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold cursor-pointer"
+                                    className="sap-btn-emphasized text-[11px] py-0.5 px-2 cursor-pointer"
                                   >
                                     انتقال به مرحله بعد
                                   </button>
@@ -748,38 +788,52 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
               <button
                 type="button"
                 onClick={() => toggleGroup('transfers_group')}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/80 transition-colors cursor-pointer text-right"
+                className="w-full px-3.5 py-2 flex items-center justify-between hover:bg-[#e5f3fa]/50 transition-colors cursor-pointer text-right"
               >
-                <div className="flex items-center gap-2.5 font-semibold text-slate-800">
+                <div className="flex items-center gap-2 font-semibold text-[#333333]">
                   {expandedGroups.transfers_group ? (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                    <ChevronDown className="w-4 h-4 text-[#007cc0]" />
                   ) : (
-                    <ChevronLeft className="w-4 h-4 text-slate-400" />
+                    <ChevronLeft className="w-4 h-4 text-[#666666]" />
                   )}
-                  <Folder className="w-4 h-4 text-slate-500" />
+                  <Folder className="w-4 h-4 text-[#007cc0]" />
                   <span>حواله‌های انتقال بین مراحل (Inter-Operation Transfers)</span>
                 </div>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-[#666666]">
                   {toPersianDigits(transfers.length)} حواله
                 </span>
               </button>
 
               {expandedGroups.transfers_group && (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-[#e5e5e5]">
                   {transfers.slice(0, 6).map(tr => (
                     <div
                       key={tr.id}
-                      className="pr-10 pl-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50/90"
+                      className="pr-9 pl-3.5 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-[#e5f3fa]/40"
                     >
                       <div className="flex items-center gap-2.5">
-                        <ArrowRightLeft className="w-4 h-4 text-slate-400 shrink-0" />
+                        <ArrowRightLeft className="w-4 h-4 text-[#007cc0] shrink-0" />
                         <div>
-                          <div className="font-semibold text-slate-900">
-                            {tr.transferNumber} — {tr.partName} ({tr.moNumber})
+                          <div className="font-semibold text-[#333333] flex items-center gap-1.5 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => router.traceDocument(tr.transferNumber, 'WIP_TRACEABILITY')}
+                              className="sap-doc-link font-mono cursor-pointer"
+                            >
+                              {tr.transferNumber}
+                            </button>
+                            <span>— {tr.partName}</span>
+                            <button
+                              type="button"
+                              onClick={() => router.traceDocument(tr.moNumber, 'WIP_TRACEABILITY')}
+                              className="sap-doc-link font-mono text-[11px] cursor-pointer"
+                            >
+                              ({tr.moNumber})
+                            </button>
                           </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
+                          <div className="text-[11px] text-[#666666] mt-0.5">
                             از {tr.fromStepName} به {tr.toStepName} • تعداد:{' '}
-                            <strong className="font-mono text-slate-800">
+                            <strong className="font-mono text-[#333333] tabular-nums">
                               {formatNumber(tr.quantity)} عدد
                             </strong>
                           </div>
@@ -788,12 +842,12 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
 
                       <div className="flex items-center gap-2 self-end sm:self-center">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
                             tr.status === 'APPROVED'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              ? 'bg-[#f1f8f3] text-[#107e3e] border-[#b7dfc4]'
                               : tr.status === 'REJECTED'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-orange-50 text-orange-700 border-orange-200'
+                              ? 'bg-[#fff0f0] text-[#bb0000] border-[#f2b8b5]'
+                              : 'bg-[#fef7f1] text-[#b85a00] border-[#f5d0b3]'
                           }`}
                         >
                           {tr.status === 'APPROVED'
@@ -806,7 +860,7 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                           <button
                             type="button"
                             onClick={() => handleApproveTransfer(tr.id)}
-                            className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer"
+                            className="px-2.5 py-0.5 rounded bg-[#107e3e] hover:bg-[#0d6832] text-white text-[11px] font-semibold cursor-pointer"
                           >
                             تایید دریافت
                           </button>

@@ -11,6 +11,7 @@ import {
 import { PhysicalCoil } from '../../types/inventory';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 
 export interface ChildSlitNode {
   id: string;
@@ -255,6 +256,7 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
   onReverseSlitting,
 }) => {
   const { openQuickEditDrawer, requestConfirm, showUndoToast, recordAudit } = useEnterpriseUx();
+  const router = useErpRouter();
 
   const [treesState, setTreesState] = useState<ParentCoilSlittingTree[]>(() => {
     try {
@@ -687,23 +689,23 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4 text-right" dir="rtl">
+    <div className="sap-card p-4 space-y-4 text-right" dir="rtl">
       {/* Header & Parent Coil Selector */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#e8e8e8] pb-3">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center shrink-0">
-            <GitBranch className="w-5 h-5" />
+          <div className="w-9 h-9 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf5] flex items-center justify-center shrink-0">
+            <GitBranch className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm sm:text-base font-bold text-slate-900">
+              <h3 className="text-sm font-semibold text-[#333333]">
                 شجره‌نامه برش کلاف (Coil Slitting Genealogy: Parent ➔ Child Strips & Sheets)
               </h3>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#fff4e5] text-[#e9730c] border border-[#f5cba7]">
                 ردیابی شماره ذوب (Heat Traceability)
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#666666] mt-0.5">
               مشاهده و ویرایش کشویی (با آیکون مداد) برش رول مادر (Parent) به نوارها و شیت‌های فرعی (Child)، ته‌کلاف و دستورات تولید (MO).
             </p>
           </div>
@@ -711,7 +713,7 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
 
         {/* Parent Coil Selector Pills */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-slate-500 font-medium ml-1">انتخاب رول مادر:</span>
+          <span className="text-xs text-[#666666] font-medium ml-1">انتخاب رول مادر:</span>
           {slittingTrees.map(tree => {
             const isSelected = tree.parentId === activeTree.parentId;
             return (
@@ -719,16 +721,16 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                 key={tree.parentId}
                 type="button"
                 onClick={() => setSelectedTreeId(tree.parentId)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition cursor-pointer flex items-center gap-1.5 border ${
+                className={`px-3 py-1 rounded text-xs font-mono font-semibold transition cursor-pointer flex items-center gap-1.5 border ${
                   isSelected
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                    ? 'bg-[#007cc0] text-white border-[#007cc0]'
+                    : 'bg-[#f5f5f5] hover:bg-[#e5f3fa] text-[#333333] border-[#d9d9d9]'
                 }`}
               >
                 <span>{tree.parentCoilCode}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded ${
-                    isSelected ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-200 text-slate-600'
+                  className={`text-[10px] px-1.5 rounded ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-white text-[#666666] border border-[#d9d9d9]'
                   }`}
                 >
                   {tree.materialGrade}
@@ -742,19 +744,19 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
       {/* Visual Tree Layout: Parent Coil (Right) ➔ Slitting Operation ➔ Child Strips/Sheets (Left) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch pt-1">
         {/* 1. Parent Coil Card (رول مادر) with Pencil Drawer Edit */}
-        <div className="lg:col-span-4 bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden border border-slate-800">
+        <div className="lg:col-span-4 bg-[#f7f7f7] text-[#333333] rounded-md p-4 flex flex-col justify-between relative overflow-hidden border border-[#d9d9d9] border-t-4 border-t-[#007cc0]">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf5]">
                 رول مادر (Parent Master Coil)
               </span>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-slate-300">{activeTree.coilPackNumber}</span>
+                <span className="font-mono text-xs text-[#666666]">{activeTree.coilPackNumber}</span>
                 <button
                   type="button"
                   onClick={handleEditParentCoil}
                   title="ویرایش مشخصات رول مادر در کشو"
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-400 text-slate-300 hover:text-slate-950 border border-slate-700 transition cursor-pointer"
+                  className="p-1.5 rounded bg-white hover:bg-[#e5f3fa] text-[#666666] hover:text-[#007cc0] border border-[#d9d9d9] transition cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                 </button>
@@ -762,24 +764,48 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
             </div>
 
             <div>
-              <div className="text-lg font-black font-mono tracking-tight text-white">
+              <button
+                type="button"
+                onClick={() => router.traceDocument(activeTree.parentCoilCode, 'COILS')}
+                className="sap-doc-link text-base font-bold font-mono tracking-tight"
+                title="مشاهده پرونده رول مادر"
+              >
                 {activeTree.parentCoilCode}
-              </div>
-              <div className="text-xs text-slate-300 mt-0.5">{activeTree.supplierName}</div>
+              </button>
+              <div className="text-xs text-[#666666] mt-0.5">{activeTree.supplierName}</div>
+              {activeTree.contractNumber && (
+                <div className="text-[11px] text-[#666666] mt-0.5">
+                  قرارداد:{' '}
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(activeTree.contractNumber, 'CONTRACTS')}
+                    className="sap-doc-link text-[11px]"
+                  >
+                    {activeTree.contractNumber}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Heat Number Highlight Box */}
-            <div className="p-3 rounded-xl bg-slate-800/90 border border-slate-700 flex items-center justify-between">
+            <div className="p-2.5 rounded bg-white border border-[#d9d9d9] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-amber-400 shrink-0" />
+                <Flame className="w-4 h-4 text-[#e9730c] shrink-0" />
                 <div>
-                  <span className="text-[10px] text-slate-400 block">شماره ذوب فولاد (Heat Number)</span>
-                  <span className="font-mono text-sm font-black text-amber-400">{activeTree.heatNumber}</span>
+                  <span className="text-[10px] text-[#666666] block">شماره ذوب فولاد (Heat Number)</span>
+                  <button
+                    type="button"
+                    onClick={() => router.traceDocument(activeTree.heatNumber, 'WIP_TRACEABILITY')}
+                    className="sap-doc-link font-mono text-xs font-bold"
+                    title="رهگیری شماره ذوب در تولید"
+                  >
+                    {activeTree.heatNumber}
+                  </button>
                 </div>
               </div>
               <div className="text-left">
-                <span className="text-[10px] text-slate-400 block">گرید و ضخامت</span>
-                <span className="font-mono text-xs font-bold text-white">
+                <span className="text-[10px] text-[#666666] block">گرید و ضخامت</span>
+                <span className="font-mono text-xs font-semibold text-[#333333]">
                   {activeTree.materialGrade} | {toPersianDigits(activeTree.thicknessMm)}mm
                 </span>
               </div>
@@ -787,15 +813,15 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
 
             {/* Parent Specs Grid */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-800/50 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">وزن اولیه رول مادر</span>
-                <span className="font-mono font-bold text-emerald-400 text-sm mt-0.5 block">
+              <div className="p-2.5 rounded bg-white border border-[#d9d9d9]">
+                <span className="text-[10px] text-[#666666] block">وزن اولیه رول مادر</span>
+                <span className="font-mono font-bold text-[#107e3e] text-sm mt-0.5 block">
                   {formatNumber(activeTree.originalWeightKg)} kg
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-800/50 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">عرض اولیه کلاف</span>
-                <span className="font-mono font-bold text-white text-sm mt-0.5 block">
+              <div className="p-2.5 rounded bg-white border border-[#d9d9d9]">
+                <span className="text-[10px] text-[#666666] block">عرض اولیه کلاف</span>
+                <span className="font-mono font-bold text-[#333333] text-sm mt-0.5 block">
                   {formatNumber(activeTree.originalWidthMm)} mm
                 </span>
               </div>
@@ -803,10 +829,10 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
           </div>
 
           {/* Mass Balance Bar inside Parent Card */}
-          <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
+          <div className="mt-4 pt-3 border-t border-[#d9d9d9] space-y-2">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-400">موازنه جرم برش کلاف:</span>
-              <span className="font-mono text-emerald-400 font-bold">
+              <span className="text-[#666666]">موازنه جرم برش کلاف:</span>
+              <span className="font-mono text-[#107e3e] font-semibold">
                 راندمان برش:{' '}
                 {toPersianDigits(
                   Math.min(
@@ -817,24 +843,24 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                 ٪
               </span>
             </div>
-            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden flex">
+            <div className="w-full h-2.5 bg-[#e8e8e8] rounded-full overflow-hidden flex">
               <div
-                className="bg-emerald-500 h-full"
+                className="bg-[#107e3e] h-full"
                 style={{ width: `${(totalSlitWeight / Math.max(1, activeTree.originalWeightKg)) * 100}%` }}
                 title={`نوار و شیت فرعی: ${totalSlitWeight} kg`}
               />
               <div
-                className="bg-amber-400 h-full"
+                className="bg-[#e9730c] h-full"
                 style={{ width: `${(remnantWeight / Math.max(1, activeTree.originalWeightKg)) * 100}%` }}
                 title={`ته‌کلاف: ${remnantWeight} kg`}
               />
               <div
-                className="bg-rose-500 h-full"
+                className="bg-[#bb0000] h-full"
                 style={{ width: `${(scrapWeight / Math.max(1, activeTree.originalWeightKg)) * 100}%` }}
                 title={`پرت برش: ${scrapWeight} kg`}
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-300 font-mono">
+            <div className="flex items-center justify-between text-[10px] text-[#666666] font-mono">
               <span>نوار/شیت: {formatNumber(totalSlitWeight)}kg</span>
               <span>ته‌کلاف: {formatNumber(remnantWeight)}kg</span>
               <span>پرت: {formatNumber(scrapWeight)}kg</span>
@@ -844,15 +870,15 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
 
         {/* 2. Child Strips & Sheets Tree Branches (نوارها و شیت‌های فرعی - Child Nodes) */}
         <div className="lg:col-span-8 flex flex-col justify-between space-y-3">
-          <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="bg-[#f7f7f7] border border-[#d9d9d9] rounded px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <Scissors className="w-4 h-4 text-indigo-600" />
-              <span className="font-bold text-slate-800">ایستگاه برش: {activeTree.slittingMachine}</span>
-              <span className="text-slate-400">|</span>
-              <span className="text-slate-600">تاریخ برش: {activeTree.slittingDate}</span>
+              <Scissors className="w-4 h-4 text-[#007cc0]" />
+              <span className="font-semibold text-[#333333]">ایستگاه برش: {activeTree.slittingMachine}</span>
+              <span className="text-[#bfbfbf]">|</span>
+              <span className="text-[#666666]">تاریخ برش: {activeTree.slittingDate}</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+              <span className="font-mono text-[11px] font-semibold text-[#007cc0] bg-[#e5f3fa] border border-[#b3ddf5] px-2 py-0.5 rounded">
                 {toPersianDigits(visibleChildren.length)} خروجی فرعی (Child) از ذوب {activeTree.heatNumber}
               </span>
               {totalSlitWeight > 0 && (
@@ -860,7 +886,7 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                   type="button"
                   onClick={handleReverseSlitting}
                   title="ابطال عملیات برش و بازگرداندن وزن نوارهای فرعی به رول مادر"
-                  className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-[#ffebee] hover:bg-[#bb0000] text-[#bb0000] hover:text-white border border-[#f5c2c7] hover:border-[#bb0000] text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>ابطال برش (Reverse Slitting)</span>
@@ -869,39 +895,39 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
               <button
                 type="button"
                 onClick={handleAddChildNode}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                className="sap-btn-emphasized px-2.5 py-1 text-[11px] flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3 h-3 text-emerald-400" />
+                <Plus className="w-3 h-3" />
                 <span>افزودن نوار/شیت فرعی</span>
               </button>
             </div>
           </div>
 
           {/* Vertical Connected Tree of Child Outputs */}
-          <div className="relative pr-5 space-y-2.5">
+          <div className="relative pr-5 space-y-2">
             {/* Vertical Connector Line */}
-            <div className="absolute right-2 top-3 bottom-3 w-0.5 bg-slate-300 rounded-full" />
+            <div className="absolute right-2 top-3 bottom-3 w-0.5 bg-[#d9d9d9] rounded-full" />
 
             {visibleChildren.map(child => {
               const isStripOrSheet = child.type === 'SLIT_STRIP' || child.type === 'BLANK_SHEET';
               const isRemnant = child.type === 'REMNANT_COIL';
 
               const dotColor = isStripOrSheet
-                ? 'bg-emerald-600 ring-emerald-100'
+                ? 'bg-[#107e3e] ring-[#eef7f1]'
                 : isRemnant
-                ? 'bg-amber-500 ring-amber-100'
-                : 'bg-rose-500 ring-rose-100';
+                ? 'bg-[#e9730c] ring-[#fff4e5]'
+                : 'bg-[#bb0000] ring-[#ffebee]';
 
               const cardBorder = isStripOrSheet
-                ? 'border-slate-200 hover:border-emerald-400 bg-white'
+                ? 'border-[#d9d9d9] hover:border-[#007cc0] bg-white'
                 : isRemnant
-                ? 'border-amber-200 bg-amber-50/40'
-                : 'border-rose-200 bg-rose-50/30';
+                ? 'border-[#f5cba7] bg-[#fff4e5]/40'
+                : 'border-[#f5c2c7] bg-[#ffebee]/40';
 
               return (
                 <div
                   key={child.id}
-                  className={`relative rounded-xl border p-3 transition-all shadow-2xs ${cardBorder}`}
+                  className={`relative rounded border p-2.5 transition-all ${cardBorder}`}
                 >
                   {/* Tree Branch Node Circle */}
                   <span
@@ -911,35 +937,35 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        <span className="font-mono text-xs font-bold text-[#333333] bg-[#f5f5f5] px-2 py-0.5 rounded border border-[#d9d9d9]">
                           {child.childCode}
                         </span>
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
                             isStripOrSheet
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              ? 'bg-[#eef7f1] text-[#107e3e] border-[#bce0c8]'
                               : isRemnant
-                              ? 'bg-amber-100 text-amber-900 border-amber-300'
-                              : 'bg-rose-100 text-rose-800 border-rose-200'
+                              ? 'bg-[#fff4e5] text-[#e9730c] border-[#f5cba7]'
+                              : 'bg-[#ffebee] text-[#bb0000] border-[#f5c2c7]'
                           }`}
                         >
                           {child.typeLabel}
                         </span>
-                        <span className="text-xs font-bold text-slate-700">{child.dimensionsLabel}</span>
-                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                        <span className="text-xs font-semibold text-[#333333]">{child.dimensionsLabel}</span>
+                        <span className="text-[10px] font-mono text-[#666666] bg-[#f5f5f5] px-1.5 py-0.5 rounded">
                           ذوب ارث‌برده: {activeTree.heatNumber}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3 flex-wrap text-[11px] text-slate-600">
+                      <div className="flex items-center gap-3 flex-wrap text-[11px] text-[#666666]">
                         <span>
-                          محل استقرار: <strong>{child.warehouseLocation}</strong>
+                          محل استقرار: <strong className="text-[#333333]">{child.warehouseLocation}</strong>
                         </span>
                         {child.targetPartName && (
                           <>
-                            <span className="text-slate-300">•</span>
+                            <span className="text-[#bfbfbf]">•</span>
                             <span>
-                              قطعه هدف: <strong className="text-slate-900">{child.targetPartName}</strong>
+                              قطعه هدف: <strong className="text-[#333333]">{child.targetPartName}</strong>
                             </span>
                           </>
                         )}
@@ -949,26 +975,31 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                     {/* Right-side Metrics, Linked MO Badge, Pencil Edit & Soft Delete */}
                     <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
                       {child.assignedMoNumber && (
-                        <div className="px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-left">
-                          <span className="text-[9px] text-indigo-600 block">دستور تولید متصل</span>
-                          <span className="font-mono text-xs font-black text-indigo-900">
+                        <div className="px-2 py-0.5 rounded bg-[#e5f3fa] border border-[#b3ddf5] text-left">
+                          <span className="text-[9px] text-[#666666] block">دستور تولید متصل</span>
+                          <button
+                            type="button"
+                            onClick={() => router.traceDocument(child.assignedMoNumber!, 'WIP_TRACEABILITY')}
+                            className="sap-doc-link font-mono text-xs font-bold"
+                            title="رهگیری این دستور تولید"
+                          >
                             {child.assignedMoNumber}
-                          </span>
+                          </button>
                         </div>
                       )}
 
                       {child.sheetCount && (
-                        <div className="text-left px-2 py-1 rounded-lg bg-slate-50 border border-slate-200">
-                          <span className="text-[9px] text-slate-500 block">تعداد شیت/بلنک</span>
-                          <span className="font-mono text-xs font-bold text-slate-900">
+                        <div className="text-left px-2 py-0.5 rounded bg-[#f7f7f7] border border-[#d9d9d9]">
+                          <span className="text-[9px] text-[#666666] block">تعداد شیت/بلنک</span>
+                          <span className="font-mono text-xs font-semibold text-[#333333]">
                             {formatNumber(child.sheetCount)} برگ
                           </span>
                         </div>
                       )}
 
                       <div className="text-left min-w-[75px]">
-                        <span className="text-[10px] text-slate-400 block">وزن فرعی</span>
-                        <span className="font-mono text-sm font-black text-slate-900">
+                        <span className="text-[10px] text-[#666666] block">وزن فرعی</span>
+                        <span className="font-mono text-sm font-bold text-[#333333]">
                           {formatNumber(child.weightKg)} <span className="text-[10px] font-normal">kg</span>
                         </span>
                       </div>
@@ -977,7 +1008,7 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                         type="button"
                         onClick={() => handleEditChildNode(child)}
                         title="ویرایش در کشو (Edit)"
-                        className="p-1.5 rounded-lg bg-white hover:bg-slate-900 text-slate-600 hover:text-white border border-slate-200 transition cursor-pointer"
+                        className="p-1.5 rounded bg-white hover:bg-[#e5f3fa] text-[#666666] hover:text-[#007cc0] border border-[#d9d9d9] transition cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -986,7 +1017,7 @@ export const CoilSlittingGenealogyPanel: React.FC<CoilSlittingGenealogyPanelProp
                         type="button"
                         onClick={() => handleDeleteChildNode(child)}
                         title="حذف منطقی (Soft Delete)"
-                        className="p-1.5 rounded-lg bg-white hover:bg-rose-600 text-slate-400 hover:text-white border border-slate-200 transition cursor-pointer"
+                        className="p-1.5 rounded bg-white hover:bg-[#bb0000] text-[#666666] hover:text-white border border-[#d9d9d9] transition cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

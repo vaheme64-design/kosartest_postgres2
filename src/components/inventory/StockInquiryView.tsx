@@ -39,6 +39,7 @@ import {
 } from '../../utils/formatters';
 import { CoilSlittingGenealogyPanel } from './CoilSlittingGenealogyPanel';
 import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 import { FormulaTooltip } from '../common/FormulaTooltip';
 import {
   loadQcHoldMap,
@@ -89,6 +90,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
   onRefresh,
 }) => {
   const { requestConfirm, showUndoToast, recordAudit } = useEnterpriseUx();
+  const { route, traceDocument, clearDocQuery } = useErpRouter();
   const [qcHoldMap, setQcHoldMap] = useState<Record<string, QcHoldRecord>>(() => loadQcHoldMap());
   const [vipMap, setVipMap] = useState<Record<string, boolean>>(() => loadVipPartsMap());
 
@@ -313,13 +315,48 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
       .finally(() => setDocsLoading(false));
   }, [balances]);
 
-  // Select default part for Cardex
+  // Select default part for Cardex or jump directly from URL docQuery
   useEffect(() => {
+    const q = (route.docQuery || '').trim();
+    if (q) {
+      const qLower = q.toLowerCase();
+      setSearchTerm(q);
+      const matchedPart = parts.find(
+        p => p.code.toLowerCase() === qLower || p.code.toLowerCase().includes(qLower) || p.name.toLowerCase().includes(qLower)
+      );
+      if (matchedPart) {
+        setSelectedCardexPartId(matchedPart.id);
+        setPartSearchQuery(matchedPart.code);
+        setInquiryMode('PART_CARDEX');
+        return;
+      }
+      const matchedDoc = allDocuments.find(
+        d => d.documentNumber.toLowerCase().includes(qLower) || (d.referenceNumber || '').toLowerCase().includes(qLower)
+      );
+      if (matchedDoc && matchedDoc.lines && matchedDoc.lines.length > 0) {
+        const linePart = parts.find(p => p.id === matchedDoc.lines[0].partId || p.code === matchedDoc.lines[0].partCode);
+        if (linePart) {
+          setSelectedCardexPartId(linePart.id);
+          setInquiryMode('PART_CARDEX');
+          return;
+        }
+      }
+      const matchedBal = balances.find(
+        b =>
+          (b.lotNumber && b.lotNumber.toLowerCase().includes(qLower)) ||
+          (b.heatNumber && b.heatNumber.toLowerCase().includes(qLower)) ||
+          (b.contractNumber && b.contractNumber.toLowerCase().includes(qLower))
+      );
+      if (matchedBal) {
+        setInquiryMode('ANALYTICAL_TABLE');
+        return;
+      }
+    }
     if (!selectedCardexPartId && parts.length > 0) {
       const partWithStock = parts.find(p => balances.some(b => b.partId === p.id || b.partCode === p.code));
       setSelectedCardexPartId((partWithStock || parts[0]).id);
     }
-  }, [parts, balances, selectedCardexPartId]);
+  }, [route.docQuery, parts, balances, allDocuments, selectedCardexPartId]);
 
   // Saved Column Preferences
   const [visibleCols, setVisibleCols] = useState<typeof DEFAULT_VISIBLE_COLUMNS>(() => {
@@ -730,12 +767,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
   const getDocTypeBadge = (docType: string) => {
     switch (docType) {
       case 'OPENING_BALANCE':
-        return { label: 'موجودی اول دوره', color: 'bg-indigo-50 text-indigo-800 border-indigo-200' };
+        return { label: 'موجودی اول دوره', color: 'bg-[#e5f3fa] text-[#007cc0] border-[#b3ddf2]' };
       case 'RECEIPT_RAW_MATERIAL':
-        return { label: 'رسید ورود به انبار', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+        return { label: 'رسید ورود به انبار', color: 'bg-[#f2f8f4] text-[#107e3e] border-[#b7dfc7]' };
       case 'RECEIPT_FINISHED_GOODS':
       case 'PRODUCTION_RECEIPT':
-        return { label: 'رسید تولید از خط', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+        return { label: 'رسید تولید از خط', color: 'bg-[#f2f8f4] text-[#107e3e] border-[#b7dfc7]' };
       case 'ISSUE_RAW_MATERIAL':
       case 'ISSUE_TO_PRODUCTION':
         return { label: 'حواله ارسال به خط تولید', color: 'bg-amber-50 text-amber-900 border-amber-200' };
@@ -745,83 +782,87 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
       case 'DELIVERY_TO_CUSTOMER':
         return { label: 'حواله تحویل به مشتری', color: 'bg-rose-50 text-rose-800 border-rose-200' };
       default:
-        return { label: docType, color: 'bg-slate-100 text-slate-700 border-slate-200' };
+        return { label: docType, color: 'bg-[#f5f5f5] text-[#333333] border-[#d9d9d9]' };
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Compact Single-Row Toolbar: Mode Tabs + Actions */}
-      <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1 bg-slate-100/70 p-1 rounded-lg border border-slate-200/50">
-          <button
-            type="button"
-            onClick={() => setInquiryMode('PART_CARDEX')}
-            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
-              inquiryMode === 'PART_CARDEX'
-                ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <History className="w-3.5 h-3.5 text-slate-500" />
-            <span>۱. فهرست قطعات و کاردکس کالا</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setInquiryMode('ANALYTICAL_TABLE')}
-            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
-              inquiryMode === 'ANALYTICAL_TABLE'
-                ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
-            <span>۲. جدول تحلیلی کل موجودی انبارها</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setInquiryMode('COIL_SLITTING')}
-            className={`flex items-center gap-1.5 py-1.5 px-3 rounded-md text-xs transition-all cursor-pointer whitespace-nowrap ${
-              inquiryMode === 'COIL_SLITTING'
-                ? 'bg-white text-slate-900 font-medium shadow-2xs border border-slate-200/70'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <GitBranch className="w-3.5 h-3.5 text-slate-500" />
-            <span>۳. شجره‌نامه برش کلاف</span>
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {inquiryMode === 'ANALYTICAL_TABLE' && (
+      {/* SAP Fiori IconTabBar & Actions */}
+      <div className="sap-card overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 px-3 bg-[#ffffff] border-b border-[#d9d9d9]">
+          <div className="sap-icon-tab-bar border-b-0 flex-1">
             <button
               type="button"
-              onClick={() => setShowColumnPicker(!showColumnPicker)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200/60 transition-colors cursor-pointer whitespace-nowrap"
+              onClick={() => setInquiryMode('PART_CARDEX')}
+              className={`sap-icon-tab ${inquiryMode === 'PART_CARDEX' ? 'sap-icon-tab-active' : ''}`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-              <span>تنظیم ستون‌ها</span>
+              <History className="w-3.5 h-3.5" />
+              <span>۱. فهرست قطعات و کاردکس کالا</span>
             </button>
-          )}
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium border border-slate-200/60 transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>به‌روزرسانی</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>خروجی اکسل (CSV)</span>
-          </button>
+
+            <button
+              type="button"
+              onClick={() => setInquiryMode('ANALYTICAL_TABLE')}
+              className={`sap-icon-tab ${inquiryMode === 'ANALYTICAL_TABLE' ? 'sap-icon-tab-active' : ''}`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>۲. جدول تحلیلی کل موجودی انبارها</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInquiryMode('COIL_SLITTING')}
+              className={`sap-icon-tab ${inquiryMode === 'COIL_SLITTING' ? 'sap-icon-tab-active' : ''}`}
+            >
+              <GitBranch className="w-3.5 h-3.5" />
+              <span>۳. شجره‌نامه برش کلاف</span>
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 py-2 lg:py-0">
+            {route.docQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearDocQuery();
+                  setSearchTerm('');
+                  setPartSearchQuery('');
+                }}
+                className="px-2.5 py-1 rounded bg-[#e5f3fa] border border-[#b3ddf2] text-[#007cc0] text-[11px] font-medium cursor-pointer whitespace-nowrap"
+                title="پاک کردن فیلتر رهگیری سند"
+              >
+                فیلتر رهگیری: {route.docQuery} ×
+              </button>
+            )}
+            {inquiryMode === 'ANALYTICAL_TABLE' && (
+              <button
+                type="button"
+                onClick={() => setShowColumnPicker(!showColumnPicker)}
+                className="sap-btn-standard flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer whitespace-nowrap"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>تنظیم ستون‌ها</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={loading}
+              className="sap-btn-standard flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer whitespace-nowrap"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>به‌روزرسانی</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3 py-1 bg-[#107e3e] hover:bg-[#0d6832] text-white rounded text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>خروجی اکسل (CSV)</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -832,37 +873,37 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
         <CoilSlittingGenealogyPanel />
       ) : inquiryMode === 'PART_CARDEX' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-          {/* Right Sidebar: Compact Searchable List of Parts (3 columns) */}
-          <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/60 overflow-hidden">
-            <div className="p-3 border-b border-slate-100 bg-slate-50/40 space-y-2">
+          {/* SAP Master-Detail Right List (3 columns) */}
+          <div className="lg:col-span-3 sap-card overflow-hidden">
+            <div className="p-3 border-b border-[#d9d9d9] bg-[#ffffff] space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-medium text-slate-800">فهرست اقلام و ورق‌ها</h3>
-                <span className="text-[11px] font-mono tabular-nums bg-white px-2 py-0.5 rounded border border-slate-200/60 text-slate-600">
+                <h3 className="text-xs font-semibold text-[#333333]">فهرست اقلام و ورق‌ها</h3>
+                <span className="text-[11px] font-mono tabular-nums bg-[#e5f3fa] px-2 py-0.5 rounded border border-[#b3ddf2] text-[#007cc0]">
                   {toPersianDigits(catalogPartsWithStock.length)} قلم
                 </span>
               </div>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2" />
+                <Search className="w-3.5 h-3.5 text-[#666666] absolute right-2.5 top-2" />
                 <input
                   type="text"
                   value={partSearchQuery}
                   onChange={e => setPartSearchQuery(e.target.value)}
                   placeholder="جستجوی نام یا کد کالا..."
-                  className="w-full bg-white border border-slate-200/70 rounded-lg pr-8 pl-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-slate-400"
+                  className="w-full bg-[#ffffff] border border-[#d9d9d9] rounded pr-8 pl-2.5 py-1 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
               </div>
-              <label className="flex items-center gap-1.5 text-[11px] font-normal text-slate-600 cursor-pointer pt-0.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-normal text-[#666666] cursor-pointer pt-0.5">
                 <input
                   type="checkbox"
                   checked={onlyBelowReorderPoint}
                   onChange={e => setOnlyBelowReorderPoint(e.target.checked)}
-                  className="rounded border-slate-300 text-slate-800 focus:ring-slate-500"
+                  className="rounded border-[#cccccc] text-[#007cc0] focus:ring-[#007cc0]"
                 />
                 <span>فقط اقلام زیر نقطه سفارش</span>
               </label>
             </div>
 
-            <div className="max-h-[660px] overflow-y-auto divide-y divide-slate-100">
+            <div className="max-h-[660px] overflow-y-auto divide-y divide-[#e8e8e8] bg-[#ffffff]">
               {catalogPartsWithStock.map(item => {
                 const isSelected =
                   activeCardexPartSummary?.part.id === item.part.id;
@@ -871,29 +912,29 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                     key={item.part.id}
                     type="button"
                     onClick={() => setSelectedCardexPartId(item.part.id)}
-                    className={`w-full text-right px-3 py-2.5 transition-colors flex items-start justify-between gap-2 cursor-pointer ${
+                    className={`w-full text-right px-3 py-2 transition-colors flex items-start justify-between gap-2 cursor-pointer ${
                       isSelected
-                        ? 'bg-slate-100/90 text-slate-900 border-r-2 border-slate-700'
-                        : 'hover:bg-slate-50/70 text-slate-800'
+                        ? 'bg-[#e5f3fa] text-[#007cc0] border-r-[3px] border-[#007cc0]'
+                        : 'hover:bg-[#e5f3fa]/50 text-[#333333]'
                     }`}
                   >
                     <div className="min-w-0 flex-1 space-y-1">
-                      <div className={`text-xs leading-snug truncate ${isSelected ? 'font-medium text-slate-900' : 'font-normal text-slate-800'}`}>
+                      <div className={`text-xs leading-snug truncate ${isSelected ? 'font-semibold text-[#007cc0]' : 'font-normal text-[#333333]'}`}>
                         {item.part.name}
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
                           isSelected
-                            ? 'bg-white text-slate-700 border border-slate-200/70'
-                            : 'bg-slate-100/80 text-slate-500'
+                            ? 'bg-[#ffffff] text-[#007cc0] border border-[#b3ddf2]'
+                            : 'bg-[#f5f5f5] text-[#666666] border border-[#e8e8e8]'
                         }`}>
                           {item.part.code}
                         </span>
                         {item.blockedTotal > 0 && (
-                          <span className="w-2 h-2 rounded-full bg-rose-500" title="دارای موجودی قرنطینه کیفی" />
+                          <span className="w-2 h-2 rounded-full bg-[#bb0000]" title="دارای موجودی قرنطینه کیفی" />
                         )}
                         {item.needsPurchase && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-50 text-rose-700">
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#fff0f0] text-[#bb0000]">
                             کسری
                           </span>
                         )}
@@ -902,12 +943,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
 
                     <div className="text-left shrink-0 tabular-nums">
                       <div
-                        className={`text-xs font-mono font-medium whitespace-nowrap ${
+                        className={`text-xs font-mono font-semibold whitespace-nowrap ${
                           item.needsPurchase
-                            ? 'text-rose-600'
+                            ? 'text-[#bb0000]'
                             : item.availableTotal > 0
-                            ? 'text-emerald-700'
-                            : 'text-slate-400'
+                            ? 'text-[#107e3e]'
+                            : 'text-[#666666]'
                         }`}
                       >
                         {formatNumber(item.availableTotal)}{' '}
@@ -915,7 +956,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                           {item.part.unit === 'KG' ? 'kg' : 'عدد'}
                         </span>
                       </div>
-                      <div className="text-[10px] mt-0.5 font-mono whitespace-nowrap text-slate-400">
+                      <div className="text-[10px] mt-0.5 font-mono whitespace-nowrap text-[#666666]">
                         حداقل: {formatNumber(item.reorderPoint)}
                       </div>
                     </div>
@@ -929,78 +970,78 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           <div className="lg:col-span-9 space-y-4">
             {activeCardexPartSummary ? (
               <>
-                {/* Part Header & Warehouse Stock Breakdown */}
-                <div className="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/40 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                {/* SAP Object Header & Warehouse Stock Breakdown */}
+                <div className="sap-card overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-[#d9d9d9] bg-[#ffffff] flex flex-col xl:flex-row xl:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200/70 font-mono text-xs font-medium whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3ddf2] font-mono text-xs font-semibold whitespace-nowrap">
                           {activeCardexPartSummary.part.code}
                         </span>
-                        <h3 className="text-sm font-medium text-slate-800">
+                        <h3 className="text-sm font-semibold text-[#333333]">
                           {activeCardexPartSummary.part.name}
                         </h3>
                         {activeCardexPartSummary.needsPurchase ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#fff0f0] text-[#bb0000] border border-[#f5b7b1] whitespace-nowrap">
                             <AlertTriangle className="w-3 h-3" />
                             زیر نقطه سفارش
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#f2f8f4] text-[#107e3e] border border-[#b7dfc7] whitespace-nowrap">
                             <CheckCircle2 className="w-3 h-3" />
                             موجودی ایمن
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-[#666666]">
                         واحد سنجش:{' '}
-                        <strong className="text-slate-700">
+                        <strong className="text-[#333333]">
                           {activeCardexPartSummary.part.unit === 'KG' ? 'کیلوگرم (KG)' : 'عدد (PCS)'}
                         </strong>
                         {activeCardexPartSummary.part.materialGrade && (
                           <span>
                             {' '}
-                            · گرید: <strong className="text-slate-700">{activeCardexPartSummary.part.materialGrade}</strong>
+                            · گرید: <strong className="text-[#333333]">{activeCardexPartSummary.part.materialGrade}</strong>
                           </span>
                         )}
                         {activeCardexPartSummary.part.thicknessMm && (
                           <span>
                             {' '}
-                            · ضخامت: <strong className="text-slate-700">{activeCardexPartSummary.part.thicknessMm} mm</strong>
+                            · ضخامت: <strong className="text-[#333333]">{activeCardexPartSummary.part.thicknessMm} mm</strong>
                           </span>
                         )}
                       </p>
                     </div>
 
                     {/* Clean Inline KPI Strip */}
-                    <div className="flex flex-wrap items-center gap-4 text-xs bg-white px-3.5 py-2 rounded-lg border border-slate-200 tabular-nums">
+                    <div className="flex flex-wrap items-center gap-4 text-xs bg-[#f5f5f5] px-3 py-1.5 rounded border border-[#d9d9d9] tabular-nums">
                       <div>
-                        <span className="text-slate-400 text-[11px] ml-1.5">موجودی فیزیکی:</span>
-                        <strong className="font-mono text-slate-900">
+                        <span className="text-[#666666] text-[11px] ml-1.5">موجودی فیزیکی:</span>
+                        <strong className="font-mono text-[#333333]">
                           {formatNumber(activeCardexPartSummary.physicalTotal)}
                         </strong>
                       </div>
-                      <div className="h-3.5 w-px bg-slate-200" />
+                      <div className="h-3.5 w-px bg-[#d9d9d9]" />
                       <div>
-                        <span className="text-slate-400 text-[11px] ml-1.5">قرنطینه:</span>
-                        <strong className="font-mono text-rose-600">
+                        <span className="text-[#666666] text-[11px] ml-1.5">قرنطینه:</span>
+                        <strong className="font-mono text-[#bb0000]">
                           {formatNumber(activeCardexPartSummary.blockedTotal)}
                         </strong>
                       </div>
-                      <div className="h-3.5 w-px bg-slate-200" />
+                      <div className="h-3.5 w-px bg-[#d9d9d9]" />
                       <div>
-                        <span className="text-slate-500 text-[11px] ml-1.5">موجودی آزاد (ATP):</span>
-                        <strong className="font-mono text-sm text-emerald-700">
+                        <span className="text-[#666666] text-[11px] ml-1.5">موجودی آزاد (ATP):</span>
+                        <strong className="font-mono text-sm text-[#107e3e]">
                           {formatNumber(activeCardexPartSummary.availableTotal)}{' '}
                           <span className="text-[11px] font-sans font-normal">
                             {activeCardexPartSummary.part.unit === 'KG' ? 'kg' : 'عدد'}
                           </span>
                         </strong>
                       </div>
-                      <div className="h-3.5 w-px bg-slate-200" />
+                      <div className="h-3.5 w-px bg-[#d9d9d9]" />
                       <div>
-                        <span className="text-slate-400 text-[11px] ml-1.5">نقطه سفارش:</span>
-                        <strong className="font-mono text-slate-700">
+                        <span className="text-[#666666] text-[11px] ml-1.5">نقطه سفارش:</span>
+                        <strong className="font-mono text-[#333333]">
                           {formatNumber(activeCardexPartSummary.reorderPoint)}
                         </strong>
                       </div>
@@ -1008,10 +1049,10 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                   </div>
 
                   {/* Section A: Warehouse & Coil-Pack Balances for this Part */}
-                  <div className="p-4 space-y-2.5">
+                  <div className="p-3.5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <Boxes className="w-3.5 h-3.5 text-slate-500" />
+                      <h4 className="text-xs font-bold text-[#333333] flex items-center gap-1.5">
+                        <Boxes className="w-3.5 h-3.5 text-[#007cc0]" />
                         <span>
                           الف) تفکیک موجودی در انبارها و بچ‌ها ({toPersianDigits(activeCardexPartSummary.balances.length)} ردیف)
                         </span>
@@ -1019,21 +1060,21 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                     </div>
 
                     {activeCardexPartSummary.balances.length === 0 ? (
-                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500 text-center">
+                      <div className="p-4 bg-[#f5f5f5] border border-[#d9d9d9] rounded text-xs text-[#666666] text-center">
                         در حال حاضر هیچ موجودی فعالی برای این قطعه در انبارها ثبت نشده است.
                       </div>
                     ) : (
-                      <div className="overflow-x-auto border border-slate-200 rounded-lg">
-                        <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                      <div className="overflow-x-auto border border-[#d9d9d9] rounded">
+                        <table className="sap-table-compact w-full text-right text-xs">
+                          <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
                             <tr>
-                              <th className="py-2 px-3 whitespace-nowrap">انبار و جایگاه</th>
-                              <th className="py-2 px-3 whitespace-nowrap">شماره کویل‌پک / بچ</th>
-                              <th className="py-2 px-3 whitespace-nowrap">قرارداد مرتبط</th>
-                              <th className="py-2 px-3 whitespace-nowrap">مالکیت</th>
-                              <th className="py-2 px-3 whitespace-nowrap">موجودی فیزیکی</th>
-                              <th className="py-2 px-3 whitespace-nowrap text-rose-700">قرنطینه کیفی</th>
-                              <th className="py-2 px-3 whitespace-nowrap text-emerald-700">
+                              <th className="py-1.5 px-2.5 whitespace-nowrap">انبار و جایگاه</th>
+                              <th className="py-1.5 px-2.5 whitespace-nowrap">شماره کویل‌پک / بچ</th>
+                              <th className="py-1.5 px-2.5 whitespace-nowrap">قرارداد مرتبط</th>
+                              <th className="py-1.5 px-2.5 whitespace-nowrap">مالکیت</th>
+                              <th className="py-1.5 px-2.5 whitespace-nowrap">موجودی فیزیکی</th>
+                              <th className="py-1.5 px-2.5 whitespace-nowrap text-[#bb0000]">قرنطینه کیفی</th>
+                              <th className="py-1.5 px-2.5 whitespace-nowrap text-[#107e3e]">
                                 <span className="inline-flex items-center">
                                   <span>موجودی آزاد (ATP)</span>
                                   <FormulaTooltip
@@ -1044,55 +1085,77 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                                   />
                                 </span>
                               </th>
-                              <th className="py-2 px-3 text-center whitespace-nowrap">وضعیت کیفی</th>
+                              <th className="py-1.5 px-2.5 text-center whitespace-nowrap">وضعیت کیفی</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 tabular-nums">
+                          <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                             {activeCardexPartSummary.balances.map(b => {
                               const isHeld = b.qualityBlockedQty > 0;
                               return (
                                 <tr
                                   key={b.id}
-                                  className={isHeld ? 'bg-rose-50/50 hover:bg-rose-50' : 'hover:bg-slate-50/80'}
+                                  className={isHeld ? 'bg-rose-50/50 hover:bg-rose-50' : 'hover:bg-[#e5f3fa]/60'}
                                 >
-                                  <td className="py-2.5 px-3 font-medium text-slate-900 whitespace-nowrap">
+                                  <td className="py-1.5 px-2.5 font-medium text-[#333333] whitespace-nowrap">
                                     <span>{b.warehouseName}</span>{' '}
-                                    <span className="text-[10px] font-mono text-slate-400">
+                                    <span className="text-[10px] font-mono text-[#666666]">
                                       ({b.locationCode})
                                     </span>
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
-                                    {b.lotNumber || 'عمومی'}
+                                  <td className="py-1.5 px-2.5 font-mono font-semibold whitespace-nowrap">
+                                    {b.lotNumber ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => traceDocument(b.lotNumber!, 'COILS')}
+                                        className="sap-doc-link font-mono font-semibold cursor-pointer"
+                                        title="مشاهده مشخصات رول / بچ"
+                                      >
+                                        {b.lotNumber}
+                                      </button>
+                                    ) : (
+                                      <span className="text-[#666666]">عمومی</span>
+                                    )}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap">
-                                    {b.contractNumber || 'آزاد'}
+                                  <td className="py-1.5 px-2.5 font-mono whitespace-nowrap">
+                                    {b.contractNumber ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => traceDocument(b.contractNumber!, 'CONTRACTS')}
+                                        className="sap-doc-link font-mono cursor-pointer"
+                                        title="مشاهده قرارداد مرتبط"
+                                      >
+                                        {b.contractNumber}
+                                      </button>
+                                    ) : (
+                                      <span className="text-[#666666]">آزاد</span>
+                                    )}
                                   </td>
-                                  <td className="py-2.5 px-3 whitespace-nowrap">
+                                  <td className="py-1.5 px-2.5 whitespace-nowrap">
                                     {b.ownership === 'SAPCO_SUPPLIER_OWNED' ? (
                                       <span className="text-amber-800 font-medium">امانی ساپکو</span>
                                     ) : (
-                                      <span className="text-slate-600">ملکی شرکت</span>
+                                      <span className="text-[#666666]">ملکی شرکت</span>
                                     )}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900 whitespace-nowrap">
+                                  <td className="py-1.5 px-2.5 font-mono font-bold text-[#333333] whitespace-nowrap">
                                     {formatNumber(b.physicalQty)} {b.unit === 'KG' ? 'kg' : 'عدد'}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-rose-700 whitespace-nowrap">
+                                  <td className="py-1.5 px-2.5 font-mono font-bold text-[#bb0000] whitespace-nowrap">
                                     {b.qualityBlockedQty > 0
                                       ? `${formatNumber(b.qualityBlockedQty)} ${b.unit === 'KG' ? 'kg' : 'عدد'}`
                                       : '—'}
                                   </td>
-                                  <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
+                                  <td className="py-1.5 px-2.5 font-mono font-bold text-[#107e3e] whitespace-nowrap">
                                     {formatNumber(b.availableQty)} {b.unit === 'KG' ? 'kg' : 'عدد'}
                                   </td>
-                                  <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                  <td className="py-1.5 px-2.5 text-center whitespace-nowrap">
                                     <button
                                       type="button"
                                       onClick={() => handleToggleQcHoldOnBalance(b)}
-                                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold inline-flex items-center gap-1 border transition-colors cursor-pointer whitespace-nowrap ${
+                                      className={`px-2 py-0.5 rounded text-[11px] font-semibold inline-flex items-center gap-1 border transition-colors cursor-pointer whitespace-nowrap ${
                                         isHeld
                                           ? 'bg-rose-600 text-white border-rose-700 hover:bg-rose-700'
-                                          : 'bg-white text-slate-700 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                                          : 'bg-[#ffffff] text-[#333333] border-[#d9d9d9] hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
                                       }`}
                                     >
                                       {isHeld ? <Unlock className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
@@ -1110,17 +1173,17 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                 </div>
 
                 {/* Section B: Chronological Stock Cardex (کاردکس جامع ورود و خروج قطعه) */}
-                <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                <div className="sap-card p-3.5 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <History className="w-3.5 h-3.5 text-slate-500" />
+                    <h4 className="text-xs font-bold text-[#333333] flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-[#007cc0]" />
                       <span>
                         ب) کاردکس گردش کالا («{activeCardexPartSummary.part.name}»)
                       </span>
                     </h4>
-                    <span className="text-[11px] text-slate-500 tabular-nums">
+                    <span className="text-[11px] text-[#666666] tabular-nums">
                       تعداد اسناد گردش:{' '}
-                      <strong className="font-mono text-slate-900">
+                      <strong className="font-mono text-[#333333]">
                         {toPersianDigits(selectedPartCardexRows.length)}
                       </strong>{' '}
                       تراکنش
@@ -1128,58 +1191,86 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                   </div>
 
                   {docsLoading ? (
-                    <div className="py-8 text-center text-xs text-slate-500">
+                    <div className="py-8 text-center text-xs text-[#666666]">
                       در حال بارگذاری کاردکس گردش کالا...
                     </div>
                   ) : selectedPartCardexRows.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="py-6 text-center text-xs text-[#666666] bg-[#f5f5f5] rounded border border-[#d9d9d9]">
                       هنوز هیچ سند ورود یا خروجی برای این کالا در کاردکس ثبت نشده است.
                     </div>
                   ) : (
-                    <div className="overflow-x-auto border border-slate-200 rounded-lg">
-                      <table className="w-full text-right text-xs">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                    <div className="overflow-x-auto border border-[#d9d9d9] rounded">
+                      <table className="sap-table-compact w-full text-right text-xs">
+                        <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
                           <tr>
-                            <th className="py-2 px-3 whitespace-nowrap">تاریخ و ساعت</th>
-                            <th className="py-2 px-3 whitespace-nowrap">شماره سند</th>
-                            <th className="py-2 px-3 whitespace-nowrap">نوع عملیات</th>
-                            <th className="py-2 px-3 whitespace-nowrap">انبار</th>
-                            <th className="py-2 px-3 whitespace-nowrap">کویل‌پک / بچ</th>
-                            <th className="py-2 px-3 whitespace-nowrap text-emerald-700">وارده (+)</th>
-                            <th className="py-2 px-3 whitespace-nowrap text-rose-700">صادره (-)</th>
-                            <th className="py-2 px-3 whitespace-nowrap bg-slate-100/80 font-bold text-slate-900">
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">تاریخ و ساعت</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">شماره سند</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">نوع عملیات</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">انبار</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap">کویل‌پک / بچ</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap text-[#107e3e]">وارده (+)</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap text-[#bb0000]">صادره (-)</th>
+                            <th className="py-1.5 px-2.5 whitespace-nowrap bg-[#f5f5f5] font-bold text-[#333333]">
                               مانده پس از سند
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 tabular-nums">
+                        <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                           {selectedPartCardexRows.map(tx => {
                             const badge = getDocTypeBadge(tx.docType);
                             return (
-                              <tr key={tx.id} className="hover:bg-slate-50/80">
-                                <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                              <tr key={tx.id} className="hover:bg-[#e5f3fa]/60">
+                                <td className="py-1.5 px-2.5 font-mono text-[11px] text-[#666666] whitespace-nowrap">
                                   {formatDateTime(tx.docDate)}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-semibold text-slate-900 whitespace-nowrap">
-                                  <div>{tx.docNumber}</div>
+                                <td className="py-1.5 px-2.5 font-mono font-semibold text-[#333333] whitespace-nowrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => traceDocument(tx.docNumber, 'INVENTORY_LEDGER')}
+                                    className="sap-doc-link font-mono font-semibold cursor-pointer"
+                                  >
+                                    {tx.docNumber}
+                                  </button>
                                   {tx.referenceNumber !== '—' && (
-                                    <div className="text-[10px] text-slate-400 font-normal">
-                                      مرجع: {tx.referenceNumber}
+                                    <div className="text-[10px] text-[#666666] font-normal">
+                                      مرجع:{' '}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          traceDocument(
+                                            tx.referenceNumber,
+                                            tx.referenceNumber.startsWith('CNT') ? 'CONTRACTS' : 'WIP_TRACEABILITY'
+                                          )
+                                        }
+                                        className="sap-doc-link font-mono cursor-pointer"
+                                      >
+                                        {tx.referenceNumber}
+                                      </button>
                                     </div>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 whitespace-nowrap">
+                                <td className="py-1.5 px-2.5 whitespace-nowrap">
                                   <span
                                     className={`inline-block px-2 py-0.5 rounded border text-[10px] font-semibold ${badge.color}`}
                                   >
                                     {badge.label}
                                   </span>
                                 </td>
-                                <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">{tx.warehouseName}</td>
-                                <td className="py-2.5 px-3 font-mono text-slate-700 whitespace-nowrap">
-                                  {tx.lotNumber}
+                                <td className="py-1.5 px-2.5 text-[#333333] whitespace-nowrap">{tx.warehouseName}</td>
+                                <td className="py-1.5 px-2.5 font-mono text-[#333333] whitespace-nowrap">
+                                  {tx.lotNumber && tx.lotNumber !== 'عمومی' ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => traceDocument(tx.lotNumber, 'COILS')}
+                                      className="sap-doc-link font-mono cursor-pointer"
+                                    >
+                                      {tx.lotNumber}
+                                    </button>
+                                  ) : (
+                                    <span>{tx.lotNumber}</span>
+                                  )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
+                                <td className="py-1.5 px-2.5 font-mono font-bold text-[#107e3e] whitespace-nowrap">
                                   {tx.inQty > 0 ? (
                                     <span className="inline-flex items-center gap-0.5">
                                       <ArrowDownLeft className="w-3.5 h-3.5" />+{formatNumber(tx.inQty)}
@@ -1188,7 +1279,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                                     '—'
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-rose-700 whitespace-nowrap">
+                                <td className="py-1.5 px-2.5 font-mono font-bold text-[#bb0000] whitespace-nowrap">
                                   {tx.outQty > 0 ? (
                                     <span className="inline-flex items-center gap-0.5">
                                       <ArrowUpRight className="w-3.5 h-3.5" />-{formatNumber(tx.outQty)}
@@ -1197,9 +1288,9 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                                     '—'
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-slate-900 bg-slate-50/80 whitespace-nowrap">
+                                <td className="py-1.5 px-2.5 font-mono font-bold text-[#333333] bg-[#f5f5f5] whitespace-nowrap">
                                   {formatNumber(tx.runningBalance)}{' '}
-                                  <span className="text-[10px] font-normal text-slate-500">
+                                  <span className="text-[10px] font-normal text-[#666666]">
                                     {tx.unit === 'KG' ? 'kg' : 'عدد'}
                                   </span>
                                 </td>
@@ -1220,12 +1311,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
 
       {/* Column Visibility Customizer Drawer */}
       {showColumnPicker && (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3 text-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="font-bold text-slate-800">انتخاب ستون‌های قابل نمایش در جدول موجودی:</span>
+        <div className="sap-card p-3.5 space-y-3 text-xs">
+          <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+            <span className="font-bold text-[#333333]">انتخاب ستون‌های قابل نمایش در جدول موجودی:</span>
             <div className="flex items-center gap-2">
               {savedViewNotice && (
-                <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                <span className="text-[#107e3e] font-semibold flex items-center gap-1">
                   <BookmarkCheck className="w-3.5 h-3.5" />
                   <span>نمای دلخواه شما ذخیره شد</span>
                 </span>
@@ -1233,7 +1324,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
               <button
                 type="button"
                 onClick={handleSaveViewPreferences}
-                className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-medium cursor-pointer"
+                className="sap-btn-emphasized px-3 py-1 text-[11px] cursor-pointer"
               >
                 ذخیره به عنوان پیش‌فرض من
               </button>
@@ -1255,12 +1346,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
               { key: 'physicalKg', label: 'وزن کل (کیلوگرم)' },
               { key: 'lastTx', label: 'تاریخ آخرین گردش' },
             ].map(col => (
-              <label key={col.key} className="flex items-center gap-1.5 text-slate-700 cursor-pointer select-none">
+              <label key={col.key} className="flex items-center gap-1.5 text-[#333333] cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={(visibleCols as any)[col.key]}
                   onChange={e => setVisibleCols(prev => ({ ...prev, [col.key]: e.target.checked }))}
-                  className="rounded border-slate-300 text-slate-900"
+                  className="rounded border-[#cccccc] text-[#007cc0]"
                 />
                 <span>{col.label}</span>
               </label>
@@ -1270,45 +1361,45 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
       )}
 
       {/* 4 Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs text-slate-500">موجودی فیزیکی کل (نتایج فیلترشده)</span>
-          <div className="text-lg font-bold text-slate-900 mt-1 font-mono tabular-nums">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="sap-card p-3.5">
+          <span className="text-xs text-[#666666]">موجودی فیزیکی کل (نتایج فیلترشده)</span>
+          <div className="text-lg font-bold text-[#333333] mt-1 font-mono tabular-nums">
             {formatWeightKg(totalPhysicalKg)}
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs text-slate-500">موجودی قابل استفاده (آزاد جهت تولید)</span>
-          <div className="text-lg font-bold text-emerald-700 mt-1 font-mono tabular-nums">
+        <div className="sap-card p-3.5">
+          <span className="text-xs text-[#666666]">موجودی قابل استفاده (آزاد جهت تولید)</span>
+          <div className="text-lg font-bold text-[#107e3e] mt-1 font-mono tabular-nums">
             {formatWeightKg(totalAvailableKg)}
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs text-slate-500">ورق و اقلام امانی ساپکو</span>
+        <div className="sap-card p-3.5">
+          <span className="text-xs text-[#666666]">ورق و اقلام امانی ساپکو</span>
           <div className="text-lg font-bold text-amber-700 mt-1 font-mono tabular-nums">
             {formatWeightKg(totalSapcoKg)}
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs text-slate-500">رزرو شده جهت خطوط تولید</span>
-          <div className="text-lg font-bold text-blue-700 mt-1 font-mono tabular-nums">
+        <div className="sap-card p-3.5">
+          <span className="text-xs text-[#666666]">رزرو شده جهت خطوط تولید</span>
+          <div className="text-lg font-bold text-[#007cc0] mt-1 font-mono tabular-nums">
             {formatWeightKg(totalReservedKg)}
           </div>
         </div>
       </div>
 
       {/* Filter & Grouping Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-2xs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="sap-card p-3.5 space-y-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           {/* Search */}
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#666666] absolute right-3 top-2" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="جستجوی نام کالا، کد، کویل‌پک، شماره قرارداد..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg pr-9 pl-3 py-2 text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-900"
+              className="w-full bg-[#ffffff] border border-[#d9d9d9] rounded pr-9 pl-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
             />
           </div>
 
@@ -1316,7 +1407,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           <select
             value={selectedPartFilter}
             onChange={e => setSelectedPartFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه کالاها (ورق، پیچ و مهره، لاستیک، قطعه)</option>
             {parts.map(p => (
@@ -1333,7 +1424,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
               setSelectedGradeFilter(e.target.value);
               setSelectedLotFilter('ALL');
             }}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه جنس‌ها و گریدهای ورق</option>
             {grades.map(g => (
@@ -1347,7 +1438,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           <select
             value={selectedLotFilter}
             onChange={e => setSelectedLotFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:bg-white focus:border-slate-900"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded px-3 py-1.5 text-xs text-[#333333] font-mono focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه کویل‌پک‌ها و بچ‌ها ({toPersianDigits(matchingPacksOrLots.length)})</option>
             {matchingPacksOrLots.map(lot => (
@@ -1358,12 +1449,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           {/* Warehouse Filter */}
           <select
             value={selectedWarehouseFilter}
             onChange={e => setSelectedWarehouseFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه انبارهای کارخانه</option>
             {warehouses.map(w => (
@@ -1377,7 +1468,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           <select
             value={selectedContractFilter}
             onChange={e => setSelectedContractFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه قراردادها</option>
             {contractNumbers.map(cn => (
@@ -1391,7 +1482,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           <select
             value={selectedOwnershipFilter}
             onChange={e => setSelectedOwnershipFilter(e.target.value as any)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
           >
             <option value="ALL">همه انواع مالکیت</option>
             <option value="SAPCO_SUPPLIER_OWNED">فقط امانی ساپکو / مشتری</option>
@@ -1399,13 +1490,13 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
           </select>
 
           {/* Grouping Selector */}
-          <div className="flex items-center gap-2 bg-blue-50/70 border border-blue-200 rounded-lg px-3 py-1.5">
-            <Layers className="w-4 h-4 text-blue-600 shrink-0" />
-            <span className="text-[11px] font-semibold text-blue-900 whitespace-nowrap">گروه‌بندی:</span>
+          <div className="flex items-center gap-2 bg-[#e5f3fa] border border-[#b3ddf2] rounded px-3 py-1">
+            <Layers className="w-4 h-4 text-[#007cc0] shrink-0" />
+            <span className="text-[11px] font-semibold text-[#007cc0] whitespace-nowrap">گروه‌بندی:</span>
             <select
               value={groupBy}
               onChange={e => setGroupBy(e.target.value as StockGroupingKey)}
-              className="w-full bg-transparent text-xs font-bold text-blue-950 focus:outline-none cursor-pointer"
+              className="w-full bg-transparent text-xs font-bold text-[#333333] focus:outline-none cursor-pointer"
             >
               <option value="NONE">بدون گروه‌بندی (لیست تفضیلی)</option>
               <option value="THICKNESS">بر اساس ضخامت ورق (mm)</option>
@@ -1422,17 +1513,17 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
         {/* Dynamic Matching Coil Pack Quick Tags */}
         {matchingPacksOrLots.length > 0 &&
           (selectedPartFilter !== 'ALL' || selectedGradeFilter !== 'ALL' || selectedContractFilter !== 'ALL') && (
-            <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 text-[11px]">
-              <span className="text-slate-500 font-medium">کویل‌پک‌های موجود برای این فیلتر (کلیک جهت انتخاب):</span>
+            <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-[#e8e8e8] text-[11px]">
+              <span className="text-[#666666] font-medium">کویل‌پک‌های موجود برای این فیلتر (کلیک جهت انتخاب):</span>
               {matchingPacksOrLots.map(lot => (
                 <button
                   key={lot}
                   type="button"
                   onClick={() => setSelectedLotFilter(selectedLotFilter === lot ? 'ALL' : lot)}
-                  className={`px-2.5 py-0.5 rounded-md font-mono text-[11px] transition-colors border cursor-pointer ${
+                  className={`px-2 py-0.5 rounded font-mono text-[11px] transition-colors border cursor-pointer ${
                     selectedLotFilter === lot
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-[#007cc0] text-white border-[#007cc0]'
+                      : 'bg-[#f5f5f5] text-[#333333] border-[#d9d9d9] hover:bg-[#e5f3fa]'
                   }`}
                 >
                   {lot}
@@ -1441,19 +1532,19 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
             </div>
           )}
 
-        <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-100 gap-2">
-          <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none">
+        <div className="flex flex-wrap items-center justify-between pt-2 border-t border-[#e8e8e8] gap-2">
+          <label className="flex items-center gap-2 text-xs text-[#333333] cursor-pointer select-none">
             <input
               type="checkbox"
               checked={onlyAvailable}
               onChange={e => setOnlyAvailable(e.target.checked)}
-              className="rounded border-slate-300 text-slate-900 focus:ring-0"
+              className="rounded border-[#cccccc] text-[#007cc0] focus:ring-0"
             />
             <span>فقط نمایش رول‌ها و کالاهای دارای موجودی قابل استفاده (&gt; 0)</span>
           </label>
 
-          <div className="text-xs text-slate-500">
-            تعداد رکوردهای منطبق: <strong className="text-slate-900 font-mono">{formatNumber(filteredBalances.length)}</strong>
+          <div className="text-xs text-[#666666]">
+            تعداد رکوردهای منطبق: <strong className="text-[#333333] font-mono tabular-nums">{formatNumber(filteredBalances.length)}</strong>
           </div>
         </div>
       </div>
@@ -1462,61 +1553,91 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
       {groupBy !== 'NONE' ? (
         <div className="space-y-3">
           {groupedData.map(group => (
-            <div key={group.groupKey} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
-              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div key={group.groupKey} className="sap-card overflow-hidden">
+              <div className="bg-[#f5f5f5] px-4 py-2 border-b border-[#d9d9d9] flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-blue-600" />
-                  <strong className="text-slate-900 text-sm">{group.groupTitle}</strong>
-                  <span className="text-slate-500">
+                  <Layers className="w-4 h-4 text-[#007cc0]" />
+                  <strong className="text-[#333333] text-sm">{group.groupTitle}</strong>
+                  <span className="text-[#666666]">
                     ({toPersianDigits(group.items.length)} ردیف موجودی
                     {group.coilsCount > 0 ? ` · ${toPersianDigits(group.coilsCount)} کویل/بچ` : ''})
                   </span>
                 </div>
-                <div className="flex items-center gap-4 font-mono">
-                  <span className="text-slate-600">
-                    وزن فیزیکی گروه: <strong className="text-slate-900">{formatWeightKg(group.totalPhysicalKg)}</strong>
+                <div className="flex items-center gap-4 font-mono tabular-nums">
+                  <span className="text-[#666666]">
+                    وزن فیزیکی گروه: <strong className="text-[#333333]">{formatWeightKg(group.totalPhysicalKg)}</strong>
                   </span>
-                  <span className="text-emerald-700">
+                  <span className="text-[#107e3e]">
                     قابل استفاده: <strong>{formatWeightKg(group.totalAvailableKg)}</strong>
                   </span>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-white border-b border-slate-100 text-slate-500">
+                <table className="sap-table-compact w-full text-right text-xs">
+                  <thead className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold">
                     <tr>
-                      <th className="py-2.5 px-3">کالا / ورق</th>
-                      <th className="py-2.5 px-3">انبار و جایگاه</th>
-                      <th className="py-2.5 px-3">شماره کویل‌پک / بچ</th>
-                      <th className="py-2.5 px-3">شماره قرارداد</th>
-                      <th className="py-2.5 px-3">موجودی فیزیکی</th>
-                      <th className="py-2.5 px-3 text-emerald-700">موجودی قابل استفاده</th>
-                      <th className="py-2.5 px-3">وزن کل (کیلوگرم)</th>
+                      <th className="py-1.5 px-2.5">کالا / ورق</th>
+                      <th className="py-1.5 px-2.5">انبار و جایگاه</th>
+                      <th className="py-1.5 px-2.5">شماره کویل‌پک / بچ</th>
+                      <th className="py-1.5 px-2.5">شماره قرارداد</th>
+                      <th className="py-1.5 px-2.5">موجودی فیزیکی</th>
+                      <th className="py-1.5 px-2.5 text-[#107e3e]">موجودی قابل استفاده</th>
+                      <th className="py-1.5 px-2.5">وزن کل (کیلوگرم)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                     {group.items.map(item => (
-                      <tr key={item.id} className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-medium text-slate-900">
-                          {item.partName} <span className="text-slate-400 font-mono">({item.partCode})</span>
+                      <tr key={item.id} className="hover:bg-[#e5f3fa]/60">
+                        <td className="py-1.5 px-2.5 font-medium text-[#333333]">
+                          {item.partName}{' '}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCardexPartId(item.partId);
+                              setInquiryMode('PART_CARDEX');
+                            }}
+                            className="sap-doc-link font-mono cursor-pointer"
+                          >
+                            ({item.partCode})
+                          </button>
                         </td>
-                        <td className="py-2.5 px-3 text-slate-600">
+                        <td className="py-1.5 px-2.5 text-[#666666]">
                           {item.warehouseName} · <span className="font-mono">{item.locationCode}</span>
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
-                          {item.lotNumber || '—'}
+                        <td className="py-1.5 px-2.5 font-mono font-semibold text-[#333333]">
+                          {item.lotNumber ? (
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(item.lotNumber!, 'COILS')}
+                              className="sap-doc-link font-mono cursor-pointer"
+                            >
+                              {item.lotNumber}
+                            </button>
+                          ) : (
+                            '—'
+                          )}
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-700">
-                          {item.contractNumber || 'آزاد'}
+                        <td className="py-1.5 px-2.5 font-mono text-[#333333]">
+                          {item.contractNumber ? (
+                            <button
+                              type="button"
+                              onClick={() => traceDocument(item.contractNumber!, 'CONTRACTS')}
+                              className="sap-doc-link font-mono cursor-pointer"
+                            >
+                              {item.contractNumber}
+                            </button>
+                          ) : (
+                            'آزاد'
+                          )}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-900 tabular-nums">
+                        <td className="py-1.5 px-2.5 font-mono font-bold text-[#333333]">
                           {formatNumber(item.physicalQty)} {item.unit === 'KG' ? 'kg' : 'عدد'}
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-emerald-700 tabular-nums">
+                        <td className="py-1.5 px-2.5 font-mono font-bold text-[#107e3e]">
                           {formatNumber(item.availableQty)} {item.unit === 'KG' ? 'kg' : 'عدد'}
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-800 tabular-nums">
+                        <td className="py-1.5 px-2.5 font-mono text-[#333333]">
                           {formatWeightKg(item.physicalKg)}
                         </td>
                       </tr>
@@ -1529,22 +1650,22 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
         </div>
       ) : (
         /* Standard Table with Expandable Details */
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+        <div className="sap-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
+            <table className="sap-table-compact w-full text-right text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold select-none">
-                  <th className="py-3 px-3 w-8" />
-                  {visibleCols.partCode && <th className="py-3 px-3">کد کالا</th>}
-                  {visibleCols.partName && <th className="py-3 px-3">نام کالا و مشخصات فنی</th>}
-                  {visibleCols.warehouse && <th className="py-3 px-3">انبار و جایگاه</th>}
-                  {visibleCols.lotNumber && <th className="py-3 px-3">شماره کویل‌پک / ذوب</th>}
-                  {visibleCols.contract && <th className="py-3 px-3">شماره قرارداد</th>}
-                  {visibleCols.ownership && <th className="py-3 px-3">نوع مالکیت</th>}
+                <tr className="bg-[#ffffff] border-b border-[#d9d9d9] text-[#333333] font-semibold select-none">
+                  <th className="py-1.5 px-2.5 w-8" />
+                  {visibleCols.partCode && <th className="py-1.5 px-2.5">کد کالا</th>}
+                  {visibleCols.partName && <th className="py-1.5 px-2.5">نام کالا و مشخصات فنی</th>}
+                  {visibleCols.warehouse && <th className="py-1.5 px-2.5">انبار و جایگاه</th>}
+                  {visibleCols.lotNumber && <th className="py-1.5 px-2.5">شماره کویل‌پک / ذوب</th>}
+                  {visibleCols.contract && <th className="py-1.5 px-2.5">شماره قرارداد</th>}
+                  {visibleCols.ownership && <th className="py-1.5 px-2.5">نوع مالکیت</th>}
                   {visibleCols.physicalQty && (
                     <th
                       onClick={() => handleSort('physicalQty')}
-                      className="py-3 px-3 cursor-pointer hover:text-slate-900"
+                      className="py-1.5 px-2.5 cursor-pointer hover:text-[#007cc0]"
                     >
                       <div className="flex items-center gap-1">
                         <span>موجودی فیزیکی</span>
@@ -1555,7 +1676,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                   {visibleCols.availableQty && (
                     <th
                       onClick={() => handleSort('availableQty')}
-                      className="py-3 px-3 cursor-pointer hover:text-emerald-800 text-emerald-700"
+                      className="py-1.5 px-2.5 cursor-pointer hover:text-[#107e3e] text-[#107e3e]"
                     >
                       <div className="flex items-center gap-1">
                         <span>موجودی قابل استفاده</span>
@@ -1563,12 +1684,12 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                       </div>
                     </th>
                   )}
-                  {visibleCols.reservedQty && <th className="py-3 px-3 text-blue-700">رزرو شده</th>}
-                  {visibleCols.blockedQty && <th className="py-3 px-3 text-rose-700">قرنطینه کیفی</th>}
+                  {visibleCols.reservedQty && <th className="py-1.5 px-2.5 text-[#007cc0]">رزرو شده</th>}
+                  {visibleCols.blockedQty && <th className="py-1.5 px-2.5 text-[#bb0000]">قرنطینه کیفی</th>}
                   {visibleCols.physicalKg && (
                     <th
                       onClick={() => handleSort('physicalKg')}
-                      className="py-3 px-3 cursor-pointer hover:text-slate-900"
+                      className="py-1.5 px-2.5 cursor-pointer hover:text-[#007cc0]"
                     >
                       <div className="flex items-center gap-1">
                         <span>وزن کل (کیلوگرم)</span>
@@ -1576,17 +1697,18 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                       </div>
                     </th>
                   )}
-                  {visibleCols.lastTx && <th className="py-3 px-3">آخرین گردش</th>}
+                  {visibleCols.lastTx && <th className="py-1.5 px-2.5">آخرین گردش</th>}
+                  <th className="py-1.5 px-2.5 text-left">کنترل کیفی</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200/70">
+              <tbody className="divide-y divide-[#e8e8e8] tabular-nums">
                 {paginatedBalances.length === 0 ? (
                   <tr>
-                    <td colSpan={13} className="py-10 text-center text-slate-500">
-                      <div className="font-semibold text-slate-700 mb-1">
+                    <td colSpan={14} className="py-10 text-center text-[#666666]">
+                      <div className="font-semibold text-[#333333] mb-1">
                         هیچ موجودی منطبق با فیلترهای انتخابی یافت نشد.
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-[#666666]">
                         پیشنهاد: فیلترهای بالا را روی «همه» قرار دهید یا از طریق دکمه «ثبت رسید کالا / رول» موجودی جدید وارد کنید.
                       </div>
                     </td>
@@ -1598,19 +1720,31 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                       <React.Fragment key={item.id}>
                         <tr
                           onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
-                          className="hover:bg-slate-50/90 transition-colors cursor-pointer"
+                          className="hover:bg-[#e5f3fa]/60 transition-colors cursor-pointer"
                         >
-                          <td className="py-3 px-3 text-slate-400">
+                          <td className="py-1.5 px-2.5 text-[#666666]">
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </td>
                           {visibleCols.partCode && (
-                            <td className="py-3 px-3 font-mono font-bold text-slate-900">{item.partCode}</td>
+                            <td className="py-1.5 px-2.5 font-mono font-bold text-[#333333]" onClick={e => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCardexPartId(item.partId);
+                                  setInquiryMode('PART_CARDEX');
+                                }}
+                                className="sap-doc-link font-mono font-bold cursor-pointer"
+                                title="مشاهده کاردکس گردش این کالا"
+                              >
+                                {item.partCode}
+                              </button>
+                            </td>
                           )}
                           {visibleCols.partName && (
-                            <td className="py-3 px-3 font-medium text-slate-900">
+                            <td className="py-1.5 px-2.5 font-medium text-[#333333]">
                               <div>{item.partName}</div>
                               {item.materialGrade && (
-                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                <div className="text-[11px] text-[#666666] mt-0.5">
                                   جنس {item.materialGrade}
                                   {item.thicknessMm ? ` · ضخامت ${item.thicknessMm} میلی‌متر` : ''}
                                 </div>
@@ -1618,53 +1752,75 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                             </td>
                           )}
                           {visibleCols.warehouse && (
-                            <td className="py-3 px-3 text-slate-700">
+                            <td className="py-1.5 px-2.5 text-[#333333]">
                               <div className="flex items-center gap-1.5">
-                                <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                                <Building2 className="w-3.5 h-3.5 text-[#666666]" />
                                 <span>{item.warehouseName}</span>
                               </div>
-                              <div className="text-[10px] font-mono text-slate-400">{item.locationCode}</div>
+                              <div className="text-[10px] font-mono text-[#666666]">{item.locationCode}</div>
                             </td>
                           )}
                           {visibleCols.lotNumber && (
-                            <td className="py-3 px-3 font-mono">
+                            <td className="py-1.5 px-2.5 font-mono" onClick={e => e.stopPropagation()}>
                               {item.lotNumber ? (
                                 <div>
-                                  <div className="text-slate-900 font-semibold">{item.lotNumber}</div>
+                                  <button
+                                    type="button"
+                                    onClick={() => traceDocument(item.lotNumber!, 'COILS')}
+                                    className="sap-doc-link font-mono font-semibold cursor-pointer"
+                                  >
+                                    {item.lotNumber}
+                                  </button>
                                   {item.heatNumber && (
-                                    <div className="text-[10px] text-slate-500">ذوب: {item.heatNumber}</div>
+                                    <button
+                                      type="button"
+                                      onClick={() => traceDocument(item.heatNumber!, 'COILS')}
+                                      className="block sap-doc-link text-[10px] font-mono cursor-pointer"
+                                    >
+                                      ذوب: {item.heatNumber}
+                                    </button>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-slate-400">—</span>
+                                <span className="text-[#666666]">—</span>
                               )}
                             </td>
                           )}
                           {visibleCols.contract && (
-                            <td className="py-3 px-3 font-mono text-slate-700">
-                              {item.contractNumber || 'آزاد / عمومی'}
+                            <td className="py-1.5 px-2.5 font-mono text-[#333333]" onClick={e => e.stopPropagation()}>
+                              {item.contractNumber ? (
+                                <button
+                                  type="button"
+                                  onClick={() => traceDocument(item.contractNumber!, 'CONTRACTS')}
+                                  className="sap-doc-link font-mono cursor-pointer"
+                                >
+                                  {item.contractNumber}
+                                </button>
+                              ) : (
+                                'آزاد / عمومی'
+                              )}
                             </td>
                           )}
                           {visibleCols.ownership && (
-                            <td className="py-3 px-3 text-slate-700">
+                            <td className="py-1.5 px-2.5 text-[#333333]">
                               {item.ownership === 'SAPCO_SUPPLIER_OWNED' ? (
                                 <span className="text-amber-800 font-semibold">امانی ساپکو</span>
                               ) : (
-                                <span className="text-slate-700">ملکی شرکت</span>
+                                <span className="text-[#333333]">ملکی شرکت</span>
                               )}
                             </td>
                           )}
                           {visibleCols.physicalQty && (
-                            <td className="py-3 px-3 font-bold text-slate-900 font-mono tabular-nums">
-                              {formatNumber(item.physicalQty)} <span className="text-[10px] font-normal text-slate-500">{item.unit === 'KG' ? 'kg' : 'عدد'}</span>
+                            <td className="py-1.5 px-2.5 font-bold text-[#333333] font-mono">
+                              {formatNumber(item.physicalQty)} <span className="text-[10px] font-normal text-[#666666]">{item.unit === 'KG' ? 'kg' : 'عدد'}</span>
                             </td>
                           )}
                           {visibleCols.availableQty && (
-                            <td className="py-3 px-3 font-bold text-emerald-700 font-mono tabular-nums">
+                            <td className="py-1.5 px-2.5 font-bold text-[#107e3e] font-mono">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span>
                                   {formatNumber(item.availableQty)}{' '}
-                                  <span className="text-[10px] font-normal text-emerald-600">
+                                  <span className="text-[10px] font-normal text-[#107e3e]">
                                     {item.unit === 'KG' ? 'kg' : 'عدد'}
                                   </span>
                                 </span>
@@ -1695,76 +1851,98 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                             </td>
                           )}
                           {visibleCols.reservedQty && (
-                            <td className="py-3 px-3 font-mono text-blue-700 tabular-nums">
+                            <td className="py-1.5 px-2.5 font-mono text-[#007cc0]">
                               {item.reservedQty > 0 ? formatNumber(item.reservedQty) : '—'}
                             </td>
                           )}
                           {visibleCols.blockedQty && (
-                            <td className="py-3 px-3 font-mono text-rose-700 tabular-nums">
+                            <td className="py-1.5 px-2.5 font-mono text-[#bb0000]">
                               {item.qualityBlockedQty > 0 ? formatNumber(item.qualityBlockedQty) : '—'}
                             </td>
                           )}
                           {visibleCols.physicalKg && (
-                            <td className="py-3 px-3 font-bold text-slate-800 font-mono tabular-nums">
+                            <td className="py-1.5 px-2.5 font-bold text-[#333333] font-mono">
                               {formatWeightKg(item.physicalKg)}
                             </td>
                           )}
                           {visibleCols.lastTx && (
-                            <td className="py-3 px-3 text-slate-500 text-[11px] font-mono">
+                            <td className="py-1.5 px-2.5 text-[#666666] text-[11px] font-mono">
                               {formatDateTime(item.lastTransactionAt)}
                             </td>
                           )}
-                          <td className="py-3 px-3 text-left" onClick={e => e.stopPropagation()}>
+                          <td className="py-1.5 px-2.5 text-left" onClick={e => e.stopPropagation()}>
                             <button
                               type="button"
                               onClick={() => handleToggleQcHoldOnBalance(item)}
-                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 border transition-colors cursor-pointer ${
+                              className={`px-2 py-0.5 rounded text-[11px] font-bold inline-flex items-center gap-1 border transition-colors cursor-pointer whitespace-nowrap ${
                                 item.qualityBlockedQty > 0
                                   ? 'bg-rose-600 text-white border-rose-700 hover:bg-rose-700'
-                                  : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+                                  : 'bg-[#ffffff] text-rose-700 border-rose-200 hover:bg-rose-50'
                               }`}
                             >
                               <ShieldAlert className="w-3 h-3" />
-                              <span>{item.qualityBlockedQty > 0 ? 'رفع قرنطینه' : 'قرنطینه کیفی / QC Hold'}</span>
+                              <span>{item.qualityBlockedQty > 0 ? 'رفع قرنطینه' : 'قرنطینه کیفی'}</span>
                             </button>
                           </td>
                         </tr>
 
                         {/* Expandable Details Row */}
                         {isExpanded && (
-                          <tr className="bg-slate-50/90">
-                            <td colSpan={13} className="p-4 border-t border-slate-200">
+                          <tr className="bg-[#f5f5f5]">
+                            <td colSpan={14} className="p-3.5 border-t border-[#d9d9d9]">
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                                <div className="bg-white p-3 rounded-lg border border-slate-200">
-                                  <span className="text-slate-500 block">تفکیک وضعیت موجودی این ردیف:</span>
+                                <div className="bg-[#ffffff] p-3 rounded border border-[#d9d9d9]">
+                                  <span className="text-[#666666] block">تفکیک وضعیت موجودی این ردیف:</span>
                                   <div className="mt-1.5 space-y-1 font-mono">
                                     <div className="flex justify-between">
                                       <span>فیزیکی کل:</span>
                                       <strong>{formatNumber(item.physicalQty)} {item.unit}</strong>
                                     </div>
-                                    <div className="flex justify-between text-emerald-700">
+                                    <div className="flex justify-between text-[#107e3e]">
                                       <span>قابل استفاده (آزاد):</span>
                                       <strong>{formatNumber(item.availableQty)} {item.unit}</strong>
                                     </div>
-                                    <div className="flex justify-between text-blue-700">
+                                    <div className="flex justify-between text-[#007cc0]">
                                       <span>رزرو تولید:</span>
                                       <strong>{formatNumber(item.reservedQty)} {item.unit}</strong>
                                     </div>
-                                    <div className="flex justify-between text-rose-700">
+                                    <div className="flex justify-between text-[#bb0000]">
                                       <span>قرنطینه کیفی:</span>
                                       <strong>{formatNumber(item.qualityBlockedQty)} {item.unit}</strong>
                                     </div>
                                   </div>
                                 </div>
 
-                                <div className="bg-white p-3 rounded-lg border border-slate-200">
-                                  <span className="text-slate-500 block">ردیابی کویل‌پک و ذوب:</span>
+                                <div className="bg-[#ffffff] p-3 rounded border border-[#d9d9d9]">
+                                  <span className="text-[#666666] block">ردیابی کویل‌پک و ذوب:</span>
                                   <div className="mt-1.5 space-y-1">
                                     <div>
-                                      کویل‌پک / بچ: <strong className="font-mono text-slate-900">{item.lotNumber || 'ثبت نشده'}</strong>
+                                      کویل‌پک / بچ:{' '}
+                                      {item.lotNumber ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => traceDocument(item.lotNumber!, 'COILS')}
+                                          className="sap-doc-link font-mono font-bold cursor-pointer"
+                                        >
+                                          {item.lotNumber}
+                                        </button>
+                                      ) : (
+                                        <strong className="font-mono text-[#333333]">ثبت نشده</strong>
+                                      )}
                                     </div>
                                     <div>
-                                      شماره ذوب: <strong className="font-mono text-slate-900">{item.heatNumber || '—'}</strong>
+                                      شماره ذوب:{' '}
+                                      {item.heatNumber ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => traceDocument(item.heatNumber!, 'COILS')}
+                                          className="sap-doc-link font-mono font-bold cursor-pointer"
+                                        >
+                                          {item.heatNumber}
+                                        </button>
+                                      ) : (
+                                        <strong className="font-mono text-[#333333]">—</strong>
+                                      )}
                                     </div>
                                     <div>
                                       جنس و ضخامت: <strong>{item.materialGrade || '—'} {item.thicknessMm ? `(${item.thicknessMm} mm)` : ''}</strong>
@@ -1772,20 +1950,31 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                                   </div>
                                 </div>
 
-                                <div className="bg-white p-3 rounded-lg border border-slate-200">
-                                  <span className="text-slate-500 block">اطلاعات مالکیت و قرارداد:</span>
+                                <div className="bg-[#ffffff] p-3 rounded border border-[#d9d9d9]">
+                                  <span className="text-[#666666] block">اطلاعات مالکیت و قرارداد:</span>
                                   <div className="mt-1.5 space-y-1">
                                     <div>
                                       مالکیت: <strong>{item.ownership === 'SAPCO_SUPPLIER_OWNED' ? 'امانی ساپکو / مشتری' : 'ملکی شرکت کوثر'}</strong>
                                     </div>
                                     <div>
-                                      شماره قرارداد: <strong className="font-mono text-slate-900">{item.contractNumber || 'آزاد / بدون قرارداد'}</strong>
+                                      شماره قرارداد:{' '}
+                                      {item.contractNumber ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => traceDocument(item.contractNumber!, 'CONTRACTS')}
+                                          className="sap-doc-link font-mono font-bold cursor-pointer"
+                                        >
+                                          {item.contractNumber}
+                                        </button>
+                                      ) : (
+                                        <strong className="font-mono text-[#333333]">آزاد / بدون قرارداد</strong>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
 
-                                <div className="bg-white p-3 rounded-lg border border-slate-200">
-                                  <span className="text-slate-500 block">موقعیت مکانی و آخرین گردش:</span>
+                                <div className="bg-[#ffffff] p-3 rounded border border-[#d9d9d9]">
+                                  <span className="text-[#666666] block">موقعیت مکانی و آخرین گردش:</span>
                                   <div className="mt-1.5 space-y-1">
                                     <div>
                                       انبار: <strong>{item.warehouseName}</strong>
@@ -1812,8 +2001,8 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
 
           {/* Pagination Bar */}
           {totalPages > 1 && (
-            <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
-              <span className="text-slate-500">
+            <div className="px-4 py-2.5 bg-[#ffffff] border-t border-[#d9d9d9] flex items-center justify-between text-xs">
+              <span className="text-[#666666]">
                 صفحه {toPersianDigits(currentPage)} از {toPersianDigits(totalPages)}
               </span>
               <div className="flex items-center gap-1.5">
@@ -1821,7 +2010,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                   type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer"
+                  className="sap-btn-standard px-3 py-1 disabled:opacity-40 cursor-pointer"
                 >
                   قبلی
                 </button>
@@ -1829,7 +2018,7 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                   type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 cursor-pointer"
+                  className="sap-btn-standard px-3 py-1 disabled:opacity-40 cursor-pointer"
                 >
                   بعدی
                 </button>
@@ -1844,25 +2033,25 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
       {/* Mandatory QC Hold Reason Modal (ثبت اجباری علت قرنطینه کیفی در انبار) */}
       {qcHoldTargetBalance && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-[#333333]/40 flex items-center justify-center z-50 p-4"
           onClick={() => setQcHoldTargetBalance(null)}
         >
           <div
-            className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-5 text-right shadow-2xl space-y-4"
+            className="bg-[#ffffff] border border-[#d9d9d9] rounded max-w-lg w-full p-4 text-right shadow-lg space-y-3"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-[#e8e8e8] pb-2.5">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
-                  <ShieldAlert className="w-5 h-5" />
+                <div className="w-9 h-9 rounded bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] flex items-center justify-center shrink-0">
+                  <ShieldAlert className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-semibold text-[#333333]">
                     ثبت اجباری علت قرنطینه کیفی (QC Hold) — {qcHoldTargetBalance.partName}
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    کویل‌پک / بچ: <span className="font-mono font-bold text-slate-700">{qcHoldTargetBalance.lotNumber || qcHoldTargetBalance.partCode}</span> | مقدار درگیر:{' '}
-                    <span className="font-mono font-bold text-rose-700">
+                  <p className="text-[11px] text-[#666666] mt-0.5">
+                    کویل‌پک / بچ: <span className="font-mono font-semibold text-[#333333]">{qcHoldTargetBalance.lotNumber || qcHoldTargetBalance.partCode}</span> | مقدار درگیر:{' '}
+                    <span className="font-mono font-semibold text-[#bb0000] tabular-nums">
                       {formatNumber(qcHoldTargetBalance.physicalQty)} {qcHoldTargetBalance.unit}
                     </span>
                   </p>
@@ -1871,23 +2060,23 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
               <button
                 type="button"
                 onClick={() => setQcHoldTargetBalance(null)}
-                className="px-2 py-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs cursor-pointer"
+                className="px-2 py-1 rounded text-[#666666] hover:text-[#333333] hover:bg-[#f5f5f5] text-xs cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleConfirmStockQcHoldModal} className="space-y-3.5 text-xs">
-              <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200 text-rose-900 text-[11px] leading-relaxed">
+            <form onSubmit={handleConfirmStockQcHoldModal} className="space-y-3 text-xs">
+              <div className="p-2.5 rounded bg-[#ffecec] border border-[#f5b7b1] text-[#bb0000] text-[11px] leading-relaxed">
                 <strong>هشدار کنترل کیفیت و کسر از ATP:</strong> با فریز و قرنطینه کردن این ردیف، مقدار{' '}
-                <strong className="font-mono">
+                <strong className="font-mono tabular-nums">
                   {formatNumber(qcHoldTargetBalance.physicalQty)} {qcHoldTargetBalance.unit}
                 </strong>{' '}
                 بلافاصله از موجودی آزاد (ATP) در انبار و ماژول MRP کسر می‌گردد. ثبت علت دقیق قرنطینه جهت درج در لاگ حسابرسی (Audit Trail) اجباری است.
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
+                <label className="block text-[11px] font-semibold text-[#333333] mb-1.5">
                   انتخاب سریع از دلایل متداول عدم انطباق کیفی:
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -1899,10 +2088,10 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                         setQcHoldReasonText(preset);
                         setQcHoldReasonError('');
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] border transition cursor-pointer ${
+                      className={`px-2.5 py-1 rounded text-[11px] border transition cursor-pointer ${
                         qcHoldReasonText === preset
-                          ? 'bg-rose-600 text-white border-rose-600 font-bold'
-                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          ? 'bg-[#bb0000] text-[#ffffff] border-[#bb0000] font-semibold'
+                          : 'bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#333333] border-[#d9d9d9]'
                       }`}
                     >
                       {preset}
@@ -1912,8 +2101,8 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  علت قرنطینه کیفی (QC Hold Reason) <span className="text-rose-600">* (اجباری)</span>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  علت قرنطینه کیفی (QC Hold Reason) <span className="text-[#bb0000]">* (اجباری)</span>
                 </label>
                 <textarea
                   rows={3}
@@ -1923,24 +2112,24 @@ export const StockInquiryView: React.FC<StockInquiryViewProps> = ({
                     if (e.target.value.trim()) setQcHoldReasonError('');
                   }}
                   placeholder="علت دقیق قرنطینه کیفی یا شماره گزارش عدم انطباق (NCR) را وارد نمایید..."
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-rose-500"
+                  className="w-full rounded border border-[#bfbfbf] bg-[#ffffff] px-3 py-1.5 text-xs text-[#333333] focus:outline-none focus:border-[#007cc0]"
                 />
                 {qcHoldReasonError && (
-                  <p className="text-[11px] text-rose-600 font-bold mt-1">{qcHoldReasonError}</p>
+                  <p className="text-[11px] text-[#bb0000] font-semibold mt-1">{qcHoldReasonError}</p>
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#e8e8e8]">
                 <button
                   type="button"
                   onClick={() => setQcHoldTargetBalance(null)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium cursor-pointer"
+                  className="sap-btn-standard px-3.5 py-1.5 text-xs cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="px-4 py-1.5 rounded bg-[#bb0000] hover:bg-[#990000] text-[#ffffff] text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   <span>ثبت علت در لاگ و اعمال قرنطینه (QC Hold)</span>

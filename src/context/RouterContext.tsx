@@ -7,6 +7,7 @@ import { DrawerTabKey } from '../components/workflow/OrderDetailsDrawer';
 import { MasterSubSection } from '../components/MasterDataHubView';
 
 export type ErpModalType = 'create-mo' | 'wip-check' | 'edit-mo' | 'timeline' | 'log-step' | null;
+export type WipSubTabKey = 'UNIFIED_DIRECTORY' | 'TRACEABILITY' | 'DASHBOARD' | 'ORDERS' | 'TRANSFERS' | 'STAGES';
 
 export interface RouteState {
   tab: TabKey;
@@ -15,10 +16,12 @@ export interface RouteState {
   inventorySubTab: InventorySubTab;
   planningSubTab: PlanningSubTabKey;
   machineSubTab: MachineSubTabKey;
+  wipSubTab?: WipSubTabKey;
   masterSubSection?: MasterSubSection;
   moId: string | null;
   drawerTab: DrawerTabKey | null;
   timelineMoId: string | null;
+  docQuery?: string | null;
   modal: ErpModalType;
   modalOrderId?: string | null;
   modalPartId?: string | null;
@@ -31,10 +34,12 @@ export interface RouteNavigateParams {
   inventorySubTab?: InventorySubTab;
   planningSubTab?: PlanningSubTabKey;
   machineSubTab?: MachineSubTabKey;
+  wipSubTab?: WipSubTabKey;
   masterSubSection?: MasterSubSection;
   moId?: string | null;
   drawerTab?: DrawerTabKey | null;
   timelineMoId?: string | null;
+  docQuery?: string | null;
   modal?: ErpModalType;
   modalOrderId?: string | null;
   modalPartId?: string | null;
@@ -51,6 +56,8 @@ interface RouterContextType {
   openTimeline: (moId: string) => void;
   closeTimeline: () => void;
   setProductionSubTab: (subTab: ProductionWorkbenchSubTab) => void;
+  traceDocument: (query: string, target?: 'INVENTORY_LEDGER' | 'WIP_TRACEABILITY' | 'COILS' | 'CONTRACTS') => void;
+  clearDocQuery: () => void;
   buildShareableUrl: (params?: RouteNavigateParams) => string;
 }
 
@@ -61,10 +68,12 @@ const DEFAULT_ROUTE: RouteState = {
   inventorySubTab: 'DASHBOARD',
   planningSubTab: 'erp_workbench',
   machineSubTab: 'machines',
+  wipSubTab: 'UNIFIED_DIRECTORY',
   masterSubSection: 'PARTS',
   moId: null,
   drawerTab: null,
   timelineMoId: null,
+  docQuery: null,
   modal: null,
   modalOrderId: null,
   modalPartId: null,
@@ -265,6 +274,9 @@ function parseUrlToRoute(): RouteState {
 
   const rawMasterSubSection = searchParams.get('masterSubSection') || searchParams.get('section');
   const masterSubSection: MasterSubSection = (rawMasterSubSection as MasterSubSection) || 'PARTS';
+  const docQuery = searchParams.get('doc') || searchParams.get('q') || null;
+  const rawWipSubTab = searchParams.get('wipTab') as WipSubTabKey | null;
+  const wipSubTab: WipSubTabKey = rawWipSubTab || 'UNIFIED_DIRECTORY';
 
   return {
     tab,
@@ -273,10 +285,12 @@ function parseUrlToRoute(): RouteState {
     inventorySubTab,
     planningSubTab,
     machineSubTab,
+    wipSubTab,
     masterSubSection,
     moId,
     drawerTab,
     timelineMoId,
+    docQuery,
     modal,
     modalOrderId,
     modalPartId,
@@ -326,6 +340,14 @@ function serializeRouteToHash(state: RouteState): string {
 
   if (state.timelineMoId) {
     params.set('timeline', state.timelineMoId);
+  }
+
+  if (state.docQuery) {
+    params.set('doc', state.docQuery);
+  }
+
+  if (state.tab === 'wip' && state.wipSubTab && state.wipSubTab !== 'UNIFIED_DIRECTORY') {
+    params.set('wipTab', state.wipSubTab);
   }
 
   const queryString = params.toString();
@@ -435,6 +457,23 @@ export const ErpRouterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, [navigate]);
 
+  const traceDocument = useCallback((query: string, target: 'INVENTORY_LEDGER' | 'WIP_TRACEABILITY' | 'COILS' | 'CONTRACTS' = 'INVENTORY_LEDGER') => {
+    const cleanQuery = (query || '').trim();
+    if (target === 'WIP_TRACEABILITY') {
+      navigate({ tab: 'wip', wipSubTab: 'TRACEABILITY', docQuery: cleanQuery, moId: null });
+    } else if (target === 'COILS') {
+      navigate({ tab: 'inventory', inventorySubTab: 'COILS', docQuery: cleanQuery, moId: null });
+    } else if (target === 'CONTRACTS') {
+      navigate({ tab: 'contracts', docQuery: cleanQuery, moId: null });
+    } else {
+      navigate({ tab: 'inventory', inventorySubTab: 'MOVEMENT', docQuery: cleanQuery, moId: null });
+    }
+  }, [navigate]);
+
+  const clearDocQuery = useCallback(() => {
+    navigate({ docQuery: null }, { replace: true });
+  }, [navigate]);
+
   const buildShareableUrl = useCallback((params?: RouteNavigateParams) => {
     if (typeof window === 'undefined') return '';
     const targetState: RouteState = { ...route, ...params };
@@ -453,6 +492,8 @@ export const ErpRouterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     openTimeline,
     closeTimeline,
     setProductionSubTab,
+    traceDocument,
+    clearDocQuery,
     buildShareableUrl,
   }), [
     route,
@@ -465,6 +506,8 @@ export const ErpRouterProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     openTimeline,
     closeTimeline,
     setProductionSubTab,
+    traceDocument,
+    clearDocQuery,
     buildShareableUrl,
   ]);
 

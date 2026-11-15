@@ -358,10 +358,10 @@ export const ReceiptFormModal: React.FC<ReceiptFormModalProps> = ({
         setQContractNumber('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت قرارداد');
+        setErrorMessage(data.error || 'خطا در ثبت قرارداد');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -395,10 +395,10 @@ export const ReceiptFormModal: React.FC<ReceiptFormModalProps> = ({
         setQPartName('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت قطعه');
+        setErrorMessage(data.error || 'خطا در ثبت قطعه');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -430,10 +430,10 @@ export const ReceiptFormModal: React.FC<ReceiptFormModalProps> = ({
         setQWhName('');
         if (onItemCreated) onItemCreated();
       } else {
-        alert(data.error || 'خطا در ثبت انبار');
+        setErrorMessage(data.error || 'خطا در ثبت انبار');
       }
     } catch {
-      alert('خطا در ارتباط با سرور');
+      setErrorMessage('خطا در ارتباط با سرور');
     } finally {
       setSubmittingQuick(false);
     }
@@ -1021,15 +1021,15 @@ export const ReceiptFormModal: React.FC<ReceiptFormModalProps> = ({
                       </div>
 
                       <div className="overflow-x-auto">
-                        <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                        <table className="w-full text-right text-xs sap-table-compact">
+                          <thead className="bg-[#ffffff] text-[#333333] border-b border-[#d9d9d9]">
                             <tr>
-                              <th className="py-2 px-2.5">ردیف</th>
-                              <th className="py-2 px-2.5">شماره کویل‌پک (پلاک ساپکو)</th>
-                              <th className="py-2 px-2.5">کد رول در کارگاه</th>
-                              <th className="py-2 px-2.5">وزن خالص باسکول (kg)</th>
-                              <th className="py-2 px-2.5">شماره ذوب</th>
-                              <th className="py-2 px-2.5 text-center">حذف</th>
+                              <th>ردیف</th>
+                              <th>شماره کویل‌پک (پلاک ساپکو)</th>
+                              <th>کد رول در کارگاه</th>
+                              <th>وزن خالص باسکول (kg)</th>
+                              <th>شماره ذوب</th>
+                              <th className="text-center">حذف</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">

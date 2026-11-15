@@ -20,6 +20,7 @@ import { Part, Machine } from '../../types/inventory';
 import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { getDynamicWorkDays } from '../../utils/jalali';
 import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
+import { useErpRouter } from '../../context/RouterContext';
 
 interface MachineCapacityTimelineViewProps {
   suggestions: ProductionPlanSuggestion[];
@@ -205,6 +206,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
   initialMachineCode,
 }) => {
   const { openQuickEditDrawer, requestConfirm, showUndoToast, recordAudit } = useEnterpriseUx();
+  const { traceDocument } = useErpRouter();
   const workDays = useMemo(() => getDynamicWorkDays(), []);
 
   const [blocks, setBlocks] = useState<ScheduledMoBlock[]>(() => {
@@ -635,32 +637,32 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
   return (
     <div className="space-y-4 text-right" dir="rtl">
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="sap-card p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded bg-[#e5f3fa] border border-[#b3d7ff] text-[#007cc0] flex items-center justify-center shrink-0">
             <CalendarClock className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+              <h2 className="text-sm sm:text-base font-bold text-[#333333]">
                 تقویم ظرفیت ماشین‌آلات و گانت چارت دستورات تولید (Finite Capacity Planning)
               </h2>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e5f3fa] text-[#007cc0] border border-[#b3d7ff]">
                 تسطیح خودکار و دستی (Auto & Manual Leveling)
               </span>
               {totalConflictsCount > 0 ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#fde8e8] text-[#bb0000] border border-[#f5b8b8]">
                   <AlertTriangle className="w-3.5 h-3.5" />
                   {toPersianDigits(totalConflictsCount)} تداخل زمانی ماشین‌آلات شناسایی شد
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#eef8f2] text-[#107e3e] border border-[#b7dfc5]">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   بدون تداخل زمانی (برنامه تسطیح‌شده)
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-[#666666] mt-1">
               نمای بصری تخصیص دستورات تولید روی پرس‌ها به همراه <strong>تسطیح خودکار (با احتساب SMED)</strong> و <strong>تسطیح دستی دقیق (انتخابگر ساعت HH:mm)</strong>.
             </p>
           </div>
@@ -677,7 +679,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                     handleFocusConflictOnTimeline(first.machineCode, first.blockA, first.blockB, true);
                   }
                 }}
-                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded bg-[#e9730c] hover:bg-[#d1660a] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Sliders className="w-3.5 h-3.5" />
                 <span>تسطیح دستی تداخل‌ها (Manual Leveling)</span>
@@ -685,7 +687,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
               <button
                 type="button"
                 onClick={handleResolveAllConflicts}
-                className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded bg-[#bb0000] hover:bg-[#990000] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>تسطیح خودکار همه (Auto-Leveling)</span>
@@ -695,7 +697,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
             <button
               type="button"
               onClick={resetDemoConflicts}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
+              className="sap-btn-standard px-3 py-1.5 text-xs font-semibold cursor-pointer"
             >
               بازنشانی سناریوی تداخل نمونه
             </button>
@@ -705,15 +707,15 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
 
       {/* Interactive Conflict Navigator Strip: Click to jump directly to the conflicting machine/day */}
       {allConflictsList.length > 0 && (
-        <div className="bg-rose-50/90 border border-rose-300 rounded-2xl p-4 space-y-3 shadow-2xs">
+        <div className="bg-[#fde8e8]/60 border border-[#f5b8b8] rounded-md p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-xs font-black text-rose-950">
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            <div className="flex items-center gap-2 text-xs font-bold text-[#bb0000]">
+              <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0" />
               <span>
                 فهرست تداخل‌های شناسایی‌شده در تقویم کاری (روی هر تداخل کلیک کنید تا مستقیم روی همان ماشین و ساعت برود):
               </span>
             </div>
-            <span className="text-[11px] text-rose-700 font-bold">
+            <span className="text-[11px] text-[#bb0000] font-bold">
               امکان انتخاب بین «تسطیح دستی (ساعت دلخواه)» و «تسطیح خودکار (پایان دستور اول + SMED)»
             </span>
           </div>
@@ -723,25 +725,37 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
               <div
                 key={idx}
                 onClick={() => handleFocusConflictOnTimeline(conf.machineCode, conf.blockA, conf.blockB, false)}
-                className="bg-white border border-rose-200 hover:border-rose-400 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer transition shadow-2xs"
+                className="bg-white border border-[#f5b8b8] hover:border-[#bb0000] rounded p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer transition"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded bg-[#fde8e8] text-[#bb0000] font-mono text-[10px] font-bold">
                       {conf.machineCode}
                     </span>
-                    <span className="text-xs font-bold text-slate-900">{conf.machineName}</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold flex items-center gap-1">
+                    <span className="text-xs font-bold text-[#333333]">{conf.machineName}</span>
+                    <span className="px-2 py-0.5 rounded bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9] text-[10px] font-bold flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {conf.dayLabel}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-600">
-                    تداخل <strong>{toPersianDigits(conf.overlapHours)} ساعت</strong> بین{' '}
-                    <span className="font-mono font-bold text-slate-800">{conf.blockA.moNumber}</span> (تا{' '}
-                    {formatHourLabel(conf.blockA.endHour)}) و{' '}
-                    <span className="font-mono font-bold text-rose-700">{conf.blockB.moNumber}</span> (از{' '}
-                    {formatHourLabel(conf.blockB.startHour)})
+                  <div className="text-[11px] text-[#666666] flex items-center gap-1 flex-wrap">
+                    <span>تداخل <strong>{toPersianDigits(conf.overlapHours)} ساعت</strong> بین</span>
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); traceDocument(conf.blockA.moNumber, 'WIP_TRACEABILITY'); }}
+                      className="sap-doc-link font-mono"
+                    >
+                      {conf.blockA.moNumber}
+                    </button>
+                    <span>(تا {formatHourLabel(conf.blockA.endHour)}) و</span>
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); traceDocument(conf.blockB.moNumber, 'WIP_TRACEABILITY'); }}
+                      className="sap-doc-link font-mono text-[#bb0000]"
+                    >
+                      {conf.blockB.moNumber}
+                    </button>
+                    <span>(از {formatHourLabel(conf.blockB.startHour)})</span>
                   </div>
                 </div>
 
@@ -751,7 +765,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                     onClick={() =>
                       handleFocusConflictOnTimeline(conf.machineCode, conf.blockA, conf.blockB, true)
                     }
-                    className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                    className="px-2.5 py-1.5 rounded bg-[#e9730c] hover:bg-[#d1660a] text-white text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
                   >
                     <Sliders className="w-3 h-3" />
                     <span>تسطیح دستی</span>
@@ -759,7 +773,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                   <button
                     type="button"
                     onClick={() => handleAutoResolveMachineConflict(conf)}
-                    className="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                    className="px-2.5 py-1.5 rounded bg-[#bb0000] hover:bg-[#990000] text-white text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
                   >
                     <Sparkles className="w-3 h-3" />
                     <span>تسطیح خودکار</span>
@@ -773,54 +787,54 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
 
       {/* KPI Strip & Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-xs text-[#666666]">
             <span>دستورات تولید زمان‌بندی‌شده</span>
-            <Layers className="w-4 h-4 text-slate-400" />
+            <Layers className="w-4 h-4 text-[#666666]" />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono mt-1">
-            {toPersianDigits(activeBlocks.length)} <span className="text-xs font-sans font-normal text-slate-500">عملیات MO</span>
+          <div className="text-xl font-bold text-[#333333] font-mono mt-1">
+            {toPersianDigits(activeBlocks.length)} <span className="text-xs font-sans font-normal text-[#666666]">عملیات MO</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-xs text-[#666666]">
             <span>تداخل‌های زمانی (Overlaps)</span>
-            <AlertTriangle className={`w-4 h-4 ${totalConflictsCount > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />
+            <AlertTriangle className={`w-4 h-4 ${totalConflictsCount > 0 ? 'text-[#bb0000]' : 'text-[#107e3e]'}`} />
           </div>
-          <div className={`text-xl font-black font-mono mt-1 ${totalConflictsCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+          <div className={`text-xl font-bold font-mono mt-1 ${totalConflictsCount > 0 ? 'text-[#bb0000]' : 'text-[#107e3e]'}`}>
             {toPersianDigits(totalConflictsCount)}{' '}
-            <span className="text-xs font-sans font-normal text-slate-500">
+            <span className="text-xs font-sans font-normal text-[#666666]">
               {totalConflictsCount > 0 ? 'مورد نیازمند تصمیم‌گیری' : 'تداخل صفر'}
             </span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="sap-card p-3.5">
+          <div className="flex items-center justify-between text-xs text-[#666666]">
             <span>متوسط ضریب اشغال پرس‌ها</span>
-            <Cpu className="w-4 h-4 text-indigo-500" />
+            <Cpu className="w-4 h-4 text-[#007cc0]" />
           </div>
-          <div className="text-xl font-black text-indigo-700 font-mono mt-1">
+          <div className="text-xl font-bold text-[#007cc0] font-mono mt-1">
             {toPersianDigits(
               machineRows.length > 0
                 ? Math.round(machineRows.reduce((s, r) => s + r.utilizationPercent, 0) / machineRows.length)
                 : 0
             )}
-            ٪ <span className="text-xs font-sans font-normal text-slate-500">در ۲ شیفت کاری</span>
+            ٪ <span className="text-xs font-sans font-normal text-[#666666]">در ۲ شیفت کاری</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col justify-between">
+        <div className="sap-card p-3.5 flex flex-col justify-between">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-[#333333] font-semibold">
+              <Filter className="w-3.5 h-3.5 text-[#666666]" />
               <span>فیلتر سالن:</span>
             </div>
             <select
               value={selectedHall}
               onChange={e => setSelectedHall(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none"
+              className="bg-white border border-[#bfbfbf] rounded px-2 py-1 text-xs font-bold text-[#333333] focus:outline-none focus:border-[#007cc0]"
             >
               <option value="ALL">همه سالن‌ها</option>
               {dynamicHallList.map(h => (
@@ -830,12 +844,12 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-2 text-[11px] text-slate-700 font-medium cursor-pointer mt-2">
+          <label className="flex items-center gap-2 text-[11px] text-[#333333] font-medium cursor-pointer mt-2">
             <input
               type="checkbox"
               checked={onlyConflicts}
               onChange={e => setOnlyConflicts(e.target.checked)}
-              className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+              className="rounded border-[#bfbfbf] text-[#bb0000] focus:ring-[#bb0000]"
             />
             <span>فقط نمایش ماشین‌آلات دارای تداخل زمانی</span>
           </label>
@@ -843,33 +857,33 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
       </div>
 
       {/* Main Minimal Visual Gantt / Timeline Chart */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+      <div className="sap-card overflow-hidden">
         {/* Legend & Shift Indicators */}
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-[11px]">
+        <div className="px-4 py-2.5 bg-[#f7f7f7] border-b border-[#d9d9d9] flex flex-wrap items-center justify-between gap-3 text-[11px]">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="font-bold text-slate-700">راهنمای وضعیت دستور کار روی گانت:</span>
+            <span className="font-bold text-[#333333]">راهنمای وضعیت دستور کار روی گانت:</span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-emerald-600 inline-block" />
-              <span className="text-slate-700">در حال تولید (In Progress)</span>
+              <span className="w-3 h-3 rounded-xs bg-[#107e3e] inline-block" />
+              <span className="text-[#333333]">در حال تولید (In Progress)</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-indigo-600 inline-block" />
-              <span className="text-slate-700">برنامه‌ریزی شده (Scheduled)</span>
+              <span className="w-3 h-3 rounded-xs bg-[#007cc0] inline-block" />
+              <span className="text-[#333333]">برنامه‌ریزی شده (Scheduled)</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-slate-500 inline-block" />
-              <span className="text-slate-700">تکمیل شده (Completed)</span>
+              <span className="w-3 h-3 rounded-xs bg-[#666666] inline-block" />
+              <span className="text-[#333333]">تکمیل شده (Completed)</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-xs bg-rose-600 ring-2 ring-rose-300 inline-block" />
-              <span className="font-bold text-rose-700">تداخل زمانی ماشین (Time Conflict)</span>
+              <span className="w-3 h-3 rounded-xs bg-[#bb0000] ring-2 ring-[#f5b8b8] inline-block" />
+              <span className="font-bold text-[#bb0000]">تداخل زمانی ماشین (Time Conflict)</span>
             </span>
           </div>
-          <div className="flex items-center gap-3 text-slate-500 font-mono text-[10px]">
-            <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-sans">
+          <div className="flex items-center gap-3 text-[#666666] font-mono text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9] font-sans">
               شیفت صبح (A): ۰۷:۰۰ تا ۱۵:۰۰
             </span>
-            <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 font-sans">
+            <span className="px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3d7ff] font-sans">
               شیفت عصر (B): ۱۵:۰۰ تا ۲۳:۰۰
             </span>
           </div>
@@ -879,15 +893,15 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
         <div className="overflow-x-auto">
           <div className="min-w-[920px]">
             {/* Time Axis Header */}
-            <div className="grid grid-cols-12 border-b border-slate-200 bg-slate-100/70 text-[11px] font-bold text-slate-600">
-              <div className="col-span-3 py-2.5 px-4 border-l border-slate-200 flex items-center justify-between">
+            <div className="grid grid-cols-12 border-b border-[#d9d9d9] bg-[#f5f5f5] text-[11px] font-bold text-[#333333]">
+              <div className="col-span-3 py-2 px-4 border-l border-[#d9d9d9] flex items-center justify-between">
                 <span>ماشین / خط تولید (Work Center)</span>
-                <span className="text-[10px] text-slate-400">بارگذاری</span>
+                <span className="text-[10px] text-[#666666]">بارگذاری</span>
               </div>
-              <div className="col-span-9 relative py-2.5 px-2">
-                <div className="grid grid-cols-16 text-center font-mono text-[10px] text-slate-500">
+              <div className="col-span-9 relative py-2 px-2">
+                <div className="grid grid-cols-16 text-center font-mono text-[10px] text-[#666666]">
                   {HOURS_AXIS.slice(0, 16).map(hr => (
-                    <div key={hr} className="border-r border-slate-200/70 first:border-r-0">
+                    <div key={hr} className="border-r border-[#d9d9d9] first:border-r-0">
                       {toPersianDigits(String(hr).padStart(2, '0'))}:۰۰
                     </div>
                   ))}
@@ -896,7 +910,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
             </div>
 
             {/* Machine Rows */}
-            <div className="divide-y divide-slate-200">
+            <div className="divide-y divide-[#e8e8e8]">
               {machineRows.map(row => {
                 const hasConflict = row.conflicts.length > 0;
                 const isHighlighted = highlightedMachineCode === row.machineCode;
@@ -908,56 +922,56 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                     }}
                     className={`grid grid-cols-12 transition-all ${
                       isHighlighted
-                        ? 'bg-amber-50/70 ring-2 ring-inset ring-amber-400'
+                        ? 'bg-[#fff5eb] ring-2 ring-inset ring-[#e9730c]'
                         : hasConflict
-                        ? 'bg-rose-50/20'
-                        : 'hover:bg-slate-50/60'
+                        ? 'bg-[#fde8e8]/30'
+                        : 'hover:bg-[#fafafa]'
                     }`}
                   >
                     {/* Right Column: Machine Info */}
-                    <div className="col-span-3 p-3.5 border-l border-slate-200 flex flex-col justify-between">
+                    <div className="col-span-3 p-3 border-l border-[#d9d9d9] flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between gap-1.5">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9]">
                             {row.machineCode}
                           </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white font-mono">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#e5f3fa] text-[#007cc0] border border-[#b3d7ff] font-mono">
                             {row.tonnageLabel}
                           </span>
                         </div>
-                        <div className="text-xs font-bold text-slate-900 mt-1.5">{row.machineName}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{row.hall}</div>
+                        <div className="text-xs font-bold text-[#333333] mt-1.5">{row.machineName}</div>
+                        <div className="text-[10px] text-[#666666] mt-0.5">{row.hall}</div>
                       </div>
 
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-                        <span className="text-slate-500">ضریب اشغال شیفت:</span>
+                      <div className="mt-3 pt-2 border-t border-[#e8e8e8] flex items-center justify-between text-[10px]">
+                        <span className="text-[#666666]">ضریب اشغال شیفت:</span>
                         <div className="flex items-center gap-1.5">
-                          <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="w-16 h-1.5 bg-[#e8e8e8] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 hasConflict
-                                  ? 'bg-rose-600'
+                                  ? 'bg-[#bb0000]'
                                   : row.utilizationPercent >= 80
-                                  ? 'bg-amber-500'
-                                  : 'bg-emerald-600'
+                                  ? 'bg-[#e9730c]'
+                                  : 'bg-[#107e3e]'
                               }`}
                               style={{ width: `${row.utilizationPercent}%` }}
                             />
                           </div>
-                          <span className="font-mono font-bold text-slate-800">
+                          <span className="font-mono font-bold text-[#333333]">
                             {toPersianDigits(row.utilizationPercent)}٪
                           </span>
                         </div>
                       </div>
 
                       {hasConflict && (
-                        <div className="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-[10px] space-y-2">
+                        <div className="mt-2 p-2.5 rounded bg-[#fde8e8] border border-[#f5b8b8] text-[#bb0000] text-[10px] space-y-2">
                           <div className="flex items-center justify-between font-bold">
                             <span className="flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                              <AlertTriangle className="w-3 h-3 text-[#bb0000] shrink-0" />
                               تداخل: {toPersianDigits(row.conflicts[0].overlapHours)} ساعت همپوشانی
                             </span>
-                            <span className="font-mono text-[9px] text-rose-700">
+                            <span className="font-mono text-[9px] text-[#bb0000]">
                               SMED: +{toPersianDigits(row.conflicts[0].blockB.setupMinutes || 30)}m
                             </span>
                           </div>
@@ -972,7 +986,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                                   true
                                 )
                               }
-                              className="py-1.5 px-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs transition cursor-pointer"
+                              className="py-1 px-2 rounded bg-[#e9730c] hover:bg-[#d1660a] text-white text-[10px] font-bold flex items-center justify-center gap-1 transition cursor-pointer"
                             >
                               <Sliders className="w-3 h-3" />
                               <span>تسطیح دستی</span>
@@ -980,7 +994,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                             <button
                               type="button"
                               onClick={() => handleAutoResolveMachineConflict(row.conflicts[0])}
-                              className="py-1.5 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs transition cursor-pointer"
+                              className="py-1 px-2 rounded bg-[#bb0000] hover:bg-[#990000] text-white text-[10px] font-bold flex items-center justify-center gap-1 transition cursor-pointer"
                             >
                               <Sparkles className="w-3 h-3" />
                               <span>تسطیح خودکار</span>
@@ -998,8 +1012,8 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                             key={hr}
                             className={`border-r h-full ${
                               hr === 15
-                                ? 'border-r-2 border-dashed border-amber-400/70 bg-blue-50/10'
-                                : 'border-slate-100'
+                                ? 'border-r-2 border-dashed border-[#e9730c]/60 bg-[#e5f3fa]/20'
+                                : 'border-[#f0f0f0]'
                             }`}
                           />
                         ))}
@@ -1022,12 +1036,12 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                             : 'top-2 bottom-2';
 
                           const colorClass = isConflicting
-                            ? 'bg-rose-600/95 hover:bg-rose-600 text-white border-rose-800 ring-2 ring-rose-300'
+                            ? 'bg-[#bb0000] hover:bg-[#990000] text-white border-[#880000] ring-2 ring-[#f5b8b8]'
                             : item.status === 'IN_PROGRESS'
-                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700'
+                            ? 'bg-[#107e3e] hover:bg-[#0c6631] text-white border-[#0a5227]'
                             : item.status === 'COMPLETED'
-                            ? 'bg-slate-600 hover:bg-slate-500 text-white border-slate-700'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-700';
+                            ? 'bg-[#666666] hover:bg-[#555555] text-white border-[#444444]'
+                            : 'bg-[#007cc0] hover:bg-[#006299] text-white border-[#005080]';
 
                           return (
                             <button
@@ -1078,20 +1092,24 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
       {selectedBlock && (
         <div
           ref={inspectorRef}
-          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs grid grid-cols-1 lg:grid-cols-12 gap-4 items-center"
+          className="sap-card p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center"
         >
           <div className="lg:col-span-8 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 text-amber-400 font-mono text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => traceDocument(selectedBlock.moNumber, 'WIP_TRACEABILITY')}
+                  className="px-2.5 py-1 rounded bg-[#e5f3fa] border border-[#b3d7ff] text-[#007cc0] hover:underline font-mono text-xs font-bold cursor-pointer"
+                >
                   {selectedBlock.moNumber}
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono text-xs font-bold">
+                </button>
+                <span className="px-2 py-0.5 rounded bg-[#f5f5f5] text-[#333333] border border-[#d9d9d9] font-mono text-xs font-bold">
                   {selectedBlock.operationCode}: {selectedBlock.operationTitle}
                 </span>
-                <span className="text-sm font-bold text-slate-900">{selectedBlock.partName}</span>
+                <span className="text-sm font-bold text-[#333333]">{selectedBlock.partName}</span>
                 {conflictingBlockIds.has(selectedBlock.id) && (
-                  <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded bg-[#fde8e8] text-[#bb0000] border border-[#f5b8b8] text-[11px] font-bold flex items-center gap-1">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     دارای تداخل زمانی روی {selectedBlock.machineName}
                   </span>
@@ -1103,7 +1121,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                 <button
                   type="button"
                   onClick={() => handleEditBlockInDrawer(selectedBlock)}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-900 text-slate-700 hover:text-white text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  className="sap-btn-standard px-2.5 py-1 text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>ویرایش در کشو</span>
@@ -1111,7 +1129,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                 <button
                   type="button"
                   onClick={() => handleDeleteBlock(selectedBlock)}
-                  className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-600 text-slate-500 hover:text-white transition cursor-pointer"
+                  className="p-1.5 rounded border border-[#d9d9d9] bg-white hover:bg-[#fde8e8] text-[#666666] hover:text-[#bb0000] transition cursor-pointer"
                   title="حذف منطقی از گانت"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -1120,53 +1138,57 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1 text-xs">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] text-slate-500 block">ماشین تخصیص‌یافته</span>
-                <span className="font-bold text-slate-900 mt-0.5 block">{selectedBlock.machineName}</span>
+              <div className="p-2.5 rounded bg-[#fafafa] border border-[#e8e8e8]">
+                <span className="text-[10px] text-[#666666] block">ماشین تخصیص‌یافته</span>
+                <span className="font-bold text-[#333333] mt-0.5 block">{selectedBlock.machineName}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] text-slate-500 block">بازه زمانی شیفت</span>
-                <span className="font-mono font-bold text-slate-900 mt-0.5 block">
+              <div className="p-2.5 rounded bg-[#fafafa] border border-[#e8e8e8]">
+                <span className="text-[10px] text-[#666666] block">بازه زمانی شیفت</span>
+                <span className="font-mono font-bold text-[#333333] mt-0.5 block">
                   {formatHourLabel(selectedBlock.startHour)} الی {formatHourLabel(selectedBlock.endHour)}
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] text-slate-500 block">تیراژ دستور تولید</span>
-                <span className="font-mono font-bold text-emerald-700 mt-0.5 block">
+              <div className="p-2.5 rounded bg-[#fafafa] border border-[#e8e8e8]">
+                <span className="text-[10px] text-[#666666] block">تیراژ دستور تولید</span>
+                <span className="font-mono font-bold text-[#107e3e] mt-0.5 block">
                   {formatNumber(selectedBlock.quantity)} قطعه
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] text-slate-500 block">کد قالب و زمان ستاپ (SMED)</span>
-                <span className="font-mono font-bold text-slate-800 mt-0.5 block">
+              <div className="p-2.5 rounded bg-[#fafafa] border border-[#e8e8e8]">
+                <span className="text-[10px] text-[#666666] block">کد قالب و زمان ستاپ (SMED)</span>
+                <span className="font-mono font-bold text-[#333333] mt-0.5 block">
                   {selectedBlock.dieCode} ({toPersianDigits(selectedBlock.setupMinutes)}m)
                 </span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] text-slate-500 block">قرارداد پشتوانه</span>
-                <span className="font-mono font-bold text-indigo-700 mt-0.5 block">
+              <div className="p-2.5 rounded bg-[#fafafa] border border-[#e8e8e8]">
+                <span className="text-[10px] text-[#666666] block">قرارداد پشتوانه</span>
+                <button
+                  type="button"
+                  onClick={() => traceDocument(selectedBlock.contractNumber, 'CONTRACTS')}
+                  className="sap-doc-link font-mono mt-0.5 block"
+                >
                   {selectedBlock.contractNumber}
-                </span>
+                </button>
               </div>
             </div>
           </div>
 
           {/* Interactive Time Shift Controls for Selected MO (HH:mm Time Pickers & Conflict Detection) */}
-          <div className="lg:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+          <div className="lg:col-span-4 bg-[#fafafa] border border-[#d9d9d9] rounded p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <ArrowLeftRight className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="text-xs font-bold text-[#333333] flex items-center gap-1.5">
+                <ArrowLeftRight className="w-3.5 h-3.5 text-[#007cc0]" />
                 تسطیح دستی زمان‌بندی (Time Picker HH:mm):
               </span>
-              <span className="text-[10px] text-slate-500 font-mono font-bold">{selectedBlock.machineCode}</span>
+              <span className="text-[10px] text-[#666666] font-mono font-bold">{selectedBlock.machineCode}</span>
             </div>
 
             {/* Manual Start & End Time Inputs */}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                <label className="text-[11px] font-bold text-[#333333] flex items-center justify-between">
                   <span>ساعت شروع</span>
-                  <span className="text-[10px] text-indigo-600 font-mono font-bold">
+                  <span className="text-[10px] text-[#007cc0] font-mono font-bold">
                     {formatHourLabel(selectedBlock.startHour)}
                   </span>
                 </label>
@@ -1181,14 +1203,14 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                     const newEndHr = Number((newStartHr + curDuration).toFixed(2));
                     handleManualTimeChange(selectedBlock.id, startStr, hourToTimeString(newEndHr));
                   }}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-indigo-500 cursor-pointer text-center"
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer text-center"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                <label className="text-[11px] font-bold text-[#333333] flex items-center justify-between">
                   <span>ساعت پایان</span>
-                  <span className="text-[10px] text-indigo-600 font-mono font-bold">
+                  <span className="text-[10px] text-[#007cc0] font-mono font-bold">
                     {formatHourLabel(selectedBlock.endHour)}
                   </span>
                 </label>
@@ -1200,15 +1222,15 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                     const endStr = e.target.value;
                     handleManualTimeChange(selectedBlock.id, hourToTimeString(selectedBlock.startHour), endStr);
                   }}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-indigo-500 cursor-pointer text-center"
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono font-bold text-[#333333] focus:outline-none focus:border-[#007cc0] cursor-pointer text-center"
                 />
               </div>
             </div>
 
             {/* Duration Display */}
-            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-indigo-50/60 border border-indigo-100 text-xs">
-              <span className="text-[11px] text-indigo-800">طول مدت زمان‌بندی:</span>
-              <span className="font-mono font-bold text-indigo-950">
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-[#e5f3fa] border border-[#b3d7ff] text-xs">
+              <span className="text-[11px] text-[#007cc0]">طول مدت زمان‌بندی:</span>
+              <span className="font-mono font-bold text-[#333333]">
                 {toPersianDigits(Math.floor(selectedBlock.endHour - selectedBlock.startHour))} ساعت و{' '}
                 {toPersianDigits(Math.round(((selectedBlock.endHour - selectedBlock.startHour) % 1) * 60))} دقیقه
               </span>
@@ -1216,12 +1238,12 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
 
             {/* Live Conflict Warning Banner */}
             {selectedBlockConflict ? (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-xs space-y-2 animate-in fade-in">
-                <div className="flex items-center gap-1.5 font-bold text-rose-800">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <div className="p-2.5 bg-[#fde8e8] border border-[#f5b8b8] rounded text-[#bb0000] text-xs space-y-2 animate-in fade-in">
+                <div className="flex items-center gap-1.5 font-bold text-[#bb0000]">
+                  <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0" />
                   <span>تداخل با دستور {selectedBlockConflict.moNumber}</span>
                 </div>
-                <p className="text-[11px] text-rose-700 leading-relaxed">
+                <p className="text-[11px] text-[#bb0000] leading-relaxed">
                   تداخل در بازه {formatHourLabel(Math.max(selectedBlock.startHour, selectedBlockConflict.startHour))} تا{' '}
                   {formatHourLabel(Math.min(selectedBlock.endHour, selectedBlockConflict.endHour))} روی{' '}
                   {selectedBlock.machineName}
@@ -1243,7 +1265,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                             : selectedBlock.id,
                       })
                     }
-                    className="py-1.5 px-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                    className="py-1.5 px-2 bg-[#e9730c] hover:bg-[#d1660a] text-white rounded text-[11px] font-bold transition cursor-pointer"
                   >
                     پنل تسطیح دستی
                   </button>
@@ -1270,23 +1292,23 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                         },
                       });
                     }}
-                    className="py-1.5 px-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold transition cursor-pointer shadow-xs"
+                    className="py-1.5 px-2 bg-[#bb0000] hover:bg-[#990000] text-white rounded text-[11px] font-bold transition cursor-pointer"
                   >
                     تسطیح خودکار
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="p-2 bg-[#eef8f2] border border-[#b7dfc5] rounded text-[#107e3e] text-xs flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
                 <span className="text-[11px] font-medium">زمان‌بندی فاقد تداخل روی {selectedBlock.machineCode} است.</span>
               </div>
             )}
 
             {suggestions.length > 0 && (
-              <div className="text-[10px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-200/80">
+              <div className="text-[10px] text-[#666666] flex items-center justify-between pt-1 border-t border-[#e8e8e8]">
                 <span>پیشنهادهای MRP آماده زمان‌بندی:</span>
-                <span className="font-mono font-bold text-slate-800">{toPersianDigits(suggestions.length)} دستور</span>
+                <span className="font-mono font-bold text-[#333333]">{toPersianDigits(suggestions.length)} دستور</span>
               </div>
             )}
           </div>
@@ -1296,24 +1318,24 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
       {/* Side-by-Side Manual Leveling Modal (تسطیح دستی تداخل زمانی روی ماشین) */}
       {manualLevelingConflict && manualModalBlockA && manualModalBlockB && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#333333]/40 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setManualLevelingConflict(null)}
         >
           <div
             onClick={e => e.stopPropagation()}
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4"
+            className="bg-white border border-[#d9d9d9] rounded-md w-full max-w-2xl p-5 shadow-2xl space-y-4"
             dir="rtl"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3.5">
+            <div className="flex items-start justify-between gap-3 border-b border-[#d9d9d9] pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 border border-amber-300">
+                <div className="p-2 rounded bg-[#fff5eb] text-[#e9730c] border border-[#f5d0a9]">
                   <Sliders className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">
+                  <h3 className="text-sm font-bold text-[#333333]">
                     میز تسطیح دستی تداخل زمانی (Manual Capacity Leveling)
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#666666] mt-0.5">
                     دستگاه: <strong>{manualLevelingConflict.machineName}</strong> ({manualLevelingConflict.machineCode}) • تنظیم دستی ساعت شروع و پایان هر دو دستور تولید
                   </p>
                 </div>
@@ -1321,7 +1343,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
               <button
                 type="button"
                 onClick={() => setManualLevelingConflict(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                className="p-1.5 rounded text-[#666666] hover:text-[#333333] hover:bg-[#f5f5f5] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1329,23 +1351,23 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
 
             {/* Live Overlap Status Indicator */}
             <div
-              className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+              className={`p-3 rounded border flex items-center justify-between text-xs ${
                 manualModalOverlapHours > 0
-                  ? 'bg-rose-50 border-rose-300 text-rose-900'
-                  : 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                  ? 'bg-[#fde8e8] border-[#f5b8b8] text-[#bb0000]'
+                  : 'bg-[#eef8f2] border-[#b7dfc5] text-[#107e3e]'
               }`}
             >
               <div className="flex items-center gap-2 font-bold">
                 {manualModalOverlapHours > 0 ? (
                   <>
-                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-[#bb0000] shrink-0" />
                     <span>
                       در حال حاضر {toPersianDigits(manualModalOverlapHours)} ساعت همپوشانی زمانی بین دو دستور وجود دارد.
                     </span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#107e3e] shrink-0" />
                     <span>
                       تداخل زمانی به طور کامل برطرف شد! (همپوشانی: ۰ ساعت)
                     </span>
@@ -1360,20 +1382,20 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
             {/* Side-by-Side Order Time Editors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Block A Card */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-xs font-bold">
+              <div className="p-4 rounded bg-[#fafafa] border border-[#d9d9d9] space-y-3">
+                <div className="flex items-center justify-between border-b border-[#e8e8e8] pb-2">
+                  <span className="px-2 py-0.5 rounded bg-[#107e3e] text-white font-mono text-xs font-bold">
                     ۱. {manualModalBlockA.moNumber}
                   </span>
-                  <span className="text-[11px] font-mono text-slate-600">
+                  <span className="text-[11px] font-mono text-[#666666]">
                     {manualModalBlockA.operationCode} • {formatNumber(manualModalBlockA.quantity)} عدد
                   </span>
                 </div>
-                <div className="text-xs font-bold text-slate-900">{manualModalBlockA.partName}</div>
+                <div className="text-xs font-bold text-[#333333]">{manualModalBlockA.partName}</div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-bold mb-1">
+                    <label className="block text-[11px] text-[#666666] font-bold mb-1">
                       ساعت شروع ({formatHourLabel(manualModalBlockA.startHour)})
                     </label>
                     <input
@@ -1387,11 +1409,11 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                           hourToTimeString(manualModalBlockA.endHour)
                         )
                       }
-                      className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-center"
+                      className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono font-bold text-center focus:outline-none focus:border-[#007cc0]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-bold mb-1">
+                    <label className="block text-[11px] text-[#666666] font-bold mb-1">
                       ساعت پایان ({formatHourLabel(manualModalBlockA.endHour)})
                     </label>
                     <input
@@ -1405,27 +1427,27 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                           e.target.value
                         )
                       }
-                      className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-center"
+                      className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono font-bold text-center focus:outline-none focus:border-[#007cc0]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Block B Card */}
-              <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-3">
-                <div className="flex items-center justify-between border-b border-amber-200 pb-2">
-                  <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-xs font-bold">
+              <div className="p-4 rounded bg-[#fff5eb]/50 border border-[#f5d0a9] space-y-3">
+                <div className="flex items-center justify-between border-b border-[#f5d0a9] pb-2">
+                  <span className="px-2 py-0.5 rounded bg-[#007cc0] text-white font-mono text-xs font-bold">
                     ۲. {manualModalBlockB.moNumber}
                   </span>
-                  <span className="text-[11px] font-mono text-slate-600">
+                  <span className="text-[11px] font-mono text-[#666666]">
                     {manualModalBlockB.operationCode} • {formatNumber(manualModalBlockB.quantity)} عدد
                   </span>
                 </div>
-                <div className="text-xs font-bold text-slate-900">{manualModalBlockB.partName}</div>
+                <div className="text-xs font-bold text-[#333333]">{manualModalBlockB.partName}</div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-bold mb-1">
+                    <label className="block text-[11px] text-[#666666] font-bold mb-1">
                       ساعت شروع ({formatHourLabel(manualModalBlockB.startHour)})
                     </label>
                     <input
@@ -1441,11 +1463,11 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                           hourToTimeString(Math.min(23, newStart + dur))
                         );
                       }}
-                      className="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-center"
+                      className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono font-bold text-center focus:outline-none focus:border-[#007cc0]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-bold mb-1">
+                    <label className="block text-[11px] text-[#666666] font-bold mb-1">
                       ساعت پایان ({formatHourLabel(manualModalBlockB.endHour)})
                     </label>
                     <input
@@ -1459,7 +1481,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                           e.target.value
                         )
                       }
-                      className="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-center"
+                      className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono font-bold text-center focus:outline-none focus:border-[#007cc0]"
                     />
                   </div>
                 </div>
@@ -1479,7 +1501,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                         hourToTimeString(end)
                       );
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold cursor-pointer"
+                    className="sap-btn-standard px-2.5 py-1 text-[10px] font-bold cursor-pointer"
                   >
                     چسباندن به پایان دستور اول + {toPersianDigits(manualModalBlockB.setupMinutes || 30)}m ستاپ
                   </button>
@@ -1493,7 +1515,7 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
                         hourToTimeString(Math.min(23, 15 + dur))
                       );
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold cursor-pointer"
+                    className="sap-btn-standard px-2.5 py-1 text-[10px] font-bold cursor-pointer"
                   >
                     انتقال به ابتدای شیفت عصر (۱۵:۰۰)
                   </button>
@@ -1501,11 +1523,11 @@ export const MachineCapacityTimelineView: React.FC<MachineCapacityTimelineViewPr
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+            <div className="flex items-center justify-between pt-3 border-t border-[#d9d9d9]">
               <button
                 type="button"
                 onClick={() => setManualLevelingConflict(null)}
-                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                className="sap-btn-emphasized px-5 py-1.5 text-xs font-bold cursor-pointer"
               >
                 تایید و بستن میز تسطیح دستی
               </button>
