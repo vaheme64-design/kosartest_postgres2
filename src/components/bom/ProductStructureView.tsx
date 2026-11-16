@@ -19,6 +19,7 @@ import { Part } from '../../types/inventory';
 import { toPersianDigits } from '../../utils/formatters';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { useErpRouter } from '../../context/RouterContext';
+import { useEnterpriseUx } from '../../context/EnterpriseUxContext';
 
 export interface SubComponentNode {
   id: string;
@@ -118,6 +119,7 @@ const STORAGE_KEY_PRODUCT_STRUCTURES = 'kpims_product_structures_v3';
 
 export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ parts }) => {
   const { traceDocument } = useErpRouter();
+  const { requestConfirm } = useEnterpriseUx();
   const [structures, setStructures] = useState<ProductStructureData[]>(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY_PRODUCT_STRUCTURES);
@@ -339,17 +341,22 @@ export const ProductStructureView: React.FC<ProductStructureViewProps> = ({ part
 
   const handleDeleteNode = (nodeId: string) => {
     if (!activeStructure) return;
-    if (!confirm('آیا از حذف این زیرمجموعه و تمام اجزای وابسته به آن اطمینان دارید؟')) return;
-
-    const updatedSubComponents = deleteTreeNode(activeStructure.subComponents, nodeId);
-    const updatedStructures = structures.map(s => {
-      if (s.id === activeStructure.id) {
-        return { ...s, subComponents: updatedSubComponents };
-      }
-      return s;
+    requestConfirm({
+      title: 'حذف زیرمجموعه ساختار درختی (BOM)',
+      message: 'آیا از حذف این زیرمجموعه و تمام اجزای وابسته به آن اطمینان دارید؟',
+      variant: 'danger',
+      confirmLabel: 'بله، حذف شود',
+      onConfirm: () => {
+        const updatedSubComponents = deleteTreeNode(activeStructure.subComponents, nodeId);
+        const updatedStructures = structures.map(s => {
+          if (s.id === activeStructure.id) {
+            return { ...s, subComponents: updatedSubComponents };
+          }
+          return s;
+        });
+        persistStructures(updatedStructures, 'زیرمجموعه انتخابی حذف شد و ساختار درختی بروزرسانی گردید.');
+      },
     });
-
-    persistStructures(updatedStructures, 'زیرمجموعه انتخابی حذف شد و ساختار درختی بروزرسانی گردید.');
   };
 
   const handleCreateNewAssembly = (e: React.FormEvent) => {

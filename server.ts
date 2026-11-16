@@ -124,14 +124,12 @@ async function startServer() {
     console.log(`KPIMS Server successfully started and listening on http://${HOST}:${PORT}`);
     void (async () => {
       try {
-        const dbOnline = await probeDatabaseConnectivity();
-        if (dbOnline && isDatabaseUrlConfigured()) {
-          await loadInventoryAppState();
-          await loadProductionWipState();
-          console.log('[KPIMS Startup] PostgreSQL state hydrated & synchronized successfully.');
-        }
+        await probeDatabaseConnectivity();
+        await loadInventoryAppState();
+        await loadProductionWipState();
+        console.log('[KPIMS Startup] Enterprise state hydrated & synchronized successfully.');
       } catch (err) {
-        console.warn('[KPIMS Startup] PostgreSQL hydration notice:', err instanceof Error ? err.message : err);
+        console.warn('[KPIMS Startup] Hydration notice:', err instanceof Error ? err.message : err);
       }
     })();
   });

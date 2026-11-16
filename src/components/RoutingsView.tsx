@@ -43,6 +43,7 @@ import { MasterDataDifferenceGuideModal } from './common/MasterDataDifferenceGui
 import { TraceabilityTagModal } from './wip/TraceabilityTagModal';
 import { SearchableSelect } from './common/SearchableSelect';
 import { useErpRouter } from '../context/RouterContext';
+import { useEnterpriseUx } from '../context/EnterpriseUxContext';
 
 interface RoutingsViewProps {
   routings: Routing[];
@@ -70,6 +71,7 @@ export const RoutingsView: React.FC<RoutingsViewProps> = ({
   onSaveDie,
 }) => {
   const { traceDocument } = useErpRouter();
+  const { requestConfirm } = useEnterpriseUx();
   const [selectedRoutingId, setSelectedRoutingId] = useState<string>(routings[0]?.id || '');
   const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>({});
   const [viewMode, setViewMode] = useState<'DIRECTORY' | 'STEPPER'>('STEPPER');
@@ -389,11 +391,18 @@ export const RoutingsView: React.FC<RoutingsViewProps> = ({
 
   const handleDeleteStep = async (index: number) => {
     if (!activeRouting) return;
-    if (!confirm('آیا از حذف این گام عملیاتی اطمینان دارید؟')) return;
-    const updatedOps = activeRouting.operations.filter((_, i) => i !== index);
-    await onSaveRouting({
-      ...activeRouting,
-      operations: updatedOps,
+    requestConfirm({
+      title: 'حذف گام عملیاتی روتینگ',
+      message: 'آیا از حذف این گام عملیاتی از مسیر ساخت اطمینان دارید؟',
+      variant: 'danger',
+      confirmLabel: 'بله، حذف شود',
+      onConfirm: async () => {
+        const updatedOps = activeRouting.operations.filter((_, i) => i !== index);
+        await onSaveRouting({
+          ...activeRouting,
+          operations: updatedOps,
+        });
+      },
     });
   };
 
@@ -563,12 +572,17 @@ export const RoutingsView: React.FC<RoutingsViewProps> = ({
 
   const handleDeleteRouting = async () => {
     if (!activeRouting) return;
-    if (!confirm(`آیا از حذف کامل مسیر تولید برای قطعه [${activeRouting.partCode}] ${activeRouting.partName} اطمینان دارید؟`)) {
-      return;
-    }
-    if (onDeleteRouting) {
-      await onDeleteRouting(activeRouting.id);
-    }
+    requestConfirm({
+      title: 'حذف کامل مسیر تولید (Routing)',
+      message: `آیا از حذف کامل مسیر تولید برای قطعه [${activeRouting.partCode}] ${activeRouting.partName} اطمینان دارید؟`,
+      variant: 'danger',
+      confirmLabel: 'بله، حذف مسیر',
+      onConfirm: async () => {
+        if (onDeleteRouting) {
+          await onDeleteRouting(activeRouting.id);
+        }
+      },
+    });
   };
 
   return (

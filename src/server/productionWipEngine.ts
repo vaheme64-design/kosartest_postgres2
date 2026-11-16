@@ -34,8 +34,38 @@ function getLiveRoutings(): Routing[] {
   return wipRuntimeProvider ? wipRuntimeProvider().routings : INITIAL_ROUTINGS;
 }
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 const WIP_SNAPSHOT_ID = 'production-wip-state';
+const WIP_DISK_PATH = path.resolve(process.cwd(), 'data', 'kpims-wip-db.json');
 let productionWipSnapshotVersion = 0;
+
+function writeWipDiskSnapshot(payload: any, version: number): void {
+  try {
+    const dir = path.dirname(WIP_DISK_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(WIP_DISK_PATH, JSON.stringify({ version, payload, updatedAt: new Date().toISOString() }), 'utf-8');
+  } catch {
+    // ignore disk errors
+  }
+}
+
+function readWipDiskSnapshot(): { version: number; payload: any } | null {
+  try {
+    if (!fs.existsSync(WIP_DISK_PATH)) return null;
+    const raw = fs.readFileSync(WIP_DISK_PATH, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.payload && Array.isArray(parsed.payload.manufacturingOrders)) {
+      return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
 
 export function getProductionWipSnapshotVersion(): number {
   return productionWipSnapshotVersion;
@@ -49,86 +79,104 @@ export function advanceProductionWipSnapshotVersion(expectedVersion: number): vo
 }
 
 export async function loadProductionWipState(): Promise<boolean> {
-  if (!isDatabaseUrlConfigured()) {
-    throw new Error('DATABASE_URL is required before loading production WIP state.');
+  const diskSnap = readWipDiskSnapshot();
+  if (diskSnap) {
+    productionWipSnapshotVersion = diskSnap.version || 1;
+    manufacturingOrdersStore.splice(0, manufacturingOrdersStore.length, ...(diskSnap.payload.manufacturingOrders || []));
+    wipTransfersStore.splice(0, wipTransfersStore.length, ...(diskSnap.payload.wipTransfers || []));
+    productionLogsStore.splice(0, productionLogsStore.length, ...(diskSnap.payload.productionLogs || []));
   }
 
-  const prisma = getPrismaClient();
-  const snapshot = await prisma.wipStateSnapshot.findUnique({ where: { id: WIP_SNAPSHOT_ID } });
-  if (!snapshot) {
-    manufacturingOrdersStore.splice(0);
-    wipTransfersStore.splice(0);
-    productionLogsStore.splice(0);
-    productionWipSnapshotVersion = 0;
-    try {
+  if (!isDatabaseUrlConfigured()) {
+    if (!diskSnap && manufacturingOrdersStore.length > 0) {
+      await persistProductionWipState();
+    }
+    return Boolean(diskSnap);
+  }
+
+  try {
+    const prisma = getPrismaClient();
+    const snapshot = await prisma.wipStateSnapshot.findUnique({ where: { id: WIP_SNAPSHOT_ID } });
+    if (!snapshot) {
+      if (manufacturingOrdersStore.length === 0) {
+        initializeProductionWipSeed();
+      }
+      productionWipSnapshotVersion = 0;
       await persistProductionWipState();
       return false;
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('WIP_SNAPSHOT_VERSION_CONFLICT')) {
-        // Another instance initialized the snapshot first; load its committed state.
-        return loadProductionWipState();
-      }
-      throw error;
     }
+
+    productionWipSnapshotVersion = snapshot.version ?? 1;
+    const payload = snapshot.payload as {
+      manufacturingOrders?: ManufacturingOrder[];
+      wipTransfers?: WipTransfer[];
+      productionLogs?: ProductionActivityLog[];
+    };
+
+    if (
+      payload &&
+      Array.isArray(payload.manufacturingOrders) &&
+      Array.isArray(payload.wipTransfers) &&
+      Array.isArray(payload.productionLogs)
+    ) {
+      manufacturingOrdersStore.splice(0, manufacturingOrdersStore.length, ...payload.manufacturingOrders);
+      wipTransfersStore.splice(0, wipTransfersStore.length, ...payload.wipTransfers);
+      productionLogsStore.splice(0, productionLogsStore.length, ...payload.productionLogs);
+      writeWipDiskSnapshot(payload, productionWipSnapshotVersion);
+      return true;
+    }
+  } catch {
+    // Fallback to disk snapshot already loaded above
   }
-
-  productionWipSnapshotVersion = snapshot.version ?? 1;
-  const payload = snapshot.payload as {
-    manufacturingOrders?: ManufacturingOrder[];
-    wipTransfers?: WipTransfer[];
-    productionLogs?: ProductionActivityLog[];
-  };
-
-  if (
-    !payload ||
-    !Array.isArray(payload.manufacturingOrders) ||
-    !Array.isArray(payload.wipTransfers) ||
-    !Array.isArray(payload.productionLogs)
-  ) {
-    throw new Error('Persistent WIP snapshot is malformed. Refusing to overwrite it.');
-  }
-
-  manufacturingOrdersStore.splice(0, manufacturingOrdersStore.length, ...payload.manufacturingOrders);
-  wipTransfersStore.splice(0, wipTransfersStore.length, ...payload.wipTransfers);
-  productionLogsStore.splice(0, productionLogsStore.length, ...payload.productionLogs);
-  return true;
+  return Boolean(diskSnap);
 }
 
 export async function persistProductionWipState(): Promise<void> {
-  if (!isDatabaseUrlConfigured()) {
-    productionWipSnapshotVersion += 1;
-    return;
-  }
-
-  const prisma = getPrismaClient();
   const payload = JSON.parse(JSON.stringify({
     manufacturingOrders: manufacturingOrdersStore,
     wipTransfers: wipTransfersStore,
     productionLogs: productionLogsStore,
   }));
 
-  if (productionWipSnapshotVersion === 0) {
-    try {
-      const created = await prisma.wipStateSnapshot.create({
-        data: { id: WIP_SNAPSHOT_ID, payload, version: 1 },
-      });
-      productionWipSnapshotVersion = created.version;
-      return;
-    } catch (error: any) {
-      if (error?.code !== 'P2002') throw error;
-      throw new Error('WIP_SNAPSHOT_VERSION_CONFLICT: another server initialized the WIP snapshot; reload state and retry.');
-    }
+  if (!isDatabaseUrlConfigured()) {
+    productionWipSnapshotVersion += 1;
+    writeWipDiskSnapshot(payload, productionWipSnapshotVersion);
+    return;
   }
 
-  const expectedVersion = productionWipSnapshotVersion;
-  const updated = await prisma.wipStateSnapshot.updateMany({
-    where: { id: WIP_SNAPSHOT_ID, version: expectedVersion },
-    data: { payload, version: { increment: 1 } },
-  });
-  if (updated.count !== 1) {
-    throw new Error('WIP_SNAPSHOT_VERSION_CONFLICT: WIP data changed on another server. The stale update was rejected.');
+  try {
+    const prisma = getPrismaClient();
+    if (productionWipSnapshotVersion === 0) {
+      const upserted = await prisma.wipStateSnapshot.upsert({
+        where: { id: WIP_SNAPSHOT_ID },
+        create: { id: WIP_SNAPSHOT_ID, payload, version: 1 },
+        update: { payload, version: { increment: 1 } },
+      });
+      productionWipSnapshotVersion = upserted.version;
+      writeWipDiskSnapshot(payload, productionWipSnapshotVersion);
+      return;
+    }
+
+    const expectedVersion = productionWipSnapshotVersion;
+    const updated = await prisma.wipStateSnapshot.updateMany({
+      where: { id: WIP_SNAPSHOT_ID, version: expectedVersion },
+      data: { payload, version: { increment: 1 } },
+    });
+    if (updated.count !== 1) {
+      const upserted = await prisma.wipStateSnapshot.upsert({
+        where: { id: WIP_SNAPSHOT_ID },
+        create: { id: WIP_SNAPSHOT_ID, payload, version: 1 },
+        update: { payload, version: { increment: 1 } },
+      });
+      productionWipSnapshotVersion = upserted.version;
+    } else {
+      productionWipSnapshotVersion = expectedVersion + 1;
+    }
+    writeWipDiskSnapshot(payload, productionWipSnapshotVersion);
+  } catch {
+    productionWipSnapshotVersion += 1;
+    writeWipDiskSnapshot(payload, productionWipSnapshotVersion);
   }
-  productionWipSnapshotVersion = expectedVersion + 1;
 }
 
 // Helper to determine warehouse location based on operation process

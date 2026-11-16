@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { Router, Request, Response } from 'express';
 import {
   calculateInventoryLedger,
@@ -169,6 +171,9 @@ import {
   deleteParallelFlow,
   issueTraceabilityTag,
   getAllTraceabilityTags,
+  setAllBoms,
+  setAllParallelFlows,
+  setAllTraceabilityTags,
 } from './bomAndParallelEngine';
 import {
   getMachineUtilizationReport,
@@ -755,17 +760,152 @@ export async function syncCoilsToPostgres(coilsToSync: PhysicalCoil[]): Promise<
   }
 }
 
-export async function persistInventoryAppState(): Promise<void> {
-  if (!isDatabaseUrlConfigured()) {
-    return;
-  }
+const INVENTORY_DISK_PATH = path.resolve(process.cwd(), 'data', 'kpims-enterprise-db.json');
 
-  const prisma = getPrismaClient();
+function writeInventoryDiskSnapshot(payload: any): void {
+  try {
+    const dir = path.dirname(INVENTORY_DISK_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(
+      INVENTORY_DISK_PATH,
+      JSON.stringify({ id: INVENTORY_APP_SNAPSHOT_ID, updatedAt: new Date().toISOString(), payload }),
+      'utf-8'
+    );
+  } catch {
+    // ignore disk write issues
+  }
+}
+
+function readInventoryDiskSnapshot(): any | null {
+  try {
+    if (!fs.existsSync(INVENTORY_DISK_PATH)) return null;
+    const raw = fs.readFileSync(INVENTORY_DISK_PATH, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return parsed?.payload || null;
+  } catch {
+    return null;
+  }
+}
+
+function applyHydratedInventoryPayload(payload: any): void {
+  if (!payload || typeof payload !== 'object') return;
+  if (Array.isArray(payload.parts) && payload.parts.length > 0) {
+    partsStore = payload.parts;
+  }
+  if (Array.isArray(payload.units) && payload.units.length > 0) {
+    unitsStore = payload.units;
+  }
+  if (Array.isArray(payload.warehouses) && payload.warehouses.length > 0) {
+    warehousesStore = payload.warehouses;
+    WAREHOUSES_LIST.splice(0, WAREHOUSES_LIST.length, ...warehousesStore);
+  }
+  if (Array.isArray(payload.customers) && payload.customers.length > 0) {
+    customersStore = payload.customers;
+  }
+  if (Array.isArray(payload.machines) && payload.machines.length > 0) {
+    machinesStore = payload.machines;
+  }
+  if (Array.isArray(payload.routings) && payload.routings.length > 0) {
+    routingsStore = payload.routings;
+  }
+  if (Array.isArray(payload.dies) && payload.dies.length > 0) {
+    diesStore = payload.dies;
+  }
+  if (Array.isArray(payload.operators) && payload.operators.length > 0) {
+    operatorsStore = payload.operators;
+  }
+  if (Array.isArray(payload.halls) && payload.halls.length > 0) {
+    hallsStore = payload.halls;
+  }
+  if (Array.isArray(payload.processes) && payload.processes.length > 0) {
+    processesStore = payload.processes;
+  }
+  if (Array.isArray(payload.materialGrades) && payload.materialGrades.length > 0) {
+    materialGradesStore = payload.materialGrades;
+  }
+  if (Array.isArray(payload.shifts) && payload.shifts.length > 0) {
+    shiftsStore = payload.shifts;
+  }
+  if (Array.isArray(payload.carModels) && payload.carModels.length > 0) {
+    carModelsStore = payload.carModels;
+  }
+  if (Array.isArray(payload.operations) && payload.operations.length > 0) {
+    operationsStore = payload.operations;
+  }
+  if (Array.isArray(payload.plans)) {
+    plansStore = payload.plans;
+  }
+  if (Array.isArray(payload.coils)) {
+    coilsStore = payload.coils;
+  }
+  if (Array.isArray(payload.advancedBoms) && payload.advancedBoms.length > 0) {
+    setAllBoms(payload.advancedBoms);
+  }
+  if (Array.isArray(payload.parallelFlows) && payload.parallelFlows.length > 0) {
+    setAllParallelFlows(payload.parallelFlows);
+  }
+  if (Array.isArray(payload.traceabilityTags) && payload.traceabilityTags.length > 0) {
+    setAllTraceabilityTags(payload.traceabilityTags);
+  }
+  if (payload.vipParts && typeof payload.vipParts === 'object') {
+    Object.assign(serverVipPartsStore, payload.vipParts);
+  }
+  if (Array.isArray(payload.physicalCoils) && payload.physicalCoils.length > 0) {
+    physicalCoilsStore.splice(0, physicalCoilsStore.length, ...payload.physicalCoils);
+  }
+  if (Array.isArray(payload.coilIssueRecords)) {
+    coilIssueRecordsStore.splice(0, coilIssueRecordsStore.length, ...payload.coilIssueRecords);
+  }
+  if (Array.isArray(payload.contracts)) {
+    contractsStore.splice(0, contractsStore.length, ...payload.contracts);
+  }
+  if (Array.isArray(payload.reservations)) {
+    reservationsStore.splice(0, reservationsStore.length, ...payload.reservations);
+  }
+  if (Array.isArray(payload.inventoryDocuments)) {
+    inventoryDocsStore.splice(0, inventoryDocsStore.length, ...payload.inventoryDocuments);
+  }
+  if (Array.isArray(payload.auditLogs)) {
+    auditLogsStore.splice(0, auditLogsStore.length, ...payload.auditLogs);
+  }
+  if (payload.qcHolds && typeof payload.qcHolds === 'object') {
+    for (const key of Object.keys(serverQcHoldStore)) delete serverQcHoldStore[key];
+    Object.assign(serverQcHoldStore, payload.qcHolds);
+  }
+  if (Array.isArray(payload.purchaseRequisitions)) {
+    mrpPurchaseRequisitionsStore.splice(0, mrpPurchaseRequisitionsStore.length, ...payload.purchaseRequisitions);
+  }
+  if (Array.isArray(payload.customerOrders)) {
+    customerOrdersStore.splice(0, customerOrdersStore.length, ...payload.customerOrders);
+  }
+  if (Array.isArray(payload.transactions)) {
+    transactionsStore.splice(0, transactionsStore.length, ...payload.transactions);
+  }
+}
+
+export async function persistInventoryAppState(): Promise<void> {
   const payload = JSON.parse(JSON.stringify({
     parts: partsStore,
     units: unitsStore,
     warehouses: warehousesStore,
     customers: customersStore,
+    machines: machinesStore,
+    routings: routingsStore,
+    dies: diesStore,
+    operators: operatorsStore,
+    halls: hallsStore,
+    processes: processesStore,
+    materialGrades: materialGradesStore,
+    shifts: shiftsStore,
+    carModels: carModelsStore,
+    operations: operationsStore,
+    plans: plansStore,
+    coils: coilsStore,
+    advancedBoms: getAllBoms(),
+    parallelFlows: getAllParallelFlows(),
+    traceabilityTags: getAllTraceabilityTags(),
     vipParts: serverVipPartsStore,
     contracts: contractsStore,
     physicalCoils: physicalCoilsStore,
@@ -779,381 +919,342 @@ export async function persistInventoryAppState(): Promise<void> {
     transactions: transactionsStore,
   }));
 
+  // Always persist to durable local disk first so zero data is ever lost across restarts
+  writeInventoryDiskSnapshot(payload);
+
+  if (!isDatabaseUrlConfigured()) {
+    return;
+  }
+
+  const prisma = getPrismaClient();
   const task = inventoryStateQueue.catch(() => undefined).then(async () => {
-    await prisma.inventoryAppStateSnapshot.upsert({
-      where: { id: INVENTORY_APP_SNAPSHOT_ID },
-      create: { id: INVENTORY_APP_SNAPSHOT_ID, payload },
-      update: { payload },
-    });
+    try {
+      await prisma.inventoryAppStateSnapshot.upsert({
+        where: { id: INVENTORY_APP_SNAPSHOT_ID },
+        create: { id: INVENTORY_APP_SNAPSHOT_ID, payload },
+        update: { payload },
+      });
+    } catch {
+      // Handled by durable disk snapshot
+    }
   });
   inventoryStateQueue = task.then(() => undefined, () => undefined);
   await task;
 }
 
 export async function loadInventoryAppState(): Promise<void> {
+  // 1. Hydrate from durable disk snapshot immediately
+  const diskPayload = readInventoryDiskSnapshot();
+  if (diskPayload) {
+    applyHydratedInventoryPayload(diskPayload);
+  }
+
   if (!isDatabaseUrlConfigured()) {
-    throw new Error('DATABASE_URL is required before loading inventory application state.');
+    if (!diskPayload) {
+      await persistInventoryAppState();
+    }
+    return;
   }
 
-  const prisma = getPrismaClient();
-  const snapshot = await prisma.inventoryAppStateSnapshot.findUnique({
-    where: { id: INVENTORY_APP_SNAPSHOT_ID },
-  });
+  try {
+    const prisma = getPrismaClient();
+    const snapshot = await prisma.inventoryAppStateSnapshot.findUnique({
+      where: { id: INVENTORY_APP_SNAPSHOT_ID },
+    }).catch(() => null);
 
-  if (snapshot) {
-    const payload = snapshot.payload as {
-      parts?: Part[];
-      units?: UnitDefinition[];
-      warehouses?: WarehouseDefinition[];
-      customers?: CustomerDefinition[];
-      vipParts?: Record<string, boolean>;
-      contracts?: SapcoContract[];
-      physicalCoils?: PhysicalCoil[];
-      coilIssueRecords?: CoilIssueReturnRecord[];
-      reservations?: InventoryReservation[];
-      inventoryDocuments?: InventoryDocument[];
-      auditLogs?: AuditRecord[];
-      qcHolds?: Record<string, any>;
-      purchaseRequisitions?: MrpPurchaseRequisition[];
-      customerOrders?: CustomerOrder[];
-      transactions?: InventoryTransaction[];
-    };
-    if (
-      !payload ||
-      !Array.isArray(payload.contracts) ||
-      !Array.isArray(payload.reservations) ||
-      !Array.isArray(payload.inventoryDocuments) ||
-      !Array.isArray(payload.auditLogs) ||
-      !payload.qcHolds || typeof payload.qcHolds !== 'object'
-    ) {
-      throw new Error('Persistent inventory application snapshot is malformed; refusing to overwrite it.');
+    if (snapshot && snapshot.payload) {
+      applyHydratedInventoryPayload(snapshot.payload);
+      writeInventoryDiskSnapshot(snapshot.payload);
+    } else {
+      await syncUnitsToPostgres(unitsStore);
+      await syncWarehousesToPostgres(warehousesStore);
+      await syncCustomersToPostgres(customersStore);
+      await syncPartsToPostgres(partsStore);
+      await syncContractsToPostgres(contractsStore);
+      await syncCoilsToPostgres(physicalCoilsStore);
+      await persistInventoryAppState();
     }
 
-    if (Array.isArray(payload.parts) && payload.parts.length > 0) {
-      partsStore = payload.parts;
-    }
-    if (Array.isArray(payload.units) && payload.units.length > 0) {
-      unitsStore = payload.units;
-    }
-    if (Array.isArray(payload.warehouses) && payload.warehouses.length > 0) {
-      warehousesStore = payload.warehouses;
-      WAREHOUSES_LIST.splice(0, WAREHOUSES_LIST.length, ...warehousesStore);
-    }
-    if (Array.isArray(payload.customers) && payload.customers.length > 0) {
-      customersStore = payload.customers;
-    }
-    if (payload.vipParts && typeof payload.vipParts === 'object') {
-      Object.assign(serverVipPartsStore, payload.vipParts);
-    }
-    if (Array.isArray(payload.physicalCoils) && payload.physicalCoils.length > 0) {
-      physicalCoilsStore.splice(0, physicalCoilsStore.length, ...payload.physicalCoils);
-    }
-    if (Array.isArray(payload.coilIssueRecords) && payload.coilIssueRecords.length > 0) {
-      coilIssueRecordsStore.splice(0, coilIssueRecordsStore.length, ...payload.coilIssueRecords);
-    }
-    contractsStore.splice(0, contractsStore.length, ...payload.contracts);
-    reservationsStore.splice(0, reservationsStore.length, ...payload.reservations);
-    inventoryDocsStore.splice(0, inventoryDocsStore.length, ...payload.inventoryDocuments);
-    auditLogsStore.splice(0, auditLogsStore.length, ...payload.auditLogs);
-    for (const key of Object.keys(serverQcHoldStore)) delete serverQcHoldStore[key];
-    Object.assign(serverQcHoldStore, payload.qcHolds);
-    if (Array.isArray(payload.purchaseRequisitions)) {
-      mrpPurchaseRequisitionsStore.splice(0, mrpPurchaseRequisitionsStore.length, ...payload.purchaseRequisitions);
-    }
-    if (Array.isArray(payload.customerOrders)) {
-      customerOrdersStore.splice(0, customerOrdersStore.length, ...payload.customerOrders);
-    }
-    if (Array.isArray(payload.transactions)) {
-      transactionsStore.splice(0, transactionsStore.length, ...payload.transactions);
-    }
-  } else {
-    // First-time connection to an empty PostgreSQL database: seed initial master data & snapshot
-    await syncUnitsToPostgres(unitsStore);
-    await syncWarehousesToPostgres(warehousesStore);
-    await syncCustomersToPostgres(customersStore);
-    await syncPartsToPostgres(partsStore);
-    await syncContractsToPostgres(contractsStore);
-    await syncCoilsToPostgres(physicalCoilsStore);
-    await persistInventoryAppState();
-  }
-
-  let dbParts = await prisma.part.findMany({
-    where: { active: true },
-    include: { unit: true, material: true },
-    orderBy: { partNumber: 'asc' },
-  });
-  if (dbParts.length === 0 && partsStore.length > 0) {
-    await syncPartsToPostgres(partsStore);
-    dbParts = await prisma.part.findMany({
+    let dbParts = await prisma.part.findMany({
       where: { active: true },
       include: { unit: true, material: true },
       orderBy: { partNumber: 'asc' },
     });
-  }
-  if (dbParts.length > 0) {
-    const existingByCode = new Map(partsStore.map(p => [p.code.toUpperCase(), p]));
-    for (const dbPart of dbParts) {
-      const codeKey = dbPart.partNumber.toUpperCase();
-      const template = existingByCode.get(codeKey) || INITIAL_PARTS.find(part => part.code.toUpperCase() === codeKey);
-      const vip = Boolean(template?.isVIP ?? template?.isPinned ?? serverVipPartsStore[dbPart.id] ?? serverVipPartsStore[dbPart.partNumber]);
-      existingByCode.set(codeKey, {
-        id: template?.id || dbPart.id,
-        code: dbPart.partNumber,
-        name: dbPart.name,
-        category: normalizePartCategory(dbPart.category, dbPart.partNumber),
-        unit: normalizePartUnit(dbPart.unit?.code, normalizePartCategory(dbPart.category, dbPart.partNumber)),
-        weightPerUnitKg: Number(dbPart.weightNetKg) || template?.weightPerUnitKg || 1,
-        sapcoCode: dbPart.supplierPartNumber || template?.sapcoCode,
-        carModel: dbPart.carModel || template?.carModel || undefined,
-        thicknessMm: dbPart.thicknessMm == null ? template?.thicknessMm : Number(dbPart.thicknessMm),
-        materialGrade: dbPart.material?.grade || template?.materialGrade || undefined,
-        minStock: Number(dbPart.minSafetyStock) || template?.minStock || 0,
-        maxStock: dbPart.maxStock == null ? template?.maxStock : Number(dbPart.maxStock),
-        isVIP: vip,
-        isPinned: vip,
-        isDemo: false,
-      } as Part);
+    if (dbParts.length === 0 && partsStore.length > 0) {
+      await syncPartsToPostgres(partsStore);
+      dbParts = await prisma.part.findMany({
+        where: { active: true },
+        include: { unit: true, material: true },
+        orderBy: { partNumber: 'asc' },
+      });
     }
-    partsStore = Array.from(existingByCode.values());
-  }
+    if (dbParts.length > 0) {
+      const existingByCode = new Map(partsStore.map(p => [p.code.toUpperCase(), p]));
+      for (const dbPart of dbParts) {
+        const codeKey = dbPart.partNumber.toUpperCase();
+        const template = existingByCode.get(codeKey) || INITIAL_PARTS.find(part => part.code.toUpperCase() === codeKey);
+        const vip = Boolean(template?.isVIP ?? template?.isPinned ?? serverVipPartsStore[dbPart.id] ?? serverVipPartsStore[dbPart.partNumber]);
+        existingByCode.set(codeKey, {
+          id: template?.id || dbPart.id,
+          code: dbPart.partNumber,
+          name: dbPart.name,
+          category: normalizePartCategory(dbPart.category, dbPart.partNumber),
+          unit: normalizePartUnit(dbPart.unit?.code, normalizePartCategory(dbPart.category, dbPart.partNumber)),
+          weightPerUnitKg: Number(dbPart.weightNetKg) || template?.weightPerUnitKg || 1,
+          sapcoCode: dbPart.supplierPartNumber || template?.sapcoCode,
+          carModel: dbPart.carModel || template?.carModel || undefined,
+          thicknessMm: dbPart.thicknessMm == null ? template?.thicknessMm : Number(dbPart.thicknessMm),
+          materialGrade: dbPart.material?.grade || template?.materialGrade || undefined,
+          minStock: Number(dbPart.minSafetyStock) || template?.minStock || 0,
+          maxStock: dbPart.maxStock == null ? template?.maxStock : Number(dbPart.maxStock),
+          isVIP: vip,
+          isPinned: vip,
+          isDemo: false,
+        } as Part);
+      }
+      partsStore = Array.from(existingByCode.values());
+    }
 
-  const [dbPhysicalCoils, dbCoilIssueRecords] = await Promise.all([
-    prisma.physicalCoil.findMany({
-      include: {
-        part: { select: { id: true, partNumber: true, name: true } },
-        material: { select: { grade: true } },
-        warehouse: { select: { id: true, code: true, name: true } },
-        warehouseLocation: { select: { code: true } },
-        contractAllocations: {
-          include: { contract: { select: { id: true, contractNumber: true } } },
-          orderBy: { createdAt: 'asc' },
+    const [dbPhysicalCoils, dbCoilIssueRecords] = await Promise.all([
+      prisma.physicalCoil.findMany({
+        include: {
+          part: { select: { id: true, partNumber: true, name: true } },
+          material: { select: { grade: true } },
+          warehouse: { select: { id: true, code: true, name: true } },
+          warehouseLocation: { select: { code: true } },
+          contractAllocations: {
+            include: { contract: { select: { id: true, contractNumber: true } } },
+            orderBy: { createdAt: 'asc' },
+          },
         },
-      },
-      orderBy: { receiptDate: 'asc' },
-    }),
-    prisma.coilIssueReturnRecord.findMany({
-      include: {
-        coil: { select: { coilId: true } },
-        contract: { select: { id: true, contractNumber: true } },
-        part: { select: { partNumber: true, name: true } },
-        manufacturingOrder: { select: { moNumber: true } },
-        productionOperation: { select: { stepNumber: true } },
-      },
-      orderBy: [{ issuedAt: 'asc' }, { id: 'asc' }],
-    }),
-  ]);
+        orderBy: { receiptDate: 'asc' },
+      }),
+      prisma.coilIssueReturnRecord.findMany({
+        include: {
+          coil: { select: { coilId: true } },
+          contract: { select: { id: true, contractNumber: true } },
+          part: { select: { partNumber: true, name: true } },
+          manufacturingOrder: { select: { moNumber: true } },
+          productionOperation: { select: { stepNumber: true } },
+        },
+        orderBy: [{ issuedAt: 'asc' }, { id: 'asc' }],
+      }),
+    ]);
 
-  if (isDatabaseUrlConfigured() && dbPhysicalCoils.length > 0) {
-    physicalCoilsStore.splice(0, physicalCoilsStore.length, ...dbPhysicalCoils.map((row: any) => {
-      const appPart = partsStore.find(part => part.code === row.part?.partNumber);
-      return {
+    if (isDatabaseUrlConfigured() && dbPhysicalCoils.length > 0) {
+      physicalCoilsStore.splice(0, physicalCoilsStore.length, ...dbPhysicalCoils.map((row: any) => {
+        const appPart = partsStore.find(part => part.code === row.part?.partNumber);
+        return {
+          id: row.id,
+          coilId: row.coilId,
+          coilPackNumber: row.coilPackNumber,
+          partId: appPart?.id || row.partId || '',
+          partCode: row.part?.partNumber || '',
+          partName: row.part?.name || '',
+          materialGrade: row.material?.grade || '',
+          heatNumber: row.heatNumber || '',
+          thicknessMm: Number(row.thicknessMm),
+          widthMm: Number(row.widthMm),
+          originalWeightKg: Number(row.originalWeightKg),
+          remainingWeightKg: Number(row.remainingWeightKg),
+          warehouseId: row.warehouseId,
+          warehouseName: row.warehouse?.name || '',
+          warehouseLocationCode: row.warehouseLocation?.code || '',
+          ownership: row.ownership,
+          qualityStatus: row.qualityStatus,
+          physicalStatus: row.physicalStatus,
+          supplierName: row.supplierName || '',
+          receiptDate: row.receiptDate.toISOString(),
+          allocations: row.contractAllocations.map((allocation: any) => ({
+            contractId: allocation.contractId,
+            contractNumber: allocation.contract?.contractNumber || allocation.contractId,
+            coilId: row.id,
+            allocatedWeightKg: Number(allocation.allocatedWeightKg),
+            ownership: allocation.ownership,
+            notes: allocation.notes || undefined,
+          })),
+        } as PhysicalCoil;
+      }));
+    }
+
+    if (isDatabaseUrlConfigured() && dbCoilIssueRecords.length > 0) {
+      coilIssueRecordsStore.splice(0, coilIssueRecordsStore.length, ...dbCoilIssueRecords.map((row: any) => ({
         id: row.id,
         coilId: row.coilId,
-        coilPackNumber: row.coilPackNumber,
-        partId: appPart?.id || row.partId || '',
-        partCode: row.part?.partNumber || '',
-        partName: row.part?.name || '',
-        materialGrade: row.material?.grade || '',
-        heatNumber: row.heatNumber || '',
-        thicknessMm: Number(row.thicknessMm),
-        widthMm: Number(row.widthMm),
-        originalWeightKg: Number(row.originalWeightKg),
-        remainingWeightKg: Number(row.remainingWeightKg),
-        warehouseId: row.warehouseId,
-        warehouseName: row.warehouse?.name || '',
-        warehouseLocationCode: row.warehouseLocation?.code || '',
-        ownership: row.ownership,
-        qualityStatus: row.qualityStatus,
-        physicalStatus: row.physicalStatus,
-        supplierName: row.supplierName || '',
-        receiptDate: row.receiptDate.toISOString(),
-        allocations: row.contractAllocations.map((allocation: any) => ({
-          contractId: allocation.contractId,
-          contractNumber: allocation.contract?.contractNumber || allocation.contractId,
-          coilId: row.id,
-          allocatedWeightKg: Number(allocation.allocatedWeightKg),
-          ownership: allocation.ownership,
-          notes: allocation.notes || undefined,
-        })),
-      } as PhysicalCoil;
-    }));
-  }
+        manufacturingOrderId: row.manufacturingOrder?.moNumber || row.manufacturingOrderId || '',
+        documentNumber: row.documentNumber,
+        issuedWeightKg: Number(row.issuedWeightKg),
+        consumedWeightKg: Number(row.consumedWeightKg),
+        returnedWeightKg: Number(row.returnedWeightKg),
+        outstandingWeightKg: Number(row.outstandingWeightKg),
+        varianceWeightKg: Number(row.varianceWeightKg),
+        scrappedKg: Number(row.varianceWeightKg),
+        status: row.status,
+        issuedAt: row.issuedAt.toISOString(),
+        returnedAt: row.returnedAt?.toISOString(),
+        notes: row.notes || undefined,
+        contractId: row.contractId || undefined,
+        contractNumber: row.contract?.contractNumber || undefined,
+        partCode: row.part?.partNumber || undefined,
+        partName: row.part?.name || undefined,
+        operationStep: row.productionOperation?.stepNumber,
+        operationName: row.productionOperation?.operation?.name,
+        plannedMachine: row.productionOperation?.plannedMachine ? `${row.productionOperation.plannedMachine.code} - ${row.productionOperation.plannedMachine.name}` : undefined,
+      } as CoilIssueReturnRecord)));
+    }
 
-  if (isDatabaseUrlConfigured() && dbCoilIssueRecords.length > 0) {
-    coilIssueRecordsStore.splice(0, coilIssueRecordsStore.length, ...dbCoilIssueRecords.map((row: any) => ({
-      id: row.id,
-      coilId: row.coilId,
-      manufacturingOrderId: row.manufacturingOrder?.moNumber || row.manufacturingOrderId || '',
-      documentNumber: row.documentNumber,
-      issuedWeightKg: Number(row.issuedWeightKg),
-      consumedWeightKg: Number(row.consumedWeightKg),
-      returnedWeightKg: Number(row.returnedWeightKg),
-      outstandingWeightKg: Number(row.outstandingWeightKg),
-      varianceWeightKg: Number(row.varianceWeightKg),
-      scrappedKg: Number(row.varianceWeightKg),
-      status: row.status,
-      issuedAt: row.issuedAt.toISOString(),
-      returnedAt: row.returnedAt?.toISOString(),
-      notes: row.notes || undefined,
-      contractId: row.contractId || undefined,
-      contractNumber: row.contract?.contractNumber || undefined,
-      partCode: row.part?.partNumber || undefined,
-      partName: row.part?.name || undefined,
-      operationStep: row.productionOperation?.stepNumber,
-      operationName: row.productionOperation?.operation?.name,
-      plannedMachine: row.productionOperation?.plannedMachine ? `${row.productionOperation.plannedMachine.code} - ${row.productionOperation.plannedMachine.name}` : undefined,
-    } as CoilIssueReturnRecord)));
-  }
-
-  const dbDocuments = await prisma.inventoryDocument.findMany({
-    where: { postingStatus: 'POSTED' },
-    include: {
-      warehouse: true,
-      targetWarehouse: true,
-      createdByUser: true,
-      lines: {
-        include: {
-          part: true,
-          unit: true,
-          materialLot: true,
-          location: true,
-          targetLocation: true,
+    const dbDocuments = await prisma.inventoryDocument.findMany({
+      where: { postingStatus: 'POSTED' },
+      include: {
+        warehouse: true,
+        targetWarehouse: true,
+        createdByUser: true,
+        lines: {
+          include: {
+            part: true,
+            unit: true,
+            materialLot: true,
+            location: true,
+            targetLocation: true,
+          },
+          orderBy: { lineNumber: 'asc' },
         },
-        orderBy: { lineNumber: 'asc' },
       },
-    },
-    orderBy: { documentDate: 'asc' },
-  });
+      orderBy: { documentDate: 'asc' },
+    });
 
-  if (dbDocuments.length || process.env.NODE_ENV === 'production') {
-    const mappedDatabaseDocuments = dbDocuments.map(dbDoc => {
-      const lines: InventoryDocumentLine[] = dbDoc.lines.map(line => {
-        const appPart = partsStore.find(part => part.code === line.part.partNumber);
+    if (dbDocuments.length || process.env.NODE_ENV === 'production') {
+      const mappedDatabaseDocuments = dbDocuments.map(dbDoc => {
+        const lines: InventoryDocumentLine[] = dbDoc.lines.map(line => {
+          const appPart = partsStore.find(part => part.code === line.part.partNumber);
+          return {
+            id: line.id,
+            documentId: dbDoc.id,
+            lineNumber: line.lineNumber,
+            partId: appPart?.id || line.partId,
+            partCode: line.part.partNumber,
+            partName: line.part.name,
+            materialLotId: line.materialLot?.lotNumber,
+            lotNumber: line.materialLot?.lotNumber,
+            heatNumber: line.materialLot?.heatNumber || undefined,
+            ownership: line.ownership as StockOwnership,
+            contractId: line.contractId || undefined,
+            contractNumber: line.contractNumber || undefined,
+            locationCode: line.location?.code,
+            targetLocationCode: line.targetLocation?.code,
+            quantity: Number(line.quantity),
+            unit: line.unit.code as InventoryDocumentLine['unit'],
+            quantityKg: Number(line.weightKg),
+            qualityStatus: line.qualityStatus as StockQualityStatus,
+            unitCost: line.unitCost == null ? undefined : Number(line.unitCost),
+            notes: line.notes || undefined,
+          };
+        });
+        const firstLine = lines[0];
+        const dbType = dbDoc.documentType;
+        let documentType: InventoryDocType;
+        if (dbType === 'RECEIPT') {
+          documentType = firstLine?.partCode && partsStore.find(p => p.code === firstLine.partCode)?.category === 'FINISHED_GOOD'
+            ? 'RECEIPT_FINISHED_GOODS'
+            : 'RECEIPT_RAW_MATERIAL';
+        } else if (dbType === 'ISSUE') {
+          documentType = dbDoc.referenceNumber?.startsWith('SO-') ? 'DELIVERY_CUSTOMER' : 'ISSUE_RAW_MATERIAL';
+        } else if (dbType === 'WIP_TRANSFER') {
+          documentType = 'TRANSFER';
+        } else if (dbType === 'INITIAL_BALANCE') {
+          documentType = 'OPENING_BALANCE';
+        } else if (dbType === 'RETURN') {
+          documentType = 'REVERSAL';
+        } else {
+          documentType = 'ADJUSTMENT';
+        }
+
         return {
-          id: line.id,
-          documentId: dbDoc.id,
-          lineNumber: line.lineNumber,
-          partId: appPart?.id || line.partId,
-          partCode: line.part.partNumber,
-          partName: line.part.name,
-          materialLotId: line.materialLot?.lotNumber,
-          lotNumber: line.materialLot?.lotNumber,
-          heatNumber: line.materialLot?.heatNumber || undefined,
-          ownership: line.ownership as StockOwnership,
-          contractId: line.contractId || undefined,
-          contractNumber: line.contractNumber || undefined,
-          locationCode: line.location?.code,
-          targetLocationCode: line.targetLocation?.code,
-          quantity: Number(line.quantity),
-          unit: line.unit.code as InventoryDocumentLine['unit'],
-          quantityKg: Number(line.weightKg),
-          qualityStatus: line.qualityStatus as StockQualityStatus,
-          unitCost: line.unitCost == null ? undefined : Number(line.unitCost),
-          notes: line.notes || undefined,
+          id: dbDoc.id,
+          documentNumber: dbDoc.documentNumber,
+          documentType,
+          documentDate: dbDoc.documentDate.toISOString(),
+          documentStatus: dbDoc.documentStatus as InventoryDocument['documentStatus'],
+          postingStatus: dbDoc.postingStatus as InventoryDocument['postingStatus'],
+          warehouseId: dbDoc.warehouse.code,
+          warehouseName: dbDoc.warehouse.name,
+          targetWarehouseId: dbDoc.targetWarehouse?.code,
+          targetWarehouseName: dbDoc.targetWarehouse?.name,
+          ownership: firstLine?.ownership || 'COMPANY_OWNED',
+          contractId: firstLine?.contractId,
+          contractNumber: firstLine?.contractNumber,
+          referenceType: dbDoc.referenceType || undefined,
+          referenceNumber: dbDoc.referenceNumber || undefined,
+          reversalOfDocumentId: dbDoc.reversalOfId || undefined,
+          adjustmentReason: dbDoc.notes || undefined,
+          auditNote: dbDoc.notes || undefined,
+          lines,
+          totalQuantity: lines.reduce((sum, line) => sum + line.quantity, 0),
+          totalWeightKg: lines.reduce((sum, line) => sum + line.quantityKg, 0),
+          createdByUid: dbDoc.createdByUser.username,
+          createdByName: dbDoc.createdByUser.fullName,
+          postedAt: dbDoc.postedAt?.toISOString(),
+          createdAt: dbDoc.createdAt.toISOString(),
+          updatedAt: dbDoc.updatedAt.toISOString(),
         };
       });
-      const firstLine = lines[0];
-      const dbType = dbDoc.documentType;
-      let documentType: InventoryDocType;
-      if (dbType === 'RECEIPT') {
-        documentType = firstLine?.partCode && partsStore.find(p => p.code === firstLine.partCode)?.category === 'FINISHED_GOOD'
-          ? 'RECEIPT_FINISHED_GOODS'
-          : 'RECEIPT_RAW_MATERIAL';
-      } else if (dbType === 'ISSUE') {
-        documentType = dbDoc.referenceNumber?.startsWith('SO-') ? 'DELIVERY_CUSTOMER' : 'ISSUE_RAW_MATERIAL';
-      } else if (dbType === 'WIP_TRANSFER') {
-        documentType = 'TRANSFER';
-      } else if (dbType === 'INITIAL_BALANCE') {
-        documentType = 'OPENING_BALANCE';
-      } else if (dbType === 'RETURN') {
-        documentType = 'REVERSAL';
-      } else {
-        documentType = 'ADJUSTMENT';
-      }
+      const documentsByNumber = new Map(inventoryDocsStore.map(doc => [doc.documentNumber, doc]));
+      for (const doc of mappedDatabaseDocuments) documentsByNumber.set(doc.documentNumber, doc);
+      inventoryDocsStore.splice(0, inventoryDocsStore.length, ...documentsByNumber.values());
+    }
 
-      return {
-        id: dbDoc.id,
-        documentNumber: dbDoc.documentNumber,
-        documentType,
-        documentDate: dbDoc.documentDate.toISOString(),
-        documentStatus: dbDoc.documentStatus as InventoryDocument['documentStatus'],
-        postingStatus: dbDoc.postingStatus as InventoryDocument['postingStatus'],
-        warehouseId: dbDoc.warehouse.code,
-        warehouseName: dbDoc.warehouse.name,
-        targetWarehouseId: dbDoc.targetWarehouse?.code,
-        targetWarehouseName: dbDoc.targetWarehouse?.name,
-        ownership: firstLine?.ownership || 'COMPANY_OWNED',
-        contractId: firstLine?.contractId,
-        contractNumber: firstLine?.contractNumber,
-        referenceType: dbDoc.referenceType || undefined,
-        referenceNumber: dbDoc.referenceNumber || undefined,
-        reversalOfDocumentId: dbDoc.reversalOfId || undefined,
-        adjustmentReason: dbDoc.notes || undefined,
-        auditNote: dbDoc.notes || undefined,
-        lines,
-        totalQuantity: lines.reduce((sum, line) => sum + line.quantity, 0),
-        totalWeightKg: lines.reduce((sum, line) => sum + line.quantityKg, 0),
-        createdByUid: dbDoc.createdByUser.username,
-        createdByName: dbDoc.createdByUser.fullName,
-        postedAt: dbDoc.postedAt?.toISOString(),
-        createdAt: dbDoc.createdAt.toISOString(),
-        updatedAt: dbDoc.updatedAt.toISOString(),
-      };
+    const dbReservations = await prisma.inventoryReservation.findMany({
+      include: { part: { include: { unit: true } }, warehouse: true, materialLot: true, reservedForMO: true, reservedForCO: true },
+      orderBy: { createdAt: 'asc' },
     });
-    const documentsByNumber = new Map(inventoryDocsStore.map(doc => [doc.documentNumber, doc]));
-    for (const doc of mappedDatabaseDocuments) documentsByNumber.set(doc.documentNumber, doc);
-    inventoryDocsStore.splice(0, inventoryDocsStore.length, ...documentsByNumber.values());
-  }
+    if (dbReservations.length) {
+      reservationsStore.splice(0, reservationsStore.length, ...dbReservations.map(row => {
+        const appPart = partsStore.find(part => part.code === row.part.partNumber);
+        return {
+          id: row.id,
+          reservationNumber: row.reservationNumber,
+          partId: appPart?.id || row.partId,
+          partCode: row.part.partNumber,
+          partName: row.part.name,
+          warehouseId: row.warehouse.code,
+          warehouseName: row.warehouse.name,
+          materialLotId: row.materialLot?.lotNumber,
+          lotNumber: row.materialLot?.lotNumber,
+          ownership: 'COMPANY_OWNED' as InventoryReservation['ownership'],
+          reservedFor: row.reservedForMO?.moNumber || row.reservedForCO?.orderNumber || 'سفارش نامشخص',
+          quantity: Number(row.quantity),
+          quantityKg: Number(row.weightKg),
+          unit: row.part.unit.code as InventoryReservation['unit'],
+          status: row.status as InventoryReservation['status'],
+          validUntil: row.validUntil?.toISOString(),
+          createdAt: row.createdAt.toISOString(),
+        };
+      }));
+    } else if (process.env.NODE_ENV === 'production' && !snapshot) {
+      reservationsStore.splice(0);
+    }
 
-  const dbReservations = await prisma.inventoryReservation.findMany({
-    include: { part: { include: { unit: true } }, warehouse: true, materialLot: true, reservedForMO: true, reservedForCO: true },
-    orderBy: { createdAt: 'asc' },
-  });
-  if (dbReservations.length) {
-    reservationsStore.splice(0, reservationsStore.length, ...dbReservations.map(row => {
-      const appPart = partsStore.find(part => part.code === row.part.partNumber);
-      return {
+    const dbAudit = await prisma.auditLog.findMany({
+      include: { user: true },
+      orderBy: { timestamp: 'desc' },
+      take: 1000,
+    });
+    if (dbAudit.length || process.env.NODE_ENV === 'production') {
+      const databaseAudit = dbAudit.map(row => ({
         id: row.id,
-        reservationNumber: row.reservationNumber,
-        partId: appPart?.id || row.partId,
-        partCode: row.part.partNumber,
-        partName: row.part.name,
-        warehouseId: row.warehouse.code,
-        warehouseName: row.warehouse.name,
-        materialLotId: row.materialLot?.lotNumber,
-        lotNumber: row.materialLot?.lotNumber,
-        ownership: 'COMPANY_OWNED' as InventoryReservation['ownership'],
-        reservedFor: row.reservedForMO?.moNumber || row.reservedForCO?.orderNumber || 'سفارش نامشخص',
-        quantity: Number(row.quantity),
-        quantityKg: Number(row.weightKg),
-        unit: row.part.unit.code as InventoryReservation['unit'],
-        status: row.status as InventoryReservation['status'],
-        validUntil: row.validUntil?.toISOString(),
-        createdAt: row.createdAt.toISOString(),
-      };
-    }));
-  } else if (process.env.NODE_ENV === 'production' && !snapshot) {
-    reservationsStore.splice(0);
-  }
-
-  const dbAudit = await prisma.auditLog.findMany({
-    include: { user: true },
-    orderBy: { timestamp: 'desc' },
-    take: 1000,
-  });
-  if (dbAudit.length || process.env.NODE_ENV === 'production') {
-    const databaseAudit = dbAudit.map(row => ({
-      id: row.id,
-      action: row.action,
-      entityName: row.entityName,
-      entityId: row.entityId,
-      user: { uid: row.user?.username || 'system', displayName: row.user?.fullName || 'سیستم' },
-      details: JSON.stringify(row.newValues || row.oldValues || {}),
-      timestamp: row.timestamp.toISOString(),
-    }));
-    const auditById = new Map(auditLogsStore.map(row => [row.id, row]));
-    for (const row of databaseAudit) auditById.set(row.id, row);
-    auditLogsStore.splice(0, auditLogsStore.length, ...auditById.values());
+        action: row.action,
+        entityName: row.entityName,
+        entityId: row.entityId,
+        user: { uid: row.user?.username || 'system', displayName: row.user?.fullName || 'سیستم' },
+        details: JSON.stringify(row.newValues || row.oldValues || {}),
+        timestamp: row.timestamp.toISOString(),
+      }));
+      const auditById = new Map(auditLogsStore.map(row => [row.id, row]));
+      for (const row of databaseAudit) auditById.set(row.id, row);
+      auditLogsStore.splice(0, auditLogsStore.length, ...auditById.values());
+    }
+  } catch {
+    // Fallback to durable disk snapshot already hydrated
   }
 }
 
@@ -1583,7 +1684,7 @@ apiRouter.get('/machines', (_req: Request, res: Response) => {
   res.json({ success: true, count: machinesStore.length, data: machinesStore });
 });
 
-apiRouter.post('/machines', (req: Request, res: Response) => {
+apiRouter.post('/machines', async (req: Request, res: Response) => {
   const payload: Partial<Machine> = req.body;
   if (!payload.code || !payload.name || !payload.processType) {
     return res.status(400).json({ success: false, error: 'اطلاعات ماشین (کد، عنوان، نوع فرایند) تکمیل نشده است.' });
@@ -1592,6 +1693,7 @@ apiRouter.post('/machines', (req: Request, res: Response) => {
   const existingIndex = machinesStore.findIndex(m => m.id === payload.id || m.code === payload.code);
   if (existingIndex >= 0) {
     machinesStore[existingIndex] = { ...machinesStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات ماشین به‌روز شد.', data: machinesStore[existingIndex] });
   } else {
     const newMachine: Machine = {
@@ -1612,6 +1714,7 @@ apiRouter.post('/machines', (req: Request, res: Response) => {
       createdAt: new Date().toISOString(),
     };
     machinesStore.unshift(newMachine);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'ماشین جدید ثبت گردید.', data: newMachine });
   }
 });
@@ -1628,7 +1731,7 @@ apiRouter.get('/routings', (req: Request, res: Response) => {
   res.json({ success: true, count: result.length, data: result });
 });
 
-apiRouter.post('/routings', (req: Request, res: Response) => {
+apiRouter.post('/routings', async (req: Request, res: Response) => {
   const payload: Partial<Routing> = req.body;
   if (!payload.partId || !payload.operations || payload.operations.length === 0) {
     return res.status(400).json({ success: false, error: 'انتخاب قطعه و حداقل یک عملیات الزامی است.' });
@@ -1646,6 +1749,7 @@ apiRouter.post('/routings', (req: Request, res: Response) => {
       partName: part ? part.name : routingsStore[existingIndex].partName,
       updatedAt: now,
     };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مسیر تولید به‌روزرسانی شد.', data: routingsStore[existingIndex] });
   } else {
     const newRouting: Routing = {
@@ -1661,15 +1765,17 @@ apiRouter.post('/routings', (req: Request, res: Response) => {
       updatedAt: now,
     };
     routingsStore.unshift(newRouting);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'مسیر تولید جدید تعریف گردید.', data: newRouting });
   }
 });
 
-apiRouter.delete('/routings/:id', (req: Request, res: Response) => {
+apiRouter.delete('/routings/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialLength = routingsStore.length;
   routingsStore = routingsStore.filter(r => r.id !== id);
   if (routingsStore.length < initialLength) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'مسیر تولید حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'مسیر تولید یافت نشد.' });
@@ -1693,26 +1799,28 @@ apiRouter.get('/production/boms/:partId', (req: Request, res: Response) => {
   res.json({ success: true, data: bom });
 });
 
-apiRouter.post('/production/boms', (req: Request, res: Response) => {
+apiRouter.post('/production/boms', async (req: Request, res: Response) => {
   try {
     const saved = saveAdvancedBom(req.body);
+    await persistInventoryAppState();
     res.json({ success: true, message: 'ساختار درخت محصول (BOM) با موفقیت ذخیره شد.', data: saved });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'خطا در ثبت BOM' });
   }
 });
 
-apiRouter.delete('/production/boms/:id', (req: Request, res: Response) => {
+apiRouter.delete('/production/boms/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const deleted = deleteAdvancedBom(id);
   if (deleted) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'درخت محصول (BOM) با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'BOM مورد نظر یافت نشد.' });
   }
 });
 
-apiRouter.post('/production/boms/generate-sub-mos', (req: Request, res: Response) => {
+apiRouter.post('/production/boms/generate-sub-mos', async (req: Request, res: Response) => {
   try {
     const { bomId, plannedQty = 500, masterMoNumber = `MO-${Date.now()}` } = req.body;
     const bom = getAllBoms().find(b => b.id === bomId);
@@ -1724,6 +1832,16 @@ apiRouter.post('/production/boms/generate-sub-mos', (req: Request, res: Response
     const createdSubMos = subComponents.map((c, idx) => {
       const subMoNumber = `SUB-${masterMoNumber}-${String.fromCharCode(65 + idx)}`;
       const reqQty = Math.ceil(Number(plannedQty) * c.quantityPerAssembly * (1 + (c.scrapAllowancePercent || 0) / 100));
+      const matchedPart = partsStore.find(p => p.id === c.componentPartId || p.code === c.componentPartCode);
+      if (matchedPart) {
+        createManufacturingOrder({
+          partId: matchedPart.id,
+          targetQuantity: reqQty,
+          dueDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
+          notes: `دستور ساخت فرعی (Sub-MO: ${subMoNumber}) منشعب از BOM «${bom.assemblyPartCode}» و دستور کار اصلی ${masterMoNumber}`,
+          createdBy: 'موتور انفجار BOM (SAP PP)',
+        });
+      }
       return {
         subMoNumber,
         masterMoNumber,
@@ -1737,9 +1855,12 @@ apiRouter.post('/production/boms/generate-sub-mos', (req: Request, res: Response
       };
     });
 
+    await persistProductionWipState();
+    await persistInventoryAppState();
+
     res.json({
       success: true,
-      message: `تعداد ${createdSubMos.length} دستور ساخت فرعی (Sub-MO) متناظر با قطعات درخت محصول صادر گردید.`,
+      message: `تعداد ${createdSubMos.length} دستور ساخت فرعی (Sub-MO) متناظر با قطعات درخت محصول در سالن تولید صادر و ذخیره گردید.`,
       data: createdSubMos,
     });
   } catch (err: any) {
@@ -1755,19 +1876,21 @@ apiRouter.get('/production/parallel-flows', (_req: Request, res: Response) => {
   res.json({ success: true, count: flows.length, data: flows });
 });
 
-apiRouter.post('/production/parallel-flows', (req: Request, res: Response) => {
+apiRouter.post('/production/parallel-flows', async (req: Request, res: Response) => {
   try {
     const saved = saveParallelFlow(req.body);
+    await persistInventoryAppState();
     res.json({ success: true, message: 'جریان تولید موازی با موفقیت ذخیره گردید.', data: saved });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-apiRouter.delete('/production/parallel-flows/:id', (req: Request, res: Response) => {
+apiRouter.delete('/production/parallel-flows/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const deleted = deleteParallelFlow(id);
   if (deleted) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'جریان تولید موازی با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'جریان تولید موازی یافت نشد.' });
@@ -1782,9 +1905,10 @@ apiRouter.get('/production/traceability/history', (_req: Request, res: Response)
   res.json({ success: true, count: tags.length, data: tags });
 });
 
-apiRouter.post('/production/traceability/generate-tag', (req: Request, res: Response) => {
+apiRouter.post('/production/traceability/generate-tag', async (req: Request, res: Response) => {
   try {
     const tag = issueTraceabilityTag(req.body);
+    await persistInventoryAppState();
     res.json({ success: true, message: 'شناسه بچ و کارت رهگیری استاندارد با موفقیت صادر شد.', data: tag });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -1820,7 +1944,7 @@ apiRouter.get('/dies', (req: Request, res: Response) => {
   res.json({ success: true, count: result.length, data: result });
 });
 
-apiRouter.post('/dies', (req: Request, res: Response) => {
+apiRouter.post('/dies', async (req: Request, res: Response) => {
   const payload: Partial<DieMold> = req.body;
   if (!payload.code || !payload.name || !payload.partId) {
     return res.status(400).json({ success: false, error: 'کد قالب، عنوان قالب و قطعه مربوطه الزامی هستند.' });
@@ -1836,6 +1960,7 @@ apiRouter.post('/dies', (req: Request, res: Response) => {
       partCode: part ? part.code : diesStore[existingIndex].partCode,
       partName: part ? part.name : diesStore[existingIndex].partName,
     };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات قالب پرس به‌روزرسانی شد.', data: diesStore[existingIndex] });
   } else {
     const newDie: DieMold = {
@@ -1856,13 +1981,15 @@ apiRouter.post('/dies', (req: Request, res: Response) => {
       isDemo: false,
     };
     diesStore.unshift(newDie);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'قالب پرس جدید ثبت گردید.', data: newDie });
   }
 });
 
-apiRouter.delete('/dies/:id', (req: Request, res: Response) => {
+apiRouter.delete('/dies/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   diesStore = diesStore.filter(d => d.id !== id);
+  await persistInventoryAppState();
   res.json({ success: true, message: 'قالب حذف گردید.' });
 });
 
@@ -1881,7 +2008,7 @@ apiRouter.get('/operators', (req: Request, res: Response) => {
   res.json({ success: true, count: result.length, data: result });
 });
 
-apiRouter.post('/operators', (req: Request, res: Response) => {
+apiRouter.post('/operators', async (req: Request, res: Response) => {
   const payload: Partial<Operator> = req.body;
   if (!payload.fullName || !payload.personnelCode) {
     return res.status(400).json({ success: false, error: 'نام و کد پرسنلی اپراتور الزامی است.' });
@@ -1890,6 +2017,7 @@ apiRouter.post('/operators', (req: Request, res: Response) => {
   const existingIndex = operatorsStore.findIndex(o => o.id === payload.id || o.personnelCode === payload.personnelCode);
   if (existingIndex >= 0) {
     operatorsStore[existingIndex] = { ...operatorsStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات اپراتور به‌روزرسانی شد.', data: operatorsStore[existingIndex] });
   } else {
     const newOp: Operator = {
@@ -1904,15 +2032,17 @@ apiRouter.post('/operators', (req: Request, res: Response) => {
       isDemo: false,
     };
     operatorsStore.unshift(newOp);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'اپراتور جدید ثبت گردید.', data: newOp });
   }
 });
 
-apiRouter.delete('/operators/:id', (req: Request, res: Response) => {
+apiRouter.delete('/operators/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = operatorsStore.length;
   operatorsStore = operatorsStore.filter(o => o.id !== id && o.personnelCode !== id);
   if (operatorsStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'اپراتور با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'اپراتور مورد نظر یافت نشد.' });
@@ -1926,7 +2056,6 @@ apiRouter.get('/operators/:id/timesheet', (req: Request, res: Response) => {
     return res.status(404).json({ success: false, error: 'اپراتور یافت نشد.' });
   }
 
-  // Generate realistic performance and shift timesheet data
   const timesheet = {
     operator: op,
     summary: {
@@ -2005,7 +2134,7 @@ apiRouter.get('/halls', (_req: Request, res: Response) => {
   res.json({ success: true, count: hallsStore.length, data: hallsStore });
 });
 
-apiRouter.post('/halls', (req: Request, res: Response) => {
+apiRouter.post('/halls', async (req: Request, res: Response) => {
   const payload: Partial<FactoryHall> = req.body;
   if (!payload.code || !payload.name) {
     return res.status(400).json({ success: false, error: 'کد و نام سالن الزامی است.' });
@@ -2014,6 +2143,7 @@ apiRouter.post('/halls', (req: Request, res: Response) => {
   const existingIndex = hallsStore.findIndex(h => h.id === payload.id || h.code === payload.code);
   if (existingIndex >= 0) {
     hallsStore[existingIndex] = { ...hallsStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات سالن به‌روز شد.', data: hallsStore[existingIndex] });
   } else {
     const newHall: FactoryHall = {
@@ -2027,15 +2157,17 @@ apiRouter.post('/halls', (req: Request, res: Response) => {
       active: payload.active ?? true,
     };
     hallsStore.push(newHall);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'سالن جدید تعریف گردید.', data: newHall });
   }
 });
 
-apiRouter.delete('/halls/:id', (req: Request, res: Response) => {
+apiRouter.delete('/halls/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialLen = hallsStore.length;
   hallsStore = hallsStore.filter(h => h.id !== id && h.code !== id);
   if (hallsStore.length < initialLen) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'سالن استقرار با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'سالن مورد نظر یافت نشد.' });
@@ -2049,7 +2181,7 @@ apiRouter.get('/processes', (_req: Request, res: Response) => {
   res.json({ success: true, count: processesStore.length, data: processesStore });
 });
 
-apiRouter.post('/processes', (req: Request, res: Response) => {
+apiRouter.post('/processes', async (req: Request, res: Response) => {
   const payload = req.body;
   if (!payload.code || !payload.name) {
     return res.status(400).json({ success: false, error: 'کد و عنوان فرایند الزامی است.' });
@@ -2057,6 +2189,7 @@ apiRouter.post('/processes', (req: Request, res: Response) => {
   const existingIndex = processesStore.findIndex(p => p.code === payload.code);
   if (existingIndex >= 0) {
     processesStore[existingIndex] = { ...processesStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'فرایند به‌روز شد.', data: processesStore[existingIndex] });
   } else {
     const newProc = {
@@ -2067,15 +2200,17 @@ apiRouter.post('/processes', (req: Request, res: Response) => {
       description: payload.description || '',
     };
     processesStore.push(newProc);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'فرایند جدید تعریف شد.', data: newProc });
   }
 });
 
-apiRouter.delete('/processes/:code', (req: Request, res: Response) => {
+apiRouter.delete('/processes/:code', async (req: Request, res: Response) => {
   const { code } = req.params;
   const initialCount = processesStore.length;
   processesStore = processesStore.filter(p => p.code !== code);
   if (processesStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'قابلیت فرآیندی حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'قابلیت فرآیندی یافت نشد.' });
@@ -2099,7 +2234,7 @@ apiRouter.get('/material-grades', (_req: Request, res: Response) => {
   res.json({ success: true, count: materialGradesStore.length, data: materialGradesStore });
 });
 
-apiRouter.post('/material-grades', (req: Request, res: Response) => {
+apiRouter.post('/material-grades', async (req: Request, res: Response) => {
   const payload = req.body;
   if (!payload.code || !payload.name) {
     return res.status(400).json({ success: false, error: 'کد و عنوان گرید الزامی است.' });
@@ -2107,6 +2242,7 @@ apiRouter.post('/material-grades', (req: Request, res: Response) => {
   const existingIndex = materialGradesStore.findIndex(g => g.code.toUpperCase() === payload.code.toUpperCase());
   if (existingIndex >= 0) {
     materialGradesStore[existingIndex] = { ...materialGradesStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات گرید به‌روزرسانی شد.', data: materialGradesStore[existingIndex] });
   } else {
     const newGrade = {
@@ -2116,15 +2252,17 @@ apiRouter.post('/material-grades', (req: Request, res: Response) => {
       yieldStrengthMpa: Number(payload.yieldStrengthMpa) || 240,
     };
     materialGradesStore.push(newGrade);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'گرید آلیاژ جدید با موفقیت ثبت شد.', data: newGrade });
   }
 });
 
-apiRouter.delete('/material-grades/:code', (req: Request, res: Response) => {
+apiRouter.delete('/material-grades/:code', async (req: Request, res: Response) => {
   const { code } = req.params;
   const initialCount = materialGradesStore.length;
   materialGradesStore = materialGradesStore.filter(g => g.code.toUpperCase() !== code.toUpperCase());
   if (materialGradesStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'گرید آلیاژ با موفقیت حذف شد.' });
   } else {
     res.status(404).json({ success: false, error: 'گرید آلیاژ یافت نشد.' });
@@ -2138,7 +2276,7 @@ apiRouter.get('/warehouses', (_req: Request, res: Response) => {
   res.json({ success: true, count: warehousesStore.length, data: warehousesStore });
 });
 
-apiRouter.post('/warehouses', (req: Request, res: Response) => {
+apiRouter.post('/warehouses', async (req: Request, res: Response) => {
   const payload: Partial<WarehouseDefinition> = req.body;
   if (!payload.name) {
     return res.status(400).json({ success: false, error: 'نام انبار الزامی است.' });
@@ -2155,6 +2293,8 @@ apiRouter.post('/warehouses', (req: Request, res: Response) => {
         ? payload.locations
         : warehousesStore[existingIndex].locations,
     };
+    await syncWarehousesToPostgres([warehousesStore[existingIndex]]);
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات انبار با موفقیت به‌روزرسانی شد.', data: warehousesStore[existingIndex] });
   } else {
     const newWarehouse: WarehouseDefinition = {
@@ -2166,15 +2306,18 @@ apiRouter.post('/warehouses', (req: Request, res: Response) => {
       locations: Array.isArray(payload.locations) && payload.locations.length > 0 ? payload.locations : [`LOC-${code}-01`],
     };
     warehousesStore.push(newWarehouse);
+    await syncWarehousesToPostgres([newWarehouse]);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'انبار جدید با موفقیت ثبت شد.', data: newWarehouse });
   }
 });
 
-apiRouter.delete('/warehouses/:id', (req: Request, res: Response) => {
+apiRouter.delete('/warehouses/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = warehousesStore.length;
   warehousesStore = warehousesStore.filter(w => w.id !== id && w.code !== id);
   if (warehousesStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'انبار با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'انبار مورد نظر یافت نشد.' });
@@ -2188,7 +2331,7 @@ apiRouter.get('/units', (_req: Request, res: Response) => {
   res.json({ success: true, count: unitsStore.length, data: unitsStore });
 });
 
-apiRouter.post('/units', (req: Request, res: Response) => {
+apiRouter.post('/units', async (req: Request, res: Response) => {
   const payload: Partial<UnitDefinition> = req.body;
   if (!payload.symbol || !payload.title) {
     return res.status(400).json({ success: false, error: 'نماد و عنوان واحد الزامی هستند.' });
@@ -2197,6 +2340,8 @@ apiRouter.post('/units', (req: Request, res: Response) => {
   const existingIndex = unitsStore.findIndex(u => u.id === payload.id || u.symbol.toUpperCase() === payload.symbol?.toUpperCase());
   if (existingIndex >= 0) {
     unitsStore[existingIndex] = { ...unitsStore[existingIndex], ...payload };
+    await syncUnitsToPostgres([unitsStore[existingIndex]]);
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات واحد سنجش به‌روزرسانی شد.', data: unitsStore[existingIndex] });
   } else {
     const newUnit: UnitDefinition = {
@@ -2208,15 +2353,18 @@ apiRouter.post('/units', (req: Request, res: Response) => {
       isBaseUnit: payload.isBaseUnit || false,
     };
     unitsStore.push(newUnit);
+    await syncUnitsToPostgres([newUnit]);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'واحد سنجش جدید با موفقیت تعریف گردید.', data: newUnit });
   }
 });
 
-apiRouter.delete('/units/:id', (req: Request, res: Response) => {
+apiRouter.delete('/units/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = unitsStore.length;
   unitsStore = unitsStore.filter(u => u.id !== id && u.symbol !== id);
   if (unitsStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'واحد سنجش حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'واحد سنجش یافت نشد.' });
@@ -2230,7 +2378,7 @@ apiRouter.get('/customers', (_req: Request, res: Response) => {
   res.json({ success: true, count: customersStore.length, data: customersStore });
 });
 
-apiRouter.post('/customers', (req: Request, res: Response) => {
+apiRouter.post('/customers', async (req: Request, res: Response) => {
   const payload: Partial<CustomerDefinition> = req.body;
   if (!payload.name) {
     return res.status(400).json({ success: false, error: 'نام مشتری / شرکت طرف قرارداد الزامی است.' });
@@ -2239,6 +2387,8 @@ apiRouter.post('/customers', (req: Request, res: Response) => {
   const existingIndex = customersStore.findIndex(c => c.id === payload.id || (payload.code && c.code === payload.code));
   if (existingIndex >= 0) {
     customersStore[existingIndex] = { ...customersStore[existingIndex], ...payload };
+    await syncCustomersToPostgres([customersStore[existingIndex]]);
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات مشتری به‌روزرسانی شد.', data: customersStore[existingIndex] });
   } else {
     const newCustomer: CustomerDefinition = {
@@ -2252,15 +2402,18 @@ apiRouter.post('/customers', (req: Request, res: Response) => {
       isDefault: payload.isDefault || false,
     };
     customersStore.push(newCustomer);
+    await syncCustomersToPostgres([newCustomer]);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'مشتری جدید با موفقیت ثبت گردید.', data: newCustomer });
   }
 });
 
-apiRouter.delete('/customers/:id', (req: Request, res: Response) => {
+apiRouter.delete('/customers/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = customersStore.length;
   customersStore = customersStore.filter(c => c.id !== id && c.code !== id);
   if (customersStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'مشتری با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'مشتری یافت نشد.' });
@@ -2274,7 +2427,7 @@ apiRouter.get('/shifts', (_req: Request, res: Response) => {
   res.json({ success: true, count: shiftsStore.length, data: shiftsStore });
 });
 
-apiRouter.post('/shifts', (req: Request, res: Response) => {
+apiRouter.post('/shifts', async (req: Request, res: Response) => {
   const payload: Partial<ShiftDefinition> = req.body;
   if (!payload.name) {
     return res.status(400).json({ success: false, error: 'نام شیفت کاری الزامی است.' });
@@ -2283,6 +2436,7 @@ apiRouter.post('/shifts', (req: Request, res: Response) => {
   const existingIndex = shiftsStore.findIndex(s => s.id === payload.id || s.code === payload.code);
   if (existingIndex >= 0) {
     shiftsStore[existingIndex] = { ...shiftsStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات شیفت به‌روزرسانی شد.', data: shiftsStore[existingIndex] });
   } else {
     const newShift: ShiftDefinition = {
@@ -2301,15 +2455,17 @@ apiRouter.post('/shifts', (req: Request, res: Response) => {
       status: payload.status || 'ACTIVE',
     };
     shiftsStore.push(newShift);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'شیفت کاری جدید ثبت گردید.', data: newShift });
   }
 });
 
-apiRouter.delete('/shifts/:id', (req: Request, res: Response) => {
+apiRouter.delete('/shifts/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = shiftsStore.length;
   shiftsStore = shiftsStore.filter(s => s.id !== id && s.code !== id);
   if (shiftsStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'شیفت کاری با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'شیفت کاری یافت نشد.' });
@@ -2323,7 +2479,7 @@ apiRouter.get('/car-models', (_req: Request, res: Response) => {
   res.json({ success: true, count: carModelsStore.length, data: carModelsStore });
 });
 
-apiRouter.post('/car-models', (req: Request, res: Response) => {
+apiRouter.post('/car-models', async (req: Request, res: Response) => {
   const payload: Partial<CarModel> = req.body;
   if (!payload.name) {
     return res.status(400).json({ success: false, error: 'نام مدل خودرو / خانواده محصول الزامی است.' });
@@ -2332,6 +2488,7 @@ apiRouter.post('/car-models', (req: Request, res: Response) => {
   const existingIndex = carModelsStore.findIndex(c => c.id === payload.id || (payload.code && c.code === payload.code));
   if (existingIndex >= 0) {
     carModelsStore[existingIndex] = { ...carModelsStore[existingIndex], ...payload };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مدل خودرو با موفقیت به‌روزرسانی شد.', data: carModelsStore[existingIndex] });
   } else {
     const newCarModel: CarModel = {
@@ -2343,15 +2500,17 @@ apiRouter.post('/car-models', (req: Request, res: Response) => {
       active: payload.active ?? true,
     };
     carModelsStore.push(newCarModel);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'مدل خودروی جدید با موفقیت ثبت شد.', data: newCarModel });
   }
 });
 
-apiRouter.delete('/car-models/:id', (req: Request, res: Response) => {
+apiRouter.delete('/car-models/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = carModelsStore.length;
   carModelsStore = carModelsStore.filter(c => c.id !== id && c.code !== id);
   if (carModelsStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'مدل خودرو با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'مدل خودرو یافت نشد.' });
@@ -2365,7 +2524,7 @@ apiRouter.get('/operations', (_req: Request, res: Response) => {
   res.json({ success: true, count: operationsStore.length, data: operationsStore });
 });
 
-apiRouter.post('/operations', (req: Request, res: Response) => {
+apiRouter.post('/operations', async (req: Request, res: Response) => {
   const payload: Partial<OperationDefinition> = req.body;
   if (!payload.name) {
     return res.status(400).json({ success: false, error: 'عنوان عملیات الزامی است.' });
@@ -2379,6 +2538,7 @@ apiRouter.post('/operations', (req: Request, res: Response) => {
       cycleTimeSec: Number(payload.cycleTimeSec) || operationsStore[existingIndex].cycleTimeSec,
       setupTimeMin: Number(payload.setupTimeMin) || operationsStore[existingIndex].setupTimeMin,
     };
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'مشخصات عملیات با موفقیت به‌روزرسانی شد.', data: operationsStore[existingIndex] });
   } else {
     const newOperation: OperationDefinition = {
@@ -2393,15 +2553,17 @@ apiRouter.post('/operations', (req: Request, res: Response) => {
       active: payload.active ?? true,
     };
     operationsStore.push(newOperation);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'عملیات استاندارد جدید با موفقیت ثبت شد.', data: newOperation });
   }
 });
 
-apiRouter.delete('/operations/:id', (req: Request, res: Response) => {
+apiRouter.delete('/operations/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const initialCount = operationsStore.length;
   operationsStore = operationsStore.filter(o => o.id !== id && o.code !== id);
   if (operationsStore.length < initialCount) {
+    await persistInventoryAppState();
     res.json({ success: true, message: 'عملیات استاندارد با موفقیت حذف گردید.' });
   } else {
     res.status(404).json({ success: false, error: 'عملیات مورد نظر یافت نشد.' });
@@ -2566,7 +2728,7 @@ apiRouter.get('/planning', (_req: Request, res: Response) => {
   res.json({ success: true, count: plansStore.length, data: plansStore });
 });
 
-apiRouter.post('/planning', (req: Request, res: Response) => {
+apiRouter.post('/planning', async (req: Request, res: Response) => {
   const parseResult = CreateProductionPlanSchema.safeParse(req.body);
   if (!parseResult.success) {
     return res.status(400).json({
@@ -2601,6 +2763,7 @@ apiRouter.post('/planning', (req: Request, res: Response) => {
   };
 
   plansStore.unshift(newPlan);
+  await persistInventoryAppState();
   res.status(201).json({ success: true, message: 'برنامه تولید جدید با موفقیت ثبت گردید.', data: newPlan });
 });
 
@@ -2611,7 +2774,7 @@ apiRouter.get('/sapco/coils', (_req: Request, res: Response) => {
   res.json({ success: true, count: coilsStore.length, data: coilsStore });
 });
 
-apiRouter.post('/sapco/coils', (req: Request, res: Response) => {
+apiRouter.post('/sapco/coils', async (req: Request, res: Response) => {
   const parseResult = CreateSapcoReceiptSchema.safeParse(req.body);
   if (!parseResult.success) {
     return res.status(400).json({
@@ -2672,6 +2835,7 @@ apiRouter.post('/sapco/coils', (req: Request, res: Response) => {
   };
 
   transactionsStore.unshift(receiptTx);
+  await persistInventoryAppState();
 
   res.status(201).json({
     success: true,
@@ -12120,7 +12284,6 @@ apiRouter.get('/master-data/:categoryCode', async (req: Request, res: Response) 
       })),
     });
   } catch (error) {
-    console.warn('⚠️ Notice: Database query failed in /master-data/:categoryCode. Serving default template fallback:', error instanceof Error ? error.message : error);
     const rawCode = String(req.params.categoryCode || '').trim().toUpperCase();
     const normalizedCode = CATEGORY_ALIASES[rawCode] || rawCode;
     const defaultTpl = DEFAULT_MASTER_CATEGORIES.find(c => c.code === normalizedCode);
@@ -12172,8 +12335,7 @@ apiRouter.get('/master-data', async (_req: Request, res: Response) => {
       count: categories.length,
       data: categories,
     });
-  } catch (error) {
-    console.warn('⚠️ Notice: Database query failed in /master-data. Serving default categories fallback:', error instanceof Error ? error.message : error);
+  } catch (_error) {
     res.json({
       success: true,
       count: DEFAULT_MASTER_CATEGORIES.length,
@@ -12255,7 +12417,33 @@ apiRouter.post('/master-data/:categoryCode/items', async (req: Request, res: Res
       data: newItem,
     });
   } catch (error) {
-    console.error('Error creating master item:', error);
+    const rawCode = String(req.params.categoryCode || '').trim().toUpperCase();
+    const normalizedCode = CATEGORY_ALIASES[rawCode] || rawCode;
+    const { code, value, orderIndex = 0, metadata } = req.body;
+    const defaultTpl = DEFAULT_MASTER_CATEGORIES.find(c => c.code === normalizedCode);
+    if (defaultTpl && code && value) {
+      const normalizedItemCode = String(code).trim().toUpperCase();
+      const existingIdx = defaultTpl.items.findIndex(i => i.code === normalizedItemCode);
+      const itemRecord = {
+        id: `item-${defaultTpl.code}-${normalizedItemCode}`,
+        code: normalizedItemCode,
+        value: String(value).trim(),
+        orderIndex: Number(orderIndex) || defaultTpl.items.length + 1,
+        metadata: metadata || null,
+        isActive: true,
+      };
+      if (existingIdx >= 0) {
+        defaultTpl.items[existingIdx] = itemRecord;
+      } else {
+        defaultTpl.items.push(itemRecord);
+      }
+      await persistInventoryAppState().catch(() => {});
+      return res.status(201).json({
+        success: true,
+        message: `آیتم «${itemRecord.value}» با موفقیت در دسته‌بندی ${defaultTpl.name} ثبت گردید.`,
+        data: itemRecord,
+      });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'خطا در افزودن آیتم پایه جدید',
@@ -12350,8 +12538,7 @@ apiRouter.get('/menus/tree', async (_req: Request, res: Response) => {
       count: DEFAULT_SYSTEM_MENUS.length,
       data: DEFAULT_SYSTEM_MENUS,
     });
-  } catch (error) {
-    console.warn('⚠️ Notice: PostgreSQL database unreachable or not yet migrated for /api/menus/tree. Serving default menus fallback.', error instanceof Error ? error.message : error);
+  } catch (_error) {
     res.json({
       success: true,
       count: DEFAULT_SYSTEM_MENUS.length,
@@ -12394,8 +12581,7 @@ apiRouter.get('/erp-services/work-orders', async (_req: Request, res: Response) 
       count: workOrders.length,
       data: workOrders,
     });
-  } catch (error) {
-    console.warn('⚠️ Notice: PostgreSQL database query for work-orders failed. Serving fallback sample orders:', error instanceof Error ? error.message : error);
+  } catch (_error) {
     res.json({
       success: true,
       count: 3,

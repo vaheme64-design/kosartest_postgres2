@@ -460,3 +460,22 @@ export function deleteParallelFlow(id: string): boolean {
   parallelFlowsStore = parallelFlowsStore.filter(f => f.id !== id && f.flowCode !== id);
   return parallelFlowsStore.length < init;
 }
+
+export function setAllBoms(boms: AdvancedBomDefinition[]): void {
+  if (Array.isArray(boms)) {
+    advancedBomsStore = [...boms];
+  }
+}
+
+export function setAllParallelFlows(flows: ParallelProductionFlow[]): void {
+  if (Array.isArray(flows)) {
+    parallelFlowsStore = [...flows];
+  }
+}
+
+export function setAllTraceabilityTags(tags: TraceabilityTagData[]): void {
+  if (Array.isArray(tags)) {
+    traceabilityTagsStore = [...tags];
+  }
+}
+
