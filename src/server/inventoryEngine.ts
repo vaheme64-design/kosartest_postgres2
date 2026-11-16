@@ -1477,6 +1477,7 @@ export function extractPartRowFields(row: Record<string, any>) {
   const openingQtyRaw = getRowFieldByAliases(row, [
     'quantity',
     'openingBalance',
+    'initialStock',
     'stock',
     'physicalQty',
     'موجودی اول دوره',
@@ -1541,7 +1542,7 @@ export function validateImportBatchRows(
 
     if (typeUpper === 'ITEM_MASTER' || typeUpper === 'PARTS' || typeUpper === 'ITEMS') {
       const extracted = extractPartRowFields(row);
-      const { code, name } = extracted;
+      const { code, name, openingQty, minStock } = extracted;
 
       let hasRowError = false;
       if (!code) {
@@ -1550,6 +1551,14 @@ export function validateImportBatchRows(
       }
       if (!name) {
         errors.push({ rowNumber: rowNum, fieldName: 'name', errorMessage: `نام قطعه در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (openingQty < 0 || Number.isNaN(openingQty)) {
+        errors.push({ rowNumber: rowNum, fieldName: 'openingQty', errorMessage: `موجودی اول دوره در ردیف ${rowNum} نمی‌تواند منفی یا نامعتبر باشد.` });
+        hasRowError = true;
+      }
+      if (minStock < 0 || Number.isNaN(minStock)) {
+        errors.push({ rowNumber: rowNum, fieldName: 'minStock', errorMessage: `حداقل موجودی اطمینان در ردیف ${rowNum} نمی‌تواند منفی یا نامعتبر باشد.` });
         hasRowError = true;
       }
       if (code && seenIds.has(String(code).toUpperCase())) {
@@ -1591,9 +1600,9 @@ export function validateImportBatchRows(
           weightKg: weight,
         });
       }
-    } else if (typeUpper === 'INVENTORY_RECEIPTS' || typeUpper === 'INVENTORY_ISSUES') {
+    } else if (typeUpper === 'INVENTORY_RECEIPTS' || typeUpper === 'INVENTORY_ISSUES' || typeUpper === 'OPENING_BALANCES' || typeUpper === 'STOCK_COUNT') {
       const partCode = normalizeExcelDigits(getRowFieldByAliases(row, ['partCode', 'کد قطعه', 'کد کالا', 'code'])).toUpperCase();
-      const qty = parseExcelNumber(getRowFieldByAliases(row, ['quantity', 'تعداد/وزن', 'مقدار']), 0);
+      const qty = parseExcelNumber(getRowFieldByAliases(row, ['quantity', 'مقدار اول دوره', 'تعداد/وزن', 'مقدار']), 0);
       const warehouseCode = getRowFieldByAliases(row, ['warehouseId', 'warehouseCode', 'کد انبار']);
 
       let hasRowError = false;
@@ -1605,7 +1614,7 @@ export function validateImportBatchRows(
         errors.push({ rowNumber: rowNum, fieldName: 'quantity', errorMessage: `مقدار در ردیف ${rowNum} باید مثبت باشد.` });
         hasRowError = true;
       }
-      if (!warehouseCode) {
+      if (!warehouseCode && (typeUpper === 'INVENTORY_RECEIPTS' || typeUpper === 'INVENTORY_ISSUES')) {
         errors.push({ rowNumber: rowNum, fieldName: 'warehouseCode', errorMessage: `کد انبار در ردیف ${rowNum} الزامی است.` });
         hasRowError = true;
       }
@@ -1640,8 +1649,47 @@ export function validateImportBatchRows(
       if (!hasRowError) {
         validRows.push(row);
       }
+    } else if (typeUpper === 'WAREHOUSES') {
+      const code = normalizeExcelDigits(getRowFieldByAliases(row, ['code', 'کد انبار', 'warehouseCode']));
+      const name = String(getRowFieldByAliases(row, ['name', 'نام انبار', 'warehouseName']) || '').trim();
+      let hasRowError = false;
+      if (!code) {
+        errors.push({ rowNumber: rowNum, fieldName: 'code', errorMessage: `کد انبار در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (!name) {
+        errors.push({ rowNumber: rowNum, fieldName: 'name', errorMessage: `نام انبار در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (!hasRowError) validRows.push(row);
+    } else if (typeUpper === 'CUSTOMERS') {
+      const code = normalizeExcelDigits(getRowFieldByAliases(row, ['code', 'کد مشتری']));
+      const name = String(getRowFieldByAliases(row, ['name', 'نام مشتری']) || '').trim();
+      let hasRowError = false;
+      if (!code) {
+        errors.push({ rowNumber: rowNum, fieldName: 'code', errorMessage: `کد مشتری در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (!name) {
+        errors.push({ rowNumber: rowNum, fieldName: 'name', errorMessage: `نام مشتری در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (!hasRowError) validRows.push(row);
+    } else if (typeUpper === 'UNITS') {
+      const symbol = normalizeExcelDigits(getRowFieldByAliases(row, ['symbol', 'رمز/نماد واحد'])).toUpperCase();
+      const title = String(getRowFieldByAliases(row, ['title', 'عنوان واحد']) || '').trim();
+      let hasRowError = false;
+      if (!symbol) {
+        errors.push({ rowNumber: rowNum, fieldName: 'symbol', errorMessage: `نماد واحد در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (!title) {
+        errors.push({ rowNumber: rowNum, fieldName: 'title', errorMessage: `عنوان واحد در ردیف ${rowNum} الزامی است.` });
+        hasRowError = true;
+      }
+      if (!hasRowError) validRows.push(row);
     } else {
-      validRows.push(row);
+      errors.push({ rowNumber: rowNum, fieldName: 'batchType', errorMessage: `نوع قالب ایمپورت «${templateType || 'نامشخص'}» پشتیبانی نمی‌شود.` });
     }
   });
 

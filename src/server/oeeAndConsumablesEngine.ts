@@ -1261,3 +1261,46 @@ export function updateConsumableStockOrRate(payload: {
   }
   return true;
 }
+
+export function exportOeeConsumablesSnapshot(): {
+  machineOverrides: Record<string, CustomDowntimeOverride>;
+  consumablesStock: Array<{ code: string; currentStock: number; standardRatePerDriverUnit: number; minSafetyStock: number }>;
+  purchaseRequisitions: PurchaseRequisitionRecord[];
+} {
+  return {
+    machineOverrides: Object.fromEntries(machineRuntimeOverrides.entries()),
+    consumablesStock: consumablesCatalogStore.map(c => ({
+      code: c.code,
+      currentStock: c.currentStock,
+      standardRatePerDriverUnit: c.standardRatePerDriverUnit,
+      minSafetyStock: c.minSafetyStock,
+    })),
+    purchaseRequisitions: [...purchaseRequisitionsStore],
+  };
+}
+
+export function hydrateOeeConsumablesSnapshot(snapshot: any): void {
+  if (!snapshot || typeof snapshot !== 'object') return;
+  if (snapshot.machineOverrides && typeof snapshot.machineOverrides === 'object') {
+    machineRuntimeOverrides.clear();
+    for (const [k, v] of Object.entries(snapshot.machineOverrides)) {
+      if (v && typeof v === 'object') {
+        machineRuntimeOverrides.set(k, v as CustomDowntimeOverride);
+      }
+    }
+  }
+  if (Array.isArray(snapshot.consumablesStock)) {
+    for (const entry of snapshot.consumablesStock) {
+      const target = consumablesCatalogStore.find(c => c.code === entry.code);
+      if (target) {
+        if (typeof entry.currentStock === 'number') target.currentStock = entry.currentStock;
+        if (typeof entry.standardRatePerDriverUnit === 'number') target.standardRatePerDriverUnit = entry.standardRatePerDriverUnit;
+        if (typeof entry.minSafetyStock === 'number') target.minSafetyStock = entry.minSafetyStock;
+      }
+    }
+  }
+  if (Array.isArray(snapshot.purchaseRequisitions)) {
+    purchaseRequisitionsStore.splice(0, purchaseRequisitionsStore.length, ...snapshot.purchaseRequisitions);
+  }
+}
+

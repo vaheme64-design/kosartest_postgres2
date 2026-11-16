@@ -43,6 +43,32 @@ export const INITIAL_CUSTOMER_ORDERS: CustomerOrder[] = [
       },
     ],
   },
+  {
+    id: 'ORD-ECU-002',
+    orderNumber: 'SO-SAPCO-ECU-102',
+    customerName: 'شرکت ساپکو (فراخوان مرحله دوم تحویل خط تندرو ایران‌خودرو)',
+    contractNumber: 'CNT-SAPCO-ECU-BRK',
+    orderDate: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    dueDate: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    priority: 2, // Normal / Planned Batch
+    status: 'OPEN',
+    notes: 'سفارش تکمیلی قرارداد CNT-SAPCO-ECU-BRK جهت پوشش برنامه تحویل هفته آینده ساپکو',
+    createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
+    lines: [
+      {
+        id: 'ORD-LN-ECU-002',
+        orderId: 'ORD-ECU-002',
+        partId: 'PRT-FGD-ECU-BRK',
+        partCode: 'SAPCO-ASY-ECU-BRK-01',
+        partName: 'مجموعه براکت ضدسرقت رایانه موتور با پوشش رنگ کاتافورز ED',
+        orderedQuantity: 1200,
+        deliveredQuantity: 0,
+        remainingQuantity: 1200,
+        dueDate: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+        unitPriceRials: 2450000,
+      },
+    ],
+  },
 ];
 
 export const customerOrdersStore: CustomerOrder[] = [...INITIAL_CUSTOMER_ORDERS];
@@ -214,10 +240,20 @@ export function calculateNetRequirements(params?: {
       });
     });
 
-    // Credit PLANNED MOs as open supply too so repeated netting doesn't duplicate planned production
+    // Credit PLANNED MOs and unstarted portion of RELEASED MOs (awaiting raw material issue)
+    // without double-counting WIP already included in totalDownstreamWip.
     const plannedMosSupply = activeMos
-      .filter(m => (m.partId === part.id || m.partCode === part.code) && m.status === 'PLANNED')
-      .reduce((sum, m) => sum + m.targetQuantity, 0);
+      .filter(m => (m.partId === part.id || m.partCode === part.code) && (m.status === 'PLANNED' || m.status === 'RELEASED'))
+      .reduce((sum, m) => {
+        const moWip = m.status === 'RELEASED'
+          ? m.operations.reduce((s, op) => s + op.waitingInputQty + op.inProgressQty + op.readyForTransferQty, 0)
+          : 0;
+        const uncoveredOrderQty = Math.max(
+          0,
+          m.targetQuantity - (m.completedQuantity || 0) - (m.totalScrapQuantity || 0) - (m.totalRejectedQuantity || 0) - moWip
+        );
+        return sum + uncoveredOrderQty;
+      }, 0);
 
     // 2.3. Net Production Requirement from route beginning
     const netProductionRequirement = Math.max(0, netDemandAfterFg - totalDownstreamWip - plannedMosSupply);

@@ -1453,7 +1453,7 @@ export const MasterDataHubView: React.FC<MasterDataHubViewProps> = ({
 
       {/* 2. PARTS (قطعات / کالا) */}
       {activeSection === 'PARTS' && (
-        <PartsView parts={parts} onSavePart={onSavePart} />
+        <PartsView parts={parts} onSavePart={onSavePart} onRefreshParts={onRefresh} />
       )}
 
       {/* 3. ROUTINGS (مسیرهای تولید) */}

@@ -166,7 +166,9 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
   // Parse uploaded Excel (.xlsx, .xls) or CSV file into previewRows using sheetjs
   const handleExcelFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !templateData) return;
+    // Reset input immediately so re-uploading the same or edited filename always triggers onChange
+    e.target.value = '';
+    if (!file) return;
 
     const fileName = file.name.toLowerCase();
     const reader = new FileReader();
@@ -294,7 +296,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
       } else {
         setNotification({
           type: 'success',
-          message: `${data.message || 'اطلاعات پایه جدید با موفقیت در دیتابیس اصلی ثبت شدند.'} اکنون جهت ثبت نهایی ردیف‌ها، دکمه «تایید و ثبت نهایی در نرم‌افزار» را کلیک کنید.`,
+          message: `${data.message || 'اطلاعات پایه جدید با موفقیت در سیستم ثبت شد.'} اکنون جهت ثبت نهایی ردیف‌ها، دکمه «تایید و ثبت نهایی در نرم‌افزار» را کلیک کنید.`,
         });
         if (onSuccess) await onSuccess();
         // Automatically re-validate so previewRows validation passes 100%
@@ -327,9 +329,13 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
       if (!res.ok || !data.success) {
         setNotification({ type: 'error', message: data.error || 'خطا در ثبت اطلاعات در پایگاه داده' });
       } else {
+        const targetLabel =
+          data.persistedTarget === 'POSTGRESQL'
+            ? 'پایگاه داده اصلی PostgreSQL'
+            : 'پایگاه داده پایدار محلی (Durable Disk Storage)';
         setNotification({
           type: 'success',
-          message: `${data.message || 'اطلاعات با موفقیت در دیتابیس اصلی PostgreSQL ثبت شد.'} هم‌اکنون کلیه قطعات و ردیف‌ها در کاتالوگ اصلی قطعات و استعلام موجودی قابل مشاهده می‌باشند.`,
+          message: `${data.message || `اطلاعات با موفقیت در ${targetLabel} ثبت شد.`} هم‌اکنون کلیه قطعات و ردیف‌ها در کاتالوگ اصلی قطعات و استعلام موجودی قابل مشاهده می‌باشند.`,
         });
         setValidationResult(null);
         if (onSuccess) await onSuccess();

@@ -10,6 +10,7 @@ import {
   planSuggestionsStore,
 } from '../src/server/productionPlanningEngine';
 import { INITIAL_PARTS, INITIAL_MACHINES, INITIAL_DIES_MOLDS, INITIAL_ROUTINGS } from '../src/server/sampleData';
+import { clearProductionWipData } from '../src/server/productionWipEngine';
 import { CustomerOrder } from '../src/types/productionPlanning';
 import { DetailedStockBalance, InventoryReservation, Machine } from '../src/types/inventory';
 import { ManufacturingOrder } from '../src/types/productionWip';
@@ -25,6 +26,9 @@ function runAssertion(desc: string, condition: boolean) {
 
 async function runProductionPlanningTests() {
   console.log('🧪 Starting KPIMS Production Planning Engine Automated Test Suite...\n');
+
+  // Reset auto-seeded WIP orders so Test Group 1 & Group 7 test net requirement generation and release isolation cleanly
+  clearProductionWipData();
 
   // =========================================================================
   // TEST GROUP 1: Demand & Netting Logic (FG, Blocked Stock, Reservations)
