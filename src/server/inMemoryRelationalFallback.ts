@@ -28,6 +28,7 @@ import {
   createManufacturingOrder,
   registerOperationInput,
   registerOperationProduction,
+  loadMaterialIntoManufacturingOrder,
   persistProductionWipState,
 } from './productionWipEngine';
 import {
@@ -42,7 +43,9 @@ import {
   getCustomerOrderFulfillmentReport,
   getWipAgingReport,
   getProductionDelaysReport,
+  applyQcHoldsToBalances,
 } from './managementReportsEngine';
+import { serverQcHoldStore } from './mrpEngine';
 import { ReportFilterParams } from '../types/managementReports';
 import { INITIAL_DIES_MOLDS } from './sampleData';
 
@@ -67,7 +70,8 @@ export function getFallbackPlanningReadModel(
   inventoryDocs: InventoryDocument[],
   reservations: InventoryReservation[],
 ) {
-  const { balances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts);
+  const { balances: rawBalances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts);
+  const balances = applyQcHoldsToBalances(rawBalances, serverQcHoldStore);
   const netReqs = calculateNetRequirements({
     parts,
     orders: customerOrdersStore,
@@ -75,6 +79,7 @@ export function getFallbackPlanningReadModel(
     reservations,
     activeMos: manufacturingOrdersStore,
     routings,
+    qcHolds: serverQcHoldStore,
   });
 
   const requirements = netReqs.map(req => {
@@ -680,8 +685,9 @@ export async function postFallbackCoilIssue(
   physicalCoils: PhysicalCoil[],
   coilIssueRecords: CoilIssueReturnRecord[],
   inventoryDocs: InventoryDocument[],
-  parts: Part[],
+  _parts: Part[],
   transactions: InventoryTransaction[],
+  coils?: { coilNumber: string; heatNumber?: string; receivedWeightKg: number; consumedWeightKg: number; status: string }[],
 ) {
   const { issuedWeightKg, moId, moOperationId, scrappedKg, multiParts, initialInputQuantityPcs } = body || {};
   const issueRequestKey = String(body?.issueRequestKey || '').trim();
@@ -774,7 +780,7 @@ export async function postFallbackCoilIssue(
       partId: coil.partId,
       partCode: coil.partCode,
       partName: coil.partName,
-      lotNumber: coil.coilId,
+      lotNumber: coil.coilPackNumber || coil.coilId,
       heatNumber: coil.heatNumber,
       ownership: coil.ownership,
       contractId: coil.allocations?.[0]?.contractId,
@@ -787,10 +793,13 @@ export async function postFallbackCoilIssue(
       notes: `حواله کلاف ${coil.coilId} به ${mo?.moNumber || row.moId} (${row.initialInputQuantityPcs || 0} قطعه)`,
     });
 
-    if (row.initialInputQuantityPcs > 0 && mo && row.moOperationId) {
-      const wipOp = mo.operations.find(op => op.id === row.moOperationId);
+    if (row.initialInputQuantityPcs > 0 && mo) {
+      const sortedOps = [...mo.operations].sort((a, b) => a.stepNumber - b.stepNumber);
+      const wipOp = row.moOperationId
+        ? mo.operations.find(op => op.id === row.moOperationId)
+        : sortedOps[0];
       if (wipOp) {
-        registerOperationInput({
+        loadMaterialIntoManufacturingOrder({
           moId: mo.id,
           operationId: wipOp.id,
           quantity: row.initialInputQuantityPcs,
@@ -798,6 +807,14 @@ export async function postFallbackCoilIssue(
           notes: `ورود ورق از کلاف ${coil.coilId} (سند ${docNumber})`,
         });
       }
+    }
+  }
+
+  if (coils && coils.length > 0) {
+    const sapcoCoil = coils.find(c => c.coilNumber === coil.coilId || (coil.heatNumber && c.heatNumber === coil.heatNumber));
+    if (sapcoCoil) {
+      sapcoCoil.consumedWeightKg = Number((sapcoCoil.consumedWeightKg + totalIssued).toFixed(2));
+      sapcoCoil.status = sapcoCoil.consumedWeightKg >= sapcoCoil.receivedWeightKg - 0.01 ? 'DEPLETED' : 'IN_CUTTING';
     }
   }
 
@@ -928,7 +945,7 @@ export function postFallbackCoilReturn(
         partId: coil.partId || 'PRT-RM-COIL',
         partCode: coil.partCode || `RM-COIL-${coil.materialGrade}`,
         partName: coil.partName || `کلاف ورق ${coil.materialGrade}`,
-        lotNumber: coil.coilId,
+        lotNumber: coil.coilPackNumber || coil.coilId,
         heatNumber: coil.heatNumber,
         ownership: coil.ownership,
         locationCode: coil.warehouseLocationCode || 'LOC-RAW-A1',
@@ -1080,6 +1097,8 @@ export async function postFallbackWipOperationProduction(
   physicalCoils: PhysicalCoil[],
   inventoryDocs: InventoryDocument[],
   transactions: InventoryTransaction[],
+  reservations: InventoryReservation[] = [],
+  onPostedDocument?: (doc: InventoryDocument) => void,
 ) {
   const idempotencyKey = String(body.idempotencyKey || '').trim();
   if (idempotencyKey && fallbackWipProductionIdempotency.has(idempotencyKey)) {
@@ -1094,7 +1113,11 @@ export async function postFallbackWipOperationProduction(
     };
   }
 
-  const preMo = manufacturingOrdersStore.find(m => m.id === body.moId || m.moNumber === body.moId);
+  const preMoIndex = manufacturingOrdersStore.findIndex(m => m.id === body.moId || m.moNumber === body.moId);
+  const preMo = preMoIndex >= 0 ? manufacturingOrdersStore[preMoIndex] : undefined;
+  const preMoSnapshot = preMo ? JSON.parse(JSON.stringify(preMo)) : null;
+  const preLogsCount = productionLogsStore.length;
+
   const preOp = preMo?.operations.find(o => o.id === body.operationId);
   const totalToReport =
     (Number(body.goodQty) || 0) +
@@ -1116,8 +1139,20 @@ export async function postFallbackWipOperationProduction(
 
   const mutationResult = registerOperationProduction(body);
   if (!mutationResult.success || !mutationResult.data) {
+    if (preMoSnapshot && preMoIndex >= 0) {
+      manufacturingOrdersStore[preMoIndex] = preMoSnapshot;
+      productionLogsStore.splice(0, productionLogsStore.length - preLogsCount);
+    }
     throw Object.assign(new Error(mutationResult.error || 'خطا در ثبت عملکرد تولید'), { statusCode: 400 });
   }
+
+  const rollbackWipMutation = () => {
+    if (preMoSnapshot && preMoIndex >= 0) {
+      manufacturingOrdersStore[preMoIndex] = preMoSnapshot;
+      const addedLogs = productionLogsStore.length - preLogsCount;
+      if (addedLogs > 0) productionLogsStore.splice(0, addedLogs);
+    }
+  };
 
   const mo = mutationResult.data;
   const op = mo.operations.find(o => o.id === body.operationId);
@@ -1128,10 +1163,37 @@ export async function postFallbackWipOperationProduction(
   const isFinalOp = op && sortedOps[sortedOps.length - 1]?.id === op.id;
   const nowIso = new Date().toISOString();
   const suffix = `${Date.now().toString().slice(-6)}`;
-  const activeCoil = physicalCoils[0];
+  const activeCoil =
+    physicalCoils.find(
+      c => c.remainingWeightKg > 0 && c.qualityStatus === 'AVAILABLE' && c.physicalStatus !== 'BLOCKED',
+    ) ||
+    physicalCoils.find(c => c.remainingWeightKg > 0) ||
+    physicalCoils[0];
   const heatNumber = activeCoil?.heatNumber || 'HT-DC01A-9921';
-  const coilNumber = activeCoil?.coilId || 'COIL-ECU-001';
+  const coilNumber = activeCoil?.coilPackNumber || activeCoil?.coilId || 'MOB-DC01A-2.0-1140-A';
   let postedTxCount = 0;
+
+  // Resolve real lot/ownership/location from posted stock balances to prevent phantom lot mismatches
+  const { balances: currentStockBalances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts);
+  const pickLotMeta = (
+    partIdOrCode: string,
+    whId: string,
+    fallbackLot: string,
+    fallbackLoc: string,
+    fallbackOwnership: 'SAPCO_SUPPLIER_OWNED' | 'COMPANY_OWNED' = 'SAPCO_SUPPLIER_OWNED',
+  ) => {
+    const candidates = currentStockBalances
+      .filter(b => (b.partId === partIdOrCode || b.partCode === partIdOrCode) && b.warehouseId === whId && b.availableQty > 0)
+      .sort((a, b) => b.availableQty - a.availableQty);
+    const best = candidates[0];
+    return {
+      lotNumber: best?.lotNumber || fallbackLot,
+      heatNumber: best?.heatNumber || heatNumber,
+      ownership: (best?.ownership || fallbackOwnership) as 'SAPCO_SUPPLIER_OWNED' | 'COMPANY_OWNED',
+      locationCode: best?.locationCode || fallbackLoc,
+      contractNumber: best?.contractNumber,
+    };
+  };
 
   // Automatic BOM Backflush in Inventory Docs when operation produces output
   if (op && goodQty > 0) {
@@ -1142,6 +1204,7 @@ export async function postFallbackWipOperationProduction(
     if (mo.partCode === 'WIP-ECU-MAIN-BRK') {
       if (isFirstOp) {
         const consumedKg = Number(((goodQty + scrapQty) * 0.98).toFixed(2));
+        const meta = pickLotMeta('PRT-RAW-ECU-COIL', sourceWhId, coilNumber, 'LOC-RAW-A1', 'SAPCO_SUPPLIER_OWNED');
         issueLines.push({
           id: `LN-WIP-BF-${suffix}`,
           documentId: `DOC-WIP-BF-${suffix}`,
@@ -1149,22 +1212,20 @@ export async function postFallbackWipOperationProduction(
           partId: 'PRT-RAW-ECU-COIL',
           partCode: 'RM-COIL-DC01A-2.0-1140',
           partName: 'رول ورق روغنی DC01A ضخامت 2mm با عرض 1140mm',
-          lotNumber: coilNumber,
-          heatNumber,
-          ownership: 'SAPCO_SUPPLIER_OWNED',
-          contractNumber: 'CNT-SAPCO-ECU-BRK',
-          locationCode: 'LOC-RAW-A1',
+          lotNumber: meta.lotNumber,
+          heatNumber: meta.heatNumber,
+          ownership: meta.ownership,
+          contractNumber: meta.contractNumber || 'CNT-SAPCO-ECU-BRK',
+          locationCode: meta.locationCode,
           quantity: consumedKg,
           unit: 'KG',
           quantityKg: consumedKg,
           qualityStatus: 'AVAILABLE',
           notes: `مصرف خودکار ورق از عملیات ${op.stepCode} دستور ${mo.moNumber}`,
         });
-        if (activeCoil) {
-          activeCoil.remainingWeightKg = Math.max(0, Number((activeCoil.remainingWeightKg - consumedKg).toFixed(2)));
-        }
       } else if (op.processType === 'SPOT_WELD' || isFinalOp) {
         const nutsQty = goodQty * 15;
+        const meta = pickLotMeta('PRT-FST-NUT-M6', sourceWhId, 'LOT-NUT-M6-101', 'LOC-RAW-FST-01', 'SAPCO_SUPPLIER_OWNED');
         issueLines.push({
           id: `LN-WIP-BF-${suffix}-NUT`,
           documentId: `DOC-WIP-BF-${suffix}`,
@@ -1172,10 +1233,11 @@ export async function postFallbackWipOperationProduction(
           partId: 'PRT-FST-NUT-M6',
           partCode: 'FST-NUT-WELD-M6',
           partName: 'مهره جوشی چهارگوش پایه‌دار M6',
-          lotNumber: 'LOT-NUT-M6-01',
-          heatNumber: 'HT-FST-M6',
-          ownership: 'COMPANY_OWNED',
-          locationCode: 'LOC-RAW-B1',
+          lotNumber: meta.lotNumber,
+          heatNumber: meta.heatNumber || 'HT-FST-M6',
+          ownership: meta.ownership,
+          contractNumber: meta.contractNumber,
+          locationCode: meta.locationCode,
           quantity: nutsQty,
           unit: 'PCS',
           quantityKg: Number((nutsQty * 0.006).toFixed(3)),
@@ -1186,6 +1248,7 @@ export async function postFallbackWipOperationProduction(
     } else if (mo.partCode === 'WIP-ECU-COMP-BRK') {
       if (isFirstOp) {
         const consumedKg = Number(((goodQty + scrapQty) * 0.47).toFixed(2));
+        const meta = pickLotMeta('PRT-RAW-ECU-COIL', sourceWhId, coilNumber, 'LOC-RAW-A1', 'SAPCO_SUPPLIER_OWNED');
         issueLines.push({
           id: `LN-WIP-BF-${suffix}`,
           documentId: `DOC-WIP-BF-${suffix}`,
@@ -1193,22 +1256,20 @@ export async function postFallbackWipOperationProduction(
           partId: 'PRT-RAW-ECU-COIL',
           partCode: 'RM-COIL-DC01A-2.0-1140',
           partName: 'رول ورق روغنی DC01A ضخامت 2mm با عرض 1140mm',
-          lotNumber: coilNumber,
-          heatNumber,
-          ownership: 'SAPCO_SUPPLIER_OWNED',
-          contractNumber: 'CNT-SAPCO-ECU-BRK',
-          locationCode: 'LOC-RAW-A1',
+          lotNumber: meta.lotNumber,
+          heatNumber: meta.heatNumber,
+          ownership: meta.ownership,
+          contractNumber: meta.contractNumber || 'CNT-SAPCO-ECU-BRK',
+          locationCode: meta.locationCode,
           quantity: consumedKg,
           unit: 'KG',
           quantityKg: consumedKg,
           qualityStatus: 'AVAILABLE',
           notes: `مصرف خودکار ورق از عملیات ${op.stepCode} دستور ${mo.moNumber}`,
         });
-        if (activeCoil) {
-          activeCoil.remainingWeightKg = Math.max(0, Number((activeCoil.remainingWeightKg - consumedKg).toFixed(2)));
-        }
       } else if (op.processType === 'SPOT_WELD' || isFinalOp) {
         const boltsQty = goodQty * 2;
+        const meta = pickLotMeta('PRT-FST-BLT-M6-20', sourceWhId, 'LOT-BLT-M6-202', 'LOC-RAW-FST-02', 'SAPCO_SUPPLIER_OWNED');
         issueLines.push({
           id: `LN-WIP-BF-${suffix}-BLT`,
           documentId: `DOC-WIP-BF-${suffix}`,
@@ -1216,10 +1277,11 @@ export async function postFallbackWipOperationProduction(
           partId: 'PRT-FST-BLT-M6-20',
           partCode: 'FST-BOLT-WELD-M6-20',
           partName: 'پیچ پایه جوشی مقاومتی M6x20',
-          lotNumber: 'LOT-BLT-M620-01',
-          heatNumber: 'HT-FST-M620',
-          ownership: 'COMPANY_OWNED',
-          locationCode: 'LOC-RAW-B2',
+          lotNumber: meta.lotNumber,
+          heatNumber: meta.heatNumber || 'HT-FST-M620',
+          ownership: meta.ownership,
+          contractNumber: meta.contractNumber,
+          locationCode: meta.locationCode,
           quantity: boltsQty,
           unit: 'PCS',
           quantityKg: Number((boltsQty * 0.008).toFixed(3)),
@@ -1230,6 +1292,8 @@ export async function postFallbackWipOperationProduction(
     } else if (mo.partCode === 'SAPCO-ASY-ECU-BRK-01' && isFirstOp) {
       sourceWhId = 'WH-WIP-WELD';
       sourceWhName = 'انبار پای کار جوش و مونتاژ (WIP)';
+      const mainMeta = pickLotMeta('PRT-WIP-ECU-MAIN', sourceWhId, 'LOT-ECU-MAIN-W1', 'LOC-WIP-WELD-01', 'COMPANY_OWNED');
+      const compMeta = pickLotMeta('PRT-WIP-ECU-COMP', sourceWhId, 'LOT-ECU-COMP-W1', 'LOC-WIP-WELD-02', 'COMPANY_OWNED');
       issueLines.push(
         {
           id: `LN-WIP-BF-${suffix}-M1`,
@@ -1238,10 +1302,10 @@ export async function postFallbackWipOperationProduction(
           partId: 'PRT-WIP-ECU-MAIN',
           partCode: 'WIP-ECU-MAIN-BRK',
           partName: 'صفحه براکت اصلی ضدسرقت رایانه موتور',
-          lotNumber: 'LOT-ECU-MAIN-W1',
-          heatNumber,
-          ownership: 'COMPANY_OWNED',
-          locationCode: 'LOC-WIP-WELD-01',
+          lotNumber: mainMeta.lotNumber,
+          heatNumber: mainMeta.heatNumber,
+          ownership: mainMeta.ownership,
+          locationCode: mainMeta.locationCode,
           quantity: goodQty,
           unit: 'PCS',
           quantityKg: Number((goodQty * 0.75).toFixed(2)),
@@ -1255,10 +1319,10 @@ export async function postFallbackWipOperationProduction(
           partId: 'PRT-WIP-ECU-COMP',
           partCode: 'WIP-ECU-COMP-BRK',
           partName: 'مکمل براکت ضدسرقت رایانه موتور',
-          lotNumber: 'LOT-ECU-COMP-W1',
-          heatNumber,
-          ownership: 'COMPANY_OWNED',
-          locationCode: 'LOC-WIP-WELD-02',
+          lotNumber: compMeta.lotNumber,
+          heatNumber: compMeta.heatNumber,
+          ownership: compMeta.ownership,
+          locationCode: compMeta.locationCode,
           quantity: goodQty,
           unit: 'PCS',
           quantityKg: Number((goodQty * 0.35).toFixed(2)),
@@ -1279,6 +1343,13 @@ export async function postFallbackWipOperationProduction(
             ? Number(((goodQty + scrapQty) * cmp.quantityPerAssembly * (cmp.grossWeightKg || 1) * scrapMultiplier).toFixed(2))
             : Math.ceil(goodQty * cmp.quantityPerAssembly * scrapMultiplier);
           if (reqQty <= 0) return;
+          const meta = pickLotMeta(
+            cmpPart?.id || cmp.componentPartId,
+            sourceWhId,
+            isSheet ? coilNumber : `LOT-${cmp.componentPartCode}`,
+            'LOC-RAW-A1',
+            cmp.supplierSource === 'SAPCO_CONSIGNMENT' ? 'SAPCO_SUPPLIER_OWNED' : 'COMPANY_OWNED',
+          );
           issueLines.push({
             id: `LN-WIP-BF-${suffix}-${cIdx + 1}`,
             documentId: `DOC-WIP-BF-${suffix}`,
@@ -1286,10 +1357,10 @@ export async function postFallbackWipOperationProduction(
             partId: cmpPart?.id || cmp.componentPartId,
             partCode: cmpPart?.code || cmp.componentPartCode,
             partName: cmpPart?.name || cmp.componentPartName,
-            lotNumber: isSheet ? coilNumber : `LOT-${cmp.componentPartCode}`,
-            heatNumber,
-            ownership: cmp.supplierSource === 'SAPCO_CONSIGNMENT' ? 'SAPCO_SUPPLIER_OWNED' : 'COMPANY_OWNED',
-            locationCode: 'LOC-RAW-A1',
+            lotNumber: meta.lotNumber,
+            heatNumber: meta.heatNumber,
+            ownership: meta.ownership,
+            locationCode: meta.locationCode,
             quantity: reqQty,
             unit: isSheet ? 'KG' : cmp.unit || 'PCS',
             quantityKg: isSheet ? reqQty : Number((reqQty * (cmpPart?.weightPerUnitKg || 0.05)).toFixed(3)),
@@ -1303,6 +1374,7 @@ export async function postFallbackWipOperationProduction(
           p => p.category === 'RAW_MATERIAL' && p.unit === 'KG' && p.materialGrade === matchedPart.materialGrade
         );
         if (rawPart && consumedKg > 0) {
+          const meta = pickLotMeta(rawPart.id, sourceWhId, coilNumber, 'LOC-RAW-A1', 'SAPCO_SUPPLIER_OWNED');
           issueLines.push({
             id: `LN-WIP-BF-${suffix}-RAW`,
             documentId: `DOC-WIP-BF-${suffix}`,
@@ -1310,10 +1382,10 @@ export async function postFallbackWipOperationProduction(
             partId: rawPart.id,
             partCode: rawPart.code,
             partName: rawPart.name,
-            lotNumber: coilNumber,
-            heatNumber,
-            ownership: 'SAPCO_SUPPLIER_OWNED',
-            locationCode: 'LOC-RAW-A1',
+            lotNumber: meta.lotNumber,
+            heatNumber: meta.heatNumber,
+            ownership: meta.ownership,
+            locationCode: meta.locationCode,
             quantity: consumedKg,
             unit: 'KG',
             quantityKg: consumedKg,
@@ -1347,15 +1419,27 @@ export async function postFallbackWipOperationProduction(
         createdAt: nowIso,
         updatedAt: nowIso,
       };
-      // Validate via atomicPostDocument when warehouse balance covers the lines (never exceed physical balance silently)
-      const checkRes = atomicPostDocument(bfDoc, inventoryDocs, [], parts, {
+      // Validate atomically before accepting production & backflush side-effects
+      const checkRes = atomicPostDocument(bfDoc, inventoryDocs, reservations, parts, {
         uid: body.createdByUserId || 'USR-PROD',
         displayName: body.operatorName || 'اپراتور تولید',
       });
       if (checkRes.success) {
         postedTxCount += issueLines.length;
         inventoryDocs.unshift(bfDoc);
+        if (onPostedDocument) {
+          onPostedDocument(bfDoc);
+        } else if (activeCoil) {
+          const coilIssuedKg = issueLines
+            .filter(l => l.lotNumber === activeCoil.coilId || l.lotNumber === activeCoil.coilPackNumber)
+            .reduce((s, l) => s + Number(l.quantityKg || l.quantity || 0), 0);
+          if (coilIssuedKg > 0) {
+            activeCoil.remainingWeightKg = Math.max(0, Number((activeCoil.remainingWeightKg - coilIssuedKg).toFixed(2)));
+            activeCoil.physicalStatus = activeCoil.remainingWeightKg <= 0 ? 'CONSUMED' : 'PARTIALLY_ISSUED';
+          }
+        }
       } else {
+        rollbackWipMutation();
         throw Object.assign(new Error(checkRes.error || 'موجودی انبار برای کسر خودکار BOM کافی نیست.'), { statusCode: 400 });
       }
     }
@@ -1366,14 +1450,14 @@ export async function postFallbackWipOperationProduction(
       const targetWhId = isWip ? 'WH-WIP-WELD' : 'WH-FINISHED';
       const targetWhName = isWip ? 'انبار پای کار جوش و مونتاژ (WIP)' : 'انبار محصولات نهایی آماده تحویل';
       const recWeight = Number((goodQty * (matchedPart?.weightPerUnitKg || 1.0)).toFixed(2));
-      postedTxCount += 1;
-      inventoryDocs.unshift({
+      const rcvDocNumber = isWip ? `RCV-WIP-${suffix}` : `RCV-FG-${suffix}`;
+      const rcvDoc: InventoryDocument = {
         id: `DOC-WIP-RCV-${suffix}`,
-        documentNumber: isWip ? `RCV-WIP-${suffix}` : `RCV-FG-${suffix}`,
+        documentNumber: rcvDocNumber,
         documentType: 'RECEIPT_FINISHED_GOODS',
         documentDate: nowIso,
-        documentStatus: 'CONFIRMED',
-        postingStatus: 'POSTED',
+        documentStatus: 'DRAFT',
+        postingStatus: 'UNPOSTED',
         warehouseId: targetWhId,
         warehouseName: targetWhName,
         ownership: 'COMPANY_OWNED',
@@ -1404,15 +1488,21 @@ export async function postFallbackWipOperationProduction(
         totalWeightKg: recWeight,
         createdByUid: body.createdByUserId || 'USR-PROD',
         createdByName: body.operatorName || 'اپراتور تولید',
-        postedByUid: body.createdByUserId || 'USR-PROD',
-        postedByName: body.operatorName || 'اپراتور تولید',
-        postedAt: nowIso,
         createdAt: nowIso,
         updatedAt: nowIso,
+      };
+      const rcvPostRes = atomicPostDocument(rcvDoc, inventoryDocs, reservations, parts, {
+        uid: body.createdByUserId || 'USR-PROD',
+        displayName: body.operatorName || 'اپراتور تولید',
       });
+      if (rcvPostRes.success) {
+        postedTxCount += 1;
+        inventoryDocs.unshift(rcvDoc);
+        onPostedDocument?.(rcvDoc);
+      }
       transactions.unshift({
         id: `TX-WIP-RCV-${suffix}`,
-        voucherNumber: isWip ? `RCV-WIP-${suffix}` : `RCV-FG-${suffix}`,
+        voucherNumber: rcvDocNumber,
         voucherType: 'PRODUCTION_OUTPUT',
         partId: matchedPart?.id || mo.partId,
         partCode: mo.partCode,
@@ -1525,28 +1615,33 @@ export function getFallbackPlanVsActual(filters?: ReportFilterParams) {
   const base = getPlanVsActualReport(filters);
   const proposalRows = fallbackPlanProposalsStore.flatMap(prop =>
     (prop.lines || [])
-      .filter((l: any) => !filters?.partId || l.partId === filters.partId || l.partCode === filters.partId)
+      .filter((l: any) => {
+        const linePartCode = l.partCode || l.part?.partNumber || '';
+        return !filters?.partId || l.partId === filters.partId || linePartCode === filters.partId;
+      })
       .map((l: any) => {
+        const partCode = l.partCode || l.part?.partNumber || '';
+        const partName = l.partName || l.part?.name || '';
         const relatedMos = manufacturingOrdersStore.filter(
-          m => m.partCode === l.partCode || (l.moId && m.id === l.moId),
+          m => m.partCode === partCode || m.partId === l.partId || (l.moId && m.id === l.moId),
         );
         const actualProducedQuantity = relatedMos.reduce((acc, m) => acc + (m.completedQuantity || 0), 0);
         const actualScrapQuantity = relatedMos.reduce((acc, m) => acc + (m.totalScrapQuantity || 0), 0);
-        const plannedQuantity = Number(l.plannedQuantity || 1);
+        const plannedQuantity = Number(l.plannedQty ?? l.plannedQuantity ?? 0) || 1;
         return {
           planId: prop.id,
           planNumber: `${prop.proposalNumber} (v${prop.version})`,
           planVersion: String(prop.version),
           partId: l.partId,
-          partCode: l.partCode,
-          partName: l.partName,
+          partCode,
+          partName,
           plannedQuantity,
           actualProducedQuantity,
           actualScrapQuantity,
           achievementRatePercent: Math.round((actualProducedQuantity / plannedQuantity) * 1000) / 10,
           varianceQuantity: actualProducedQuantity - plannedQuantity,
           status: prop.status,
-          targetDueDate: l.dueDate || prop.createdAt,
+          targetDueDate: l.plannedEndDate || l.dueDate || prop.generatedAt || prop.createdAt,
           isEstimate: prop.status !== 'RELEASED',
           linkedMoNumbers: relatedMos.map(m => m.moNumber),
         };
@@ -1562,16 +1657,22 @@ export function getFallbackPlanVsActual(filters?: ReportFilterParams) {
 
 export function getFallbackProductionBacklog(
   filters: ReportFilterParams,
-  stores: { parts: Part[]; inventoryDocs: InventoryDocument[]; reservations: InventoryReservation[] },
+  stores: {
+    parts: Part[];
+    inventoryDocs: InventoryDocument[];
+    reservations: InventoryReservation[];
+    qcHolds?: Record<string, any>;
+  },
 ) {
   const fulfillment = getCustomerOrderFulfillmentReport(filters).data;
-  const { balances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const { balances: rawBalances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const balances = applyQcHoldsToBalances(rawBalances, stores.qcHolds);
   const availableRawKgByGrade = new Map<string, number>();
   for (const b of balances) {
     if (b.category !== 'RAW_MATERIAL') continue;
     const p = stores.parts.find(x => x.id === b.partId || x.code === b.partCode);
     const grade = p?.materialGrade || 'ST14';
-    availableRawKgByGrade.set(grade, (availableRawKgByGrade.get(grade) || 0) + (b.availableKg || b.physicalKg || 0));
+    availableRawKgByGrade.set(grade, (availableRawKgByGrade.get(grade) || 0) + (b.availableKg || 0));
   }
 
   const data = fulfillment
@@ -1704,12 +1805,14 @@ export function getFallbackSapcoMaterialAccount(
     parts: Part[];
     inventoryDocs: InventoryDocument[];
     reservations: InventoryReservation[];
+    qcHolds?: Record<string, any>;
   },
 ) {
-  const { balances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const { balances: rawBalances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const balances = applyQcHoldsToBalances(rawBalances, stores.qcHolds);
   const totalRawSupplierKg = balances
     .filter(b => b.category === 'RAW_MATERIAL')
-    .reduce((acc, b) => acc + (b.supplierOwnedKg || b.physicalKg || 0), 0);
+    .reduce((acc, b) => acc + (b.supplierOwnedKg || 0), 0);
 
   const data = stores.contracts
     .filter(c => {
@@ -1718,7 +1821,10 @@ export function getFallbackSapcoMaterialAccount(
       return true;
     })
     .map(c => {
-      const physicalStockInPlantKg = totalRawSupplierKg || c.closingBalanceKg;
+      const gradeSupplierKg = balances
+        .filter(b => b.category === 'RAW_MATERIAL' && (!c.materialGrade || b.materialGrade === c.materialGrade))
+        .reduce((acc, b) => acc + (b.supplierOwnedKg || 0), 0);
+      const physicalStockInPlantKg = gradeSupplierKg > 0 ? gradeSupplierKg : totalRawSupplierKg || c.closingBalanceKg;
       const discrepancyKg = Math.round((physicalStockInPlantKg - c.closingBalanceKg) * 10) / 10;
       return {
         contractId: c.id,
@@ -1744,9 +1850,15 @@ export function getFallbackSapcoMaterialAccount(
 
 export function getFallbackInventoryValuationQuantities(
   filters: ReportFilterParams,
-  stores: { parts: Part[]; inventoryDocs: InventoryDocument[]; reservations: InventoryReservation[] },
+  stores: {
+    parts: Part[];
+    inventoryDocs: InventoryDocument[];
+    reservations: InventoryReservation[];
+    qcHolds?: Record<string, any>;
+  },
 ) {
-  const { balances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const { balances: rawBalances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const balances = applyQcHoldsToBalances(rawBalances, stores.qcHolds);
   const data = balances
     .filter(b => !filters.partId || b.partId === filters.partId || b.partCode === filters.partId)
     .map(b => {
@@ -2086,9 +2198,12 @@ export function getFallbackDashboardSummary(
     machines: Machine[];
     inventoryDocs: InventoryDocument[];
     reservations: InventoryReservation[];
+    routings?: Routing[];
+    qcHolds?: Record<string, any>;
   },
 ) {
-  const { balances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const { balances: rawBalances } = calculateDetailedStockBalances(stores.inventoryDocs, stores.reservations, stores.parts);
+  const balances = applyQcHoldsToBalances(rawBalances, stores.qcHolds);
   const activeOrders = customerOrdersStore.filter(o => o.status === 'OPEN' || o.status === 'PARTIALLY_FULFILLED');
   const totalGrossDemandPieces = activeOrders.reduce(
     (acc, o) => acc + o.lines.reduce((lAcc, l) => lAcc + l.remainingQuantity, 0),
@@ -2096,7 +2211,10 @@ export function getFallbackDashboardSummary(
   );
   const totalPlannedProductionPieces =
     fallbackPlanProposalsStore.length > 0
-      ? (fallbackPlanProposalsStore[0].lines || []).reduce((acc: number, l: any) => acc + Number(l.plannedQuantity || 0), 0)
+      ? (fallbackPlanProposalsStore[0].lines || []).reduce(
+          (acc: number, l: any) => acc + Number(l.plannedQty ?? l.plannedQuantity ?? 0),
+          0,
+        )
       : planSuggestionsStore.reduce((acc, p) => acc + p.proposedQuantity, 0);
   const totalActualProducedPieces = manufacturingOrdersStore.reduce((acc, m) => acc + (m.completedQuantity || 0), 0);
   const overallPlanAchievementRatePercent =
@@ -2119,7 +2237,13 @@ export function getFallbackDashboardSummary(
     0,
   );
   const totalScrapPieces = manufacturingOrdersStore.reduce((acc, m) => acc + (m.totalScrapQuantity || 0), 0);
-  const totalScrapWeightKg = Math.round(totalScrapPieces * 1.15 * 10) / 10;
+  const totalScrapWeightKg =
+    Math.round(
+      manufacturingOrdersStore.reduce((acc, m) => {
+        const part = stores.parts.find(p => p.id === m.partId || p.code === m.partCode);
+        return acc + (m.totalScrapQuantity || 0) * (part?.weightPerUnitKg || 1.0);
+      }, 0) * 10,
+    ) / 10;
   const machineReport = getFallbackMachineWorkloadCapacity(filters, { machines: stores.machines }).data;
   const reliableMachines = machineReport.filter(m => m.isReliableCapacityData);
   const averageMachineUtilizationPercent =
@@ -2135,6 +2259,8 @@ export function getFallbackDashboardSummary(
     balances,
     reservations: stores.reservations,
     activeMos: manufacturingOrdersStore,
+    routings: stores.routings,
+    qcHolds: stores.qcHolds,
   });
   const totalMaterialShortageKg = Math.round(
     netReqs.reduce((acc, r) => acc + (r.materialShortageKg || 0), 0) * 10,

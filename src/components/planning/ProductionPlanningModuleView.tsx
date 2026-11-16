@@ -118,9 +118,109 @@ export const ProductionPlanningModuleView: React.FC<ProductionPlanningModuleView
         fetch('/api/planning/customer-orders').then(r => r.json()),
       ]);
 
+      const nextNetReqs: PartNetRequirement[] = netRes.success && Array.isArray(netRes.data) ? netRes.data : [];
       if (metricsRes.success) setMetrics(metricsRes.data);
-      if (netRes.success) setNetRequirements(netRes.data);
-      if (proposalRes.success) setProposalCount(Array.isArray(proposalRes.data) ? proposalRes.data.length : 0);
+      if (netRes.success) setNetRequirements(nextNetReqs);
+      if (proposalRes.success) {
+        const rawProposals = Array.isArray(proposalRes.data) ? proposalRes.data : [];
+        setProposalCount(rawProposals.length);
+        const mappedSuggestions: ProductionPlanSuggestion[] = rawProposals.flatMap((prop: any) =>
+          (prop.lines || []).map((line: any, lineIdx: number) => {
+            const pCode = line.part?.partNumber || line.partCode || '';
+            const pName = line.part?.name || line.partName || '';
+            const netMatch = nextNetReqs.find(n => n.partId === line.partId || n.partCode === pCode);
+            const plannedQty = Number(line.plannedQty ?? line.plannedQuantity ?? 0);
+            const approvalMap: Record<string, ProductionPlanSuggestion['approvalStatus']> = {
+              DRAFT: 'DRAFT_SUGGESTION',
+              APPROVED: 'APPROVED',
+              RELEASED: 'CONVERTED_TO_MO',
+              CANCELLED: 'REJECTED',
+              SUPERSEDED: 'REJECTED',
+            };
+            const assignments = Array.isArray(line.operationAssignments) ? line.operationAssignments : [];
+            const proposedOperations = assignments.map((op: any, opIdx: number) => {
+              const matchedMachine = machines.find(m => m.id === op.machineId || m.code === op.machine?.code);
+              const eligibleCheck = matchedMachine
+                ? {
+                    machineId: matchedMachine.id,
+                    machineCode: matchedMachine.code,
+                    machineName: matchedMachine.name,
+                    hall: matchedMachine.location || 'سالن پرس‌کاری',
+                    processType: matchedMachine.processType,
+                    tonnage: matchedMachine.tonnage || 250,
+                    isEligible: true,
+                    ineligibleReasons: [],
+                    processMatch: true,
+                    tonnageSufficient: true,
+                    dieCompatible: true,
+                    isMachineActive: matchedMachine.status === 'ACTIVE',
+                    capacityAvailable: true,
+                    dailyCapacityHours: 15,
+                    currentWorkloadHours: 0,
+                    availableHoursRemaining: 15,
+                    estimatedSetupTimeMin: 25,
+                    estimatedRunTimeHours: Number(((plannedQty * 12) / 3600).toFixed(2)),
+                    currentWorkloadPercent: 0,
+                    suitabilityScore: 95,
+                    recommendationRank: 1,
+                    recommendationReason: 'تخصیص‌یافته از پیشنهاد برنامه تولید',
+                  }
+                : null;
+              return {
+                stepNumber: op.stepNumber || (opIdx + 1) * 10,
+                stepCode: op.stepCode || `OP${(opIdx + 1) * 10}`,
+                stepName: op.stepName || `عملیات ${opIdx + 1}`,
+                processType: matchedMachine?.processType || 'BLANKING',
+                requiredTonnage: matchedMachine?.tonnage || 200,
+                plannedQuantity: plannedQty,
+                standardCycleTimeSec: 12,
+                setupTimeMin: 25,
+                estimatedRunHours: Number(((plannedQty * 12) / 3600).toFixed(2)),
+                dieMoldId: op.dieId || undefined,
+                dieMoldCode: op.die?.code || undefined,
+                dieMoldName: op.die?.name || undefined,
+                recommendedMachine: eligibleCheck,
+                allCandidateMachines: eligibleCheck ? [eligibleCheck] : [],
+                isInfeasible: !eligibleCheck,
+                infeasibilityReasons: eligibleCheck ? [] : ['ماشین واجد شرایط تخصیص نیافته است'],
+              };
+            });
+
+            return {
+              id: `${prop.id}-${line.id || lineIdx}`,
+              planNumber: prop.proposalNumber,
+              planVersion: `V${prop.version || 1}.0`,
+              partId: line.partId,
+              partCode: pCode,
+              partName: pName,
+              customerOrderIds: line.customerOrderLineId ? [line.customerOrderLineId] : [],
+              customerOrderNumbers: line.customerOrderLine?.order?.orderNumber ? [line.customerOrderLine.order.orderNumber] : [],
+              targetDueDate: line.plannedEndDate || prop.generatedAt,
+              grossDemand: netMatch?.grossDemandQty ?? Number(line.requestedQty || plannedQty),
+              availableFg: netMatch?.availableFinishedGoodsQty ?? 0,
+              wipCredit: netMatch?.totalDownstreamWip ?? 0,
+              netRequiredQuantity: netMatch?.netProductionRequirement ?? plannedQty,
+              proposedQuantity: plannedQty,
+              materialStatus: {
+                requiredGrade: netMatch?.requiredMaterialGrade || 'DC01A',
+                requiredWeightKg: netMatch?.requiredMaterialKg ?? 0,
+                availableWeightKg: netMatch?.availableRawMaterialKg ?? 0,
+                shortageKg: netMatch?.materialShortageKg ?? 0,
+                hasShortage: (netMatch?.materialShortageKg ?? 0) > 0,
+              },
+              proposedOperations,
+              overallFeasible: proposedOperations.every((o: any) => !o.isInfeasible),
+              infeasibilityWarnings: Array.isArray(line.warnings) ? line.warnings : [],
+              estimatedStartDate: line.plannedStartDate || prop.generatedAt,
+              estimatedCompletionDate: line.plannedEndDate || prop.generatedAt,
+              approvalStatus: approvalMap[prop.status] || 'DRAFT_SUGGESTION',
+              createdAt: prop.generatedAt,
+              updatedAt: prop.generatedAt,
+            };
+          }),
+        );
+        setSuggestions(mappedSuggestions);
+      }
       if (ordersRes.success) {
         // PostgreSQL is the source of truth; never let an older browser cache override it.
         setCustomerOrders(Array.isArray(ordersRes.data) ? ordersRes.data : []);

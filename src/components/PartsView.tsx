@@ -14,6 +14,7 @@ import {
   Pin,
   Copy,
   Edit3,
+  Upload,
 } from 'lucide-react';
 import { Part, PartCategory, UnitOfMeasure, CarModel } from '../types/inventory';
 import { formatNumber, formatWeightKg, exportToCsv, toPersianDigits } from '../utils/formatters';
@@ -21,13 +22,15 @@ import { SearchableSelect } from './common/SearchableSelect';
 import { loadVipPartsMap, saveVipPartsMap, isPartVip } from '../utils/qcHoldStore';
 import { useEnterpriseUx } from '../context/EnterpriseUxContext';
 import { useErpRouter } from '../context/RouterContext';
+import { DataImportExportView } from './inventory/DataImportExportView';
 
 interface PartsViewProps {
   parts: Part[];
   onSavePart: (part: Partial<Part>) => Promise<{ success: boolean; message?: string; error?: string }>;
+  onRefreshParts?: () => void | Promise<void>;
 }
 
-export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
+export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart, onRefreshParts }) => {
   const { showUndoToast, recordAudit } = useEnterpriseUx();
   const { traceDocument } = useErpRouter();
   const [vipMap, setVipMap] = useState<Record<string, boolean>>(() => loadVipPartsMap());
@@ -35,6 +38,7 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [carModelFilter, setCarModelFilter] = useState<string>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExcelImportOpen, setIsExcelImportOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Partial<Part> | null>(null);
 
   // Form states
@@ -286,7 +290,15 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsExcelImportOpen(true)}
+            className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs border-[#107e3e] text-[#107e3e] hover:bg-[#ebf7ef]"
+          >
+            <Upload className="w-3.5 h-3.5 text-[#107e3e]" />
+            <span>ورود قطعات از اکسل (.xlsx / .csv)</span>
+          </button>
           <button
             onClick={handleExportCsv}
             className="sap-btn-standard flex items-center gap-1.5 px-3 py-1.5 text-xs"
@@ -645,6 +657,37 @@ export const PartsView: React.FC<PartsViewProps> = ({ parts, onSavePart }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Excel Bulk Import of Parts */}
+      {isExcelImportOpen && (
+        <div className="fixed inset-0 z-50 bg-[#333333]/40 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-sm w-full max-w-5xl p-4 shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#e8e8e8]">
+              <h3 className="text-sm font-bold text-[#333333]">
+                ورود گروهی قطعات و مواد اولیه از فایل اکسل (.xlsx / .csv) به دیتابیس اصلی
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsExcelImportOpen(false)}
+                className="text-[#666666] hover:text-[#333333] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <DataImportExportView
+              initialTemplateType="PARTS"
+              currentUser={{ uid: 'USR-ADMIN', displayName: 'مدیر مهندسی' }}
+              onSuccess={async () => {
+                if (onRefreshParts) {
+                  await onRefreshParts();
+                } else {
+                  window.dispatchEvent(new CustomEvent('kpims-parts-imported'));
+                }
+              }}
+            />
           </div>
         </div>
       )}

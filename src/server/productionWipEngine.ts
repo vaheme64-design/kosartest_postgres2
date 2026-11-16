@@ -6,6 +6,7 @@ import {
   WipDashboardMetrics,
   MoReconciliationReport,
 } from '../types/productionWip';
+import { Part, Routing } from '../types/inventory';
 import { INITIAL_ROUTINGS, INITIAL_PARTS } from './sampleData';
 import { getPrismaClient, isDatabaseUrlConfigured } from './db/prisma';
 
@@ -13,6 +14,25 @@ import { getPrismaClient, isDatabaseUrlConfigured } from './db/prisma';
 export const manufacturingOrdersStore: ManufacturingOrder[] = [];
 export const wipTransfersStore: WipTransfer[] = [];
 export const productionLogsStore: ProductionActivityLog[] = [];
+
+export interface WipRuntimeProviderData {
+  parts: Part[];
+  routings: Routing[];
+}
+
+let wipRuntimeProvider: (() => WipRuntimeProviderData) | null = null;
+
+export function registerWipRuntimeProvider(provider: () => WipRuntimeProviderData) {
+  wipRuntimeProvider = provider;
+}
+
+function getLiveParts(): Part[] {
+  return wipRuntimeProvider ? wipRuntimeProvider().parts : INITIAL_PARTS;
+}
+
+function getLiveRoutings(): Routing[] {
+  return wipRuntimeProvider ? wipRuntimeProvider().routings : INITIAL_ROUTINGS;
+}
 
 const WIP_SNAPSHOT_ID = 'production-wip-state';
 let productionWipSnapshotVersion = 0;
@@ -216,7 +236,8 @@ export function initializeProductionWipSeed() {
   if (moMainOps[6]) {
     moMainOps[6].waitingInputQty = 0;
     moMainOps[6].goodOutputQty = 420;
-    moMainOps[6].readyForTransferQty = 420;
+    moMainOps[6].readyForTransferQty = 0;
+    moMainOps[6].transferredQty = 420;
     moMainOps[6].status = 'IN_PROGRESS';
   }
 
@@ -244,33 +265,43 @@ export function initializeProductionWipSeed() {
     updatedAt: new Date().toISOString(),
   };
 
-  // MO-2: مکمل براکت ضدسرقت رایانه موتور (WIP-ECU-COMP-BRK)
-  const moCompOps: ManufacturingOperation[] = rtgComp.operations.map((op, idx) => ({
-    id: `MOP-ECU-COMP-${op.stepNumber}`,
-    moId: 'MO-ECU-COMP-01',
-    moNumber: 'MO-ECU-COMP-01',
-    stepNumber: op.stepNumber,
-    stepCode: op.stepCode,
-    stepName: op.stepName,
-    processType: op.processType,
-    sequence: idx + 1,
-    machineId: op.machineId,
-    machineName: op.machineName,
-    warehouseLocation: getLocationForProcess(op.processType, op.stepNumber),
-    status: idx === 0 ? 'COMPLETED' : 'IN_PROGRESS',
-    waitingInputQty: 0,
-    inProgressQty: 0,
-    goodOutputQty: idx === 0 ? 1500 : 460,
-    scrapQty: 0,
-    reworkQty: 0,
-    rejectedQty: 0,
-    readyForTransferQty: idx === rtgComp.operations.length - 1 ? 460 : 120,
-    transferredQty: idx === rtgComp.operations.length - 1 ? 0 : 460,
-    standardCycleTimeSec: op.standardCycleTimeSec,
-    scrapNormPercent: op.scrapNormPercent,
-    lastActivityAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
-  }));
+  // MO-2: مکمل براکت ضدسرقت رایانه موتور (WIP-ECU-COMP-BRK) — conserved stage-by-stage (1500 total)
+  const moCompStageStats = [
+    { status: 'COMPLETED' as const, waiting: 0, inProgress: 0, good: 1500, ready: 0, transferred: 1500 },
+    { status: 'IN_PROGRESS' as const, waiting: 300, inProgress: 200, good: 1000, ready: 120, transferred: 880 },
+    { status: 'IN_PROGRESS' as const, waiting: 150, inProgress: 100, good: 630, ready: 50, transferred: 580 },
+    { status: 'IN_PROGRESS' as const, waiting: 80, inProgress: 40, good: 460, ready: 0, transferred: 460 },
+    { status: 'IN_PROGRESS' as const, waiting: 0, inProgress: 0, good: 460, ready: 0, transferred: 460 },
+  ];
+  const moCompOps: ManufacturingOperation[] = rtgComp.operations.map((op, idx) => {
+    const st = moCompStageStats[idx] || { status: 'PENDING' as const, waiting: 0, inProgress: 0, good: 0, ready: 0, transferred: 0 };
+    return {
+      id: `MOP-ECU-COMP-${op.stepNumber}`,
+      moId: 'MO-ECU-COMP-01',
+      moNumber: 'MO-ECU-COMP-01',
+      stepNumber: op.stepNumber,
+      stepCode: op.stepCode,
+      stepName: op.stepName,
+      processType: op.processType,
+      sequence: idx + 1,
+      machineId: op.machineId,
+      machineName: op.machineName,
+      warehouseLocation: getLocationForProcess(op.processType, op.stepNumber),
+      status: st.status,
+      waitingInputQty: st.waiting,
+      inProgressQty: st.inProgress,
+      goodOutputQty: st.good,
+      scrapQty: 0,
+      reworkQty: 0,
+      rejectedQty: 0,
+      readyForTransferQty: st.ready,
+      transferredQty: st.transferred,
+      standardCycleTimeSec: op.standardCycleTimeSec,
+      scrapNormPercent: op.scrapNormPercent,
+      lastActivityAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
+    };
+  });
 
   const moComp: ManufacturingOrder = {
     id: 'MO-ECU-COMP-01',
@@ -296,33 +327,42 @@ export function initializeProductionWipSeed() {
     updatedAt: new Date().toISOString(),
   };
 
-  // MO-3: مجموعه نهایی براکت ضدسرقت رایانه موتور (SAPCO-ASY-ECU-BRK-01)
-  const moAsyOps: ManufacturingOperation[] = rtgAsy.operations.map((op, idx) => ({
-    id: `MOP-ECU-ASY-${op.stepNumber}`,
-    moId: 'MO-ECU-ASY-01',
-    moNumber: 'MO-ECU-ASY-01',
-    stepNumber: op.stepNumber,
-    stepCode: op.stepCode,
-    stepName: op.stepName,
-    processType: op.processType,
-    sequence: idx + 1,
-    machineId: op.machineId,
-    machineName: op.machineName,
-    warehouseLocation: getLocationForProcess(op.processType, op.stepNumber),
-    status: 'IN_PROGRESS',
-    waitingInputQty: idx === 0 ? 420 : 50,
-    inProgressQty: 50,
-    goodOutputQty: 350,
-    scrapQty: 0,
-    reworkQty: 0,
-    rejectedQty: 0,
-    readyForTransferQty: idx === rtgAsy.operations.length - 1 ? 350 : 50,
-    transferredQty: idx === rtgAsy.operations.length - 1 ? 350 : 350,
-    standardCycleTimeSec: op.standardCycleTimeSec,
-    scrapNormPercent: op.scrapNormPercent,
-    lastActivityAt: new Date().toISOString(),
-    createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-  }));
+  // MO-3: مجموعه نهایی براکت ضدسرقت رایانه موتور (SAPCO-ASY-ECU-BRK-01) — conserved stage-by-stage (1500 total)
+  const moAsyStageStats = [
+    { status: 'IN_PROGRESS' as const, waiting: 420, inProgress: 150, good: 930, ready: 100, transferred: 830 },
+    { status: 'IN_PROGRESS' as const, waiting: 120, inProgress: 80, good: 630, ready: 80, transferred: 550 },
+    { status: 'IN_PROGRESS' as const, waiting: 90, inProgress: 60, good: 400, ready: 50, transferred: 350 },
+    { status: 'IN_PROGRESS' as const, waiting: 0, inProgress: 0, good: 350, ready: 0, transferred: 350 },
+  ];
+  const moAsyOps: ManufacturingOperation[] = rtgAsy.operations.map((op, idx) => {
+    const st = moAsyStageStats[idx] || { status: 'PENDING' as const, waiting: 0, inProgress: 0, good: 0, ready: 0, transferred: 0 };
+    return {
+      id: `MOP-ECU-ASY-${op.stepNumber}`,
+      moId: 'MO-ECU-ASY-01',
+      moNumber: 'MO-ECU-ASY-01',
+      stepNumber: op.stepNumber,
+      stepCode: op.stepCode,
+      stepName: op.stepName,
+      processType: op.processType,
+      sequence: idx + 1,
+      machineId: op.machineId,
+      machineName: op.machineName,
+      warehouseLocation: getLocationForProcess(op.processType, op.stepNumber),
+      status: st.status,
+      waitingInputQty: st.waiting,
+      inProgressQty: st.inProgress,
+      goodOutputQty: st.good,
+      scrapQty: 0,
+      reworkQty: 0,
+      rejectedQty: 0,
+      readyForTransferQty: st.ready,
+      transferredQty: st.transferred,
+      standardCycleTimeSec: op.standardCycleTimeSec,
+      scrapNormPercent: op.scrapNormPercent,
+      lastActivityAt: new Date().toISOString(),
+      createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+    };
+  });
 
   const moAsy: ManufacturingOrder = {
     id: 'MO-ECU-ASY-01',
@@ -430,7 +470,8 @@ export function getManufacturingOrderById(id: string): ManufacturingOrder | unde
 }
 
 export function createManufacturingOrder(params: {
-  partId: string;
+  partId?: string;
+  partCode?: string;
   targetQuantity: number;
   initialInputQuantity?: number;
   routingId?: string;
@@ -439,21 +480,29 @@ export function createManufacturingOrder(params: {
   notes?: string;
   createdBy: string;
 }): { success: boolean; data?: ManufacturingOrder; error?: string } {
-  const part = INITIAL_PARTS.find(p => p.id === params.partId || p.code === params.partId);
+  const liveParts = getLiveParts();
+  const liveRoutings = getLiveRoutings();
+  const partLookup = params.partId || params.partCode || '';
+  const part = liveParts.find(p => p.id === partLookup || p.code === partLookup || (params.partCode && p.code === params.partCode));
   if (!part) {
     return { success: false, error: 'قطعه مورد نظر در سیستم یافت نشد.' };
   }
 
   // Find approved routing for this part (never substitute an unrelated part's routing)
   const routing = params.routingId
-    ? INITIAL_ROUTINGS.find(r => r.id === params.routingId)
-    : INITIAL_ROUTINGS.find(r => r.partId === part.id || r.partCode === part.code);
+    ? liveRoutings.find(r => r.id === params.routingId)
+    : liveRoutings.find(r => r.partId === part.id || r.partCode === part.code);
 
   if (!routing || !routing.operations.length) {
     return { success: false, error: `مسیر تولید مصوب (Routing) برای قطعه «${part.code}» تعریف نشده است.` };
   }
 
-  const moId = `MO-2026-${String(manufacturingOrdersStore.length + 1).padStart(3, '0')}`;
+  let seqNum = manufacturingOrdersStore.length + 1;
+  let moId = `MO-2026-${String(seqNum).padStart(3, '0')}`;
+  while (manufacturingOrdersStore.some(m => m.id === moId || m.moNumber === moId)) {
+    seqNum += 1;
+    moId = `MO-2026-${String(seqNum).padStart(3, '0')}`;
+  }
   const now = new Date().toISOString();
   const initialInput =
     params.initialInputQuantity !== undefined
@@ -530,6 +579,56 @@ export function createManufacturingOrder(params: {
   });
 
   return { success: true, data: newMo };
+}
+
+// Load initial raw material / blanks into MO (increases both mo.initialInputQuantity and OP waiting queue atomically)
+export function loadMaterialIntoManufacturingOrder(params: {
+  moId: string;
+  operationId?: string;
+  quantity: number;
+  operatorName: string;
+  notes?: string;
+}): { success: boolean; data?: ManufacturingOrder; error?: string } {
+  const mo = manufacturingOrdersStore.find(m => m.id === params.moId || m.moNumber === params.moId);
+  if (!mo) return { success: false, error: 'دستور تولید یافت نشد.' };
+
+  const qty = Number(params.quantity);
+  if (!Number.isFinite(qty) || qty <= 0) {
+    return { success: false, error: 'مقدار بارگذاری مواد اولیه باید بزرگتر از صفر باشد.' };
+  }
+
+  const sortedOps = [...mo.operations].sort((a, b) => a.stepNumber - b.stepNumber);
+  const op = params.operationId
+    ? mo.operations.find(o => o.id === params.operationId)
+    : sortedOps[0];
+  if (!op) return { success: false, error: 'مرحله عملیاتی هدف یافت نشد.' };
+
+  const now = new Date().toISOString();
+  mo.initialInputQuantity += qty;
+  if (mo.status === 'PLANNED') mo.status = 'RELEASED';
+  mo.updatedAt = now;
+
+  op.waitingInputQty += qty;
+  if (op.status === 'PENDING' || op.status === 'COMPLETED') {
+    op.status = 'READY';
+  }
+  op.lastActivityAt = now;
+
+  productionLogsStore.unshift({
+    id: `LOG-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    moId: mo.id,
+    moNumber: mo.moNumber,
+    operationId: op.id,
+    stepNumber: op.stepNumber,
+    stepName: op.stepName,
+    activityType: 'INPUT_LOAD',
+    quantity: qty,
+    operatorName: params.operatorName || 'انباردار رول و ورق',
+    timestamp: now,
+    notes: params.notes || `ورود مواد/شیت جدید به صف انتظار ${op.stepName}`,
+  });
+
+  return { success: true, data: mo };
 }
 
 // Register Input Quantity (Start processing at machine)
@@ -699,7 +798,19 @@ export function registerOperationProduction(params: {
   mo.totalScrapQuantity += scrap;
   mo.totalReworkQuantity += rework;
   mo.totalRejectedQuantity += rejected;
-  if (mo.completedQuantity >= mo.targetQuantity && mo.operations.every(candidate => candidate.inProgressQty === 0 && candidate.waitingInputQty === 0)) {
+  const hasPendingTransfers = wipTransfersStore.some(
+    t => t.moId === mo.id && t.status === 'PENDING_APPROVAL'
+  );
+  if (
+    mo.completedQuantity >= mo.targetQuantity &&
+    !hasPendingTransfers &&
+    mo.operations.every(
+      candidate =>
+        candidate.inProgressQty === 0 &&
+        candidate.waitingInputQty === 0 &&
+        candidate.readyForTransferQty === 0
+    )
+  ) {
     mo.status = 'COMPLETED';
     mo.closedAt = postedAt;
   }
@@ -828,7 +939,9 @@ export function approveOperationTransfer(params: {
   const mo = manufacturingOrdersStore.find(m => m.id === transfer.moId);
   if (!mo) return { success: false, error: 'دستور تولید متناظر یافت نشد.' };
 
-  // If transfer to next operation:
+  const nowIso = new Date().toISOString();
+
+  // If transfer to next operation, credit waitingInputQty; if to finished store, credit completedQuantity
   if (transfer.toOperationId !== 'STORE-FINISHED') {
     const toOp = mo.operations.find(o => o.id === transfer.toOperationId);
     if (!toOp) return { success: false, error: 'مرحله مقصد یافت نشد.' };
@@ -836,15 +949,32 @@ export function approveOperationTransfer(params: {
     // Credit destination operation
     toOp.waitingInputQty += transfer.quantity;
     if (toOp.status === 'PENDING') toOp.status = 'READY';
-    toOp.lastActivityAt = new Date().toISOString();
+    toOp.lastActivityAt = nowIso;
+  } else {
+    mo.completedQuantity += transfer.quantity;
   }
 
   transfer.status = 'APPROVED';
   transfer.receivedBy = params.receivedBy;
-  transfer.receivedAt = new Date().toISOString();
+  transfer.receivedAt = nowIso;
   if (params.notes) transfer.notes = (transfer.notes ? `${transfer.notes} | ` : '') + params.notes;
 
-  mo.updatedAt = new Date().toISOString();
+  const hasRemainingPending = wipTransfersStore.some(
+    t => t.moId === mo.id && t.status === 'PENDING_APPROVAL'
+  );
+  if (
+    transfer.toOperationId === 'STORE-FINISHED' &&
+    mo.completedQuantity >= mo.targetQuantity &&
+    !hasRemainingPending &&
+    mo.operations.every(
+      o => o.waitingInputQty === 0 && o.inProgressQty === 0 && o.readyForTransferQty === 0
+    )
+  ) {
+    mo.status = 'COMPLETED';
+    mo.closedAt = nowIso;
+  }
+
+  mo.updatedAt = nowIso;
 
   productionLogsStore.unshift({
     id: `LOG-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,

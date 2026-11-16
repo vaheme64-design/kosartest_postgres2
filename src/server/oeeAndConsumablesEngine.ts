@@ -15,10 +15,33 @@ import {
   PurchaseRequisitionRecord,
   ConsumableCategory,
 } from '../types/oeeAndConsumables';
+import { Machine, DieMold, Part } from '../types/inventory';
 import { INITIAL_MACHINES, INITIAL_DIES_MOLDS, INITIAL_PARTS } from './sampleData';
 import { manufacturingOrdersStore } from './productionWipEngine';
 import { customerOrdersStore } from './productionPlanningEngine';
 import { toPersianDigits } from '../utils/formatters';
+import { formatToJalali } from '../utils/jalali';
+
+export interface OeeRuntimeProviderData {
+  machines: Machine[];
+  dies: DieMold[];
+  parts: Part[];
+}
+
+let oeeRuntimeProvider: (() => OeeRuntimeProviderData) | null = null;
+
+export function registerOeeRuntimeProvider(provider: () => OeeRuntimeProviderData) {
+  oeeRuntimeProvider = provider;
+}
+
+function getLiveOeeStores(): OeeRuntimeProviderData {
+  if (oeeRuntimeProvider) return oeeRuntimeProvider();
+  return {
+    machines: INITIAL_MACHINES,
+    dies: INITIAL_DIES_MOLDS,
+    parts: INITIAL_PARTS,
+  };
+}
 
 // ============================================================================
 // RUNTIME STORES FOR INTERACTIVE LOGGING & REQUISITIONS
@@ -306,8 +329,9 @@ export function getMachineUtilizationReport(options?: {
   processType?: string;
 }): MachineUtilizationSummary {
   const shiftFilter: ShiftFilterKey = options?.shift || 'ALL';
-  const machines = INITIAL_MACHINES;
-  const dies = INITIAL_DIES_MOLDS;
+  const liveStores = getLiveOeeStores();
+  const machines = liveStores.machines;
+  const dies = liveStores.dies;
   const mos = manufacturingOrdersStore;
 
   const shiftMultiplier = shiftFilter === 'ALL' ? 1 : 0.5;
@@ -1026,12 +1050,18 @@ export function getConsumablesForecastReport(options?: {
   const totalOpenOrderPieces =
     customerOrders.reduce((s, o) => s + o.lines.reduce((ls, l) => ls + l.remainingQuantity, 0), 0) || 8500;
 
+  const liveStores = getLiveOeeStores();
+  const avgWeightKg = liveStores.parts.length > 0
+    ? liveStores.parts.filter(p => p.category === 'FINISHED_GOOD' || p.category === 'WIP_PART')
+        .reduce((acc, p, _, arr) => acc + (p.weightPerUnitKg || 1.2) / Math.max(1, arr.length), 0) || 1.35
+    : 1.35;
+
   const monthlyProjectedPieces = Math.round((totalMoTargetPieces + totalOpenOrderPieces) * growthFactor);
   // Each stamped/assembled automotive part averages ~3.5 press strokes, ~8 spot welds, ~0.35m CO2 weld
   const projectedStrokesInHorizon = Math.round(monthlyProjectedPieces * 3.5 * horizonRatio);
   const projectedSpotWeldsInHorizon = Math.round(monthlyProjectedPieces * 8.0 * horizonRatio);
   const projectedCo2MetersInHorizon = Math.round(monthlyProjectedPieces * 0.35 * horizonRatio);
-  const projectedSheetTonsInHorizon = Math.round(((monthlyProjectedPieces * 1.35) / 1000) * horizonRatio * 10) / 10;
+  const projectedSheetTonsInHorizon = Math.round(((monthlyProjectedPieces * avgWeightKg) / 1000) * horizonRatio * 10) / 10;
   const projectedMachineHoursInHorizon = Math.round(420 * horizonRatio * growthFactor);
   const projectedPalletsInHorizon = Math.max(10, Math.round((monthlyProjectedPieces / 120) * horizonRatio));
 
@@ -1081,13 +1111,9 @@ export function getConsumablesForecastReport(options?: {
     const reorderPoint = Math.round(dailyBurnRate * seed.supplierLeadTimeDays + seed.minSafetyStock);
     const daysOfSupplyRemaining = Math.round((usableStock / dailyBurnRate) * 10) / 10;
 
-    // Estimate run-out Jalali date
+    // Estimate exact Jalali run-out date
     const runOutMs = Date.now() + daysOfSupplyRemaining * 86400000;
-    const rDate = new Date(runOutMs);
-    const jy = rDate.getFullYear() - 621;
-    const jm = String(rDate.getMonth() + 1).padStart(2, '0');
-    const jd = String(rDate.getDate()).padStart(2, '0');
-    const estimatedRunOutDateFa = `${toPersianDigits(jy)}/${toPersianDigits(jm)}/${toPersianDigits(jd)}`;
+    const estimatedRunOutDateFa = formatToJalali(new Date(runOutMs));
 
     const totalTargetNeeded = forecastedGrossRequirement + seed.minSafetyStock;
     const netShortageQty = Math.max(0, Math.round((totalTargetNeeded - usableStock) * 10) / 10);
@@ -1195,9 +1221,6 @@ export function createConsumablesPurchaseRequisition(payload: {
 
   const totalEstimatedCostRials = lines.reduce((s, l) => s + l.estimatedCostRials, 0);
   const now = new Date();
-  const jy = now.getFullYear() - 621;
-  const jm = String(now.getMonth() + 1).padStart(2, '0');
-  const jd = String(now.getDate()).padStart(2, '0');
   const jh = String(now.getHours()).padStart(2, '0');
   const jmin = String(now.getMinutes()).padStart(2, '0');
 
@@ -1205,7 +1228,7 @@ export function createConsumablesPurchaseRequisition(payload: {
     id: `PR-${Date.now()}`,
     prNumber: `PR-1404-${String(purchaseRequisitionsStore.length + 90).padStart(3, '0')}`,
     createdAt: now.toISOString(),
-    createdAtFa: `${toPersianDigits(jy)}/${toPersianDigits(jm)}/${toPersianDigits(jd)} ${toPersianDigits(jh)}:${toPersianDigits(jmin)}`,
+    createdAtFa: `${formatToJalali(now)} ${toPersianDigits(jh)}:${toPersianDigits(jmin)}`,
     requestedBy: payload.requestedBy || 'مهندس حسینی (مدیر برنامه‌ریزی و کنترل تولید)',
     urgency: payload.urgency || 'IMMEDIATE',
     status: 'PENDING_APPROVAL',

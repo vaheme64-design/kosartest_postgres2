@@ -1,5 +1,17 @@
 import { GlobalSearchHit, GlobalSearchResultGroup, GlobalSearchResponse } from '../types/search';
 import {
+  Part,
+  Machine,
+  Routing,
+  DieMold,
+  SapcoCoilReceipt,
+  PhysicalCoil,
+  InventoryDocument,
+  SapcoContract,
+  WarehouseDefinition,
+  WAREHOUSES_LIST,
+} from '../types/inventory';
+import {
   INITIAL_PARTS,
   INITIAL_MACHINES,
   INITIAL_ROUTINGS,
@@ -14,6 +26,39 @@ import { customerOrdersStore } from './productionPlanningEngine';
 import { manufacturingOrdersStore } from './productionWipEngine';
 import { TabKey } from '../components/Sidebar';
 import { InventorySubTab } from '../components/inventory/InventoryModuleView';
+
+export interface SearchRuntimeProviderData {
+  parts: Part[];
+  machines: Machine[];
+  routings: Routing[];
+  dies: DieMold[];
+  coils: SapcoCoilReceipt[];
+  physicalCoils?: PhysicalCoil[];
+  contracts: SapcoContract[];
+  inventoryDocs: InventoryDocument[];
+  warehouses?: WarehouseDefinition[];
+}
+
+let searchRuntimeProvider: (() => SearchRuntimeProviderData) | null = null;
+
+export function registerSearchRuntimeProvider(provider: () => SearchRuntimeProviderData) {
+  searchRuntimeProvider = provider;
+}
+
+function getLiveSearchStores(): SearchRuntimeProviderData {
+  if (searchRuntimeProvider) return searchRuntimeProvider();
+  return {
+    parts: INITIAL_PARTS,
+    machines: INITIAL_MACHINES,
+    routings: INITIAL_ROUTINGS,
+    dies: INITIAL_DIES_MOLDS,
+    coils: INITIAL_SAPCO_COILS,
+    physicalCoils: [],
+    contracts: INITIAL_SAPCO_CONTRACTS,
+    inventoryDocs: INITIAL_INVENTORY_DOCUMENTS,
+    warehouses: WAREHOUSES_LIST,
+  };
+}
 
 interface ModuleNavDefinition {
   title: string;
@@ -44,16 +89,15 @@ const SYSTEM_MODULES: ModuleNavDefinition[] = [
   { title: 'مدیریت کاربران، نقش‌های سازمانی و ردپای ممیزی', subtitle: 'User Roles & System Audit Trails', keywords: ['کاربران', 'نقش', 'دسترسی', 'ممیزی', 'تنظیمات', 'امنیت'], targetTab: 'settings' },
 ];
 
-const WAREHOUSE_ITEMS = [
-  { code: 'WH-RAW-COIL', name: 'انبار مرکزی رول و کویل خام', type: 'مواد اولیه' },
-  { code: 'WH-SHEARED-BLANK', name: 'انبار بلنک و شیت‌های برش‌خورده', type: 'نیمه‌ساخته' },
-  { code: 'WH-WIP-PRESS', name: 'انبار موقت پای خطوط پرس', type: 'کار در جریان' },
-  { code: 'WH-FINISHED-GOODS', name: 'انبار محصولات نهایی تحویل مشتری', type: 'محصول نهایی' },
-  { code: 'WH-SCRAP-YARD', name: 'انبار ضایعات پرس و پوشال ورق', type: 'ضایعات' },
-];
+const WAREHOUSE_ITEMS = WAREHOUSES_LIST.map(w => ({
+  code: w.code,
+  name: w.name,
+  type: w.warehouseType || w.type,
+}));
 
 export function executeGlobalSearch(query: string, limitPerCategory = 6): GlobalSearchResponse {
   const q = query.trim().toLowerCase();
+  const stores = getLiveSearchStores();
   if (!q) {
     return {
       query: '',
@@ -97,7 +141,7 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 2. Parts (کالاها و قطعات)
-  const matchedParts: GlobalSearchHit[] = INITIAL_PARTS
+  const matchedParts: GlobalSearchHit[] = stores.parts
     .filter(p => matchesTokens(p.code) || matchesTokens(p.name) || matchesTokens(p.materialGrade) || matchesTokens(p.carModel))
     .slice(0, limitPerCategory)
     .map(p => ({
@@ -129,34 +173,54 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 3. Coils & Steel Rolls (کویل‌ها و لوت‌های مواد اولیه)
-  const matchedCoils: GlobalSearchHit[] = INITIAL_SAPCO_COILS
+  const coilItemsSource = (stores.physicalCoils && stores.physicalCoils.length > 0)
+    ? stores.physicalCoils.map(c => ({
+        id: c.id,
+        coilNumber: c.coilId,
+        heatNumber: c.heatNumber,
+        materialGrade: c.materialGrade,
+        thicknessMm: c.thicknessMm,
+        widthMm: c.widthMm,
+        receivedWeightKg: c.originalWeightKg,
+        remainingWeightKg: c.remainingWeightKg,
+        badge: c.ownership === 'COMPANY_OWNED' ? 'ملکی کارخانه' : 'امانی ساپکو',
+      }))
+    : stores.coils.map(c => ({
+        id: c.id,
+        coilNumber: c.coilNumber,
+        heatNumber: c.heatNumber,
+        materialGrade: c.materialGrade,
+        thicknessMm: c.thicknessMm,
+        widthMm: c.widthMm,
+        receivedWeightKg: c.receivedWeightKg,
+        remainingWeightKg: Math.max(0, c.receivedWeightKg - (c.consumedWeightKg || 0)),
+        badge: 'امانی ساپکو',
+      }));
+
+  const matchedCoils: GlobalSearchHit[] = coilItemsSource
     .filter(c => matchesTokens(c.coilNumber) || matchesTokens(c.heatNumber) || matchesTokens(c.materialGrade))
     .slice(0, limitPerCategory)
-    .map(c => {
-      const consumed = c.consumedWeightKg || 0;
-      const remaining = Math.max(0, c.receivedWeightKg - consumed);
-      return {
-        id: c.id,
-        type: 'coil',
-        title: `کویل ${c.coilNumber} (${c.materialGrade} - ${c.thicknessMm}mm)`,
-        subtitle: `وزن باقیمانده: ${remaining.toLocaleString('fa-IR')} کیلوگرم • ذوب: ${c.heatNumber || '—'} • انبار رول و ورق`,
-        code: c.coilNumber,
-        badge: 'امانی ساپکو',
-        badgeColor: 'blue',
-        meta: {
-          'شماره کویل': c.coilNumber,
-          'گرید ورق': c.materialGrade,
-          'ضخامت': `${c.thicknessMm} mm`,
-          'عرض': `${c.widthMm} mm`,
-          'وزن دریافتی': `${c.receivedWeightKg.toLocaleString()} kg`,
-          'وزن باقیمانده': `${remaining.toLocaleString()} kg`,
-          'شماره ذوب': c.heatNumber || '—',
-        },
-        targetTab: 'inventory',
-        targetSubTab: 'COILS',
-        filterParam: c.coilNumber,
-      };
-    });
+    .map(c => ({
+      id: c.id,
+      type: 'coil',
+      title: `کویل ${c.coilNumber} (${c.materialGrade} - ${c.thicknessMm}mm)`,
+      subtitle: `وزن باقیمانده: ${c.remainingWeightKg.toLocaleString('fa-IR')} کیلوگرم • ذوب: ${c.heatNumber || '—'} • انبار رول و ورق`,
+      code: c.coilNumber,
+      badge: c.badge,
+      badgeColor: 'blue',
+      meta: {
+        'شماره کویل': c.coilNumber,
+        'گرید ورق': c.materialGrade,
+        'ضخامت': `${c.thicknessMm} mm`,
+        'عرض': `${c.widthMm} mm`,
+        'وزن دریافتی': `${c.receivedWeightKg.toLocaleString()} kg`,
+        'وزن باقیمانده': `${c.remainingWeightKg.toLocaleString()} kg`,
+        'شماره ذوب': c.heatNumber || '—',
+      },
+      targetTab: 'inventory',
+      targetSubTab: 'COILS',
+      filterParam: c.coilNumber,
+    }));
 
   if (matchedCoils.length > 0) {
     groups.push({
@@ -231,7 +295,7 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 6. Contracts (قراردادهای مواد)
-  const matchedContracts: GlobalSearchHit[] = INITIAL_SAPCO_CONTRACTS
+  const matchedContracts: GlobalSearchHit[] = stores.contracts
     .filter(c => matchesTokens(c.contractNumber) || matchesTokens(c.title) || matchesTokens(c.customerName) || matchesTokens(c.materialGrade))
     .slice(0, limitPerCategory)
     .map(c => ({
@@ -263,7 +327,7 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 7. Inventory Documents (اسناد و کاردکس انبار)
-  const matchedDocs: GlobalSearchHit[] = INITIAL_INVENTORY_DOCUMENTS
+  const matchedDocs: GlobalSearchHit[] = stores.inventoryDocs
     .filter(d => matchesTokens(d.documentNumber) || matchesTokens(d.documentType) || matchesTokens(d.referenceNumber))
     .slice(0, limitPerCategory)
     .map(d => ({
@@ -296,7 +360,7 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 8. Machines (دستگاه‌ها و پرس‌ها)
-  const matchedMachines: GlobalSearchHit[] = INITIAL_MACHINES
+  const matchedMachines: GlobalSearchHit[] = stores.machines
     .filter(m => matchesTokens(m.code) || matchesTokens(m.name) || matchesTokens(m.location) || (m.tonnage && matchesTokens(String(m.tonnage))))
     .slice(0, limitPerCategory)
     .map(m => ({
@@ -327,7 +391,7 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 9. Dies (قالب‌های سنبه و ماتریس)
-  const matchedDies: GlobalSearchHit[] = INITIAL_DIES_MOLDS
+  const matchedDies: GlobalSearchHit[] = stores.dies
     .filter(d => matchesTokens(d.code) || matchesTokens(d.name) || matchesTokens(d.partCode))
     .slice(0, limitPerCategory)
     .map(d => ({
@@ -358,7 +422,7 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 10. Routings (مسیرهای ساخت)
-  const matchedRoutings: GlobalSearchHit[] = INITIAL_ROUTINGS
+  const matchedRoutings: GlobalSearchHit[] = stores.routings
     .filter(r => matchesTokens(r.partCode) || matchesTokens(r.partName) || matchesTokens(r.id))
     .slice(0, limitPerCategory)
     .map(r => ({
@@ -387,7 +451,10 @@ export function executeGlobalSearch(query: string, limitPerCategory = 6): Global
   }
 
   // 11. Warehouses (انبارها)
-  const matchedWarehouses: GlobalSearchHit[] = WAREHOUSE_ITEMS
+  const liveWarehouses = (stores.warehouses && stores.warehouses.length > 0)
+    ? stores.warehouses.map(w => ({ code: w.code, name: w.name, type: w.warehouseType || w.type }))
+    : WAREHOUSE_ITEMS;
+  const matchedWarehouses: GlobalSearchHit[] = liveWarehouses
     .filter(w => matchesTokens(w.code) || matchesTokens(w.name))
     .slice(0, 4)
     .map(w => ({

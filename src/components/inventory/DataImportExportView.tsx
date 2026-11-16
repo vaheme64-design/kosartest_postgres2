@@ -18,12 +18,80 @@ interface DataImportExportViewProps {
     uid: string;
     displayName: string;
   };
-  onSuccess?: () => void;
+  initialTemplateType?: string;
+  onSuccess?: () => void | Promise<void>;
 }
 
-export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ currentUser, onSuccess }) => {
+const PART_COLUMN_ALIASES: Record<string, string[]> = {
+  code: ['code', 'partCode', 'partNumber', 'part_code', 'part_number', 'کد کالا / قطعه', 'کد قطعه', 'کد کالا', 'کد کاتالوگ', 'کد کاتالوگ قطعه', 'شماره فنی', 'کد فنی'],
+  name: ['name', 'partName', 'part_name', 'title', 'description', 'نام کالا / قطعه', 'نام قطعه', 'نام کالا', 'شرح قطعه', 'شرح کالا', 'عنوان فارسی قطعه', 'عنوان قطعه', 'عنوان کامل قطعه در خط تولید'],
+  category: ['category', 'partCategory', 'type', 'دسته کالا', 'دسته‌بندی', 'دسته بندی', 'نوع کالا', 'نوع قطعه'],
+  unit: ['unit', 'uom', 'unitCode', 'واحد سنجش', 'واحد اندازه‌گیری', 'واحد اندازه گیری', 'واحد پایه', 'واحد'],
+  weightPerUnitKg: ['weightPerUnitKg', 'weightKg', 'unitWeight', 'وزن واحد (kg)', 'وزن واحد (کیلوگرم)', 'وزن واحد', 'وزن (kg)', 'وزن'],
+  materialGrade: ['materialGrade', 'grade', 'گرید ورق', 'گرید فولاد', 'گرید ماده', 'جنس ورق', 'جنس', 'گرید'],
+  thicknessMm: ['thicknessMm', 'thickness', 'ضخامت (mm)', 'ضخامت ورق (mm)', 'ضخامت ورق', 'ضخامت'],
+  carModel: ['carModel', 'vehicle', 'مدل خودرو', 'خودرو', 'خانواده خودرو', 'پروژه'],
+  sapcoCode: ['sapcoCode', 'oemCode', 'کد ساپکو / ایران‌خودرو', 'کد ساپکو', 'کد OEM', 'شماره ساپکو'],
+  minStock: ['minStock', 'safetyStock', 'حداقل موجودی (نقطه سفارش)', 'حداقل موجودی اطمینان', 'حداقل موجودی', 'نقطه سفارش'],
+  maxStock: ['maxStock', 'حداکثر موجودی', 'حداکثر ظرفیت'],
+};
+
+function normalizeUploadedRowKeys(rawRow: Record<string, any>): Record<string, any> {
+  const normalized: Record<string, any> = { ...rawRow };
+  const rawEntries = Object.entries(rawRow || {}).map(([k, v]) => [
+    k.trim().replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\u200c/g, ' ').replace(/\s+/g, ' '),
+    v,
+  ] as const);
+
+  for (const [canonicalKey, aliases] of Object.entries(PART_COLUMN_ALIASES)) {
+    if (normalized[canonicalKey] !== undefined && String(normalized[canonicalKey]).trim() !== '') continue;
+    for (const alias of aliases) {
+      const normAlias = alias.trim().replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\u200c/g, ' ').replace(/\s+/g, ' ').toLowerCase();
+      const match = rawEntries.find(([rk]) => rk.toLowerCase() === normAlias);
+      if (match && match[1] !== undefined && String(match[1]).trim() !== '') {
+        normalized[canonicalKey] = match[1];
+        break;
+      }
+    }
+  }
+  return normalized;
+}
+
+function detectBatchTypeFromRows(rows: Record<string, any>[], currentType: string): string {
+  if (!rows || rows.length === 0) return currentType;
+  const keys = Object.keys(rows[0] || {}).map(k =>
+    k.trim().replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\u200c/g, ' ').replace(/\s+/g, ' ').toLowerCase()
+  );
+  const hasCoilCols = keys.some(k =>
+    k.includes('پکینگ') || k.includes('کویل') || k.includes('coilpack') || k.includes('شماره ذوب')
+  );
+  const hasContractCols = keys.some(k =>
+    k.includes('شماره قرارداد') || k.includes('سقف تخصیص') || k.includes('contractnumber')
+  );
+  const hasPartCols = keys.some(k =>
+    k === 'کد قطعه' ||
+    k === 'کد کالا / قطعه' ||
+    k === 'کد کاتالوگ' ||
+    k === 'نام قطعه' ||
+    k === 'عنوان فارسی قطعه' ||
+    k === 'شرح قطعه' ||
+    k === 'دسته کالا' ||
+    k === 'دسته بندی' ||
+    k === 'partcode' ||
+    k === 'partnumber' ||
+    (k === 'code' && keys.includes('category'))
+  );
+  if (hasPartCols && !hasCoilCols && !hasContractCols) return 'PARTS';
+  return currentType;
+}
+
+export const DataImportExportView: React.FC<DataImportExportViewProps> = ({
+  currentUser,
+  initialTemplateType = 'PARTS',
+  onSuccess,
+}) => {
   const [activeMode, setActiveMode] = useState<'IMPORT' | 'EXPORT'>('IMPORT');
-  const [templateType, setTemplateType] = useState<string>('PHYSICAL_COILS');
+  const [templateType, setTemplateType] = useState<string>(initialTemplateType);
   const [templateData, setTemplateData] = useState<any>(null);
   const [previewRows, setPreviewRows] = useState<any[]>([]);
   const [validationResult, setValidationResult] = useState<any>(null);
@@ -38,13 +106,13 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
   const [exportPreviewList, setExportPreviewList] = useState<any[]>([]);
   const [exportLoading, setExportLoading] = useState(false);
 
-  const fetchTemplate = async (type: string) => {
+  const fetchTemplate = async (type: string, preserveExistingPreview = false) => {
     try {
       const res = await fetch(`/api/inventory/import/templates/${type}`);
       const data = await res.json();
       if (data.success) {
         setTemplateData(data.data);
-        if (data.data.sampleRows) {
+        if (!preserveExistingPreview && data.data.sampleRows) {
           setPreviewRows(data.data.sampleRows);
         }
       }
@@ -80,6 +148,21 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
       .finally(() => setExportLoading(false));
   }, [activeMode, exportDataset]);
 
+  const applyUploadedRows = async (rawParsed: any[], fileNameLabel: string) => {
+    const normalizedRows = rawParsed.map(r => normalizeUploadedRowKeys(r));
+    const detectedType = detectBatchTypeFromRows(normalizedRows, templateType);
+    if (detectedType !== templateType) {
+      setTemplateType(detectedType);
+      await fetchTemplate(detectedType, true);
+    }
+    setPreviewRows(normalizedRows);
+    setValidationResult(null);
+    setNotification({
+      type: 'success',
+      message: `تعداد ${toPersianDigits(normalizedRows.length)} ردیف از فایل «${fileNameLabel}» خوانده شد. اکنون دکمه «بررسی و اعتبارسنجی ردیف‌ها» را بزنید.`,
+    });
+  };
+
   // Parse uploaded Excel (.xlsx, .xls) or CSV file into previewRows using sheetjs
   const handleExcelFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,13 +172,13 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
     const reader = new FileReader();
 
     if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
-      reader.onload = evt => {
+      reader.onload = async evt => {
         try {
           const text = String(evt.target?.result || '').replace(/^\uFEFF/, '');
           const workbook = XLSX.read(text, { type: 'string' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const parsed = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          const parsed = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Record<string, any>[];
 
           if (!parsed || parsed.length === 0) {
             setNotification({
@@ -105,25 +188,20 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
             return;
           }
 
-          setPreviewRows(parsed);
-          setValidationResult(null);
-          setNotification({
-            type: 'success',
-            message: `تعداد ${toPersianDigits(parsed.length)} ردیف از فایل «${file.name}» با موفقیت خوانده شد. اکنون دکمه «بررسی و اعتبارسنجی» را بزنید.`,
-          });
+          await applyUploadedRows(parsed, file.name);
         } catch (err) {
           setNotification({ type: 'error', message: 'خطا در خواندن فایل CSV. لطفاً ساختار فایل را بررسی فرمایید.' });
         }
       };
       reader.readAsText(file, 'utf-8');
     } else {
-      reader.onload = evt => {
+      reader.onload = async evt => {
         try {
           const data = new Uint8Array(evt.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const parsed = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          const parsed = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Record<string, any>[];
 
           if (!parsed || parsed.length === 0) {
             setNotification({
@@ -133,12 +211,7 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
             return;
           }
 
-          setPreviewRows(parsed);
-          setValidationResult(null);
-          setNotification({
-            type: 'success',
-            message: `تعداد ${toPersianDigits(parsed.length)} ردیف از فایل اکسل «${file.name}» خوانده شد. اکنون دکمه «بررسی و اعتبارسنجی» را بزنید.`,
-          });
+          await applyUploadedRows(parsed, file.name);
         } catch (err) {
           setNotification({ type: 'error', message: 'خطا در خواندن فایل اکسل. فایل ممکن است آسیب‌دیده یا رمزگذاری‌شده باشد.' });
         }
@@ -166,12 +239,13 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
     setIsValidating(true);
     setValidationResult(null);
     try {
+      const normalizedRows = previewRows.map(r => normalizeUploadedRowKeys(r));
       const res = await fetch('/api/inventory/import/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           batchType: templateType,
-          rows: previewRows,
+          rows: normalizedRows,
         }),
       });
 
@@ -220,9 +294,9 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
       } else {
         setNotification({
           type: 'success',
-          message: `${data.message || 'اطلاعات پایه جدید با موفقیت اضافه شدند.'} اکنون جهت ثبت نهایی کالاها در انبار، دکمه «تایید و ثبت نهایی در نرم‌افزار» را کلیک کنید.`,
+          message: `${data.message || 'اطلاعات پایه جدید با موفقیت در دیتابیس اصلی ثبت شدند.'} اکنون جهت ثبت نهایی ردیف‌ها، دکمه «تایید و ثبت نهایی در نرم‌افزار» را کلیک کنید.`,
         });
-        if (onSuccess) onSuccess();
+        if (onSuccess) await onSuccess();
         // Automatically re-validate so previewRows validation passes 100%
         await handleValidate();
       }
@@ -237,13 +311,14 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
     if (previewRows.length === 0) return;
     setIsConfirming(true);
     try {
+      const normalizedRows = previewRows.map(r => normalizeUploadedRowKeys(r));
       const res = await fetch('/api/inventory/import/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           idempotencyKey: `BATCH-${Date.now()}`,
           batchType: templateType,
-          rows: previewRows,
+          rows: normalizedRows,
           user: currentUser,
         }),
       });
@@ -254,10 +329,10 @@ export const DataImportExportView: React.FC<DataImportExportViewProps> = ({ curr
       } else {
         setNotification({
           type: 'success',
-          message: `${data.message || 'اطلاعات با موفقیت در بانک اطلاعاتی انبار ثبت شد.'} هم‌اکنون کلیه ردیف‌ها در بخش «استعلام موجودی و کاردکس» قابل مشاهده می‌باشند.`,
+          message: `${data.message || 'اطلاعات با موفقیت در دیتابیس اصلی PostgreSQL ثبت شد.'} هم‌اکنون کلیه قطعات و ردیف‌ها در کاتالوگ اصلی قطعات و استعلام موجودی قابل مشاهده می‌باشند.`,
         });
         setValidationResult(null);
-        if (onSuccess) onSuccess();
+        if (onSuccess) await onSuccess();
       }
     } catch (err: any) {
       setNotification({ type: 'error', message: err.message || 'خطای شبکه' });

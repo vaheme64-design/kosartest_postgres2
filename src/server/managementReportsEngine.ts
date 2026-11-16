@@ -27,6 +27,7 @@ import {
   customerOrdersStore,
   planSuggestionsStore,
   machineWorkloadHoursMap,
+  calculateNetRequirements,
 } from './productionPlanningEngine';
 import {
   manufacturingOrdersStore,
@@ -47,7 +48,77 @@ import {
   INITIAL_SAPCO_COILS,
 } from './sampleData';
 
-import { Part, Machine, UnitOfMeasure } from '../types/inventory';
+import {
+  Part,
+  Machine,
+  Routing,
+  SapcoCoilReceipt,
+  PhysicalCoil,
+  SapcoContract,
+  InventoryDocument,
+  InventoryReservation,
+  UnitOfMeasure,
+  StockBalance,
+} from '../types/inventory';
+
+export interface ReportsRuntimeProviderData {
+  parts: Part[];
+  machines: Machine[];
+  routings: Routing[];
+  coils: SapcoCoilReceipt[];
+  physicalCoils: PhysicalCoil[];
+  contracts: SapcoContract[];
+  inventoryDocs: InventoryDocument[];
+  reservations: InventoryReservation[];
+  qcHolds?: Record<string, any>;
+}
+
+let reportsRuntimeProvider: (() => ReportsRuntimeProviderData) | null = null;
+
+export function registerReportsRuntimeProvider(provider: () => ReportsRuntimeProviderData) {
+  reportsRuntimeProvider = provider;
+}
+
+function getLiveStores(): ReportsRuntimeProviderData {
+  if (reportsRuntimeProvider) {
+    return reportsRuntimeProvider();
+  }
+  return {
+    parts: INITIAL_PARTS,
+    machines: INITIAL_MACHINES,
+    routings: INITIAL_ROUTINGS,
+    coils: INITIAL_SAPCO_COILS,
+    physicalCoils: [],
+    contracts: INITIAL_SAPCO_CONTRACTS,
+    inventoryDocs: INITIAL_INVENTORY_DOCUMENTS,
+    reservations: INITIAL_INVENTORY_RESERVATIONS,
+    qcHolds: {},
+  };
+}
+
+export function applyQcHoldsToBalances(balances: StockBalance[], qcHolds?: Record<string, any>): StockBalance[] {
+  if (!qcHolds || Object.keys(qcHolds).length === 0) return balances;
+  return balances.map(b => {
+    const hold =
+      qcHolds[b.id] ||
+      (b.lotNumber ? qcHolds[b.lotNumber] : undefined) ||
+      qcHolds[`${b.partId}-${b.warehouseId}`];
+    if (!hold || !hold.isHeld) return b;
+    const addedBlocked =
+      b.unit === 'KG'
+        ? Number(hold.heldWeightKg || hold.heldQty || b.availableKg || b.physicalKg || 0)
+        : Number(hold.heldQty || b.availableQty || b.physicalQty || 0);
+    const newBlockedQty = Math.min(b.physicalQty, (b.qualityBlockedQty || 0) + addedBlocked);
+    const newAvailableQty = Math.max(0, b.physicalQty - b.reservedQty - newBlockedQty);
+    const unitWeight = b.physicalQty > 0 ? b.physicalKg / b.physicalQty : 1;
+    return {
+      ...b,
+      qualityBlockedQty: newBlockedQty,
+      availableQty: newAvailableQty,
+      availableKg: Math.round(newAvailableQty * unitWeight * 100) / 100,
+    };
+  });
+}
 
 // Helper to check if a date string falls inside the filter range
 function isDateWithinRange(dateStr?: string, startDate?: string, endDate?: string): boolean {
@@ -195,9 +266,23 @@ export function getProductionBacklogReport(filters?: ReportFilterParams): {
   meta: ReportMeta;
   data: ProductionBacklogItem[];
 } {
+  const stores = getLiveStores();
   const fulfillmentReport = getCustomerOrderFulfillmentReport(filters).data;
-  const parts = INITIAL_PARTS;
-  const now = Date.now();
+  const parts = stores.parts;
+  const rawBalances = calculateDetailedStockBalances(
+    stores.inventoryDocs,
+    stores.reservations,
+    parts,
+  ).balances;
+  const detailedBalances = applyQcHoldsToBalances(rawBalances, stores.qcHolds);
+
+  const availableRawKgByGrade = new Map<string, number>();
+  for (const b of detailedBalances) {
+    if (b.category !== 'RAW_MATERIAL') continue;
+    const p = parts.find(x => x.id === b.partId || x.code === b.partCode);
+    const grade = p?.materialGrade || 'ST14';
+    availableRawKgByGrade.set(grade, (availableRawKgByGrade.get(grade) || 0) + (b.availableKg || 0));
+  }
 
   const backlogItems: ProductionBacklogItem[] = fulfillmentReport
     .filter(item => item.remainingQuantity > 0)
@@ -205,6 +290,9 @@ export function getProductionBacklogReport(filters?: ReportFilterParams): {
       const part = parts.find(p => p.id === item.partId || p.code === item.partCode);
       const weightPerUnit = part?.weightPerUnitKg || 1.2;
       const requiredRawMaterialKg = Math.round(item.remainingQuantity * weightPerUnit * 1.05 * 10) / 10;
+      const availKg = availableRawKgByGrade.get(part?.materialGrade || 'ST14') || 0;
+      const materialAvailabilityStatus: ProductionBacklogItem['materialAvailabilityStatus'] =
+        availKg >= requiredRawMaterialKg ? 'AVAILABLE' : availKg > 0 ? 'PARTIAL' : 'SHORTAGE';
 
       let urgencyLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' = 'MEDIUM';
       if (item.daysOverdue > 5) urgencyLevel = 'CRITICAL';
@@ -223,7 +311,7 @@ export function getProductionBacklogReport(filters?: ReportFilterParams): {
         daysOverdue: item.daysOverdue,
         urgencyLevel,
         requiredRawMaterialKg,
-        materialAvailabilityStatus: 'AVAILABLE' as const,
+        materialAvailabilityStatus,
       };
     })
     .sort((a, b) => b.daysOverdue - a.daysOverdue);
@@ -353,24 +441,36 @@ export function getMaterialConsumptionVsStandardReport(filters?: ReportFilterPar
   meta: ReportMeta;
   data: MaterialConsumptionVsStandardItem[];
 } {
+  const stores = getLiveStores();
   const mos = manufacturingOrdersStore;
-  const parts = INITIAL_PARTS;
+  const parts = stores.parts;
   const items: MaterialConsumptionVsStandardItem[] = [];
 
   mos.forEach(mo => {
     if (filters?.partId && mo.partId !== filters.partId && mo.partCode !== filters.partId) return;
 
     const part = parts.find(p => p.id === mo.partId || p.code === mo.partCode);
-    const unitWeight = part?.weightPerUnitKg || 1.15;
-    const materialGrade = part?.materialGrade || 'ST14';
+    const unitWeight = part?.weightPerUnitKg || 1.0;
+    const materialGrade = part?.materialGrade || 'DC01A';
 
     const totalProducedPieces = mo.completedQuantity || mo.operations[mo.operations.length - 1]?.goodOutputQty || 0;
-    const scrapNormPercent = 2.5; // 2.5% standard scrap allowance
+    const scrapNormPercent = mo.operations.reduce((s, o) => s + (o.scrapNormPercent || 0), 0) || 2.5;
     const theoreticalStandardConsumptionKg = Math.round(totalProducedPieces * unitWeight * (1 + scrapNormPercent / 100) * 10) / 10;
 
-    // Actual material issued to MO (based on initial input blanking/shearing weight)
-    const initialInputQty = mo.targetQuantity || 1000;
-    const actualIssuedMaterialKg = Math.round(initialInputQty * unitWeight * 10) / 10;
+    // Sum actual posted raw material issues referencing this MO, or fall back to mo.initialInputQuantity * unitWeight
+    const postedMoIssueKg = stores.inventoryDocs
+      .filter(
+        d =>
+          d.postingStatus === 'POSTED' &&
+          (d.documentType === 'ISSUE_RAW_MATERIAL' || d.documentType === 'TRANSFER') &&
+          (d.referenceNumber === mo.moNumber || d.referenceNumber === mo.id || d.referenceNumber?.includes(mo.moNumber)),
+      )
+      .reduce((acc, doc) => acc + (doc.totalWeightKg || doc.lines.reduce((la, l) => la + (l.quantityKg || l.quantity || 0), 0)), 0);
+
+    const initialInputQty = mo.initialInputQuantity || 0;
+    const actualIssuedMaterialKg = postedMoIssueKg > 0
+      ? Math.round(postedMoIssueKg * 10) / 10
+      : Math.round(initialInputQty * unitWeight * 10) / 10;
     const actualScrapKg = Math.round((mo.totalScrapQuantity || 0) * unitWeight * 10) / 10;
 
     const varianceKg = Math.round((actualIssuedMaterialKg - theoreticalStandardConsumptionKg) * 10) / 10;
@@ -408,36 +508,45 @@ export function getSapcoMaterialAccountReport(filters?: ReportFilterParams): {
   meta: ReportMeta;
   data: SapcoMaterialAccountItem[];
 } {
-  const contracts = INITIAL_SAPCO_CONTRACTS;
-  const detailedBalances = calculateDetailedStockBalances(
-    INITIAL_INVENTORY_DOCUMENTS,
-    INITIAL_INVENTORY_RESERVATIONS,
-    INITIAL_PARTS
-  ).balances;
+  const stores = getLiveStores();
+  const contracts = stores.contracts;
+  const detailedBalances = applyQcHoldsToBalances(
+    calculateDetailedStockBalances(
+      stores.inventoryDocs,
+      stores.reservations,
+      stores.parts,
+    ).balances,
+    stores.qcHolds,
+  );
 
-  const rawCoilBalance = detailedBalances.find(b => b.partCode === 'SAPCO-COIL-DC04-0.8');
-  const physicalRawCoilWeight = rawCoilBalance?.physicalKg || 10000;
+  const items: SapcoMaterialAccountItem[] = contracts
+    .filter(c => {
+      if (filters?.status && filters.status !== 'ALL' && c.status !== filters.status) return false;
+      if (filters?.partId && c.materialGrade !== filters.partId && !c.contractNumber.includes(filters.partId)) return false;
+      return true;
+    })
+    .map(c => {
+      const physicalStockInPlantKg = detailedBalances
+        .filter(b => b.category === 'RAW_MATERIAL' && (!c.materialGrade || b.materialGrade === c.materialGrade))
+        .reduce((sum, b) => sum + (b.supplierOwnedKg || b.physicalKg || 0), 0);
+      const effectivePhysical = physicalStockInPlantKg > 0 ? Math.round(physicalStockInPlantKg * 10) / 10 : c.closingBalanceKg;
+      const discrepancyKg = Math.round((effectivePhysical - c.closingBalanceKg) * 10) / 10;
 
-  const items: SapcoMaterialAccountItem[] = contracts.map(c => {
-    // Determine physical stock associated with this contract
-    const physicalStockInPlantKg = c.materialGrade === 'DC04' ? physicalRawCoilWeight : c.openingBalanceKg;
-    const discrepancyKg = Math.round((physicalStockInPlantKg - c.closingBalanceKg) * 10) / 10;
-
-    return {
-      contractId: c.id,
-      contractNumber: c.contractNumber,
-      title: c.title,
-      materialGrade: c.materialGrade,
-      allocatedQuotaKg: c.allocatedWeightKg,
-      openingBalanceKg: c.openingBalanceKg,
-      totalReceivedKg: c.totalReceivedKg || 0,
-      totalIssuedKg: c.totalConsumedKg || 0,
-      closingBookBalanceKg: c.closingBalanceKg,
-      physicalStockInPlantKg,
-      discrepancyKg,
-      status: c.status,
-    };
-  });
+      return {
+        contractId: c.id,
+        contractNumber: c.contractNumber,
+        title: c.title,
+        materialGrade: c.materialGrade,
+        allocatedQuotaKg: c.allocatedWeightKg,
+        openingBalanceKg: c.openingBalanceKg,
+        totalReceivedKg: c.totalReceivedKg || 0,
+        totalIssuedKg: c.totalConsumedKg || 0,
+        closingBookBalanceKg: c.closingBalanceKg,
+        physicalStockInPlantKg: effectivePhysical,
+        discrepancyKg,
+        status: c.status,
+      };
+    });
 
   return {
     meta: createReportMeta('گزارش بیلان و حساب امانی کلاف‌های ورق ساپکو', items.length, filters),
@@ -452,12 +561,16 @@ export function getInventoryValuationQuantitiesReport(filters?: ReportFilterPara
   meta: ReportMeta;
   data: InventoryValuationQuantitiesItem[];
 } {
-  const parts = INITIAL_PARTS;
-  const detailedBalances = calculateDetailedStockBalances(
-    INITIAL_INVENTORY_DOCUMENTS,
-    INITIAL_INVENTORY_RESERVATIONS,
-    parts
-  ).balances;
+  const stores = getLiveStores();
+  const parts = stores.parts;
+  const detailedBalances = applyQcHoldsToBalances(
+    calculateDetailedStockBalances(
+      stores.inventoryDocs,
+      stores.reservations,
+      parts,
+    ).balances,
+    stores.qcHolds,
+  );
 
   const items: InventoryValuationQuantitiesItem[] = detailedBalances
     .filter(b => {
@@ -499,7 +612,7 @@ export function getScrapByPartAndOperationReport(filters?: ReportFilterParams): 
   data: ScrapByPartAndOperationItem[];
 } {
   const mos = manufacturingOrdersStore;
-  const parts = INITIAL_PARTS;
+  const parts = getLiveStores().parts;
   const items: ScrapByPartAndOperationItem[] = [];
 
   mos.forEach(mo => {
@@ -558,7 +671,7 @@ export function getMachineWorkloadCapacityReport(filters?: ReportFilterParams): 
   meta: ReportMeta;
   data: MachineWorkloadCapacityItem[];
 } {
-  const machines = INITIAL_MACHINES;
+  const machines = getLiveStores().machines;
 
   const items: MachineWorkloadCapacityItem[] = machines
     .filter(m => {
@@ -925,7 +1038,7 @@ export function getInventoryMovementsReport(filters?: ReportFilterParams): {
   meta: ReportMeta;
   data: InventoryMovementItem[];
 } {
-  const docs = INITIAL_INVENTORY_DOCUMENTS;
+  const docs = getLiveStores().inventoryDocs;
   const items: InventoryMovementItem[] = [];
 
   docs.forEach(doc => {
@@ -966,12 +1079,16 @@ export function getInventoryReconciliationReport(filters?: ReportFilterParams): 
   meta: ReportMeta;
   data: InventoryReconciliationItem[];
 } {
-  const parts = INITIAL_PARTS;
-  const detailedBalances = calculateDetailedStockBalances(
-    INITIAL_INVENTORY_DOCUMENTS,
-    INITIAL_INVENTORY_RESERVATIONS,
-    parts
-  ).balances;
+  const stores = getLiveStores();
+  const parts = stores.parts;
+  const detailedBalances = applyQcHoldsToBalances(
+    calculateDetailedStockBalances(
+      stores.inventoryDocs,
+      stores.reservations,
+      parts,
+    ).balances,
+    stores.qcHolds,
+  );
 
   const items: InventoryReconciliationItem[] = detailedBalances
     .filter(b => {
@@ -1011,14 +1128,18 @@ export function getInventoryReconciliationReport(filters?: ReportFilterParams): 
 // 14. MANAGEMENT DASHBOARD SUMMARY
 // =========================================================================
 export function getManagementDashboardSummary(filters?: ReportFilterParams): ManagementDashboardSummary {
+  const stores = getLiveStores();
   const customerOrders = customerOrdersStore;
   const plans = planSuggestionsStore;
   const mos = manufacturingOrdersStore;
-  const detailedBalances = calculateDetailedStockBalances(
-    INITIAL_INVENTORY_DOCUMENTS,
-    INITIAL_INVENTORY_RESERVATIONS,
-    INITIAL_PARTS
-  ).balances;
+  const detailedBalances = applyQcHoldsToBalances(
+    calculateDetailedStockBalances(
+      stores.inventoryDocs,
+      stores.reservations,
+      stores.parts,
+    ).balances,
+    stores.qcHolds,
+  );
 
   // Active customer orders
   const activeOrders = customerOrders.filter(o => o.status === 'OPEN' || o.status === 'PARTIALLY_FULFILLED');
@@ -1041,9 +1162,19 @@ export function getManagementDashboardSummary(filters?: ReportFilterParams): Man
   const delaysReport = getProductionDelaysReport(filters).data;
   const totalDelayedOrdersCount = delaysReport.length;
 
-  // Raw Material Shortage
-  const fgPart = INITIAL_PARTS.find(p => p.id === 'PRT-FGD-001');
-  const totalMaterialShortageKg = 1572; // Identified shortage from MRP run
+  // Live Raw Material Shortage computed via net requirements + routings + QC holds
+  const netReqs = calculateNetRequirements({
+    parts: stores.parts,
+    orders: customerOrders,
+    balances: detailedBalances,
+    reservations: stores.reservations,
+    activeMos: mos,
+    routings: stores.routings,
+    qcHolds: stores.qcHolds,
+  });
+  const totalMaterialShortageKg = Math.round(
+    netReqs.reduce((acc, r) => acc + (r.materialShortageKg || 0), 0) * 10
+  ) / 10;
 
   // WIP Quantity
   const totalWipQuantityPieces = mos.reduce((acc, mo) => {
@@ -1056,9 +1187,14 @@ export function getManagementDashboardSummary(filters?: ReportFilterParams): Man
   const fgBalances = detailedBalances.filter(b => b.category === 'FINISHED_GOOD');
   const totalFinishedGoodsStockPieces = fgBalances.reduce((acc, b) => acc + (b.unit === 'PCS' ? b.availableQty : 0), 0);
 
-  // Scrap
+  // Scrap (weighted per part when known)
   const totalScrapPieces = mos.reduce((acc, m) => acc + (m.totalScrapQuantity || 0), 0);
-  const totalScrapWeightKg = Math.round(totalScrapPieces * 1.15 * 10) / 10;
+  const totalScrapWeightKg = Math.round(
+    mos.reduce((acc, m) => {
+      const part = stores.parts.find(p => p.id === m.partId || p.code === m.partCode);
+      return acc + (m.totalScrapQuantity || 0) * (part?.weightPerUnitKg || 1.0);
+    }, 0) * 10
+  ) / 10;
 
   // Machine Utilization
   const machineReport = getMachineWorkloadCapacityReport(filters).data;
@@ -1099,12 +1235,66 @@ export function getCoilInventoryReport(filters?: ReportFilterParams): {
   meta: ReportMeta;
   data: CoilInventoryReportItem[];
 } {
-  const coils = INITIAL_SAPCO_COILS;
+  const stores = getLiveStores();
+  const defaultContract = stores.contracts[0]?.contractNumber || '';
 
-  const results: CoilInventoryReportItem[] = coils
+  if (stores.physicalCoils.length > 0) {
+    const results: CoilInventoryReportItem[] = stores.physicalCoils
+      .filter(c => {
+        if (!isDateWithinRange(c.receiptDate, filters?.startDate, filters?.endDate)) return false;
+        if (filters?.partId && c.materialGrade !== filters.partId && c.coilId !== filters.partId) return false;
+        const remaining = c.remainingWeightKg ?? 0;
+        const status: 'FULL' | 'PARTIAL' | 'CONSUMED' | 'BLOCKED' =
+          c.qualityStatus === 'QUALITY_BLOCKED' || c.physicalStatus === 'BLOCKED'
+            ? 'BLOCKED'
+            : remaining <= 0
+              ? 'CONSUMED'
+              : remaining < c.originalWeightKg
+                ? 'PARTIAL'
+                : 'FULL';
+        if (filters?.status && filters.status !== 'ALL' && status !== filters.status) return false;
+        return true;
+      })
+      .map(c => {
+        const remainingWeightKg = c.remainingWeightKg ?? 0;
+        const consumedWeightKg = Math.max(0, c.originalWeightKg - remainingWeightKg);
+        const status: 'FULL' | 'PARTIAL' | 'CONSUMED' | 'BLOCKED' =
+          c.qualityStatus === 'QUALITY_BLOCKED' || c.physicalStatus === 'BLOCKED'
+            ? 'BLOCKED'
+            : remainingWeightKg <= 0
+              ? 'CONSUMED'
+              : remainingWeightKg < c.originalWeightKg
+                ? 'PARTIAL'
+                : 'FULL';
+        return {
+          coilId: c.id,
+          coilNumber: c.coilId,
+          materialCode: `MAT-${c.materialGrade}-${c.thicknessMm}`,
+          materialGrade: c.materialGrade,
+          thicknessMm: c.thicknessMm,
+          widthMm: c.widthMm,
+          receivedWeightKg: c.originalWeightKg,
+          consumedWeightKg,
+          remainingWeightKg,
+          warehouseLocation: `${c.warehouseName || 'انبار رول خام'} / ${c.warehouseLocationCode || 'LOC-RAW-A1'}`,
+          ownership: c.ownership === 'COMPANY_OWNED' ? 'FACTORY_OWNED' : 'SAPCO_CONSIGNMENT',
+          contractNumber: c.allocations?.[0]?.contractNumber || defaultContract || '—',
+          heatNumber: c.heatNumber || '—',
+          packingNumber: c.coilPackNumber || `PKG-${c.coilId}`,
+          status,
+          receiptDate: c.receiptDate,
+        };
+      });
+
+    return {
+      meta: createReportMeta('موجودی رول‌ها و کویل‌های ماده اولیه', results.length, filters),
+      data: results,
+    };
+  }
+
+  const results: CoilInventoryReportItem[] = stores.coils
     .filter(c => {
-      if (filters?.startDate && c.receiptDate < filters.startDate) return false;
-      if (filters?.endDate && c.receiptDate > filters.endDate) return false;
+      if (!isDateWithinRange(c.receiptDate, filters?.startDate, filters?.endDate)) return false;
       const remaining = Math.max(0, c.receivedWeightKg - (c.consumedWeightKg || 0));
       if (filters?.status && filters.status !== 'ALL') {
         if (filters.status === 'FULL' && remaining < c.receivedWeightKg) return false;
@@ -1132,8 +1322,8 @@ export function getCoilInventoryReport(filters?: ReportFilterParams): {
         remainingWeightKg,
         warehouseLocation: 'انبار رول و ورق خام',
         ownership: 'SAPCO_CONSIGNMENT',
-        contractNumber: 'CNT-SAPCO-2026-01',
-        heatNumber: c.heatNumber || 'ذوب-۵۴۱',
+        contractNumber: defaultContract || '—',
+        heatNumber: c.heatNumber || '—',
         packingNumber: `PKG-${c.coilNumber}`,
         status,
         receiptDate: c.receiptDate,
@@ -1153,38 +1343,50 @@ export function getLotConsumptionReport(filters?: ReportFilterParams): {
   meta: ReportMeta;
   data: LotConsumptionReportItem[];
 } {
-  const docs = INITIAL_INVENTORY_DOCUMENTS.filter(d => d.documentType === 'ISSUE_RAW_MATERIAL' || d.documentType === 'ISSUE_FINISHED_GOODS');
+  const stores = getLiveStores();
+  const docs = stores.inventoryDocs.filter(
+    d =>
+      d.postingStatus === 'POSTED' &&
+      (d.documentType === 'ISSUE_RAW_MATERIAL' || d.documentType === 'ISSUE_FINISHED_GOODS') &&
+      isDateWithinRange(d.documentDate, filters?.startDate, filters?.endDate),
+  );
   const mos = manufacturingOrdersStore;
-
   const results: LotConsumptionReportItem[] = [];
 
   docs.forEach(doc => {
-    doc.lines.forEach((line, idx) => {
-      const matchedMo = mos.find(m => m.moNumber === doc.referenceNumber) || mos[0];
-      const coilNum = line.lotNumber || `C-1403-${800 + idx}`;
-      const consumedKg = line.quantity;
+    doc.lines.forEach(line => {
+      const matchedMo = mos.find(m => m.moNumber === doc.referenceNumber || m.id === doc.referenceNumber);
+      const part = stores.parts.find(p => p.id === line.partId || p.code === line.partCode || p.code === matchedMo?.partCode);
+      const coil = stores.physicalCoils.find(c => c.coilId === line.lotNumber || (line.heatNumber && c.heatNumber === line.heatNumber));
+      const coilNum = line.lotNumber || coil?.coilId || '—';
+      const consumedKg = line.quantityKg ?? line.quantity;
       const targetPartCode = matchedMo?.partCode || line.partCode;
       const targetPartName = matchedMo?.partName || line.partName;
-      const piecesProduced = Math.round(consumedKg / 1.15);
-      const scrapKg = Math.round(consumedKg * 0.04 * 10) / 10;
-      const scrapPercent = 4.0;
+      if (filters?.partId && targetPartCode !== filters.partId && line.partCode !== filters.partId && matchedMo?.moNumber !== filters.partId) {
+        return;
+      }
+
+      const unitWeight = part?.weightPerUnitKg || 0;
+      const piecesProduced = unitWeight > 0 ? Math.round(consumedKg / unitWeight) : 0;
+      const scrapKg = matchedMo ? Math.round((matchedMo.totalScrapQuantity || 0) * (unitWeight || 1.0) * 10) / 10 : 0;
+      const scrapPercent = consumedKg > 0 ? Math.round((scrapKg / consumedKg) * 1000) / 10 : 0;
 
       results.push({
         issueDocumentNumber: doc.documentNumber,
         issueDate: doc.documentDate,
         coilNumber: coilNum,
-        heatNumber: `HT-${coilNum.replace('C-', '')}`,
-        materialGrade: 'ST14',
-        thicknessMm: 1.5,
+        heatNumber: line.heatNumber || coil?.heatNumber || '—',
+        materialGrade: part?.materialGrade || coil?.materialGrade || '—',
+        thicknessMm: part?.thicknessMm || coil?.thicknessMm || 0,
         consumedKg,
-        destinationMachine: doc.targetWarehouseName || 'خط پرس ضربه‌ای ۱۶۰ تن',
-        targetMoNumber: doc.referenceNumber || 'MO-1403-001',
+        destinationMachine: doc.targetWarehouseName || matchedMo?.operations?.[0]?.machineName || 'خط تولید پرس',
+        targetMoNumber: doc.referenceNumber || matchedMo?.moNumber || '—',
         targetPartCode,
         targetPartName,
         piecesProduced,
         scrapKg,
         scrapPercent,
-        operatorName: doc.createdByName || 'اپراتور شیفت صبح',
+        operatorName: doc.postedByName || doc.createdByName || 'اپراتور تولید',
       });
     });
   });
@@ -1202,9 +1404,7 @@ export function getSupplierMatrixReport(filters?: ReportFilterParams): {
   meta: ReportMeta;
   data: SupplierMatrixReportItem[];
 } {
-  const coils = INITIAL_SAPCO_COILS;
-
-  // Group by Grade and Thickness
+  const stores = getLiveStores();
   const groupMap = new Map<string, {
     grade: string;
     thicknessMm: number;
@@ -1215,43 +1415,63 @@ export function getSupplierMatrixReport(filters?: ReportFilterParams): {
     count: number;
   }>();
 
-  coils.forEach(c => {
-    const key = `${c.materialGrade}_${c.thicknessMm}`;
-    const existing = groupMap.get(key) || {
-      grade: c.materialGrade,
-      thicknessMm: c.thicknessMm,
-      financialReceivedKg: 0,
-      consignmentReceivedKg: 0,
-      totalConsumptionKg: 0,
-      closingBalanceKg: 0,
-      count: 0,
-    };
+  if (stores.physicalCoils.length > 0) {
+    stores.physicalCoils.forEach(c => {
+      if (filters?.partId && c.materialGrade !== filters.partId) return;
+      const key = `${c.materialGrade}_${c.thicknessMm}`;
+      const existing = groupMap.get(key) || {
+        grade: c.materialGrade,
+        thicknessMm: c.thicknessMm,
+        financialReceivedKg: 0,
+        consignmentReceivedKg: 0,
+        totalConsumptionKg: 0,
+        closingBalanceKg: 0,
+        count: 0,
+      };
+      if (c.ownership === 'COMPANY_OWNED') existing.financialReceivedKg += c.originalWeightKg;
+      else existing.consignmentReceivedKg += c.originalWeightKg;
+      const remaining = c.remainingWeightKg ?? 0;
+      const consumed = Math.max(0, c.originalWeightKg - remaining);
+      existing.totalConsumptionKg += consumed;
+      existing.closingBalanceKg += remaining;
+      existing.count += 1;
+      groupMap.set(key, existing);
+    });
+  } else {
+    stores.coils.forEach(c => {
+      if (filters?.partId && c.materialGrade !== filters.partId) return;
+      const key = `${c.materialGrade}_${c.thicknessMm}`;
+      const existing = groupMap.get(key) || {
+        grade: c.materialGrade,
+        thicknessMm: c.thicknessMm,
+        financialReceivedKg: 0,
+        consignmentReceivedKg: 0,
+        totalConsumptionKg: 0,
+        closingBalanceKg: 0,
+        count: 0,
+      };
+      existing.consignmentReceivedKg += c.receivedWeightKg;
+      const consumed = c.consumedWeightKg || 0;
+      const remaining = Math.max(0, c.receivedWeightKg - consumed);
+      existing.totalConsumptionKg += consumed;
+      existing.closingBalanceKg += remaining;
+      existing.count += 1;
+      groupMap.set(key, existing);
+    });
+  }
 
-    existing.consignmentReceivedKg += c.receivedWeightKg;
-    const consumed = c.consumedWeightKg || 0;
-    const remaining = Math.max(0, c.receivedWeightKg - consumed);
-    existing.totalConsumptionKg += consumed;
-    existing.closingBalanceKg += remaining;
-    existing.count += 1;
-
-    groupMap.set(key, existing);
-  });
-
-  const results: SupplierMatrixReportItem[] = Array.from(groupMap.values()).map(g => {
-    const openingBalanceKg = Math.round(g.closingBalanceKg * 0.4);
-    return {
-      grade: g.grade,
-      thicknessMm: g.thicknessMm,
-      openingBalanceKg,
-      financialReceivedKg: g.financialReceivedKg,
-      consignmentReceivedKg: g.consignmentReceivedKg,
-      totalConsumptionKg: g.totalConsumptionKg,
-      otherMovementKg: 0,
-      closingBalanceKg: g.closingBalanceKg,
-      totalCoilsCount: g.count,
-      status: 'BALANCED',
-    };
-  });
+  const results: SupplierMatrixReportItem[] = Array.from(groupMap.values()).map(g => ({
+    grade: g.grade,
+    thicknessMm: g.thicknessMm,
+    openingBalanceKg: 0,
+    financialReceivedKg: Math.round(g.financialReceivedKg * 100) / 100,
+    consignmentReceivedKg: Math.round(g.consignmentReceivedKg * 100) / 100,
+    totalConsumptionKg: Math.round(g.totalConsumptionKg * 100) / 100,
+    otherMovementKg: 0,
+    closingBalanceKg: Math.round(g.closingBalanceKg * 100) / 100,
+    totalCoilsCount: g.count,
+    status: 'BALANCED',
+  }));
 
   return {
     meta: createReportMeta('ماتریس حساب مواد تأمین‌کننده (گرید × ضخامت)', results.length, filters),

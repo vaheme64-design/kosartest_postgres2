@@ -402,6 +402,7 @@ export interface WarehouseDefinition {
   code: string;
   name: string;
   type: 'RAW_MATERIALS' | 'WIP' | 'FINISHED_GOODS' | 'SCRAP' | 'TOOLING';
+  warehouseType?: string;
   managerName?: string;
   locations: string[];
 }
@@ -524,6 +525,8 @@ export interface DetailedStockBalance {
   availableKg: number;
   lastTransactionAt: string;
 }
+
+export type StockBalance = DetailedStockBalance;
 
 export interface SapcoContract {
   id: string;

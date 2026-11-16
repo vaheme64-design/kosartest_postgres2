@@ -242,6 +242,11 @@ function AppContent() {
 
   useEffect(() => {
     loadAllData();
+    const handlePartsImported = () => {
+      loadAllData();
+    };
+    window.addEventListener('kpims-parts-imported', handlePartsImported);
+    return () => window.removeEventListener('kpims-parts-imported', handlePartsImported);
   }, [loadAllData]);
 
   // Global Ctrl+Space Shortcut for Context-Aware AI Assistant (Upgrade 5)

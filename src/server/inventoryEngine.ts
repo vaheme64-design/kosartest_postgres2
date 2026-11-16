@@ -1276,6 +1276,246 @@ export function sanitizeCsvValue(val: any): string {
   return str;
 }
 
+export function normalizeExcelDigits(val: any): string {
+  if (val === null || val === undefined) return '';
+  return String(val)
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .trim();
+}
+
+export function parseExcelNumber(val: any, fallback = 0): number {
+  if (typeof val === 'number' && Number.isFinite(val)) return val;
+  const cleaned = normalizeExcelDigits(val)
+    .replace(/[,٬،\s]/g, '')
+    .replace(/\/(?=\d+$)/, '.');
+  if (!cleaned) return fallback;
+  const num = Number(cleaned);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+export function normalizePartCategory(
+  raw: any,
+  codeHint?: string
+): 'RAW_MATERIAL' | 'WIP_PART' | 'FINISHED_GOOD' {
+  const s = normalizeExcelDigits(raw).toUpperCase();
+  if (
+    s === 'WIP_PART' ||
+    s === 'WIP' ||
+    s === 'SEMI_FINISHED' ||
+    s.includes('نیمه') ||
+    s.includes('WIP')
+  ) {
+    return 'WIP_PART';
+  }
+  if (
+    s === 'FINISHED_GOOD' ||
+    s === 'FINISHED' ||
+    s === 'FG' ||
+    s === 'PRODUCT' ||
+    s.includes('نهایی') ||
+    s.includes('محصول')
+  ) {
+    return 'FINISHED_GOOD';
+  }
+  if (
+    s === 'RAW_MATERIAL' ||
+    s === 'RAW' ||
+    s === 'SHEET' ||
+    s === 'COIL' ||
+    s === 'CONSUMABLE' ||
+    s === 'SPARE_PART' ||
+    s.includes('ماده') ||
+    s.includes('مواد') ||
+    s.includes('ورق') ||
+    s.includes('کویل') ||
+    s.includes('رول')
+  ) {
+    return 'RAW_MATERIAL';
+  }
+  const upperCode = normalizeExcelDigits(codeHint).toUpperCase();
+  if (upperCode.startsWith('WIP-')) return 'WIP_PART';
+  if (upperCode.startsWith('FG-') || upperCode.startsWith('SAPCO-ASY')) return 'FINISHED_GOOD';
+  return 'RAW_MATERIAL';
+}
+
+export function normalizePartUnit(
+  raw: any,
+  category?: 'RAW_MATERIAL' | 'WIP_PART' | 'FINISHED_GOOD'
+): 'KG' | 'PCS' {
+  const s = normalizeExcelDigits(raw).toUpperCase();
+  if (s === 'KG' || s === 'KILOGRAM' || s === 'COIL' || s === 'ROLL' || s.includes('کیلو') || s.includes('کيلو') || s.includes('رول') || s.includes('کلاف')) return 'KG';
+  if (s === 'PCS' || s === 'PC' || s === 'PIECE' || s === 'EA' || s === 'SHEET' || s === 'PALLET' || s.includes('عدد') || s.includes('قطعه') || s.includes('شیت') || s.includes('برگ') || s.includes('پالت')) return 'PCS';
+  return category === 'RAW_MATERIAL' ? 'KG' : 'PCS';
+}
+
+function getRowFieldByAliases(row: Record<string, any>, aliases: string[]): any {
+  for (const alias of aliases) {
+    if (row[alias] !== undefined && row[alias] !== null && String(row[alias]).trim() !== '') {
+      return row[alias];
+    }
+  }
+  const entries = Object.entries(row || {});
+  for (const alias of aliases) {
+    const normAlias = alias.toLowerCase().trim();
+    for (const [k, v] of entries) {
+      if (v === undefined || v === null || String(v).trim() === '') continue;
+      const normKey = k.toLowerCase().trim();
+      const keyBase = normKey.split('(')[0].trim();
+      if (normKey === normAlias || keyBase === normAlias || normKey.includes(normAlias)) {
+        return v;
+      }
+    }
+  }
+  return undefined;
+}
+
+export function extractPartRowFields(row: Record<string, any>) {
+  const codeRaw = getRowFieldByAliases(row, [
+    'code',
+    'partCode',
+    'partNumber',
+    'itemCode',
+    'کد کالا / قطعه',
+    'کد قطعه',
+    'کد کالا',
+    'کد فنی',
+    'شماره فنی',
+    'کد',
+  ]);
+  const nameRaw = getRowFieldByAliases(row, [
+    'name',
+    'partName',
+    'itemName',
+    'title',
+    'description',
+    'شرح قطعه',
+    'نام قطعه',
+    'عنوان فارسی قطعه',
+    'نام کالا',
+    'عنوان قطعه',
+    'شرح کالا',
+    'عنوان',
+    'شرح',
+  ]);
+  const categoryRaw = getRowFieldByAliases(row, [
+    'category',
+    'type',
+    'group',
+    'دسته کالا (RAW_MATERIAL / FINISHED_GOOD / WIP)',
+    'دسته کالا',
+    'دسته‌بندی',
+    'دسته بندی',
+    'گروه کالا',
+    'گروه',
+    'نوع کالا',
+    'نوع قطعه',
+  ]);
+  const unitRaw = getRowFieldByAliases(row, [
+    'unit',
+    'uom',
+    'unitCode',
+    'واحد سنجش (KG / PCS)',
+    'واحد سنجش',
+    'واحد اندازه‌گیری',
+    'واحد اندازه گیری',
+    'واحد',
+  ]);
+  const weightRaw = getRowFieldByAliases(row, [
+    'weightPerUnitKg',
+    'weightNetKg',
+    'weightKg',
+    'weight',
+    'وزن واحد (kg)',
+    'وزن واحد (کیلوگرم)',
+    'وزن واحد',
+    'وزن خالص',
+    'وزن',
+  ]);
+  const gradeRaw = getRowFieldByAliases(row, [
+    'materialGrade',
+    'grade',
+    'material',
+    'گرید متریال',
+    'گرید فولاد',
+    'گرید ورق',
+    'جنس',
+    'گرید',
+  ]);
+  const thicknessRaw = getRowFieldByAliases(row, [
+    'thicknessMm',
+    'thickness',
+    'ضخامت (mm)',
+    'ضخامت ورق (mm)',
+    'ضخامت',
+  ]);
+  const carModelRaw = getRowFieldByAliases(row, [
+    'carModel',
+    'vehicle',
+    'مدل خودرو',
+    'خودرو',
+  ]);
+  const sapcoCodeRaw = getRowFieldByAliases(row, [
+    'sapcoCode',
+    'supplierPartNumber',
+    'customerPartNumber',
+    'کد ساپکو / ایران‌خودرو',
+    'کد ساپکو',
+  ]);
+  const minStockRaw = getRowFieldByAliases(row, [
+    'minStock',
+    'minSafetyStock',
+    'حداقل موجودی اطمینان',
+    'حداقل موجودی',
+    'نقطه سفارش',
+  ]);
+  const maxStockRaw = getRowFieldByAliases(row, [
+    'maxStock',
+    'حداکثر ظرفیت',
+    'حداکثر موجودی',
+  ]);
+  const openingQtyRaw = getRowFieldByAliases(row, [
+    'quantity',
+    'openingBalance',
+    'stock',
+    'physicalQty',
+    'موجودی اول دوره',
+    'مقدار اول دوره',
+    'موجودی',
+    'مقدار',
+  ]);
+
+  const code = normalizeExcelDigits(codeRaw);
+  const name = String(nameRaw ?? '').trim();
+  const category = normalizePartCategory(categoryRaw, code);
+  const unit = normalizePartUnit(unitRaw, category);
+  const weightPerUnitKg = parseExcelNumber(weightRaw, 1) || 1;
+  const materialGrade = normalizeExcelDigits(gradeRaw) || undefined;
+  const thicknessParsed = parseExcelNumber(thicknessRaw, NaN);
+  const thicknessMm = Number.isFinite(thicknessParsed) && thicknessParsed > 0 ? thicknessParsed : undefined;
+  const carModel = carModelRaw ? String(carModelRaw).trim() : undefined;
+  const sapcoCode = sapcoCodeRaw ? normalizeExcelDigits(sapcoCodeRaw) : undefined;
+  const minStock = parseExcelNumber(minStockRaw, 0);
+  const maxStockParsed = parseExcelNumber(maxStockRaw, NaN);
+  const maxStock = Number.isFinite(maxStockParsed) && maxStockParsed > 0 ? maxStockParsed : undefined;
+  const openingQty = parseExcelNumber(openingQtyRaw, 0);
+
+  return {
+    code,
+    name,
+    category,
+    unit,
+    weightPerUnitKg,
+    materialGrade,
+    thicknessMm,
+    carModel,
+    sapcoCode,
+    minStock,
+    maxStock,
+    openingQty,
+  };
+}
+
 export function validateImportBatchRows(
   templateType: string,
   rows: Record<string, any>[],
@@ -1299,9 +1539,9 @@ export function validateImportBatchRows(
     const rowNum = idx + 2; // Row 1 is header
     const typeUpper = (templateType || '').toUpperCase();
 
-    if (typeUpper === 'ITEM_MASTER' || typeUpper === 'PARTS') {
-      const code = row['کد قطعه'] || row['code'] || row['partCode'];
-      const name = row['نام قطعه'] || row['name'] || row['partName'];
+    if (typeUpper === 'ITEM_MASTER' || typeUpper === 'PARTS' || typeUpper === 'ITEMS') {
+      const extracted = extractPartRowFields(row);
+      const { code, name } = extracted;
 
       let hasRowError = false;
       if (!code) {
@@ -1319,12 +1559,15 @@ export function validateImportBatchRows(
       if (code) seenIds.add(String(code).toUpperCase());
 
       if (!hasRowError && code && name) {
-        validRows.push(row);
+        validRows.push({
+          ...row,
+          ...extracted,
+        });
       }
     } else if (typeUpper === 'COILS' || typeUpper === 'PHYSICAL_COILS') {
-      const coilPack = row['شماره پکینگ'] || row['coilPackNumber'];
-      const partCode = row['کد قطعه'] || row['partCode'];
-      const weight = Number(row['وزن باسکول (kg)'] || row['originalWeightKg'] || row['weightKg']);
+      const coilPack = getRowFieldByAliases(row, ['coilPackNumber', 'شماره پکینگ ساپکو', 'شماره پکینگ', 'coilId', 'شناسه کویل']);
+      const partCode = getRowFieldByAliases(row, ['partCode', 'کد قطعه / ورق', 'کد قطعه', 'کد کالا', 'code']);
+      const weight = parseExcelNumber(getRowFieldByAliases(row, ['weightKg', 'originalWeightKg', 'وزن فیزیکی (kg)', 'وزن باسکول (kg)', 'وزن']), 0);
 
       let hasRowError = false;
       if (!coilPack) {
@@ -1341,12 +1584,17 @@ export function validateImportBatchRows(
       }
 
       if (!hasRowError && coilPack && partCode && weight > 0) {
-        validRows.push(row);
+        validRows.push({
+          ...row,
+          coilPackNumber: normalizeExcelDigits(coilPack),
+          partCode: normalizeExcelDigits(partCode),
+          weightKg: weight,
+        });
       }
     } else if (typeUpper === 'INVENTORY_RECEIPTS' || typeUpper === 'INVENTORY_ISSUES') {
-      const partCode = (row['کد قطعه'] || row['partCode'] || '').toUpperCase();
-      const qty = Number(row['تعداد/وزن'] || row['quantity']);
-      const warehouseCode = row['کد انبار'] || row['warehouseCode'] || row['warehouseId'];
+      const partCode = normalizeExcelDigits(getRowFieldByAliases(row, ['partCode', 'کد قطعه', 'کد کالا', 'code'])).toUpperCase();
+      const qty = parseExcelNumber(getRowFieldByAliases(row, ['quantity', 'تعداد/وزن', 'مقدار']), 0);
+      const warehouseCode = getRowFieldByAliases(row, ['warehouseId', 'warehouseCode', 'کد انبار']);
 
       let hasRowError = false;
       if (!partCode) {
@@ -1366,9 +1614,9 @@ export function validateImportBatchRows(
         validRows.push(row);
       }
     } else if (typeUpper === 'CONTRACTS') {
-      const contractNumber = row['شماره قرارداد'] || row['contractNumber'];
-      const title = row['عنوان / موضوع قرارداد'] || row['عنوان قرارداد'] || row['title'];
-      const allocatedWeight = Number(row['سهمیه وزنی کل (کیلوگرم)'] || row['allocatedWeightKg']);
+      const contractNumber = normalizeExcelDigits(getRowFieldByAliases(row, ['contractNumber', 'شماره قرارداد']));
+      const title = getRowFieldByAliases(row, ['title', 'عنوان / موضوع قرارداد', 'عنوان قرارداد']);
+      const allocatedWeight = parseExcelNumber(getRowFieldByAliases(row, ['allocatedWeightKg', 'سهمیه وزنی کل (کیلوگرم)', 'سهمیه وزنی']), 0);
 
       let hasRowError = false;
       if (!contractNumber) {

@@ -33,18 +33,7 @@ const PORT = portFromArgs || safeEnvPort || defaultAppPort || 3000;
 const HOST = hostFromArgs || process.env.HOST || '0.0.0.0';
 
 async function startServer() {
-  const dbOnline = await probeDatabaseConnectivity();
-  if (dbOnline && isDatabaseUrlConfigured()) {
-    try {
-      await loadInventoryAppState();
-      await loadProductionWipState();
-    } catch (err) {
-      console.warn('[KPIMS Startup] PostgreSQL hydration skipped (falling back to in-memory relational state):', err instanceof Error ? err.message : err);
-      initializeProductionWipSeed();
-    }
-  } else {
-    initializeProductionWipSeed();
-  }
+  initializeProductionWipSeed();
 
   const app = express();
 
@@ -133,6 +122,18 @@ async function startServer() {
 
   const server = app.listen(PORT, HOST, () => {
     console.log(`KPIMS Server successfully started and listening on http://${HOST}:${PORT}`);
+    void (async () => {
+      try {
+        const dbOnline = await probeDatabaseConnectivity();
+        if (dbOnline && isDatabaseUrlConfigured()) {
+          await loadInventoryAppState();
+          await loadProductionWipState();
+          console.log('[KPIMS Startup] PostgreSQL state hydrated & synchronized successfully.');
+        }
+      } catch (err) {
+        console.warn('[KPIMS Startup] PostgreSQL hydration notice:', err instanceof Error ? err.message : err);
+      }
+    })();
   });
 
   server.on('error', (err: any) => {

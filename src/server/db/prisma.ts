@@ -1,4 +1,6 @@
 import net from 'node:net';
+import fs from 'node:fs';
+import path from 'node:path';
 import { PrismaClient } from '@prisma/client';
 
 /**
@@ -27,8 +29,47 @@ const normalizePgUrl = (raw?: string): string => {
   return val;
 };
 
+const readDatabaseUrlFromDotEnv = (): string => {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (!fs.existsSync(envPath)) return '';
+    const content = fs.readFileSync(envPath, 'utf-8');
+    for (const line of content.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx === -1) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      if (key === 'DATABASE_URL') {
+        return normalizePgUrl(trimmed.slice(eqIdx + 1));
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+};
+
+const getEffectiveRawDatabaseUrl = (): string => {
+  const fromFile = readDatabaseUrlFromDotEnv();
+  if (fromFile && fromFile !== DEFAULT_FALLBACK_PG_URL) {
+    process.env.DATABASE_URL = fromFile;
+    return fromFile;
+  }
+  const fromEnv = normalizePgUrl(process.env.DATABASE_URL);
+  if (
+    fromEnv &&
+    fromEnv !== DEFAULT_FALLBACK_PG_URL &&
+    !fromEnv.includes('@localhost:') &&
+    !fromEnv.includes('@127.0.0.1:')
+  ) {
+    return fromEnv;
+  }
+  return fromFile || fromEnv;
+};
+
 export const isDatabaseUrlSyntaxValid = (): boolean => {
-  const rawUrl = normalizePgUrl(process.env.DATABASE_URL);
+  const rawUrl = getEffectiveRawDatabaseUrl();
   if (!rawUrl || rawUrl === DEFAULT_FALLBACK_PG_URL) return false;
   try {
     const parsed = new URL(rawUrl);
@@ -50,12 +91,12 @@ export const isDatabaseUrlConfigured = (): boolean => {
   return isDatabaseUrlSyntaxValid();
 };
 
-export async function probeDatabaseConnectivity(timeoutMs = 1000): Promise<boolean> {
+export async function probeDatabaseConnectivity(timeoutMs = 8000): Promise<boolean> {
   if (!isDatabaseUrlSyntaxValid()) {
     global.__kpimsDbReachable = false;
     return false;
   }
-  const rawUrl = normalizePgUrl(process.env.DATABASE_URL);
+  const rawUrl = getEffectiveRawDatabaseUrl();
   try {
     const parsed = new URL(rawUrl);
     const host = parsed.hostname;
@@ -84,7 +125,7 @@ export async function probeDatabaseConnectivity(timeoutMs = 1000): Promise<boole
     const prisma = getPrismaClient();
     await Promise.race([
       prisma.$queryRaw`SELECT 1 as ok`,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('DB probe timeout')), timeoutMs + 500)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('DB probe timeout')), timeoutMs)),
     ]);
     global.__kpimsDbReachable = true;
     return true;
@@ -95,7 +136,7 @@ export async function probeDatabaseConnectivity(timeoutMs = 1000): Promise<boole
 }
 
 export const resolveDatabaseUrl = (): string => {
-  const rawUrl = normalizePgUrl(process.env.DATABASE_URL);
+  const rawUrl = getEffectiveRawDatabaseUrl();
   if (isDatabaseUrlSyntaxValid()) {
     process.env.DATABASE_URL = rawUrl;
     return rawUrl;

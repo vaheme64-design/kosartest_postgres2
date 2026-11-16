@@ -117,6 +117,10 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
   }>({ mo: null, op: null });
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [reconciliationMoId, setReconciliationMoId] = useState<string | null>(null);
+  const [loadMatModalMo, setLoadMatModalMo] = useState<ManufacturingOrder | null>(null);
+  const [loadMatQty, setLoadMatQty] = useState<number>(0);
+  const [loadMatNotes, setLoadMatNotes] = useState<string>('');
+  const [loadMatSubmitting, setLoadMatSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     if (notification) {
@@ -191,6 +195,47 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message };
+    }
+  };
+
+  const handleLoadMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loadMatModalMo || loadMatQty <= 0) return;
+    setLoadMatSubmitting(true);
+    try {
+      const res = await fetch(`/api/wip/manufacturing-orders/${loadMatModalMo.id}/load-material`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quantity: loadMatQty,
+          operatorName: 'اپراتور خط تولید',
+          notes: loadMatNotes || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setNotification({
+          type: 'error',
+          message: data.error || 'خطا در بارگذاری مواد به دستور کار',
+        });
+        return;
+      }
+      setNotification({
+        type: 'success',
+        message: data.message || 'مواد اولیه / بلنک با موفقیت در دستور کار بارگذاری شد.',
+      });
+      setLoadMatModalMo(null);
+      setLoadMatQty(0);
+      setLoadMatNotes('');
+      await loadWipData();
+      if (onGlobalRefresh) await onGlobalRefresh();
+    } catch (err: any) {
+      setNotification({
+        type: 'error',
+        message: err.message || 'خطا در ارتباط با سرور',
+      });
+    } finally {
+      setLoadMatSubmitting(false);
     }
   };
 
@@ -703,6 +748,20 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
                                 ? 'تکمیل‌شده'
                                 : 'صادرشده'}
                             </span>
+                            {mo.status !== 'COMPLETED' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLoadMatModalMo(mo);
+                                  setLoadMatQty(Math.max(1, mo.targetQuantity - mo.initialInputQuantity) || mo.targetQuantity);
+                                  setLoadMatNotes('');
+                                }}
+                                className="sap-btn-standard text-[11px] py-0.5 px-2 cursor-pointer"
+                                title="بارگذاری ورق یا بلنک اولیه در مرحله نخست دستور کار"
+                              >
+                                بارگذاری مواد
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => router.traceDocument(mo.moNumber, 'INVENTORY_LEDGER')}
@@ -967,6 +1026,77 @@ export const ProductionWipModuleView: React.FC<ProductionWipModuleViewProps> = (
         onClose={() => setReconciliationMoId(null)}
         moId={reconciliationMoId}
       />
+
+      {loadMatModalMo && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#d9d9d9] rounded-md shadow-lg w-full max-w-md overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#e5e5e5] flex items-center justify-between bg-[#f8f9fa]">
+              <h3 className="text-xs font-bold text-[#333333]">
+                بارگذاری مواد اولیه / بلنک به دستور کار {loadMatModalMo.moNumber}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setLoadMatModalMo(null)}
+                className="text-xs text-[#666666] hover:text-[#333333] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleLoadMaterial} className="p-4 space-y-3 text-xs">
+              <div className="bg-[#f5f5f5] border border-[#d9d9d9] rounded p-2.5 text-[#333333]">
+                <div className="font-semibold">{loadMatModalMo.partName}</div>
+                <div className="text-[11px] text-[#666666] mt-0.5 font-mono">
+                  هدف: {formatNumber(loadMatModalMo.targetQuantity)} • بارگذاری فعلی: {formatNumber(loadMatModalMo.initialInputQuantity)}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[#333333] font-semibold mb-1">
+                  تعداد ورق / بلنک ورودی به مرحله نخست (عدد):
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={loadMatQty || ''}
+                  onChange={e => setLoadMatQty(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-[#007cc0]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#333333] font-semibold mb-1">
+                  توضیحات / شماره کویل مرجع (اختیاری):
+                </label>
+                <input
+                  type="text"
+                  value={loadMatNotes}
+                  onChange={e => setLoadMatNotes(e.target.value)}
+                  placeholder="مثال: بارگذاری بلنک برش‌خورده از کلاف COIL-ECU-001"
+                  className="w-full bg-white border border-[#bfbfbf] rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#007cc0]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#e5e5e5]">
+                <button
+                  type="button"
+                  onClick={() => setLoadMatModalMo(null)}
+                  className="sap-btn-standard text-xs px-3 py-1.5 cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadMatSubmitting || loadMatQty <= 0}
+                  className="sap-btn-emphasized text-xs px-3.5 py-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {loadMatSubmitting ? 'در حال ثبت...' : 'تایید بارگذاری در صف خط'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
