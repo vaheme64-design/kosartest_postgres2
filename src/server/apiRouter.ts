@@ -135,6 +135,7 @@ import {
   getProductionBacklogReport,
   getWipByPartAndOperationReport,
   getWipAgingReport,
+  getMaterialConsumptionVsStandardReport,
   getSapcoMaterialAccountReport,
   getInventoryValuationQuantitiesReport,
   getScrapByPartAndOperationReport,
@@ -5037,8 +5038,9 @@ apiRouter.post('/inventory/coils/:id/issue', async (req: Request, res: Response)
       );
       if (isDatabaseUrlConfigured()) {
         await syncCoilsToPostgres(physicalCoilsStore);
-        await persistInventoryAppState();
       }
+      await persistProductionWipState();
+      await persistInventoryAppState();
       return res.json(resp);
     }
     const { id } = req.params;
@@ -5638,16 +5640,16 @@ apiRouter.get('/inventory/coils/:id/genealogy', async (req: Request, res: Respon
 apiRouter.post('/inventory/coils/:id/return', async (req: Request, res: Response) => {
   try {
     if (!isDatabaseUrlConfigured()) {
-      return res.json(
-        postFallbackCoilReturn(
-          req.params.id,
-          req.body || {},
-          physicalCoilsStore,
-          coilIssueRecordsStore,
-          inventoryDocsStore,
-          warehousesStore,
-        ),
+      const resp = postFallbackCoilReturn(
+        req.params.id,
+        req.body || {},
+        physicalCoilsStore,
+        coilIssueRecordsStore,
+        inventoryDocsStore,
+        warehousesStore,
       );
+      await persistInventoryAppState();
+      return res.json(resp);
     }
     const { id } = req.params;
     const returnedKg = Number(req.body.returnedRemnantWeightKg);
@@ -5857,14 +5859,14 @@ apiRouter.post('/inventory/coils/:id/return', async (req: Request, res: Response
 apiRouter.post('/inventory/coils/:id/allocate', async (req: Request, res: Response) => {
   try {
     if (!isDatabaseUrlConfigured()) {
-      return res.json(
-        postFallbackCoilAllocate(
-          req.params.id,
-          req.body?.allocations || [],
-          physicalCoilsStore,
-          contractsStore,
-        ),
+      const resp = postFallbackCoilAllocate(
+        req.params.id,
+        req.body?.allocations || [],
+        physicalCoilsStore,
+        contractsStore,
       );
+      await persistInventoryAppState();
+      return res.json(resp);
     }
     const { id } = req.params;
     const { allocations } = req.body;
@@ -8411,8 +8413,9 @@ apiRouter.post('/wip/operations/production', async (req: Request, res: Response)
       );
       if (isDatabaseUrlConfigured()) {
         await syncCoilsToPostgres(physicalCoilsStore);
-        await persistInventoryAppState();
       }
+      await persistProductionWipState();
+      await persistInventoryAppState();
       return res.status(resp.duplicate ? 200 : 201).json(resp);
     }
 
@@ -8735,6 +8738,7 @@ apiRouter.post('/planning/proposals/regenerate', async (req: Request, res: Respo
       }
     }
     const data = createFallbackProposal(notes, partsStore, routingsStore, machinesStore, inventoryDocsStore, reservationsStore);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: 'پیشنهاد نسخه ۱ از اطلاعات جاری ایجاد شد.', data });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'خطا در تولید پیشنهاد برنامه';
@@ -8754,6 +8758,7 @@ apiRouter.post('/planning/proposals/:id/revise', async (req: Request, res: Respo
       }
     }
     const data = reviseFallbackProposal(req.params.id, changes, note);
+    await persistInventoryAppState();
     return res.status(201).json({ success: true, message: `نسخه ${data.version} به‌صورت پیش‌نویس ایجاد شد.`, data });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'خطا در اصلاح پیشنهاد برنامه';
@@ -8772,6 +8777,7 @@ apiRouter.post('/planning/proposals/:id/approve', async (req: Request, res: Resp
       }
     }
     const data = approveFallbackProposal(req.params.id, approvedBy);
+    await persistInventoryAppState();
     return res.json({ success: true, message: 'پیشنهاد با موفقیت تأیید شد.', data });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'خطا در تایید پیشنهاد';
@@ -8794,6 +8800,8 @@ apiRouter.post('/planning/proposals/:id/release', async (req: Request, res: Resp
       }
     }
     const data = await releaseFallbackProposal(req.params.id, releasedBy, partsStore, routingsStore);
+    await persistProductionWipState();
+    await persistInventoryAppState();
     return res.status(data.replayed ? 200 : 201).json({
       success: true,
       message: data.replayed ? 'این پیشنهاد قبلاً صادر شده است؛ دستورهای ساخت قبلی بازگردانده شدند.' : 'برنامه تولید و دستورهای ساخت با موفقیت صادر شدند.',
@@ -8864,11 +8872,12 @@ apiRouter.get('/planning/suggestions/:id', (req: Request, res: Response) => {
 /**
  * 18.5. Regenerate Suggestions Based on Fresh Demand and WIP
  */
-apiRouter.post('/planning/suggestions/regenerate', (_req: Request, res: Response) => {
+apiRouter.post('/planning/suggestions/regenerate', async (_req: Request, res: Response) => {
   try {
     planSuggestionsStore.length = 0; // Clear
     const fresh = generateProductionPlanSuggestions();
     planSuggestionsStore.push(...fresh);
+    await persistInventoryAppState();
     res.json({ success: true, message: 'برنامه‌ریزی تولید بر مبنای آخرین سفارشات و وضعیت WIP مجدداً محاسبه شد.', data: fresh });
   } catch (error) {
     res.status(500).json({
@@ -8881,11 +8890,12 @@ apiRouter.post('/planning/suggestions/regenerate', (_req: Request, res: Response
 /**
  * 18.6. Approve Proposed Plan
  */
-apiRouter.post('/planning/suggestions/:id/approve', (req: Request, res: Response) => {
+apiRouter.post('/planning/suggestions/:id/approve', async (req: Request, res: Response) => {
   try {
     const approvedBy = req.body.approvedBy || 'مهندس حسینی (مدیر تولید)';
     const result = approvePlanSuggestion(req.params.id, approvedBy);
     if (!result.success) return res.status(400).json(result);
+    await persistInventoryAppState();
     res.json({ success: true, message: 'برنامه پیشنهادی با موفقیت تأیید شد و آماده صدور به سالن تولید گردید.', data: result.data });
   } catch (error) {
     res.status(500).json({
@@ -8898,11 +8908,13 @@ apiRouter.post('/planning/suggestions/:id/approve', (req: Request, res: Response
 /**
  * 18.7. Release Approved Plan to Official Manufacturing Order
  */
-apiRouter.post('/planning/suggestions/:id/release-mo', (req: Request, res: Response) => {
+apiRouter.post('/planning/suggestions/:id/release-mo', async (req: Request, res: Response) => {
   try {
     const releasedBy = req.body.releasedBy || 'مهندس حسینی (مدیر تولید)';
     const result = releasePlanToManufacturingOrder(req.params.id, releasedBy);
     if (!result.success) return res.status(400).json(result);
+    await persistProductionWipState();
+    await persistInventoryAppState();
     res.status(201).json({
       success: true,
       message: `برنامه با موفقیت به دستور ساخت رسمی شماره ${result.mo?.moNumber} تبدیل و مراحل عملیاتی صادر شدند.`,
@@ -8920,11 +8932,12 @@ apiRouter.post('/planning/suggestions/:id/release-mo', (req: Request, res: Respo
 /**
  * 18.8. Revise Plan Operations / Versioning
  */
-apiRouter.post('/planning/suggestions/:id/revise', (req: Request, res: Response) => {
+apiRouter.post('/planning/suggestions/:id/revise', async (req: Request, res: Response) => {
   try {
     const { modifiedOperations, note } = req.body;
     const result = revisePlanVersion(req.params.id, modifiedOperations, note || 'اصلاح دستی تخصیص ماشین‌آلات');
     if (!result.success) return res.status(400).json(result);
+    await persistInventoryAppState();
     res.json({ success: true, message: `نسخه برنامه به ${result.data?.planVersion} ارتقا یافت و ذخیره شد.`, data: result.data });
   } catch (error) {
     res.status(500).json({
@@ -9961,14 +9974,21 @@ apiRouter.get('/reports/wip-aging', async (req: Request, res: Response) => {
 });
 
 // 19.6 Material Consumption vs Standard
-// BOM variance is intentionally unavailable until actual issue quantities can be reconciled
-// against an approved, versioned BOM. Never fall back to sample or estimated consumption.
-apiRouter.get('/reports/material-consumption-vs-standard', (_req: Request, res: Response) => {
-  return res.status(409).json({
-    success: false,
-    error: 'مقایسه با استاندارد BOM تا زمان اتصال BOM نسخه‌دار و تأییدشده به مصرف واقعی غیرفعال است. برای مشاهده مصرف ثبت‌شده، گزارش مصرف واقعی مواد را باز کنید.',
-    source: 'BOM_VARIANCE_DISABLED_UNTIL_VERSIONED_BOM_RECONCILIATION',
-  });
+apiRouter.get('/reports/material-consumption-vs-standard', (req: Request, res: Response) => {
+  try {
+    const filters = extractReportFilters(req);
+    const report = getMaterialConsumptionVsStandardReport(filters);
+    return res.json({
+      success: true,
+      source: 'VERSIONED_BOM_RECONCILIATION_AND_POSTED_MATERIAL_LEDGER',
+      ...report,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'خطا در محاسبه انحراف مصرف استاندارد BOM',
+    });
+  }
 });
 
 // 19.6a Actual Material Consumption from Posted Inventory Transactions and Production Reports
