@@ -2093,10 +2093,12 @@ async function checkDatabaseConnection() {
   const rawUrl = resolveDatabaseUrl();
   const maskedUrl = rawUrl.replace(/:([^@]+)@/, ":****@");
   const dbType = rawUrl.startsWith("postgresql://") || rawUrl.startsWith("postgres://") ? "PostgreSQL" : "SQLite";
+  const hasConfiguredUrl = isDatabaseUrlSyntaxValid();
   if (global.__kpimsDbReachable === true) {
     return {
       isConfigured: true,
       isConnected: true,
+      isDurableStorageActive: false,
       databaseType: dbType,
       databaseUrlMasked: maskedUrl,
       storageMode: "POSTGRESQL_LIVE",
@@ -2108,18 +2110,22 @@ async function checkDatabaseConnection() {
     return {
       isConfigured: true,
       isConnected: true,
+      isDurableStorageActive: false,
       databaseType: dbType,
       databaseUrlMasked: maskedUrl,
       storageMode: "POSTGRESQL_LIVE",
       lastChecked: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
+  const reasonSummary = global.__kpimsLastDbError ? `\u0627\u062A\u0635\u0627\u0644 \u0628\u0647 \u067E\u0627\u06CC\u06AF\u0627\u0647 \u062F\u0627\u062F\u0647 \u0627\u0628\u0631\u06CC PostgreSQL \u0628\u0631\u0642\u0631\u0627\u0631 \u0646\u0634\u062F (${global.__kpimsLastDbError.slice(0, 120)}). \u0645\u0648\u062A\u0648\u0631 \u067E\u0627\u06CC\u062F\u0627\u0631 \u062F\u06CC\u0633\u06A9 \u0645\u062D\u0644\u06CC (HYBRID_DURABLE_DISK) \u0628\u0627 \u0630\u062E\u06CC\u0631\u0647 \u062E\u0648\u062F\u06A9\u0627\u0631 \u0641\u0639\u0627\u0644 \u0627\u0633\u062A.` : "\u0622\u062F\u0631\u0633 PostgreSQL \u0645\u0639\u062A\u0628\u0631 \u062A\u0646\u0638\u06CC\u0645 \u0646\u0634\u062F\u0647 \u06CC\u0627 \u062F\u0631 \u062F\u0633\u062A\u0631\u0633 \u0646\u06CC\u0633\u062A\u061B \u0645\u0648\u062A\u0648\u0631 \u067E\u0627\u06CC\u062F\u0627\u0631 \u062F\u06CC\u0633\u06A9 \u0645\u062D\u0644\u06CC (HYBRID_DURABLE_DISK) \u0628\u0627 \u0630\u062E\u06CC\u0631\u0647 \u062E\u0648\u062F\u06A9\u0627\u0631 \u0641\u0639\u0627\u0644 \u0627\u0633\u062A.";
   return {
-    isConfigured: true,
-    isConnected: true,
+    isConfigured: hasConfiguredUrl,
+    isConnected: false,
+    isDurableStorageActive: true,
     databaseType: dbType,
     databaseUrlMasked: maskedUrl,
     storageMode: "HYBRID_DURABLE_DISK",
+    errorMessage: reasonSummary,
     lastChecked: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
@@ -2367,6 +2373,9 @@ function getLiveParts() {
 }
 function getLiveRoutings() {
   return wipRuntimeProvider ? wipRuntimeProvider().routings : INITIAL_ROUTINGS;
+}
+function getLiveDies() {
+  return wipRuntimeProvider?.().dies || INITIAL_DIES_MOLDS;
 }
 var WIP_SNAPSHOT_ID = "production-wip-state";
 var WIP_DISK_PATH = path2.resolve(process.cwd(), "data", "kpims-wip-db.json");
@@ -2796,6 +2805,18 @@ function getManufacturingOrderById(id) {
   return manufacturingOrdersStore.find((m) => m.id === id || m.moNumber === id);
 }
 function createManufacturingOrder(params) {
+  const targetQty = Number(params.targetQuantity);
+  if (!Number.isFinite(targetQty) || targetQty <= 0) {
+    return { success: false, error: "\u062A\u06CC\u0631\u0627\u0698 \u0647\u062F\u0641 \u062F\u0633\u062A\u0648\u0631 \u062A\u0648\u0644\u06CC\u062F \u0628\u0627\u06CC\u062F \u0639\u062F\u062F\u06CC \u0628\u0632\u0631\u06AF\u062A\u0631 \u0627\u0632 \u0635\u0641\u0631 \u0628\u0627\u0634\u062F." };
+  }
+  let initialInput = targetQty;
+  if (params.initialInputQuantity !== void 0 && params.initialInputQuantity !== null) {
+    const parsedInitial = Number(params.initialInputQuantity);
+    if (!Number.isFinite(parsedInitial) || parsedInitial < 0) {
+      return { success: false, error: "\u0645\u0642\u062F\u0627\u0631 \u0648\u0631\u0648\u062F\u06CC \u0627\u0648\u0644\u06CC\u0647 \u0645\u0648\u0627\u062F \u0646\u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u062F \u0645\u0646\u0641\u06CC \u06CC\u0627 \u0646\u0627\u0645\u0639\u062A\u0628\u0631 \u0628\u0627\u0634\u062F." };
+    }
+    initialInput = parsedInitial;
+  }
   const liveParts = getLiveParts();
   const liveRoutings = getLiveRoutings();
   const partLookup = params.partId || params.partCode || "";
@@ -2814,7 +2835,6 @@ function createManufacturingOrder(params) {
     moId = `MO-2026-${String(seqNum).padStart(3, "0")}`;
   }
   const now = (/* @__PURE__ */ new Date()).toISOString();
-  const initialInput = params.initialInputQuantity !== void 0 ? Math.max(0, Number(params.initialInputQuantity) || 0) : params.targetQuantity;
   const operations = routing.operations.map((op, idx) => ({
     id: `MOP-${moId}-${op.stepNumber}`,
     moId,
@@ -2848,7 +2868,7 @@ function createManufacturingOrder(params) {
     partId: part.id,
     partCode: part.code,
     partName: part.name,
-    targetQuantity: params.targetQuantity,
+    targetQuantity: targetQty,
     initialInputQuantity: initialInput,
     completedQuantity: 0,
     totalScrapQuantity: 0,
@@ -2920,17 +2940,18 @@ function registerOperationInput(params) {
   if (!mo) return { success: false, error: "\u062F\u0633\u062A\u0648\u0631 \u062A\u0648\u0644\u06CC\u062F \u06CC\u0627\u0641\u062A \u0646\u0634\u062F." };
   const op = mo.operations.find((o) => o.id === params.operationId);
   if (!op) return { success: false, error: "\u0645\u0631\u062D\u0644\u0647 \u0639\u0645\u0644\u06CC\u0627\u062A\u06CC \u06CC\u0627\u0641\u062A \u0646\u0634\u062F." };
-  if (params.quantity <= 0) {
-    return { success: false, error: "\u0645\u0642\u062F\u0627\u0631 \u0648\u0631\u0648\u062F\u06CC \u0628\u0627\u06CC\u062F \u0628\u0632\u0631\u06AF\u062A\u0631 \u0627\u0632 \u0635\u0641\u0631 \u0628\u0627\u0634\u062F." };
+  const qty = Number(params.quantity);
+  if (!Number.isFinite(qty) || qty <= 0) {
+    return { success: false, error: "\u0645\u0642\u062F\u0627\u0631 \u0648\u0631\u0648\u062F\u06CC \u0628\u0627\u06CC\u062F \u0639\u062F\u062F\u06CC \u0628\u0632\u0631\u06AF\u062A\u0631 \u0627\u0632 \u0635\u0641\u0631 \u0628\u0627\u0634\u062F." };
   }
-  if (params.quantity > op.waitingInputQty) {
+  if (qty > op.waitingInputQty) {
     return {
       success: false,
-      error: `\u0645\u0648\u062C\u0648\u062F\u06CC \u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631 \u0628\u0631\u0627\u06CC \u0634\u0631\u0648\u0639 \u067E\u0631\u062F\u0627\u0632\u0634 \u06A9\u0627\u0641\u06CC \u0646\u06CC\u0633\u062A. \u0645\u0648\u062C\u0648\u062F\u06CC \u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631: ${op.waitingInputQty}\u060C \u0645\u0642\u062F\u0627\u0631 \u062F\u0631\u062E\u0648\u0627\u0633\u062A\u06CC: ${params.quantity}`
+      error: `\u0645\u0648\u062C\u0648\u062F\u06CC \u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631 \u0628\u0631\u0627\u06CC \u0634\u0631\u0648\u0639 \u067E\u0631\u062F\u0627\u0632\u0634 \u06A9\u0627\u0641\u06CC \u0646\u06CC\u0633\u062A. \u0645\u0648\u062C\u0648\u062F\u06CC \u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631: ${op.waitingInputQty}\u060C \u0645\u0642\u062F\u0627\u0631 \u062F\u0631\u062E\u0648\u0627\u0633\u062A\u06CC: ${qty}`
     };
   }
-  op.waitingInputQty -= params.quantity;
-  op.inProgressQty += params.quantity;
+  op.waitingInputQty -= qty;
+  op.inProgressQty += qty;
   op.status = "IN_PROGRESS";
   op.lastActivityAt = (/* @__PURE__ */ new Date()).toISOString();
   if (params.machineId) op.machineId = params.machineId;
@@ -2944,7 +2965,7 @@ function registerOperationInput(params) {
     stepNumber: op.stepNumber,
     stepName: op.stepName,
     activityType: "INPUT_LOAD",
-    quantity: params.quantity,
+    quantity: qty,
     operatorName: params.operatorName,
     machineId: params.machineId,
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -2957,10 +2978,13 @@ function registerOperationProduction(params) {
   if (!mo) return { success: false, error: "\u062F\u0633\u062A\u0648\u0631 \u062A\u0648\u0644\u06CC\u062F \u06CC\u0627\u0641\u062A \u0646\u0634\u062F." };
   const op = mo.operations.find((o) => o.id === params.operationId);
   if (!op) return { success: false, error: "\u0645\u0631\u062D\u0644\u0647 \u0639\u0645\u0644\u06CC\u0627\u062A\u06CC \u06CC\u0627\u0641\u062A \u0646\u0634\u062F." };
-  const good = Math.max(0, Number(params.goodQty) || 0);
-  const scrap = Math.max(0, Number(params.scrapQty) || 0);
-  const rework = Math.max(0, Number(params.reworkQty) || 0);
-  const rejected = Math.max(0, Number(params.rejectedQty) || 0);
+  const good = Number(params.goodQty ?? 0);
+  const scrap = Number(params.scrapQty ?? 0);
+  const rework = Number(params.reworkQty ?? 0);
+  const rejected = Number(params.rejectedQty ?? 0);
+  if (!Number.isFinite(good) || good < 0 || !Number.isFinite(scrap) || scrap < 0 || !Number.isFinite(rework) || rework < 0 || !Number.isFinite(rejected) || rejected < 0) {
+    return { success: false, error: "\u0645\u0642\u0627\u062F\u06CC\u0631 \u062A\u0648\u0644\u06CC\u062F \u0633\u0627\u0644\u0645\u060C \u0636\u0627\u06CC\u0639\u0627\u062A\u060C \u062F\u0648\u0628\u0627\u0631\u0647\u200C\u06A9\u0627\u0631\u06CC \u0648 \u0645\u0631\u062F\u0648\u062F\u06CC \u0646\u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u0646\u062F \u0645\u0646\u0641\u06CC \u06CC\u0627 \u0646\u0627\u0645\u0639\u062A\u0628\u0631 \u0628\u0627\u0634\u0646\u062F." };
+  }
   const totalReported = good + scrap + rework + rejected;
   if (totalReported <= 0) {
     return { success: false, error: "\u062D\u062F\u0627\u0642\u0644 \u06CC\u06A9\u06CC \u0627\u0632 \u0645\u0642\u0627\u062F\u06CC\u0631 \u062A\u0648\u0644\u06CC\u062F \u0633\u0627\u0644\u0645\u060C \u0636\u0627\u06CC\u0639\u0627\u062A \u06CC\u0627 \u062F\u0648\u0628\u0627\u0631\u0647\u200C\u06A9\u0627\u0631\u06CC \u0628\u0627\u06CC\u062F \u062B\u0628\u062A \u0634\u0648\u062F." };
@@ -2981,6 +3005,19 @@ function registerOperationProduction(params) {
   op.reworkQty += rework;
   op.rejectedQty += rejected;
   op.lastActivityAt = postedAt;
+  const liveDies = getLiveDies();
+  const machineCodeOrId = params.machineId || op.machineId;
+  const matchedDie = liveDies.find(
+    (d) => (d.partId === mo.partId || d.partCode === mo.partCode) && d.processType === op.processType && (!machineCodeOrId || !d.compatibleMachineCodes?.length || d.compatibleMachineCodes.includes(machineCodeOrId))
+  ) || liveDies.find((d) => (d.partId === mo.partId || d.partCode === mo.partCode) && d.processType === op.processType);
+  let diePmNotice = "";
+  if (matchedDie) {
+    matchedDie.currentStrokes = (Number(matchedDie.currentStrokes) || 0) + totalReported;
+    if (matchedDie.strokeLifeTarget > 0 && matchedDie.currentStrokes >= matchedDie.strokeLifeTarget) {
+      matchedDie.status = "UNDER_MAINTENANCE";
+      diePmNotice = ` [\u0647\u0634\u062F\u0627\u0631 PM \u0642\u0627\u0644\u0628 ${matchedDie.code}: \u0636\u0631\u0628\u0647 \u0641\u0639\u0644\u06CC ${matchedDie.currentStrokes} \u0628\u0647 \u062D\u062F \u0646\u0635\u0627\u0628 \u0633\u0631\u0648\u06CC\u0633 \u0631\u0633\u06CC\u062F]`;
+    }
+  }
   const nextOp = mo.operations.find((candidate) => candidate.sequence === op.sequence + 1);
   op.transferredQty += good;
   if (op.inProgressQty === 0 && op.waitingInputQty === 0) {
@@ -3063,7 +3100,7 @@ function registerOperationProduction(params) {
     operatorName: params.operatorName,
     machineId: params.machineId,
     timestamp: postedAt,
-    notes: params.notes
+    notes: `${params.notes || ""}${diePmNotice}`.trim() || void 0
   });
   return { success: true, data: mo };
 }
@@ -4523,7 +4560,7 @@ async function releaseRelationalPlanProposal(id, releasedBy) {
 }
 
 // src/server/inventoryEngine.ts
-function calculateDetailedStockBalances(documents, reservations, parts) {
+function calculateDetailedStockBalances(documents, reservations, parts, qcHolds) {
   const partsMap = /* @__PURE__ */ new Map();
   parts.forEach((p) => partsMap.set(p.id, p));
   const balanceMap = /* @__PURE__ */ new Map();
@@ -4751,9 +4788,9 @@ function calculateDetailedStockBalances(documents, reservations, parts) {
       );
       for (const entry of matchingEntries) {
         if (remainingQtyToAllocate <= 0) break;
-        const availableToReserve = Math.max(0, entry.physicalQty - entry.reservedQty);
+        const availableToReserve = Math.max(0, entry.physicalQty - entry.reservedQty - entry.qualityBlockedQty);
         const qtyAllocated = Math.min(availableToReserve, remainingQtyToAllocate);
-        const kgAllocated = part.unit === "KG" ? qtyAllocated : Math.min(entry.physicalKg - entry.reservedKg, remainingKgToAllocate);
+        const kgAllocated = part.unit === "KG" ? qtyAllocated : Math.min(Math.max(0, entry.physicalKg - entry.reservedKg - entry.qualityBlockedKg), remainingKgToAllocate);
         entry.reservedQty += qtyAllocated;
         entry.reservedKg += kgAllocated;
         remainingQtyToAllocate -= qtyAllocated;
@@ -4798,6 +4835,15 @@ function calculateDetailedStockBalances(documents, reservations, parts) {
   let totalCompanyOwnedKg = 0;
   const activeLots = /* @__PURE__ */ new Set();
   for (const item of balanceMap.values()) {
+    if (qcHolds && Object.keys(qcHolds).length > 0) {
+      const hold = qcHolds[item.id] || (item.lotNumber ? qcHolds[item.lotNumber] : void 0) || qcHolds[`${item.partId}-${item.warehouseId}`];
+      if (hold && hold.isHeld) {
+        const addedBlocked = item.unit === "KG" ? Number(hold.heldWeightKg || hold.heldQty || Math.max(0, item.physicalKg - item.qualityBlockedKg) || 0) : Number(hold.heldQty || Math.max(0, item.physicalQty - item.qualityBlockedQty) || 0);
+        item.qualityBlockedQty = Math.min(item.physicalQty, (item.qualityBlockedQty || 0) + Math.max(0, addedBlocked));
+        const unitWeight = item.physicalQty > 0 ? item.physicalKg / item.physicalQty : 1;
+        item.qualityBlockedKg = Math.min(item.physicalKg, Math.round(item.qualityBlockedQty * unitWeight * 1e3) / 1e3);
+      }
+    }
     item.availableQty = Math.max(0, item.physicalQty - item.reservedQty - item.qualityBlockedQty);
     item.availableKg = Math.max(0, item.physicalKg - item.reservedKg - item.qualityBlockedKg);
     item.physicalQty = Math.round(item.physicalQty * 1e3) / 1e3;
@@ -4851,7 +4897,7 @@ function calculateDetailedStockBalances(documents, reservations, parts) {
   };
   return { balances, metrics };
 }
-function atomicPostDocument(document2, allDocuments, reservations, parts, user) {
+function atomicPostDocument(document2, allDocuments, reservations, parts, user, qcHolds) {
   if (document2.postingStatus === "POSTED") {
     return {
       success: false,
@@ -4871,6 +4917,7 @@ function atomicPostDocument(document2, allDocuments, reservations, parts, user) 
     };
   }
   const standardDocTypes = [
+    "OPENING_BALANCE",
     "RECEIPT_RAW_MATERIAL",
     "RECEIPT_FINISHED_GOODS",
     "ISSUE_RAW_MATERIAL",
@@ -4881,12 +4928,26 @@ function atomicPostDocument(document2, allDocuments, reservations, parts, user) 
   ];
   if (standardDocTypes.includes(document2.documentType)) {
     for (const line of document2.lines) {
-      if (Number(line.quantity) <= 0 || line.quantityKg !== void 0 && Number(line.quantityKg) <= 0) {
+      if (!Number.isFinite(Number(line.quantity)) || Number(line.quantity) <= 0 || line.quantityKg !== void 0 && (!Number.isFinite(Number(line.quantityKg)) || Number(line.quantityKg) <= 0)) {
         return {
           success: false,
           error: `\u062E\u0637\u0627\u06CC \u0627\u0639\u062A\u0628\u0627\u0631\u0633\u0646\u062C\u06CC \u0645\u0642\u062F\u0627\u0631\u06CC: \u0645\u0642\u062F\u0627\u0631 \u0631\u062F\u06CC\u0641 \xAB${line.lineNumber}\xBB \u0642\u0637\u0639\u0647 \xAB${line.partCode}\xBB \u0628\u0627\u06CC\u062F \u0628\u0632\u0631\u06AF\u062A\u0631 \u0627\u0632 \u0635\u0641\u0631 \u0628\u0627\u0634\u062F. \u0645\u0642\u0627\u062F\u06CC\u0631 \u0645\u0646\u0641\u06CC \u06CC\u0627 \u0635\u0641\u0631 \u0645\u062C\u0627\u0632 \u0646\u06CC\u0633\u062A\u0646\u062F.`
         };
       }
+    }
+  }
+  if (document2.documentType === "TRANSFER") {
+    if (!document2.targetWarehouseId) {
+      return {
+        success: false,
+        error: "\u0628\u0631\u0627\u06CC \u062B\u0628\u062A \u0633\u0646\u062F \u0627\u0646\u062A\u0642\u0627\u0644 \u0628\u06CC\u0646\u200C\u0627\u0646\u0628\u0627\u0631\u06CC\u060C \u0627\u0646\u062A\u062E\u0627\u0628 \u0627\u0646\u0628\u0627\u0631 \u0645\u0642\u0635\u062F \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A."
+      };
+    }
+    if (document2.warehouseId === document2.targetWarehouseId && document2.lines.every((l) => !l.targetLocationCode || l.targetLocationCode === l.locationCode)) {
+      return {
+        success: false,
+        error: "\u0627\u0646\u0628\u0627\u0631 \u0648 \u0645\u0648\u0642\u0639\u06CC\u062A \u0645\u0628\u062F\u0623 \u0648 \u0645\u0642\u0635\u062F \u0627\u0646\u062A\u0642\u0627\u0644 \u0646\u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u0646\u062F \u06CC\u06A9\u0633\u0627\u0646 \u0628\u0627\u0634\u0646\u062F."
+      };
     }
   }
   if (document2.documentType === "ADJUSTMENT" && (!document2.adjustmentReason || !document2.adjustmentReason.trim())) {
@@ -4897,7 +4958,7 @@ function atomicPostDocument(document2, allDocuments, reservations, parts, user) 
   }
   const isStockDeduction = ["ISSUE_RAW_MATERIAL", "ISSUE_FINISHED_GOODS", "DELIVERY_CUSTOMER", "SHIPMENT_CUSTOMER", "TRANSFER"].includes(document2.documentType);
   if (isStockDeduction) {
-    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts);
+    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts, qcHolds);
     const requestedMap = /* @__PURE__ */ new Map();
     for (const line of document2.lines) {
       const key = `${line.partId}:::${document2.warehouseId}:::${line.lotNumber || "ALL"}`;
@@ -4915,16 +4976,18 @@ function atomicPostDocument(document2, allDocuments, reservations, parts, user) 
         (b) => b.partId === partId && b.warehouseId === warehouseId && (lot === "ALL" || b.lotNumber === lot)
       );
       const totalAvailableInStore = matchingBalances.reduce((sum, b) => sum + b.availableQty, 0);
+      const totalBlockedInStore = matchingBalances.reduce((sum, b) => sum + b.qualityBlockedQty, 0);
       if (req.totalRequested > totalAvailableInStore) {
+        const qcNote = totalBlockedInStore > 0 ? ` (${totalBlockedInStore} \u0648\u0627\u062D\u062F \u062F\u0631 \u0642\u0631\u0646\u0637\u06CC\u0646\u0647 \u06A9\u06CC\u0641\u06CC QC Hold \u0645\u0633\u062F\u0648\u062F \u0627\u0633\u062A)` : "";
         return {
           success: false,
-          error: `\u062E\u0637\u0627\u06CC \u06A9\u0646\u062A\u0631\u0644 \u0645\u0648\u062C\u0648\u062F\u06CC: \u0645\u062C\u0645\u0648\u0639 \u062A\u0642\u0627\u0636\u0627\u06CC \u0631\u062F\u06CC\u0641\u200C\u0647\u0627\u06CC \u0633\u0646\u062F \u0628\u0631\u0627\u06CC \u0642\u0637\u0639\u0647 \xAB${req.partCode}\xBB (${req.totalRequested}) \u0628\u06CC\u0634 \u0627\u0632 \u0645\u0648\u062C\u0648\u062F\u06CC \u0622\u0632\u0627\u062F \u0627\u0646\u0628\u0627\u0631 (${totalAvailableInStore}) \u0627\u0633\u062A. \u062C\u0644\u0648\u06AF\u06CC\u0631\u06CC \u0627\u0632 \u0645\u0646\u0641\u06CC \u0634\u062F\u0646 \u0645\u0648\u062C\u0648\u062F\u06CC.`
+          error: `\u062E\u0637\u0627\u06CC \u06A9\u0646\u062A\u0631\u0644 \u0645\u0648\u062C\u0648\u062F\u06CC: \u0645\u062C\u0645\u0648\u0639 \u062A\u0642\u0627\u0636\u0627\u06CC \u0631\u062F\u06CC\u0641\u200C\u0647\u0627\u06CC \u0633\u0646\u062F \u0628\u0631\u0627\u06CC \u0642\u0637\u0639\u0647 \xAB${req.partCode}\xBB (${req.totalRequested}) \u0628\u06CC\u0634 \u0627\u0632 \u0645\u0648\u062C\u0648\u062F\u06CC \u0622\u0632\u0627\u062F \u0627\u0646\u0628\u0627\u0631 (${totalAvailableInStore}) \u0627\u0633\u062A${qcNote}. \u062C\u0644\u0648\u06AF\u06CC\u0631\u06CC \u0627\u0632 \u0645\u0646\u0641\u06CC \u0634\u062F\u0646 \u0645\u0648\u062C\u0648\u062F\u06CC \u06CC\u0627 \u0645\u0635\u0631\u0641 \u06A9\u0627\u0644\u0627\u06CC \u0642\u0631\u0646\u0637\u06CC\u0646\u0647.`
         };
       }
     }
   }
   if (document2.documentType === "ADJUSTMENT") {
-    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts);
+    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts, qcHolds);
     for (const line of document2.lines) {
       if (Number(line.quantity) < 0) {
         const absQty = Math.abs(Number(line.quantity));
@@ -11885,7 +11948,7 @@ async function releaseFallbackProposal(id, releasedBy, parts, routings) {
   return { replayed: false, proposal, plan, manufacturingOrders: createdMos };
 }
 function getFallbackMaterialIssueOptions(parts, inventoryDocs, reservations, warehouses, operators) {
-  const { balances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts);
+  const { balances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts, serverQcHoldStore);
   const coilPartCodes = /* @__PURE__ */ new Set(["RM-COIL-DC01A-2.0-1140", "RM-SHT-DC01A-2.0-1000"]);
   const stockBalances = balances.filter((b) => {
     const part = parts.find((p) => p.id === b.partId || p.code === b.partCode);
@@ -12111,6 +12174,13 @@ async function postFallbackCoilIssue(coilIdOrId, body, physicalCoils, coilIssueR
   const coil = physicalCoils.find((c) => c.id === coilIdOrId || c.coilId === coilIdOrId);
   if (!coil) {
     throw Object.assign(new Error("\u06A9\u0644\u0627\u0641 \u0641\u06CC\u0632\u06CC\u06A9\u06CC \u0645\u0648\u0631\u062F \u0646\u0638\u0631 \u06CC\u0627\u0641\u062A \u0646\u0634\u062F."), { statusCode: 404 });
+  }
+  const activeHold = serverQcHoldStore[coil.id] || serverQcHoldStore[coil.coilId] || (coil.coilPackNumber ? serverQcHoldStore[coil.coilPackNumber] : void 0);
+  if (["QUARANTINE", "QUALITY_BLOCKED", "REJECTED"].includes(coil.qualityStatus) || coil.physicalStatus === "BLOCKED" || activeHold?.isHeld) {
+    throw Object.assign(
+      new Error(`\u06A9\u0644\u0627\u0641 \xAB${coil.coilId}\xBB \u062F\u0631 \u0648\u0636\u0639\u06CC\u062A \u0642\u0631\u0646\u0637\u06CC\u0646\u0647 \u06A9\u06CC\u0641\u06CC (QC Hold) \u06CC\u0627 \u0645\u0633\u062F\u0648\u062F \u0642\u0631\u0627\u0631 \u062F\u0627\u0631\u062F \u0648 \u0627\u0645\u06A9\u0627\u0646 \u0635\u062F\u0648\u0631 \u0628\u0647 \u062A\u0648\u0644\u06CC\u062F \u0646\u062F\u0627\u0631\u062F.`),
+      { statusCode: 409 }
+    );
   }
   const fingerprint = JSON.stringify({
     coilId: coil.id,
@@ -12739,10 +12809,17 @@ async function postFallbackWipOperationProduction(body, parts, physicalCoils, in
         createdAt: nowIso2,
         updatedAt: nowIso2
       };
-      const checkRes = atomicPostDocument(bfDoc, inventoryDocs, reservations, parts, {
-        uid: body.createdByUserId || "USR-PROD",
-        displayName: body.operatorName || "\u0627\u067E\u0631\u0627\u062A\u0648\u0631 \u062A\u0648\u0644\u06CC\u062F"
-      });
+      const checkRes = atomicPostDocument(
+        bfDoc,
+        inventoryDocs,
+        reservations,
+        parts,
+        {
+          uid: body.createdByUserId || "USR-PROD",
+          displayName: body.operatorName || "\u0627\u067E\u0631\u0627\u062A\u0648\u0631 \u062A\u0648\u0644\u06CC\u062F"
+        },
+        serverQcHoldStore
+      );
       if (checkRes.success) {
         postedTxCount += issueLines.length;
         inventoryDocs.unshift(bfDoc);
@@ -13525,7 +13602,8 @@ registerPlanningRuntimeProvider(() => ({
 }));
 registerWipRuntimeProvider(() => ({
   parts: partsStore,
-  routings: routingsStore
+  routings: routingsStore,
+  dies: diesStore
 }));
 registerReportsRuntimeProvider(() => ({
   parts: partsStore,
@@ -14479,6 +14557,29 @@ async function executePersistentWipMutation(mutation, persist) {
   return task;
 }
 var apiRouter = Router();
+var VALID_RBAC_ROLES = /* @__PURE__ */ new Set([
+  "ADMIN",
+  "PRODUCTION_MANAGER",
+  "WAREHOUSE_KEEPER",
+  "LINE_SUPERVISOR",
+  "QC_INSPECTOR"
+]);
+function assertAuthorizedRole(req, res, allowedRoles, actionLabelFa) {
+  const rawRole = String(
+    req.header("x-kpims-role") || req.body?.userRole || req.body?.user?.role || ""
+  ).trim().toUpperCase();
+  if (!rawRole || !VALID_RBAC_ROLES.has(rawRole)) {
+    return true;
+  }
+  if (allowedRoles.includes(rawRole)) {
+    return true;
+  }
+  res.status(403).json({
+    success: false,
+    error: `\u0639\u062F\u0645 \u0645\u062C\u0648\u0632 \u062F\u0633\u062A\u0631\u0633\u06CC (403 Forbidden): \u0646\u0642\u0634 \xAB${rawRole}\xBB \u0645\u062C\u0627\u0632 \u0628\u0647 \u0627\u062C\u0631\u0627\u06CC \u0639\u0645\u0644\u06CC\u0627\u062A \xAB${actionLabelFa}\xBB \u0646\u06CC\u0633\u062A.`
+  });
+  return false;
+}
 function syncErpRuntimeStores() {
   if (INITIAL_PARTS !== partsStore) {
     INITIAL_PARTS.splice(0, INITIAL_PARTS.length, ...partsStore);
@@ -14615,6 +14716,9 @@ apiRouter.post("/inventory/validate-and-post", async (req, res) => {
 });
 apiRouter.post("/inventory/reverse", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "WAREHOUSE_KEEPER", "PRODUCTION_MANAGER"], "\u0627\u0628\u0637\u0627\u0644 \u0633\u0646\u062F \u0627\u0646\u0628\u0627\u0631")) {
+      return;
+    }
     const { voucherId, reason, user } = req.body;
     if (!voucherId) {
       return res.status(400).json({ success: false, error: "\u0634\u0646\u0627\u0633\u0647 \u0633\u0646\u062F \u062C\u0647\u062A \u0627\u0628\u0637\u0627\u0644 \u0645\u0634\u062E\u0635 \u0646\u0634\u062F\u0647 \u0627\u0633\u062A." });
@@ -14910,6 +15014,7 @@ apiRouter.post("/routings", async (req, res) => {
   }
 });
 apiRouter.delete("/routings/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0645\u0633\u06CC\u0631 \u062A\u0648\u0644\u06CC\u062F")) return;
   const { id } = req.params;
   const initialLength = routingsStore.length;
   routingsStore = routingsStore.filter((r) => r.id !== id);
@@ -14942,6 +15047,7 @@ apiRouter.post("/production/boms", async (req, res) => {
   }
 });
 apiRouter.delete("/production/boms/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u062F\u0631\u062E\u062A \u0645\u062D\u0635\u0648\u0644 (BOM)")) return;
   const { id } = req.params;
   const deleted = deleteAdvancedBom(id);
   if (deleted) {
@@ -15030,6 +15136,7 @@ apiRouter.post("/production/parallel-flows", async (req, res) => {
   }
 });
 apiRouter.delete("/production/parallel-flows/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u062C\u0631\u06CC\u0627\u0646 \u062A\u0648\u0644\u06CC\u062F \u0645\u0648\u0627\u0632\u06CC")) return;
   const { id } = req.params;
   const deleted = deleteParallelFlow(id);
   if (deleted) {
@@ -15112,6 +15219,7 @@ apiRouter.post("/dies", async (req, res) => {
   }
 });
 apiRouter.delete("/dies/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0642\u0627\u0644\u0628 \u067E\u0631\u0633")) return;
   const { id } = req.params;
   diesStore = diesStore.filter((d) => d.id !== id);
   await persistInventoryAppState();
@@ -15156,6 +15264,7 @@ apiRouter.post("/operators", async (req, res) => {
   }
 });
 apiRouter.delete("/operators/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0627\u067E\u0631\u0627\u062A\u0648\u0631")) return;
   const { id } = req.params;
   const initialCount = operatorsStore.length;
   operatorsStore = operatorsStore.filter((o) => o.id !== id && o.personnelCode !== id);
@@ -15271,6 +15380,7 @@ apiRouter.post("/halls", async (req, res) => {
   }
 });
 apiRouter.delete("/halls/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0633\u0627\u0644\u0646 \u062A\u0648\u0644\u06CC\u062F")) return;
   const { id } = req.params;
   const initialLen = hallsStore.length;
   hallsStore = hallsStore.filter((h) => h.id !== id && h.code !== id);
@@ -15308,6 +15418,7 @@ apiRouter.post("/processes", async (req, res) => {
   }
 });
 apiRouter.delete("/processes/:code", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0641\u0631\u0622\u06CC\u0646\u062F \u062A\u0648\u0644\u06CC\u062F")) return;
   const { code } = req.params;
   const initialCount = processesStore.length;
   processesStore = processesStore.filter((p) => p.code !== code);
@@ -15353,6 +15464,7 @@ apiRouter.post("/material-grades", async (req, res) => {
   }
 });
 apiRouter.delete("/material-grades/:code", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u06AF\u0631\u06CC\u062F \u0622\u0644\u06CC\u0627\u0698")) return;
   const { code } = req.params;
   const initialCount = materialGradesStore.length;
   materialGradesStore = materialGradesStore.filter((g) => g.code.toUpperCase() !== code.toUpperCase());
@@ -15398,6 +15510,7 @@ apiRouter.post("/warehouses", async (req, res) => {
   }
 });
 apiRouter.delete("/warehouses/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0627\u0646\u0628\u0627\u0631")) return;
   const { id } = req.params;
   const initialCount = warehousesStore.length;
   warehousesStore = warehousesStore.filter((w) => w.id !== id && w.code !== id);
@@ -15438,6 +15551,7 @@ apiRouter.post("/units", async (req, res) => {
   }
 });
 apiRouter.delete("/units/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0648\u0627\u062D\u062F \u0633\u0646\u062C\u0634")) return;
   const { id } = req.params;
   const initialCount = unitsStore.length;
   unitsStore = unitsStore.filter((u) => u.id !== id && u.symbol !== id);
@@ -15480,6 +15594,7 @@ apiRouter.post("/customers", async (req, res) => {
   }
 });
 apiRouter.delete("/customers/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0645\u0634\u062A\u0631\u06CC")) return;
   const { id } = req.params;
   const initialCount = customersStore.length;
   customersStore = customersStore.filter((c) => c.id !== id && c.code !== id);
@@ -15525,6 +15640,7 @@ apiRouter.post("/shifts", async (req, res) => {
   }
 });
 apiRouter.delete("/shifts/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0634\u06CC\u0641\u062A \u06A9\u0627\u0631\u06CC")) return;
   const { id } = req.params;
   const initialCount = shiftsStore.length;
   shiftsStore = shiftsStore.filter((s) => s.id !== id && s.code !== id);
@@ -15563,6 +15679,7 @@ apiRouter.post("/car-models", async (req, res) => {
   }
 });
 apiRouter.delete("/car-models/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0645\u062F\u0644 \u062E\u0648\u062F\u0631\u0648")) return;
   const { id } = req.params;
   const initialCount = carModelsStore.length;
   carModelsStore = carModelsStore.filter((c) => c.id !== id && c.code !== id);
@@ -15609,6 +15726,7 @@ apiRouter.post("/operations", async (req, res) => {
   }
 });
 apiRouter.delete("/operations/:id", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0639\u0645\u0644\u06CC\u0627\u062A \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F")) return;
   const { id } = req.params;
   const initialCount = operationsStore.length;
   operationsStore = operationsStore.filter((o) => o.id !== id && o.code !== id);
@@ -15619,7 +15737,8 @@ apiRouter.delete("/operations/:id", async (req, res) => {
     res.status(404).json({ success: false, error: "\u0639\u0645\u0644\u06CC\u0627\u062A \u0645\u0648\u0631\u062F \u0646\u0638\u0631 \u06CC\u0627\u0641\u062A \u0646\u0634\u062F." });
   }
 });
-apiRouter.post("/demo-data/seed", async (_req, res) => {
+apiRouter.post("/demo-data/seed", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN"], "\u0628\u0627\u0632\u0646\u0634\u0627\u0646\u06CC \u062F\u0627\u062F\u0647\u200C\u0647\u0627\u06CC \u0646\u0645\u0648\u0646\u0647 \u06A9\u0627\u0631\u062E\u0627\u0646\u0647")) return;
   const realParts = partsStore.filter((p) => !p.isDemo);
   const realMachines = machinesStore.filter((m) => !m.isDemo);
   const realRoutings = routingsStore.filter((r) => !r.isDemo);
@@ -15655,7 +15774,8 @@ apiRouter.post("/demo-data/seed", async (_req, res) => {
     summary
   });
 });
-apiRouter.post("/demo-data/clean", async (_req, res) => {
+apiRouter.post("/demo-data/clean", async (req, res) => {
+  if (!assertAuthorizedRole(req, res, ["ADMIN"], "\u067E\u0627\u06A9\u0633\u0627\u0632\u06CC \u06A9\u0627\u0645\u0644 \u062F\u0627\u062F\u0647\u200C\u0647\u0627\u06CC \u0646\u0645\u0648\u0646\u0647")) return;
   const demoPartsRemoved = partsStore.filter((p) => p.isDemo).length;
   const demoTxRemoved = transactionsStore.filter((t) => t.isDemo).length;
   const demoDiesRemoved = diesStore.filter((d) => d.isDemo).length;
@@ -15875,7 +15995,7 @@ apiRouter.post("/sapco/coils", async (req, res) => {
 });
 apiRouter.get("/inventory/dashboard-metrics", (_req, res) => {
   try {
-    const { metrics } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { metrics } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     metrics.activeContractsCount = contractsStore.filter((c) => c.status === "ACTIVE").length;
     res.json({
       success: true,
@@ -16169,6 +16289,38 @@ apiRouter.post("/inventory/documents", async (req, res) => {
         notes: l.notes
       };
     });
+    if ([
+      "OPENING_BALANCE",
+      "RECEIPT_RAW_MATERIAL",
+      "RECEIPT_FINISHED_GOODS",
+      "ISSUE_RAW_MATERIAL",
+      "ISSUE_FINISHED_GOODS",
+      "DELIVERY_CUSTOMER",
+      "SHIPMENT_CUSTOMER",
+      "TRANSFER"
+    ].includes(payload.documentType)) {
+      const invalidLine = lines.find((l) => !Number.isFinite(l.quantity) || l.quantity <= 0);
+      if (invalidLine) {
+        return res.status(400).json({
+          success: false,
+          error: `\u062E\u0637\u0627\u06CC \u0627\u0639\u062A\u0628\u0627\u0631\u0633\u0646\u062C\u06CC \u0645\u0642\u062F\u0627\u0631\u06CC: \u0645\u0642\u062F\u0627\u0631 \u0631\u062F\u06CC\u0641 \xAB${invalidLine.lineNumber}\xBB \u0642\u0637\u0639\u0647 \xAB${invalidLine.partCode}\xBB \u0628\u0627\u06CC\u062F \u0628\u0632\u0631\u06AF\u062A\u0631 \u0627\u0632 \u0635\u0641\u0631 \u0628\u0627\u0634\u062F.`
+        });
+      }
+    }
+    if (payload.documentType === "TRANSFER") {
+      if (!payload.targetWarehouseId) {
+        return res.status(400).json({
+          success: false,
+          error: "\u0628\u0631\u0627\u06CC \u062B\u0628\u062A \u0633\u0646\u062F \u0627\u0646\u062A\u0642\u0627\u0644 \u0628\u06CC\u0646\u200C\u0627\u0646\u0628\u0627\u0631\u06CC\u060C \u0627\u0646\u062A\u062E\u0627\u0628 \u0627\u0646\u0628\u0627\u0631 \u0645\u0642\u0635\u062F \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A."
+        });
+      }
+      if (payload.warehouseId === payload.targetWarehouseId && lines.every((l) => !l.targetLocationCode || l.targetLocationCode === l.locationCode)) {
+        return res.status(400).json({
+          success: false,
+          error: "\u0627\u0646\u0628\u0627\u0631 \u0648 \u0645\u0648\u0642\u0639\u06CC\u062A \u0645\u0628\u062F\u0623 \u0648 \u0645\u0642\u0635\u062F \u0627\u0646\u062A\u0642\u0627\u0644 \u0646\u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u0646\u062F \u06CC\u06A9\u0633\u0627\u0646 \u0628\u0627\u0634\u0646\u062F."
+        });
+      }
+    }
     const newDoc = {
       id: `DOC-${Date.now()}`,
       documentNumber: docNumber,
@@ -16206,7 +16358,8 @@ apiRouter.post("/inventory/documents", async (req, res) => {
         inventoryDocsStore,
         reservationsStore,
         partsStore,
-        user
+        user,
+        serverQcHoldStore
       );
       if (!postResult.success) {
         return res.status(400).json({ success: false, error: postResult.error });
@@ -16270,7 +16423,8 @@ apiRouter.post("/inventory/documents/:id/post", async (req, res) => {
       inventoryDocsStore,
       reservationsStore,
       partsStore,
-      postUser
+      postUser,
+      serverQcHoldStore
     );
     if (!postResult.success) {
       return res.status(400).json({ success: false, error: postResult.error });
@@ -16306,6 +16460,9 @@ apiRouter.post("/inventory/documents/:id/post", async (req, res) => {
 });
 apiRouter.post("/inventory/documents/:id/reverse", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "WAREHOUSE_KEEPER", "PRODUCTION_MANAGER"], "\u0627\u0628\u0637\u0627\u0644 \u0633\u0646\u062F \u0642\u0637\u0639\u06CC \u0627\u0646\u0628\u0627\u0631")) {
+      return;
+    }
     const { id } = req.params;
     const { reason, user, reversedByUid, reversedByName } = req.body || {};
     if (!reason || !String(reason).trim()) {
@@ -16324,7 +16481,7 @@ apiRouter.post("/inventory/documents/:id/reverse", async (req, res) => {
       uid: user?.uid || reversedByUid || "USR-ADMIN",
       displayName: user?.displayName || reversedByName || "\u0645\u062F\u06CC\u0631 \u0633\u06CC\u0633\u062A\u0645"
     };
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     const reversalResult = createReversalDocument(targetDoc, String(reason).trim(), revUser, balances);
     if (!reversalResult.success || !reversalResult.reversalDocument) {
       return res.status(400).json({ success: false, error: reversalResult.error });
@@ -16362,7 +16519,7 @@ apiRouter.post("/inventory/documents/:id/reverse", async (req, res) => {
 apiRouter.get("/inventory/stock-inquiry", (req, res) => {
   try {
     const { partId, materialGrade, warehouseId, locationCode, ownership, search } = req.query;
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     let filtered = [...balances];
     if (partId && typeof partId === "string" && partId !== "ALL") {
       filtered = filtered.filter((b) => b.partId === partId || b.partCode === partId);
@@ -16385,20 +16542,6 @@ apiRouter.get("/inventory/stock-inquiry", (req, res) => {
         (b) => b.partName.toLowerCase().includes(q) || b.partCode.toLowerCase().includes(q) || b.lotNumber && b.lotNumber.toLowerCase().includes(q) || b.heatNumber && b.heatNumber.toLowerCase().includes(q) || b.warehouseName.toLowerCase().includes(q)
       );
     }
-    filtered = filtered.map((b) => {
-      const hold = serverQcHoldStore[b.id] || (b.lotNumber ? serverQcHoldStore[b.lotNumber] : void 0) || serverQcHoldStore[`${b.partId}-${b.warehouseId}`];
-      if (!hold || !hold.isHeld) return b;
-      const addedBlocked = b.unit === "KG" ? Number(hold.heldWeightKg || hold.heldQty || b.availableKg || b.physicalKg || 0) : Number(hold.heldQty || b.availableQty || b.physicalQty || 0);
-      const newBlockedQty = Math.min(b.physicalQty, (b.qualityBlockedQty || 0) + addedBlocked);
-      const newAvailableQty = Math.max(0, b.physicalQty - b.reservedQty - newBlockedQty);
-      const unitWeight = b.physicalQty > 0 ? b.physicalKg / b.physicalQty : 1;
-      return {
-        ...b,
-        qualityBlockedQty: newBlockedQty,
-        availableQty: newAvailableQty,
-        availableKg: Math.round(newAvailableQty * unitWeight * 100) / 100
-      };
-    });
     const isSearching = !!(search && typeof search === "string" && search.trim()) || partId && partId !== "ALL";
     const filterOutZero = req.query.onlyAvailable === "true" || req.query.onlyNonZero === "true";
     if (filterOutZero && !isSearching) {
@@ -16419,6 +16562,9 @@ apiRouter.get("/inventory/stock-inquiry", (req, res) => {
 });
 apiRouter.post("/inventory/qc-hold", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "QC_INSPECTOR", "PRODUCTION_MANAGER", "WAREHOUSE_KEEPER"], "\u062B\u0628\u062A \u06CC\u0627 \u0631\u0641\u0639 \u0642\u0631\u0646\u0637\u06CC\u0646\u0647 \u06A9\u06CC\u0641\u06CC (QC Hold)")) {
+      return;
+    }
     const { key, partId, partCode, materialGrade, lotNumber, isHeld, heldQty, heldWeightKg, reasonFa } = req.body;
     if (!key) {
       return res.status(400).json({ success: false, error: "\u0634\u0646\u0627\u0633\u0647 \u0631\u062F\u06CC\u0641 \u0645\u0648\u062C\u0648\u062F\u06CC \u06CC\u0627 \u06A9\u0644\u0627\u0641 \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A." });
@@ -16528,7 +16674,7 @@ apiRouter.post("/inventory/reservations", async (req, res) => {
     const qty = Number(payload.quantity);
     const weightPerUnit = part.weightPerUnitKg || 1;
     const weightKg = part.unit === "KG" ? qty : Number((qty * weightPerUnit).toFixed(3));
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     const matching = balances.filter((b) => b.partId === part.id && b.warehouseId === payload.warehouseId);
     const available = matching.reduce((sum, b) => sum + b.availableQty, 0);
     if (qty > available) {
@@ -16786,6 +16932,9 @@ apiRouter.put("/inventory/contracts/:id", async (req, res) => {
 });
 apiRouter.delete("/inventory/contracts/:id", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u06CC\u0627 \u062A\u0639\u0644\u06CC\u0642 \u0642\u0631\u0627\u0631\u062F\u0627\u062F")) {
+      return;
+    }
     const { id } = req.params;
     const contract = contractsStore.find((c) => c.id === id || c.contractNumber === id);
     if (!contract) {
@@ -18955,14 +19104,6 @@ apiRouter.post("/production/execute-op-backflush", async (req, res) => {
             qty: consumedKg,
             unit: "KG"
           });
-          const physCoil = physicalCoilsStore.find((c) => c.coilId === coilNumber || c.heatNumber === heatNumber) || physicalCoilsStore[0];
-          if (physCoil) {
-            physCoil.remainingWeightKg = Math.max(0, Number((physCoil.remainingWeightKg - consumedKg).toFixed(2)));
-          }
-          const sapcoCoil = coilsStore.find((c) => c.coilNumber === coilNumber || c.heatNumber === heatNumber) || coilsStore[0];
-          if (sapcoCoil) {
-            sapcoCoil.consumedWeightKg = Number((sapcoCoil.consumedWeightKg + consumedKg).toFixed(2));
-          }
         } else if (Number(opNo) === 40 || opCode === "OP40" || isFinalOp) {
           const consumedNuts = deltaQty * 15;
           const nutsKg = Number((consumedNuts * 5e-3).toFixed(3));
@@ -19019,14 +19160,6 @@ apiRouter.post("/production/execute-op-backflush", async (req, res) => {
             qty: consumedKg,
             unit: "KG"
           });
-          const physCoil = physicalCoilsStore.find((c) => c.coilId === coilNumber || c.heatNumber === heatNumber) || physicalCoilsStore[0];
-          if (physCoil) {
-            physCoil.remainingWeightKg = Math.max(0, Number((physCoil.remainingWeightKg - consumedKg).toFixed(2)));
-          }
-          const sapcoCoil = coilsStore.find((c) => c.coilNumber === coilNumber || c.heatNumber === heatNumber) || coilsStore[0];
-          if (sapcoCoil) {
-            sapcoCoil.consumedWeightKg = Number((sapcoCoil.consumedWeightKg + consumedKg).toFixed(2));
-          }
         } else if (Number(opNo) === 30 || opCode === "OP30" || isFinalOp) {
           const consumedBolts = deltaQty * 2;
           const boltsKg = Number((consumedBolts * 9e-3).toFixed(3));
@@ -19198,12 +19331,20 @@ apiRouter.post("/production/execute-op-backflush", async (req, res) => {
           createdAt: nowIso2,
           updatedAt: nowIso2
         };
+        const targetPhysCoil = issueLines.some((l) => l.unit === "KG" && l.lotNumber) ? physicalCoilsStore.find((c) => c.coilId === coilNumber || c.coilPackNumber === coilNumber || c.heatNumber === heatNumber) : void 0;
+        if (targetPhysCoil && (["QUARANTINE", "QUALITY_BLOCKED", "REJECTED"].includes(targetPhysCoil.qualityStatus) || targetPhysCoil.physicalStatus === "BLOCKED")) {
+          return res.status(409).json({
+            success: false,
+            error: `\u06A9\u0644\u0627\u0641 \xAB${targetPhysCoil.coilId}\xBB \u062F\u0631 \u0648\u0636\u0639\u06CC\u062A \u0642\u0631\u0646\u0637\u06CC\u0646\u0647 \u06A9\u06CC\u0641\u06CC \u06CC\u0627 \u0645\u0633\u062F\u0648\u062F \u0627\u0633\u062A \u0648 \u0627\u0645\u06A9\u0627\u0646 \u0645\u0635\u0631\u0641 \u062E\u0648\u062F\u06A9\u0627\u0631 \u0646\u062F\u0627\u0631\u062F.`
+          });
+        }
         const bfPostResult = atomicPostDocument(
           bfDoc,
           inventoryDocsStore,
           reservationsStore,
           partsStore,
-          bfUser
+          bfUser,
+          serverQcHoldStore
         );
         if (!bfPostResult.success) {
           return res.status(400).json({
@@ -19297,13 +19438,18 @@ apiRouter.post("/production/execute-op-backflush", async (req, res) => {
         inventoryDocsStore,
         reservationsStore,
         partsStore,
-        { uid: "USR-ADMIN", displayName: "\u0633\u06CC\u0633\u062A\u0645 \u0627\u062A\u0648\u0645\u0627\u062A\u06CC\u06A9 \u062A\u0648\u0644\u06CC\u062F \u0648 \u0627\u0646\u0628\u0627\u0631" }
+        { uid: "USR-ADMIN", displayName: "\u0633\u06CC\u0633\u062A\u0645 \u0627\u062A\u0648\u0645\u0627\u062A\u06CC\u06A9 \u062A\u0648\u0644\u06CC\u062F \u0648 \u0627\u0646\u0628\u0627\u0631" },
+        serverQcHoldStore
       );
-      if (rcvPostResult.success) {
-        inventoryDocsStore.unshift(rcvDoc);
-        if (rcvPostResult.auditRecord) {
-          auditLogsStore.unshift(rcvPostResult.auditRecord);
-        }
+      if (!rcvPostResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: `\u062B\u0628\u062A \u0631\u0633\u06CC\u062F \u062E\u0648\u062F\u06A9\u0627\u0631 \u062A\u0648\u0644\u06CC\u062F \u0646\u0627\u0645\u0648\u0641\u0642 \u0628\u0648\u062F: ${rcvPostResult.error}`
+        });
+      }
+      inventoryDocsStore.unshift(rcvDoc);
+      if (rcvPostResult.auditRecord) {
+        auditLogsStore.unshift(rcvPostResult.auditRecord);
       }
       transactionsStore.unshift({
         id: `TX-RCV-${docSuffix}`,
@@ -19325,7 +19471,7 @@ apiRouter.post("/production/execute-op-backflush", async (req, res) => {
         createdAt: nowIso2
       });
     }
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     await persistInventoryAppState();
     res.json({
       success: true,
@@ -19347,7 +19493,7 @@ apiRouter.post("/production/execute-op-backflush", async (req, res) => {
 });
 apiRouter.get("/traceability/full-chain", (_req, res) => {
   try {
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     const tierSummary = partsStore.map((part) => {
       const partBalances = balances.filter((b) => b.partId === part.id || b.partCode === part.code);
       const onHandQty = partBalances.reduce((s, b) => s + (part.unit === "KG" ? b.physicalKg : b.physicalQty), 0);
@@ -20000,6 +20146,9 @@ apiRouter.post("/inventory/report-configs", async (req, res) => {
 });
 apiRouter.delete("/inventory/report-configs/:id", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER", "WAREHOUSE_KEEPER"], "\u062D\u0630\u0641 \u0642\u0627\u0644\u0628 \u06AF\u0632\u0627\u0631\u0634")) {
+      return;
+    }
     const { id } = req.params;
     if (!isDatabaseUrlConfigured()) {
       const deleted = deleteFallbackReportConfig(id);
@@ -20146,6 +20295,9 @@ apiRouter.post("/inventory/customers", async (req, res) => {
 });
 apiRouter.post("/inventory/import/create-missing-master-data", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "WAREHOUSE_KEEPER", "PRODUCTION_MANAGER"], "\u0627\u06CC\u062C\u0627\u062F \u0627\u0637\u0644\u0627\u0639\u0627\u062A \u067E\u0627\u06CC\u0647 \u0627\u0632 \u0627\u06A9\u0633\u0644")) {
+      return;
+    }
     const { units = [], categories = [], parts = [], warehouses = [], customers = [] } = req.body;
     let addedCount = 0;
     const syncedParts = [];
@@ -20269,7 +20421,7 @@ apiRouter.post("/inventory/import/create-missing-master-data", async (req, res) 
         const postRes = atomicPostDocument(openDoc, inventoryDocsStore, reservationsStore, partsStore, {
           uid: "USR-AUTO-IMPORT",
           displayName: "\u0648\u0631\u0648\u062F \u062E\u0648\u062F\u06A9\u0627\u0631 \u0627\u06A9\u0633\u0644"
-        });
+        }, serverQcHoldStore);
         if (postRes.success) {
           inventoryDocsStore.unshift(openDoc);
           if (postRes.auditRecord) auditLogsStore.unshift(postRes.auditRecord);
@@ -20428,6 +20580,9 @@ apiRouter.post("/inventory/import/validate", (req, res) => {
 });
 apiRouter.post("/inventory/import/confirm", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "WAREHOUSE_KEEPER", "PRODUCTION_MANAGER"], "\u062A\u0627\u06CC\u06CC\u062F \u0646\u0647\u0627\u06CC\u06CC \u0648\u0631\u0648\u062F \u0627\u0637\u0644\u0627\u0639\u0627\u062A \u0627\u0632 \u0627\u06A9\u0633\u0644")) {
+      return;
+    }
     const idempotencyKey = req.body.idempotencyKey || req.body.batchId || `BATCH-${Date.now()}`;
     const { batchType, user } = req.body;
     const rows = req.body.rows || req.body.validRows;
@@ -20553,7 +20708,7 @@ apiRouter.post("/inventory/import/confirm", async (req, res) => {
           const postRes = atomicPostDocument(openDoc, inventoryDocsStore, reservationsStore, partsStore, {
             uid: user?.uid || "USR-OP",
             displayName: user?.displayName || "\u0645\u062F\u06CC\u0631 \u0627\u0646\u0628\u0627\u0631"
-          });
+          }, serverQcHoldStore);
           if (postRes.success) {
             inventoryDocsStore.unshift(openDoc);
             if (postRes.auditRecord) auditLogsStore.unshift(postRes.auditRecord);
@@ -20766,7 +20921,7 @@ apiRouter.post("/inventory/import/confirm", async (req, res) => {
         const postRes = atomicPostDocument(openDoc, inventoryDocsStore, reservationsStore, partsStore, {
           uid: user?.uid || "USR-OP",
           displayName: user?.displayName || "\u0645\u062F\u06CC\u0631 \u0627\u0646\u0628\u0627\u0631"
-        });
+        }, serverQcHoldStore);
         if (postRes.success) {
           inventoryDocsStore.unshift(openDoc);
           if (postRes.auditRecord) auditLogsStore.unshift(postRes.auditRecord);
@@ -21618,18 +21773,68 @@ apiRouter.post("/planning/customer-orders", async (req, res) => {
         await persistInventoryAppState();
         return res.status(201).json({ success: true, message: "\u0633\u0641\u0627\u0631\u0634 \u0645\u0634\u062A\u0631\u06CC \u062F\u0631 PostgreSQL \u062B\u0628\u062A \u0634\u062F.", data, source: "postgresql" });
       } catch (_dbOrderErr) {
+        const msg = _dbOrderErr instanceof Error ? _dbOrderErr.message : "";
+        if (msg !== "HYBRID_DISK_MODE_ACTIVE" && !/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|timeout|connect/i.test(msg)) {
+          throw _dbOrderErr;
+        }
       }
     }
+    if (customerOrdersStore.some((o) => o.orderNumber === orderNumber)) {
+      return res.status(409).json({ success: false, error: "\u0634\u0645\u0627\u0631\u0647 \u0633\u0641\u0627\u0631\u0634 \u0645\u0634\u062A\u0631\u06CC \u0642\u0628\u0644\u0627\u064B \u062B\u0628\u062A \u0634\u062F\u0647 \u0627\u0633\u062A." });
+    }
+    if (!Array.isArray(payload.lines) || payload.lines.length === 0) {
+      return res.status(400).json({ success: false, error: "\u062D\u062F\u0627\u0642\u0644 \u06CC\u06A9 \u0631\u062F\u06CC\u0641 \u0642\u0637\u0639\u0647 \u0628\u0631\u0627\u06CC \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634 \u0645\u0634\u062A\u0631\u06CC \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A." });
+    }
+    const orderId = `ORD-2026-${String(customerOrdersStore.length + 1).padStart(3, "0")}`;
+    const defaultDueDate = String(payload.dueDate || new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10));
+    const normalizedLines = [];
+    for (let index = 0; index < payload.lines.length; index++) {
+      const line = payload.lines[index] || {};
+      const orderedQuantity = Number(line.orderedQuantity ?? line.orderedQty);
+      const deliveredQuantity = Number(line.deliveredQuantity ?? line.deliveredQty ?? 0);
+      if (!Number.isFinite(orderedQuantity) || orderedQuantity <= 0 || !Number.isFinite(deliveredQuantity) || deliveredQuantity < 0 || deliveredQuantity > orderedQuantity) {
+        return res.status(400).json({
+          success: false,
+          error: `\u062A\u0639\u062F\u0627\u062F \u0633\u0641\u0627\u0631\u0634/\u062A\u062D\u0648\u06CC\u0644 \u062F\u0631 \u0631\u062F\u06CC\u0641 ${index + 1} \u0645\u0639\u062A\u0628\u0631 \u0646\u06CC\u0633\u062A.`
+        });
+      }
+      const partIdentifier = String(line.partId || line.partCode || "").trim();
+      if (!partIdentifier) {
+        return res.status(400).json({
+          success: false,
+          error: `\u0642\u0637\u0639\u0647 \u0631\u062F\u06CC\u0641 ${index + 1} \u0645\u0634\u062E\u0635 \u0646\u0634\u062F\u0647 \u0627\u0633\u062A.`
+        });
+      }
+      const part = partsStore.find((p) => p.id === partIdentifier || p.code === partIdentifier);
+      if (!part) {
+        return res.status(400).json({
+          success: false,
+          error: `\u0642\u0637\u0639\u0647 \xAB${partIdentifier}\xBB \u062F\u0631 \u0627\u0637\u0644\u0627\u0639\u0627\u062A \u067E\u0627\u06CC\u0647 \u0641\u0639\u0627\u0644 \u06CC\u0627\u0641\u062A \u0646\u0634\u062F.`
+        });
+      }
+      normalizedLines.push({
+        id: `ORDL-${orderId}-${index + 1}`,
+        orderId,
+        partId: part.id,
+        partCode: part.code,
+        partName: part.name,
+        orderedQuantity,
+        deliveredQuantity,
+        remainingQuantity: orderedQuantity - deliveredQuantity,
+        dueDate: String(line.dueDate || line.requestedDate || defaultDueDate).slice(0, 10),
+        unitPriceRials: line.unitPriceRials == null ? void 0 : Number(line.unitPriceRials)
+      });
+    }
     const newOrder = {
-      id: `ORD-2026-${String(customerOrdersStore.length + 1).padStart(3, "0")}`,
+      id: orderId,
       orderNumber,
       customerName: payload.customerName || "\u0633\u0627\u067E\u06A9\u0648",
       contractNumber: payload.contractNumber || "",
       orderDate: payload.orderDate || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-      dueDate: payload.dueDate || new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10),
+      dueDate: defaultDueDate,
       priority,
       status: payload.status || "OPEN",
-      lines: payload.lines || [],
+      lines: normalizedLines,
       notes: payload.notes,
       createdAt: (/* @__PURE__ */ new Date()).toISOString()
     };
@@ -21649,58 +21854,94 @@ apiRouter.put("/planning/customer-orders/:id", async (req, res) => {
     const { id } = req.params;
     const payload = req.body || {};
     if (isDatabaseUrlConfigured()) {
-      const prisma2 = getPrismaClient();
-      const updated = await prisma2.$transaction(async (tx) => {
-        const current2 = await tx.customerOrder.findFirst({
-          where: { OR: [{ id }, { orderNumber: id }] },
-          include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: "asc" } } }
-        });
-        if (!current2) return null;
-        const data = {};
-        if (payload.orderNumber !== void 0) data.orderNumber = String(payload.orderNumber).trim();
-        if (payload.orderDate !== void 0) data.orderDate = new Date(payload.orderDate);
-        if (payload.dueDate !== void 0) data.requestedDeliveryDate = new Date(payload.dueDate);
-        if (payload.contractNumber !== void 0) data.customerContractNumber = payload.contractNumber || null;
-        if (payload.priority !== void 0) {
-          const priority = Number(payload.priority);
-          if (![1, 2, 3].includes(priority)) throw new Error("\u0627\u0648\u0644\u0648\u06CC\u062A \u0633\u0641\u0627\u0631\u0634 \u0628\u0627\u06CC\u062F \u06F1\u060C \u06F2 \u06CC\u0627 \u06F3 \u0628\u0627\u0634\u062F.");
-          data.priority = priority;
+      try {
+        const prisma2 = getPrismaClient();
+        const updated = await prisma2.$transaction(async (tx) => {
+          const current2 = await tx.customerOrder.findFirst({
+            where: { OR: [{ id }, { orderNumber: id }] },
+            include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: "asc" } } }
+          });
+          if (!current2) return null;
+          const data = {};
+          if (payload.orderNumber !== void 0) data.orderNumber = String(payload.orderNumber).trim();
+          if (payload.orderDate !== void 0) data.orderDate = new Date(payload.orderDate);
+          if (payload.dueDate !== void 0) data.requestedDeliveryDate = new Date(payload.dueDate);
+          if (payload.contractNumber !== void 0) data.customerContractNumber = payload.contractNumber || null;
+          if (payload.priority !== void 0) {
+            const priority = Number(payload.priority);
+            if (![1, 2, 3].includes(priority)) throw new Error("\u0627\u0648\u0644\u0648\u06CC\u062A \u0633\u0641\u0627\u0631\u0634 \u0628\u0627\u06CC\u062F \u06F1\u060C \u06F2 \u06CC\u0627 \u06F3 \u0628\u0627\u0634\u062F.");
+            data.priority = priority;
+          }
+          if (payload.notes !== void 0) data.notes = payload.notes || null;
+          if (payload.status !== void 0) {
+            data.documentStatus = payload.status === "CANCELLED" ? "CANCELLED" : payload.status === "FULFILLED" ? "CLOSED" : "CONFIRMED";
+          }
+          if (Array.isArray(payload.lines)) {
+            const resolved = await resolveRelationalOrderLines(tx, payload.lines, current2.id);
+            await tx.customerOrderLine.deleteMany({ where: { orderId: current2.id } });
+            data.orderLines = { create: resolved };
+          }
+          return tx.customerOrder.update({
+            where: { id: current2.id },
+            data,
+            include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: "asc" } } }
+          });
+        }, { isolationLevel: "Serializable" });
+        if (updated) {
+          const data = mapRelationalCustomerOrder(updated);
+          const idx2 = customerOrdersStore.findIndex((order) => order.id === data.id);
+          if (idx2 >= 0) customerOrdersStore[idx2] = data;
+          else customerOrdersStore.unshift(data);
+          planSuggestionsStore.length = 0;
+          planSuggestionsStore.push(...generateProductionPlanSuggestions());
+          await persistInventoryAppState();
+          return res.json({ success: true, message: `\u0633\u0641\u0627\u0631\u0634 \u0634\u0645\u0627\u0631\u0647 \xAB${data.orderNumber}\xBB \u062F\u0631 PostgreSQL \u0628\u0647\u200C\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06CC \u0634\u062F.`, data, source: "postgresql" });
         }
-        if (payload.notes !== void 0) data.notes = payload.notes || null;
-        if (payload.status !== void 0) {
-          data.documentStatus = payload.status === "CANCELLED" ? "CANCELLED" : payload.status === "FULFILLED" ? "CLOSED" : "CONFIRMED";
+      } catch (_dbUpdateErr) {
+        const msg = _dbUpdateErr instanceof Error ? _dbUpdateErr.message : "";
+        if (msg !== "HYBRID_DISK_MODE_ACTIVE" && !/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|timeout|connect/i.test(msg)) {
+          throw _dbUpdateErr;
         }
-        if (Array.isArray(payload.lines)) {
-          const resolved = await resolveRelationalOrderLines(tx, payload.lines, current2.id);
-          await tx.customerOrderLine.deleteMany({ where: { orderId: current2.id } });
-          data.orderLines = { create: resolved };
-        }
-        return tx.customerOrder.update({
-          where: { id: current2.id },
-          data,
-          include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: "asc" } } }
-        });
-      }, { isolationLevel: "Serializable" });
-      if (updated) {
-        const data = mapRelationalCustomerOrder(updated);
-        const idx2 = customerOrdersStore.findIndex((order) => order.id === data.id);
-        if (idx2 >= 0) customerOrdersStore[idx2] = data;
-        else customerOrdersStore.unshift(data);
-        planSuggestionsStore.length = 0;
-        planSuggestionsStore.push(...generateProductionPlanSuggestions());
-        await persistInventoryAppState();
-        return res.json({ success: true, message: `\u0633\u0641\u0627\u0631\u0634 \u0634\u0645\u0627\u0631\u0647 \xAB${data.orderNumber}\xBB \u062F\u0631 PostgreSQL \u0628\u0647\u200C\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06CC \u0634\u062F.`, data, source: "postgresql" });
       }
     }
     const idx = customerOrdersStore.findIndex((o) => o.id === id || o.orderNumber === id);
     if (idx === -1) return res.status(404).json({ success: false, error: "\u0633\u0641\u0627\u0631\u0634 \u0641\u0631\u0648\u0634 \u0645\u0648\u0631\u062F \u0646\u0638\u0631 \u06CC\u0627\u0641\u062A \u0646\u0634\u062F." });
     const current = customerOrdersStore[idx];
-    const updatedLines = Array.isArray(payload.lines) ? payload.lines.map((line) => ({
-      ...line,
-      orderedQuantity: Number(line.orderedQuantity) || 0,
-      deliveredQuantity: Number(line.deliveredQuantity) || 0,
-      remainingQuantity: Math.max(0, (Number(line.orderedQuantity) || 0) - (Number(line.deliveredQuantity) || 0))
-    })) : current.lines;
+    if (payload.priority !== void 0 && ![1, 2, 3].includes(Number(payload.priority))) {
+      return res.status(400).json({ success: false, error: "\u0627\u0648\u0644\u0648\u06CC\u062A \u0633\u0641\u0627\u0631\u0634 \u0628\u0627\u06CC\u062F \u06F1\u060C \u06F2 \u06CC\u0627 \u06F3 \u0628\u0627\u0634\u062F." });
+    }
+    let updatedLines = current.lines;
+    if (Array.isArray(payload.lines)) {
+      if (payload.lines.length === 0) {
+        return res.status(400).json({ success: false, error: "\u062D\u062F\u0627\u0642\u0644 \u06CC\u06A9 \u0631\u062F\u06CC\u0641 \u0642\u0637\u0639\u0647 \u0628\u0631\u0627\u06CC \u0633\u0641\u0627\u0631\u0634 \u0645\u0634\u062A\u0631\u06CC \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A." });
+      }
+      updatedLines = [];
+      for (let i = 0; i < payload.lines.length; i++) {
+        const line = payload.lines[i] || {};
+        const orderedQuantity = Number(line.orderedQuantity ?? line.orderedQty);
+        const deliveredQuantity = Number(line.deliveredQuantity ?? line.deliveredQty ?? 0);
+        if (!Number.isFinite(orderedQuantity) || orderedQuantity <= 0 || !Number.isFinite(deliveredQuantity) || deliveredQuantity < 0 || deliveredQuantity > orderedQuantity) {
+          return res.status(400).json({ success: false, error: `\u062A\u0639\u062F\u0627\u062F \u0633\u0641\u0627\u0631\u0634/\u062A\u062D\u0648\u06CC\u0644 \u062F\u0631 \u0631\u062F\u06CC\u0641 ${i + 1} \u0645\u0639\u062A\u0628\u0631 \u0646\u06CC\u0633\u062A.` });
+        }
+        const partIdentifier = String(line.partId || line.partCode || "").trim();
+        const part = partsStore.find((p) => p.id === partIdentifier || p.code === partIdentifier);
+        if (!part) {
+          return res.status(400).json({ success: false, error: `\u0642\u0637\u0639\u0647 \xAB${partIdentifier || "-"}\xBB \u062F\u0631 \u0627\u0637\u0644\u0627\u0639\u0627\u062A \u067E\u0627\u06CC\u0647 \u0641\u0639\u0627\u0644 \u06CC\u0627\u0641\u062A \u0646\u0634\u062F.` });
+        }
+        updatedLines.push({
+          id: line.id || `ORDL-${current.id}-${i + 1}`,
+          orderId: current.id,
+          partId: part.id,
+          partCode: part.code,
+          partName: part.name,
+          orderedQuantity,
+          deliveredQuantity,
+          remainingQuantity: orderedQuantity - deliveredQuantity,
+          dueDate: String(line.dueDate || line.requestedDate || payload.dueDate || current.dueDate).slice(0, 10),
+          unitPriceRials: line.unitPriceRials == null ? void 0 : Number(line.unitPriceRials)
+        });
+      }
+    }
     const updatedOrder = { ...current, ...payload, id: current.id, lines: updatedLines };
     customerOrdersStore[idx] = updatedOrder;
     planSuggestionsStore.length = 0;
@@ -21715,6 +21956,9 @@ apiRouter.put("/planning/customer-orders/:id", async (req, res) => {
 });
 apiRouter.delete("/planning/customer-orders/:id", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u0633\u0641\u0627\u0631\u0634 \u0645\u0634\u062A\u0631\u06CC")) {
+      return;
+    }
     const { id } = req.params;
     let deletedOrderNumber = "";
     if (isDatabaseUrlConfigured()) {
@@ -23866,6 +24110,9 @@ apiRouter.post("/mrp/purchase-requisitions", async (req, res) => {
 });
 apiRouter.delete("/mrp/purchase-requisitions/:prNumber", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u0644\u063A\u0648 \u062F\u0631\u062E\u0648\u0627\u0633\u062A \u062E\u0631\u06CC\u062F MRP")) {
+      return;
+    }
     const key = decodeURIComponent(req.params.prNumber);
     const idx = mrpPurchaseRequisitionsStore.findIndex(
       (p) => p.prNumber === key || p.id === key || p.materialCode === key
@@ -24360,6 +24607,9 @@ apiRouter.put("/maintenance/requests/:id", async (req, res) => {
 });
 apiRouter.delete("/maintenance/requests/:id", async (req, res) => {
   try {
+    if (!assertAuthorizedRole(req, res, ["ADMIN", "PRODUCTION_MANAGER"], "\u062D\u0630\u0641 \u062F\u0631\u062E\u0648\u0627\u0633\u062A \u062A\u0639\u0645\u06CC\u0631\u0627\u062A")) {
+      return;
+    }
     const { id } = req.params;
     maintenanceRequestsStore = maintenanceRequestsStore.filter((i) => i.id !== id && i.requestCode !== id);
     await persistInventoryAppState();
@@ -25037,10 +25287,12 @@ apiRouter.get("/erp-services/wip-flow/:workOrderId", async (req, res) => {
 apiRouter.post("/erp-services/wip-log", async (req, res) => {
   try {
     const { workOrderId, operationId, goodQuantity, scrapQuantity = 0, shiftName = "\u0634\u06CC\u0641\u062A \u0635\u0628\u062D", notes = "" } = req.body;
-    if (!workOrderId || !operationId || Number(goodQuantity) <= 0) {
+    const goodNum = Number(goodQuantity);
+    const scrapNum = Number(scrapQuantity);
+    if (!workOrderId || !operationId || !Number.isFinite(goodNum) || goodNum <= 0 || !Number.isFinite(scrapNum) || scrapNum < 0) {
       return res.status(400).json({
         success: false,
-        error: "\u0634\u0646\u0627\u0633\u0647 \u062F\u0633\u062A\u0648\u0631 \u06A9\u0627\u0631\u060C \u0645\u0631\u062D\u0644\u0647 \u0639\u0645\u0644\u06CC\u0627\u062A \u0648 \u062A\u0639\u062F\u0627\u062F \u062A\u0648\u0644\u06CC\u062F \u0633\u0627\u0644\u0645 \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A."
+        error: "\u0634\u0646\u0627\u0633\u0647 \u062F\u0633\u062A\u0648\u0631 \u06A9\u0627\u0631\u060C \u0645\u0631\u062D\u0644\u0647 \u0639\u0645\u0644\u06CC\u0627\u062A\u060C \u062A\u0639\u062F\u0627\u062F \u062A\u0648\u0644\u06CC\u062F \u0633\u0627\u0644\u0645 (\u0628\u0632\u0631\u06AF\u062A\u0631 \u0627\u0632 \u0635\u0641\u0631) \u0648 \u0636\u0627\u06CC\u0639\u0627\u062A \u063A\u06CC\u0631\u0645\u0646\u0641\u06CC \u0627\u0644\u0632\u0627\u0645\u06CC \u0648 \u0645\u0639\u062A\u0628\u0631 \u0627\u0633\u062A."
       });
     }
     const bufferCheck = await WipService.calculateOpBuffer(workOrderId, operationId, false);

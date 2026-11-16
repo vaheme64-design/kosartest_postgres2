@@ -898,6 +898,7 @@ export const InventoryModuleView: React.FC<InventoryModuleViewProps> = ({
           warehouses={warehouses}
           loading={loading}
           initialSearchTerm={initialSearchQuery}
+          userRole={currentUser.role}
           onRefresh={loadInventoryData}
           onReverseDocument={handleReverseDocument}
         />

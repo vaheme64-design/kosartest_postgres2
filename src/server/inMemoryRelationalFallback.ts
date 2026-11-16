@@ -411,7 +411,7 @@ export function getFallbackMaterialIssueOptions(
   warehouses: WarehouseDefinition[],
   operators: Operator[],
 ) {
-  const { balances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts);
+  const { balances } = calculateDetailedStockBalances(inventoryDocs, reservations, parts, serverQcHoldStore);
   const coilPartCodes = new Set(['RM-COIL-DC01A-2.0-1140', 'RM-SHT-DC01A-2.0-1000']);
 
   const stockBalances = balances
@@ -694,6 +694,21 @@ export async function postFallbackCoilIssue(
   const coil = physicalCoils.find(c => c.id === coilIdOrId || c.coilId === coilIdOrId);
   if (!coil) {
     throw Object.assign(new Error('کلاف فیزیکی مورد نظر یافت نشد.'), { statusCode: 404 });
+  }
+
+  const activeHold =
+    serverQcHoldStore[coil.id] ||
+    serverQcHoldStore[coil.coilId] ||
+    (coil.coilPackNumber ? serverQcHoldStore[coil.coilPackNumber] : undefined);
+  if (
+    ['QUARANTINE', 'QUALITY_BLOCKED', 'REJECTED'].includes(coil.qualityStatus) ||
+    coil.physicalStatus === 'BLOCKED' ||
+    activeHold?.isHeld
+  ) {
+    throw Object.assign(
+      new Error(`کلاف «${coil.coilId}» در وضعیت قرنطینه کیفی (QC Hold) یا مسدود قرار دارد و امکان صدور به تولید ندارد.`),
+      { statusCode: 409 },
+    );
   }
 
   const fingerprint = JSON.stringify({
@@ -1420,10 +1435,17 @@ export async function postFallbackWipOperationProduction(
         updatedAt: nowIso,
       };
       // Validate atomically before accepting production & backflush side-effects
-      const checkRes = atomicPostDocument(bfDoc, inventoryDocs, reservations, parts, {
-        uid: body.createdByUserId || 'USR-PROD',
-        displayName: body.operatorName || 'اپراتور تولید',
-      });
+      const checkRes = atomicPostDocument(
+        bfDoc,
+        inventoryDocs,
+        reservations,
+        parts,
+        {
+          uid: body.createdByUserId || 'USR-PROD',
+          displayName: body.operatorName || 'اپراتور تولید',
+        },
+        serverQcHoldStore,
+      );
       if (checkRes.success) {
         postedTxCount += issueLines.length;
         inventoryDocs.unshift(bfDoc);

@@ -808,6 +808,7 @@ export const getPrismaClient = (): PrismaClient => {
 export interface DatabaseStatus {
   isConfigured: boolean;
   isConnected: boolean;
+  isDurableStorageActive?: boolean;
   databaseType: 'SQLite' | 'PostgreSQL';
   databaseUrlMasked: string;
   storageMode?: 'POSTGRESQL_LIVE' | 'HYBRID_DURABLE_DISK';
@@ -820,11 +821,13 @@ export async function checkDatabaseConnection(): Promise<DatabaseStatus> {
   const maskedUrl = rawUrl.replace(/:([^@]+)@/, ':****@');
   const dbType: 'SQLite' | 'PostgreSQL' =
     rawUrl.startsWith('postgresql://') || rawUrl.startsWith('postgres://') ? 'PostgreSQL' : 'SQLite';
+  const hasConfiguredUrl = isDatabaseUrlSyntaxValid();
 
   if (global.__kpimsDbReachable === true) {
     return {
       isConfigured: true,
       isConnected: true,
+      isDurableStorageActive: false,
       databaseType: dbType,
       databaseUrlMasked: maskedUrl,
       storageMode: 'POSTGRESQL_LIVE',
@@ -837,6 +840,7 @@ export async function checkDatabaseConnection(): Promise<DatabaseStatus> {
     return {
       isConfigured: true,
       isConnected: true,
+      isDurableStorageActive: false,
       databaseType: dbType,
       databaseUrlMasked: maskedUrl,
       storageMode: 'POSTGRESQL_LIVE',
@@ -844,12 +848,18 @@ export async function checkDatabaseConnection(): Promise<DatabaseStatus> {
     };
   }
 
+  const reasonSummary = global.__kpimsLastDbError
+    ? `اتصال به پایگاه داده ابری PostgreSQL برقرار نشد (${global.__kpimsLastDbError.slice(0, 120)}). موتور پایدار دیسک محلی (HYBRID_DURABLE_DISK) با ذخیره خودکار فعال است.`
+    : 'آدرس PostgreSQL معتبر تنظیم نشده یا در دسترس نیست؛ موتور پایدار دیسک محلی (HYBRID_DURABLE_DISK) با ذخیره خودکار فعال است.';
+
   return {
-    isConfigured: true,
-    isConnected: true,
+    isConfigured: hasConfiguredUrl,
+    isConnected: false,
+    isDurableStorageActive: true,
     databaseType: dbType,
     databaseUrlMasked: maskedUrl,
     storageMode: 'HYBRID_DURABLE_DISK',
+    errorMessage: reasonSummary,
     lastChecked: new Date().toISOString(),
   };
 }

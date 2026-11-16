@@ -124,16 +124,36 @@ function AppContent() {
   const [coils, setCoils] = useState<SapcoCoilReceipt[]>([]);
   const [summary, setSummary] = useState<any>(null);
 
-  // Auth & Role
+  // Auth & Role (persisted in localStorage)
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [currentUser, setCurrentUser] = useState<UserRoleProfile>({
-    uid: 'USR-PROD-01',
-    email: 'admin.factory@sapco-supplier.ir',
-    displayName: 'مهندس حسینی (مدیر تولید)',
-    role: 'ADMIN',
-    active: true,
-    createdAt: new Date().toISOString(),
+  const [currentUser, setCurrentUser] = useState<UserRoleProfile>(() => {
+    const validRoles: UserRoleProfile['role'][] = [
+      'ADMIN',
+      'PRODUCTION_MANAGER',
+      'WAREHOUSE_KEEPER',
+      'LINE_SUPERVISOR',
+      'QC_INSPECTOR',
+    ];
+    const savedRole = typeof window !== 'undefined' ? (localStorage.getItem('kpims_active_role') as UserRoleProfile['role'] | null) : null;
+    const role: UserRoleProfile['role'] = savedRole && validRoles.includes(savedRole) ? savedRole : 'ADMIN';
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kpims_active_role', role);
+      localStorage.setItem('kpims_active_uid', 'USR-PROD-01');
+    }
+    return {
+      uid: 'USR-PROD-01',
+      email: 'admin.factory@sapco-supplier.ir',
+      displayName: 'مهندس حسینی (مدیر تولید)',
+      role,
+      active: true,
+      createdAt: new Date().toISOString(),
+    };
   });
+
+  const handleRoleChange = (role: UserRoleProfile['role']) => {
+    localStorage.setItem('kpims_active_role', role);
+    setCurrentUser(prev => ({ ...prev, role }));
+  };
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -652,7 +672,7 @@ function AppContent() {
       coilsCount={coils.length}
       reorderAlertsCount={reorderAlertsCount}
       criticalAlertsCount={criticalAlertsCount}
-      onRoleChange={role => setCurrentUser(prev => ({ ...prev, role }))}
+      onRoleChange={handleRoleChange}
       onNavigate={handleDeepNavigate}
       onOpenTemplateModal={() => setIsTemplateModalOpen(true)}
       onQuickTemplateChange={handleSelectTemplate}

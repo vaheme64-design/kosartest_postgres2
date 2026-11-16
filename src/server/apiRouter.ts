@@ -340,6 +340,7 @@ registerPlanningRuntimeProvider(() => ({
 registerWipRuntimeProvider(() => ({
   parts: partsStore,
   routings: routingsStore,
+  dies: diesStore,
 }));
 
 registerReportsRuntimeProvider(() => ({
@@ -1365,6 +1366,38 @@ async function executePersistentWipMutation<T extends { success: boolean }>(muta
 
 export const apiRouter = Router();
 
+const VALID_RBAC_ROLES = new Set([
+  'ADMIN',
+  'PRODUCTION_MANAGER',
+  'WAREHOUSE_KEEPER',
+  'LINE_SUPERVISOR',
+  'QC_INSPECTOR',
+]);
+
+function assertAuthorizedRole(
+  req: Request,
+  res: Response,
+  allowedRoles: string[],
+  actionLabelFa: string
+): boolean {
+  const rawRole = String(
+    req.header('x-kpims-role') || req.body?.userRole || req.body?.user?.role || ''
+  )
+    .trim()
+    .toUpperCase();
+  if (!rawRole || !VALID_RBAC_ROLES.has(rawRole)) {
+    return true; // Preserve compatibility for headless/CLI scripts without a browser role header
+  }
+  if (allowedRoles.includes(rawRole)) {
+    return true;
+  }
+  res.status(403).json({
+    success: false,
+    error: `عدم مجوز دسترسی (403 Forbidden): نقش «${rawRole}» مجاز به اجرای عملیات «${actionLabelFa}» نیست.`,
+  });
+  return false;
+}
+
 function syncErpRuntimeStores() {
   if (INITIAL_PARTS !== partsStore) {
     INITIAL_PARTS.splice(0, INITIAL_PARTS.length, ...partsStore);
@@ -1540,6 +1573,9 @@ apiRouter.post('/inventory/validate-and-post', async (req: Request, res: Respons
  */
 apiRouter.post('/inventory/reverse', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'WAREHOUSE_KEEPER', 'PRODUCTION_MANAGER'], 'ابطال سند انبار')) {
+      return;
+    }
     const { voucherId, reason, user } = req.body;
     if (!voucherId) {
       return res.status(400).json({ success: false, error: 'شناسه سند جهت ابطال مشخص نشده است.' });
@@ -1878,6 +1914,7 @@ apiRouter.post('/routings', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/routings/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف مسیر تولید')) return;
   const { id } = req.params;
   const initialLength = routingsStore.length;
   routingsStore = routingsStore.filter(r => r.id !== id);
@@ -1917,6 +1954,7 @@ apiRouter.post('/production/boms', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/production/boms/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف درخت محصول (BOM)')) return;
   const { id } = req.params;
   const deleted = deleteAdvancedBom(id);
   if (deleted) {
@@ -2021,6 +2059,7 @@ apiRouter.post('/production/parallel-flows', async (req: Request, res: Response)
 });
 
 apiRouter.delete('/production/parallel-flows/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف جریان تولید موازی')) return;
   const { id } = req.params;
   const deleted = deleteParallelFlow(id);
   if (deleted) {
@@ -2121,6 +2160,7 @@ apiRouter.post('/dies', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/dies/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف قالب پرس')) return;
   const { id } = req.params;
   diesStore = diesStore.filter(d => d.id !== id);
   await persistInventoryAppState();
@@ -2172,6 +2212,7 @@ apiRouter.post('/operators', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/operators/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف اپراتور')) return;
   const { id } = req.params;
   const initialCount = operatorsStore.length;
   operatorsStore = operatorsStore.filter(o => o.id !== id && o.personnelCode !== id);
@@ -2297,6 +2338,7 @@ apiRouter.post('/halls', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/halls/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف سالن تولید')) return;
   const { id } = req.params;
   const initialLen = hallsStore.length;
   hallsStore = hallsStore.filter(h => h.id !== id && h.code !== id);
@@ -2340,6 +2382,7 @@ apiRouter.post('/processes', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/processes/:code', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف فرآیند تولید')) return;
   const { code } = req.params;
   const initialCount = processesStore.length;
   processesStore = processesStore.filter(p => p.code !== code);
@@ -2392,6 +2435,7 @@ apiRouter.post('/material-grades', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/material-grades/:code', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف گرید آلیاژ')) return;
   const { code } = req.params;
   const initialCount = materialGradesStore.length;
   materialGradesStore = materialGradesStore.filter(g => g.code.toUpperCase() !== code.toUpperCase());
@@ -2447,6 +2491,7 @@ apiRouter.post('/warehouses', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/warehouses/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف انبار')) return;
   const { id } = req.params;
   const initialCount = warehousesStore.length;
   warehousesStore = warehousesStore.filter(w => w.id !== id && w.code !== id);
@@ -2494,6 +2539,7 @@ apiRouter.post('/units', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/units/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف واحد سنجش')) return;
   const { id } = req.params;
   const initialCount = unitsStore.length;
   unitsStore = unitsStore.filter(u => u.id !== id && u.symbol !== id);
@@ -2543,6 +2589,7 @@ apiRouter.post('/customers', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/customers/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف مشتری')) return;
   const { id } = req.params;
   const initialCount = customersStore.length;
   customersStore = customersStore.filter(c => c.id !== id && c.code !== id);
@@ -2595,6 +2642,7 @@ apiRouter.post('/shifts', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/shifts/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف شیفت کاری')) return;
   const { id } = req.params;
   const initialCount = shiftsStore.length;
   shiftsStore = shiftsStore.filter(s => s.id !== id && s.code !== id);
@@ -2640,6 +2688,7 @@ apiRouter.post('/car-models', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/car-models/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف مدل خودرو')) return;
   const { id } = req.params;
   const initialCount = carModelsStore.length;
   carModelsStore = carModelsStore.filter(c => c.id !== id && c.code !== id);
@@ -2693,6 +2742,7 @@ apiRouter.post('/operations', async (req: Request, res: Response) => {
 });
 
 apiRouter.delete('/operations/:id', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف عملیات استاندارد')) return;
   const { id } = req.params;
   const initialCount = operationsStore.length;
   operationsStore = operationsStore.filter(o => o.id !== id && o.code !== id);
@@ -2707,7 +2757,8 @@ apiRouter.delete('/operations/:id', async (req: Request, res: Response) => {
 /**
  * 12. Safe Sample Data Reset & Clean
  */
-apiRouter.post('/demo-data/seed', async (_req: Request, res: Response) => {
+apiRouter.post('/demo-data/seed', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN'], 'بازنشانی داده‌های نمونه کارخانه')) return;
   // Re-seed sample data without wiping non-demo user data
   const realParts = partsStore.filter(p => !p.isDemo);
   const realMachines = machinesStore.filter(m => !m.isDemo);
@@ -2748,7 +2799,8 @@ apiRouter.post('/demo-data/seed', async (_req: Request, res: Response) => {
   });
 });
 
-apiRouter.post('/demo-data/clean', async (_req: Request, res: Response) => {
+apiRouter.post('/demo-data/clean', async (req: Request, res: Response) => {
+  if (!assertAuthorizedRole(req, res, ['ADMIN'], 'پاکسازی کامل داده‌های نمونه')) return;
   // Safely remove demo data from all modules (Parts, Inventories, WIP, Customer Orders, Plans)
   const demoPartsRemoved = partsStore.filter(p => p.isDemo).length;
   const demoTxRemoved = transactionsStore.filter(t => t.isDemo).length;
@@ -2987,7 +3039,7 @@ apiRouter.post('/sapco/coils', async (req: Request, res: Response) => {
  */
 apiRouter.get('/inventory/dashboard-metrics', (_req: Request, res: Response) => {
   try {
-    const { metrics } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { metrics } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     metrics.activeContractsCount = contractsStore.filter(c => c.status === 'ACTIVE').length;
 
     res.json({
@@ -3360,6 +3412,45 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
       };
     });
 
+    if (
+      [
+        'OPENING_BALANCE',
+        'RECEIPT_RAW_MATERIAL',
+        'RECEIPT_FINISHED_GOODS',
+        'ISSUE_RAW_MATERIAL',
+        'ISSUE_FINISHED_GOODS',
+        'DELIVERY_CUSTOMER',
+        'SHIPMENT_CUSTOMER',
+        'TRANSFER',
+      ].includes(payload.documentType)
+    ) {
+      const invalidLine = lines.find(l => !Number.isFinite(l.quantity) || l.quantity <= 0);
+      if (invalidLine) {
+        return res.status(400).json({
+          success: false,
+          error: `خطای اعتبارسنجی مقداری: مقدار ردیف «${invalidLine.lineNumber}» قطعه «${invalidLine.partCode}» باید بزرگتر از صفر باشد.`,
+        });
+      }
+    }
+
+    if (payload.documentType === 'TRANSFER') {
+      if (!payload.targetWarehouseId) {
+        return res.status(400).json({
+          success: false,
+          error: 'برای ثبت سند انتقال بین‌انباری، انتخاب انبار مقصد الزامی است.',
+        });
+      }
+      if (
+        payload.warehouseId === payload.targetWarehouseId &&
+        lines.every(l => !l.targetLocationCode || l.targetLocationCode === l.locationCode)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: 'انبار و موقعیت مبدأ و مقصد انتقال نمی‌توانند یکسان باشند.',
+        });
+      }
+    }
+
     const newDoc: InventoryDocument = {
       id: `DOC-${Date.now()}`,
       documentNumber: docNumber,
@@ -3398,7 +3489,8 @@ apiRouter.post('/inventory/documents', async (req: Request, res: Response) => {
         inventoryDocsStore,
         reservationsStore,
         partsStore,
-        user
+        user,
+        serverQcHoldStore
       );
 
       if (!postResult.success) {
@@ -3477,7 +3569,8 @@ apiRouter.post('/inventory/documents/:id/post', async (req: Request, res: Respon
       inventoryDocsStore,
       reservationsStore,
       partsStore,
-      postUser
+      postUser,
+      serverQcHoldStore
     );
 
     if (!postResult.success) {
@@ -3522,6 +3615,9 @@ apiRouter.post('/inventory/documents/:id/post', async (req: Request, res: Respon
  */
 apiRouter.post('/inventory/documents/:id/reverse', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'WAREHOUSE_KEEPER', 'PRODUCTION_MANAGER'], 'ابطال سند قطعی انبار')) {
+      return;
+    }
     const { id } = req.params;
     const { reason, user, reversedByUid, reversedByName } = req.body || {};
 
@@ -3545,7 +3641,7 @@ apiRouter.post('/inventory/documents/:id/reverse', async (req: Request, res: Res
       displayName: user?.displayName || reversedByName || 'مدیر سیستم',
     };
 
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     const reversalResult = createReversalDocument(targetDoc, String(reason).trim(), revUser, balances);
     if (!reversalResult.success || !reversalResult.reversalDocument) {
       return res.status(400).json({ success: false, error: reversalResult.error });
@@ -3593,7 +3689,7 @@ apiRouter.get('/inventory/stock-inquiry', (req: Request, res: Response) => {
   try {
     const { partId, materialGrade, warehouseId, locationCode, ownership, search } = req.query;
 
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
 
     let filtered = [...balances];
 
@@ -3624,28 +3720,6 @@ apiRouter.get('/inventory/stock-inquiry', (req: Request, res: Response) => {
       );
     }
 
-    // Apply any active QC Hold (قرنطینه کیفی) overrides from serverQcHoldStore so ATP is immediately reduced
-    filtered = filtered.map(b => {
-      const hold =
-        serverQcHoldStore[b.id] ||
-        (b.lotNumber ? serverQcHoldStore[b.lotNumber] : undefined) ||
-        serverQcHoldStore[`${b.partId}-${b.warehouseId}`];
-      if (!hold || !hold.isHeld) return b;
-      const addedBlocked =
-        b.unit === 'KG'
-          ? Number(hold.heldWeightKg || hold.heldQty || b.availableKg || b.physicalKg || 0)
-          : Number(hold.heldQty || b.availableQty || b.physicalQty || 0);
-      const newBlockedQty = Math.min(b.physicalQty, (b.qualityBlockedQty || 0) + addedBlocked);
-      const newAvailableQty = Math.max(0, b.physicalQty - b.reservedQty - newBlockedQty);
-      const unitWeight = b.physicalQty > 0 ? b.physicalKg / b.physicalQty : 1;
-      return {
-        ...b,
-        qualityBlockedQty: newBlockedQty,
-        availableQty: newAvailableQty,
-        availableKg: Math.round(newAvailableQty * unitWeight * 100) / 100,
-      };
-    });
-
     // Keep zero-stock catalog parts when searching, when explicitly asked, or by default unless onlyAvailable is true
     const isSearching = !!(search && typeof search === 'string' && search.trim()) || (partId && partId !== 'ALL');
     const filterOutZero = req.query.onlyAvailable === 'true' || req.query.onlyNonZero === 'true';
@@ -3673,6 +3747,9 @@ apiRouter.get('/inventory/stock-inquiry', (req: Request, res: Response) => {
  */
 apiRouter.post('/inventory/qc-hold', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'QC_INSPECTOR', 'PRODUCTION_MANAGER', 'WAREHOUSE_KEEPER'], 'ثبت یا رفع قرنطینه کیفی (QC Hold)')) {
+      return;
+    }
     const { key, partId, partCode, materialGrade, lotNumber, isHeld, heldQty, heldWeightKg, reasonFa } = req.body;
     if (!key) {
       return res.status(400).json({ success: false, error: 'شناسه ردیف موجودی یا کلاف الزامی است.' });
@@ -3808,8 +3885,8 @@ apiRouter.post('/inventory/reservations', async (req: Request, res: Response) =>
     const weightPerUnit = part.weightPerUnitKg || 1;
     const weightKg = part.unit === 'KG' ? qty : Number((qty * weightPerUnit).toFixed(3));
 
-    // Verify stock availability before reserving
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    // Verify stock availability before reserving (strictly honoring active QC holds)
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     const matching = balances.filter(b => b.partId === part.id && b.warehouseId === payload.warehouseId);
     const available = matching.reduce((sum, b) => sum + b.availableQty, 0);
 
@@ -4113,6 +4190,9 @@ apiRouter.put('/inventory/contracts/:id', async (req: Request, res: Response) =>
 
 apiRouter.delete('/inventory/contracts/:id', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف یا تعلیق قرارداد')) {
+      return;
+    }
     const { id } = req.params;
     const contract = contractsStore.find(c => c.id === id || c.contractNumber === id);
     if (!contract) {
@@ -6279,16 +6359,6 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
             qty: consumedKg,
             unit: 'KG',
           });
-
-          // Update physical coil & sapco coil consumed weight
-          const physCoil = physicalCoilsStore.find(c => c.coilId === coilNumber || c.heatNumber === heatNumber) || physicalCoilsStore[0];
-          if (physCoil) {
-            physCoil.remainingWeightKg = Math.max(0, Number((physCoil.remainingWeightKg - consumedKg).toFixed(2)));
-          }
-          const sapcoCoil = coilsStore.find(c => c.coilNumber === coilNumber || c.heatNumber === heatNumber) || coilsStore[0];
-          if (sapcoCoil) {
-            sapcoCoil.consumedWeightKg = Number((sapcoCoil.consumedWeightKg + consumedKg).toFixed(2));
-          }
         } else if (Number(opNo) === 40 || opCode === 'OP40' || isFinalOp) {
           // Deduct 15 M6 Weld Nuts per piece
           const consumedNuts = deltaQty * 15;
@@ -6348,15 +6418,6 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
             qty: consumedKg,
             unit: 'KG',
           });
-
-          const physCoil = physicalCoilsStore.find(c => c.coilId === coilNumber || c.heatNumber === heatNumber) || physicalCoilsStore[0];
-          if (physCoil) {
-            physCoil.remainingWeightKg = Math.max(0, Number((physCoil.remainingWeightKg - consumedKg).toFixed(2)));
-          }
-          const sapcoCoil = coilsStore.find(c => c.coilNumber === coilNumber || c.heatNumber === heatNumber) || coilsStore[0];
-          if (sapcoCoil) {
-            sapcoCoil.consumedWeightKg = Number((sapcoCoil.consumedWeightKg + consumedKg).toFixed(2));
-          }
         } else if (Number(opNo) === 30 || opCode === 'OP30' || isFinalOp) {
           // Deduct 2 M6x20 Weld Bolts per piece
           const consumedBolts = deltaQty * 2;
@@ -6539,13 +6600,28 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
           updatedAt: nowIso,
         };
 
-        // Atomic SAP MM-IM stock check before deducting coils or writing posted ledger doc (prevents negative stock)
+        // Atomic SAP MM-IM stock & QC hold check before deducting coils or writing posted ledger doc
+        const targetPhysCoil = issueLines.some(l => l.unit === 'KG' && l.lotNumber)
+          ? physicalCoilsStore.find(c => c.coilId === coilNumber || c.coilPackNumber === coilNumber || c.heatNumber === heatNumber)
+          : undefined;
+        if (
+          targetPhysCoil &&
+          (['QUARANTINE', 'QUALITY_BLOCKED', 'REJECTED'].includes(targetPhysCoil.qualityStatus) ||
+            targetPhysCoil.physicalStatus === 'BLOCKED')
+        ) {
+          return res.status(409).json({
+            success: false,
+            error: `کلاف «${targetPhysCoil.coilId}» در وضعیت قرنطینه کیفی یا مسدود است و امکان مصرف خودکار ندارد.`,
+          });
+        }
+
         const bfPostResult = atomicPostDocument(
           bfDoc,
           inventoryDocsStore,
           reservationsStore,
           partsStore,
-          bfUser
+          bfUser,
+          serverQcHoldStore
         );
         if (!bfPostResult.success) {
           return res.status(400).json({
@@ -6657,13 +6733,18 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
         inventoryDocsStore,
         reservationsStore,
         partsStore,
-        { uid: 'USR-ADMIN', displayName: 'سیستم اتوماتیک تولید و انبار' }
+        { uid: 'USR-ADMIN', displayName: 'سیستم اتوماتیک تولید و انبار' },
+        serverQcHoldStore
       );
-      if (rcvPostResult.success) {
-        inventoryDocsStore.unshift(rcvDoc);
-        if (rcvPostResult.auditRecord) {
-          auditLogsStore.unshift(rcvPostResult.auditRecord);
-        }
+      if (!rcvPostResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: `ثبت رسید خودکار تولید ناموفق بود: ${rcvPostResult.error}`,
+        });
+      }
+      inventoryDocsStore.unshift(rcvDoc);
+      if (rcvPostResult.auditRecord) {
+        auditLogsStore.unshift(rcvPostResult.auditRecord);
       }
 
       transactionsStore.unshift({
@@ -6687,7 +6768,7 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
       });
     }
 
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
     await persistInventoryAppState();
 
     res.json({
@@ -6714,7 +6795,7 @@ apiRouter.post('/production/execute-op-backflush', async (req: Request, res: Res
  */
 apiRouter.get('/traceability/full-chain', (_req: Request, res: Response) => {
   try {
-    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore);
+    const { balances } = calculateDetailedStockBalances(inventoryDocsStore, reservationsStore, partsStore, serverQcHoldStore);
 
     // Group balances by the 3 ERP tiers: RAW_MATERIAL, WIP_PART, FINISHED_GOOD
     const tierSummary = partsStore.map(part => {
@@ -7492,6 +7573,9 @@ apiRouter.post('/inventory/report-configs', async (req: Request, res: Response) 
 
 apiRouter.delete('/inventory/report-configs/:id', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER', 'WAREHOUSE_KEEPER'], 'حذف قالب گزارش')) {
+      return;
+    }
     const { id } = req.params;
     if (!isDatabaseUrlConfigured()) {
       const deleted = deleteFallbackReportConfig(id);
@@ -7649,6 +7733,9 @@ apiRouter.post('/inventory/customers', async (req: Request, res: Response) => {
 
 apiRouter.post('/inventory/import/create-missing-master-data', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'WAREHOUSE_KEEPER', 'PRODUCTION_MANAGER'], 'ایجاد اطلاعات پایه از اکسل')) {
+      return;
+    }
     const { units = [], categories = [], parts = [], warehouses = [], customers = [] } = req.body;
     let addedCount = 0;
     const syncedParts: Part[] = [];
@@ -7783,7 +7870,7 @@ apiRouter.post('/inventory/import/create-missing-master-data', async (req: Reque
         const postRes = atomicPostDocument(openDoc, inventoryDocsStore, reservationsStore, partsStore, {
           uid: 'USR-AUTO-IMPORT',
           displayName: 'ورود خودکار اکسل',
-        });
+        }, serverQcHoldStore);
         if (postRes.success) {
           inventoryDocsStore.unshift(openDoc);
           if (postRes.auditRecord) auditLogsStore.unshift(postRes.auditRecord);
@@ -7973,6 +8060,9 @@ apiRouter.post('/inventory/import/validate', (req: Request, res: Response) => {
 
 apiRouter.post('/inventory/import/confirm', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'WAREHOUSE_KEEPER', 'PRODUCTION_MANAGER'], 'تایید نهایی ورود اطلاعات از اکسل')) {
+      return;
+    }
     const idempotencyKey = req.body.idempotencyKey || req.body.batchId || `BATCH-${Date.now()}`;
     const { batchType, user } = req.body;
     const rows = req.body.rows || req.body.validRows;
@@ -8112,7 +8202,7 @@ apiRouter.post('/inventory/import/confirm', async (req: Request, res: Response) 
           const postRes = atomicPostDocument(openDoc, inventoryDocsStore, reservationsStore, partsStore, {
             uid: user?.uid || 'USR-OP',
             displayName: user?.displayName || 'مدیر انبار',
-          });
+          }, serverQcHoldStore);
           if (postRes.success) {
             inventoryDocsStore.unshift(openDoc);
             if (postRes.auditRecord) auditLogsStore.unshift(postRes.auditRecord);
@@ -8336,7 +8426,7 @@ apiRouter.post('/inventory/import/confirm', async (req: Request, res: Response) 
         const postRes = atomicPostDocument(openDoc, inventoryDocsStore, reservationsStore, partsStore, {
           uid: user?.uid || 'USR-OP',
           displayName: user?.displayName || 'مدیر انبار',
-        });
+        }, serverQcHoldStore);
         if (postRes.success) {
           inventoryDocsStore.unshift(openDoc);
           if (postRes.auditRecord) auditLogsStore.unshift(postRes.auditRecord);
@@ -9333,21 +9423,80 @@ apiRouter.post('/planning/customer-orders', async (req: Request, res: Response) 
         planSuggestionsStore.push(...generateProductionPlanSuggestions());
         await persistInventoryAppState();
         return res.status(201).json({ success: true, message: 'سفارش مشتری در PostgreSQL ثبت شد.', data, source: 'postgresql' });
-      } catch (_dbOrderErr) {
-        // Fall through to snapshot store persistence
+      } catch (_dbOrderErr: any) {
+        const msg = _dbOrderErr instanceof Error ? _dbOrderErr.message : '';
+        if (msg !== 'HYBRID_DISK_MODE_ACTIVE' && !/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|timeout|connect/i.test(msg)) {
+          throw _dbOrderErr;
+        }
+        // Fall through to snapshot store persistence only when DB is unreachable / offline disk mode
       }
     }
 
+    if (customerOrdersStore.some(o => o.orderNumber === orderNumber)) {
+      return res.status(409).json({ success: false, error: 'شماره سفارش مشتری قبلاً ثبت شده است.' });
+    }
+
+    if (!Array.isArray(payload.lines) || payload.lines.length === 0) {
+      return res.status(400).json({ success: false, error: 'حداقل یک ردیف قطعه برای ثبت سفارش مشتری الزامی است.' });
+    }
+
+    const orderId = `ORD-2026-${String(customerOrdersStore.length + 1).padStart(3, '0')}`;
+    const defaultDueDate = String(payload.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
+    const normalizedLines = [];
+    for (let index = 0; index < payload.lines.length; index++) {
+      const line = payload.lines[index] || {};
+      const orderedQuantity = Number(line.orderedQuantity ?? line.orderedQty);
+      const deliveredQuantity = Number(line.deliveredQuantity ?? line.deliveredQty ?? 0);
+      if (
+        !Number.isFinite(orderedQuantity) ||
+        orderedQuantity <= 0 ||
+        !Number.isFinite(deliveredQuantity) ||
+        deliveredQuantity < 0 ||
+        deliveredQuantity > orderedQuantity
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: `تعداد سفارش/تحویل در ردیف ${index + 1} معتبر نیست.`,
+        });
+      }
+      const partIdentifier = String(line.partId || line.partCode || '').trim();
+      if (!partIdentifier) {
+        return res.status(400).json({
+          success: false,
+          error: `قطعه ردیف ${index + 1} مشخص نشده است.`,
+        });
+      }
+      const part = partsStore.find(p => p.id === partIdentifier || p.code === partIdentifier);
+      if (!part) {
+        return res.status(400).json({
+          success: false,
+          error: `قطعه «${partIdentifier}» در اطلاعات پایه فعال یافت نشد.`,
+        });
+      }
+      normalizedLines.push({
+        id: `ORDL-${orderId}-${index + 1}`,
+        orderId,
+        partId: part.id,
+        partCode: part.code,
+        partName: part.name,
+        orderedQuantity,
+        deliveredQuantity,
+        remainingQuantity: orderedQuantity - deliveredQuantity,
+        dueDate: String(line.dueDate || line.requestedDate || defaultDueDate).slice(0, 10),
+        unitPriceRials: line.unitPriceRials == null ? undefined : Number(line.unitPriceRials),
+      });
+    }
+
     const newOrder: CustomerOrder = {
-      id: `ORD-2026-${String(customerOrdersStore.length + 1).padStart(3, '0')}`,
+      id: orderId,
       orderNumber,
       customerName: payload.customerName || 'ساپکو',
       contractNumber: payload.contractNumber || '',
       orderDate: payload.orderDate || new Date().toISOString().slice(0, 10),
-      dueDate: payload.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      dueDate: defaultDueDate,
       priority,
       status: payload.status || 'OPEN',
-      lines: payload.lines || [],
+      lines: normalizedLines,
       notes: payload.notes,
       createdAt: new Date().toISOString(),
     };
@@ -9371,59 +9520,101 @@ apiRouter.put('/planning/customer-orders/:id', async (req: Request, res: Respons
     const { id } = req.params;
     const payload = req.body || {};
     if (isDatabaseUrlConfigured()) {
-      const prisma = getPrismaClient();
-      const updated = await prisma.$transaction(async (tx: any) => {
-        const current = await tx.customerOrder.findFirst({
-          where: { OR: [{ id }, { orderNumber: id }] },
-          include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: 'asc' } } },
-        });
-        if (!current) return null;
-        const data: any = {};
-        if (payload.orderNumber !== undefined) data.orderNumber = String(payload.orderNumber).trim();
-        if (payload.orderDate !== undefined) data.orderDate = new Date(payload.orderDate);
-        if (payload.dueDate !== undefined) data.requestedDeliveryDate = new Date(payload.dueDate);
-        if (payload.contractNumber !== undefined) data.customerContractNumber = payload.contractNumber || null;
-        if (payload.priority !== undefined) {
-          const priority = Number(payload.priority);
-          if (![1, 2, 3].includes(priority)) throw new Error('اولویت سفارش باید ۱، ۲ یا ۳ باشد.');
-          data.priority = priority;
+      try {
+        const prisma = getPrismaClient();
+        const updated = await prisma.$transaction(async (tx: any) => {
+          const current = await tx.customerOrder.findFirst({
+            where: { OR: [{ id }, { orderNumber: id }] },
+            include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: 'asc' } } },
+          });
+          if (!current) return null;
+          const data: any = {};
+          if (payload.orderNumber !== undefined) data.orderNumber = String(payload.orderNumber).trim();
+          if (payload.orderDate !== undefined) data.orderDate = new Date(payload.orderDate);
+          if (payload.dueDate !== undefined) data.requestedDeliveryDate = new Date(payload.dueDate);
+          if (payload.contractNumber !== undefined) data.customerContractNumber = payload.contractNumber || null;
+          if (payload.priority !== undefined) {
+            const priority = Number(payload.priority);
+            if (![1, 2, 3].includes(priority)) throw new Error('اولویت سفارش باید ۱، ۲ یا ۳ باشد.');
+            data.priority = priority;
+          }
+          if (payload.notes !== undefined) data.notes = payload.notes || null;
+          if (payload.status !== undefined) {
+            data.documentStatus = payload.status === 'CANCELLED' ? 'CANCELLED' : payload.status === 'FULFILLED' ? 'CLOSED' : 'CONFIRMED';
+          }
+          if (Array.isArray(payload.lines)) {
+            const resolved = await resolveRelationalOrderLines(tx, payload.lines, current.id);
+            await tx.customerOrderLine.deleteMany({ where: { orderId: current.id } });
+            data.orderLines = { create: resolved };
+          }
+          return tx.customerOrder.update({
+            where: { id: current.id },
+            data,
+            include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: 'asc' } } },
+          });
+        }, { isolationLevel: 'Serializable' });
+        if (updated) {
+          const data = mapRelationalCustomerOrder(updated);
+          const idx = customerOrdersStore.findIndex(order => order.id === data.id);
+          if (idx >= 0) customerOrdersStore[idx] = data;
+          else customerOrdersStore.unshift(data);
+          planSuggestionsStore.length = 0;
+          planSuggestionsStore.push(...generateProductionPlanSuggestions());
+          await persistInventoryAppState();
+          return res.json({ success: true, message: `سفارش شماره «${data.orderNumber}» در PostgreSQL به‌روزرسانی شد.`, data, source: 'postgresql' });
         }
-        if (payload.notes !== undefined) data.notes = payload.notes || null;
-        if (payload.status !== undefined) {
-          data.documentStatus = payload.status === 'CANCELLED' ? 'CANCELLED' : payload.status === 'FULFILLED' ? 'CLOSED' : 'CONFIRMED';
+      } catch (_dbUpdateErr: any) {
+        const msg = _dbUpdateErr instanceof Error ? _dbUpdateErr.message : '';
+        if (msg !== 'HYBRID_DISK_MODE_ACTIVE' && !/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|timeout|connect/i.test(msg)) {
+          throw _dbUpdateErr;
         }
-        if (Array.isArray(payload.lines)) {
-          const resolved = await resolveRelationalOrderLines(tx, payload.lines, current.id);
-          await tx.customerOrderLine.deleteMany({ where: { orderId: current.id } });
-          data.orderLines = { create: resolved };
-        }
-        return tx.customerOrder.update({
-          where: { id: current.id },
-          data,
-          include: { customer: true, orderLines: { include: { part: true }, orderBy: { lineNumber: 'asc' } } },
-        });
-      }, { isolationLevel: 'Serializable' });
-      if (updated) {
-        const data = mapRelationalCustomerOrder(updated);
-        const idx = customerOrdersStore.findIndex(order => order.id === data.id);
-        if (idx >= 0) customerOrdersStore[idx] = data;
-        else customerOrdersStore.unshift(data);
-        planSuggestionsStore.length = 0;
-        planSuggestionsStore.push(...generateProductionPlanSuggestions());
-        await persistInventoryAppState();
-        return res.json({ success: true, message: `سفارش شماره «${data.orderNumber}» در PostgreSQL به‌روزرسانی شد.`, data, source: 'postgresql' });
       }
     }
 
     const idx = customerOrdersStore.findIndex(o => o.id === id || o.orderNumber === id);
     if (idx === -1) return res.status(404).json({ success: false, error: 'سفارش فروش مورد نظر یافت نشد.' });
     const current = customerOrdersStore[idx];
-    const updatedLines = Array.isArray(payload.lines) ? payload.lines.map((line: any) => ({
-      ...line,
-      orderedQuantity: Number(line.orderedQuantity) || 0,
-      deliveredQuantity: Number(line.deliveredQuantity) || 0,
-      remainingQuantity: Math.max(0, (Number(line.orderedQuantity) || 0) - (Number(line.deliveredQuantity) || 0)),
-    })) : current.lines;
+    if (payload.priority !== undefined && ![1, 2, 3].includes(Number(payload.priority))) {
+      return res.status(400).json({ success: false, error: 'اولویت سفارش باید ۱، ۲ یا ۳ باشد.' });
+    }
+    let updatedLines = current.lines;
+    if (Array.isArray(payload.lines)) {
+      if (payload.lines.length === 0) {
+        return res.status(400).json({ success: false, error: 'حداقل یک ردیف قطعه برای سفارش مشتری الزامی است.' });
+      }
+      updatedLines = [];
+      for (let i = 0; i < payload.lines.length; i++) {
+        const line = payload.lines[i] || {};
+        const orderedQuantity = Number(line.orderedQuantity ?? line.orderedQty);
+        const deliveredQuantity = Number(line.deliveredQuantity ?? line.deliveredQty ?? 0);
+        if (
+          !Number.isFinite(orderedQuantity) ||
+          orderedQuantity <= 0 ||
+          !Number.isFinite(deliveredQuantity) ||
+          deliveredQuantity < 0 ||
+          deliveredQuantity > orderedQuantity
+        ) {
+          return res.status(400).json({ success: false, error: `تعداد سفارش/تحویل در ردیف ${i + 1} معتبر نیست.` });
+        }
+        const partIdentifier = String(line.partId || line.partCode || '').trim();
+        const part = partsStore.find(p => p.id === partIdentifier || p.code === partIdentifier);
+        if (!part) {
+          return res.status(400).json({ success: false, error: `قطعه «${partIdentifier || '-'}» در اطلاعات پایه فعال یافت نشد.` });
+        }
+        updatedLines.push({
+          id: line.id || `ORDL-${current.id}-${i + 1}`,
+          orderId: current.id,
+          partId: part.id,
+          partCode: part.code,
+          partName: part.name,
+          orderedQuantity,
+          deliveredQuantity,
+          remainingQuantity: orderedQuantity - deliveredQuantity,
+          dueDate: String(line.dueDate || line.requestedDate || payload.dueDate || current.dueDate).slice(0, 10),
+          unitPriceRials: line.unitPriceRials == null ? undefined : Number(line.unitPriceRials),
+        });
+      }
+    }
     const updatedOrder: CustomerOrder = { ...current, ...payload, id: current.id, lines: updatedLines };
     customerOrdersStore[idx] = updatedOrder;
     planSuggestionsStore.length = 0;
@@ -9442,6 +9633,9 @@ apiRouter.put('/planning/customer-orders/:id', async (req: Request, res: Respons
  */
 apiRouter.delete('/planning/customer-orders/:id', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف سفارش مشتری')) {
+      return;
+    }
     const { id } = req.params;
     let deletedOrderNumber = '';
 
@@ -11819,6 +12013,9 @@ apiRouter.post('/mrp/purchase-requisitions', async (req: Request, res: Response)
 
 apiRouter.delete('/mrp/purchase-requisitions/:prNumber', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'لغو درخواست خرید MRP')) {
+      return;
+    }
     const key = decodeURIComponent(req.params.prNumber);
     const idx = mrpPurchaseRequisitionsStore.findIndex(
       p => p.prNumber === key || p.id === key || p.materialCode === key
@@ -12341,6 +12538,9 @@ apiRouter.put('/maintenance/requests/:id', async (req: Request, res: Response) =
 
 apiRouter.delete('/maintenance/requests/:id', async (req: Request, res: Response) => {
   try {
+    if (!assertAuthorizedRole(req, res, ['ADMIN', 'PRODUCTION_MANAGER'], 'حذف درخواست تعمیرات')) {
+      return;
+    }
     const { id } = req.params;
     maintenanceRequestsStore = maintenanceRequestsStore.filter(i => i.id !== id && i.requestCode !== id);
     await persistInventoryAppState();
@@ -13101,10 +13301,19 @@ apiRouter.get('/erp-services/wip-flow/:workOrderId', async (req: Request, res: R
 apiRouter.post('/erp-services/wip-log', async (req: Request, res: Response) => {
   try {
     const { workOrderId, operationId, goodQuantity, scrapQuantity = 0, shiftName = 'شیفت صبح', notes = '' } = req.body;
-    if (!workOrderId || !operationId || Number(goodQuantity) <= 0) {
+    const goodNum = Number(goodQuantity);
+    const scrapNum = Number(scrapQuantity);
+    if (
+      !workOrderId ||
+      !operationId ||
+      !Number.isFinite(goodNum) ||
+      goodNum <= 0 ||
+      !Number.isFinite(scrapNum) ||
+      scrapNum < 0
+    ) {
       return res.status(400).json({
         success: false,
-        error: 'شناسه دستور کار، مرحله عملیات و تعداد تولید سالم الزامی است.',
+        error: 'شناسه دستور کار، مرحله عملیات، تعداد تولید سالم (بزرگتر از صفر) و ضایعات غیرمنفی الزامی و معتبر است.',
       });
     }
 

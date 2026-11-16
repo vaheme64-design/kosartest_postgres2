@@ -493,58 +493,64 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <Database className="w-3.5 h-3.5 text-[#007cc0]" />
-                      <span>وضعیت پایگاه داده (PostgreSQL)</span>
+                      <span>وضعیت پایگاه داده</span>
                     </div>
-                    <span className="text-[10px] text-[#107e3e] font-bold">متصل</span>
+                    <span className={`text-[10px] font-bold ${dbStatus?.isConnected ? 'text-[#107e3e]' : 'text-[#e9730c]'}`}>
+                      {dbStatus === null ? '...' : dbStatus.isConnected ? 'PostgreSQL متصل' : 'دیسک پایدار'}
+                    </span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onSeedDemo();
-                      setShowUserMenu(false);
-                    }}
-                    disabled={loading}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[#e5f3fa] text-[#333333] cursor-pointer disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-[#007cc0] ${loading ? 'animate-spin' : ''}`} />
-                    <span>بازنشانی داده‌های نمونه کارخانه</span>
-                  </button>
+                  {currentUser.role === 'ADMIN' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await onSeedDemo();
+                          setShowUserMenu(false);
+                        }}
+                        disabled={loading}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[#e5f3fa] text-[#333333] cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 text-[#007cc0] ${loading ? 'animate-spin' : ''}`} />
+                        <span>بازنشانی داده‌های نمونه کارخانه</span>
+                      </button>
 
-                  {!showConfirmClean ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmClean(true)}
-                      disabled={loading}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[#fdf3f3] text-[#bb0000] cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>پاکسازی داده‌های نمونه</span>
-                    </button>
-                  ) : (
-                    <div className="flex items-center justify-between bg-[#fdf3f3] border border-[#e5b3b3] px-2.5 py-1.5 rounded text-xs">
-                      <span className="text-[#bb0000] text-[11px] font-bold">تأیید پاکسازی داده‌ها؟</span>
-                      <div className="flex items-center gap-1.5">
+                      {!showConfirmClean ? (
                         <button
                           type="button"
-                          onClick={async () => {
-                            await onCleanDemo();
-                            setShowConfirmClean(false);
-                            setShowUserMenu(false);
-                          }}
-                          className="bg-[#bb0000] hover:bg-[#990000] text-white font-bold px-2 py-0.5 rounded text-[10px] cursor-pointer"
+                          onClick={() => setShowConfirmClean(true)}
+                          disabled={loading}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[#fdf3f3] text-[#bb0000] cursor-pointer"
                         >
-                          بله، حذف
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>پاکسازی داده‌های نمونه</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmClean(false)}
-                          className="text-[#666666] hover:text-[#333333] px-1.5 py-0.5 text-[10px] cursor-pointer"
-                        >
-                          انصراف
-                        </button>
-                      </div>
-                    </div>
+                      ) : (
+                        <div className="flex items-center justify-between bg-[#fdf3f3] border border-[#e5b3b3] px-2.5 py-1.5 rounded text-xs">
+                          <span className="text-[#bb0000] text-[11px] font-bold">تأیید پاکسازی داده‌ها؟</span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await onCleanDemo();
+                                setShowConfirmClean(false);
+                                setShowUserMenu(false);
+                              }}
+                              className="bg-[#bb0000] hover:bg-[#990000] text-white font-bold px-2 py-0.5 rounded text-[10px] cursor-pointer"
+                            >
+                              بله، حذف
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmClean(false)}
+                              className="text-[#666666] hover:text-[#333333] px-1.5 py-0.5 text-[10px] cursor-pointer"
+                            >
+                              انصراف
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 

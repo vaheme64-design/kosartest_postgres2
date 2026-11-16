@@ -6,8 +6,8 @@ import {
   WipDashboardMetrics,
   MoReconciliationReport,
 } from '../types/productionWip';
-import { Part, Routing } from '../types/inventory';
-import { INITIAL_ROUTINGS, INITIAL_PARTS } from './sampleData';
+import { Part, Routing, DieMold } from '../types/inventory';
+import { INITIAL_ROUTINGS, INITIAL_PARTS, INITIAL_DIES_MOLDS } from './sampleData';
 import { getPrismaClient, isDatabaseUrlConfigured } from './db/prisma';
 
 // In-Memory Data Store for Production & WIP Execution
@@ -18,6 +18,7 @@ export const productionLogsStore: ProductionActivityLog[] = [];
 export interface WipRuntimeProviderData {
   parts: Part[];
   routings: Routing[];
+  dies?: DieMold[];
 }
 
 let wipRuntimeProvider: (() => WipRuntimeProviderData) | null = null;
@@ -32,6 +33,10 @@ function getLiveParts(): Part[] {
 
 function getLiveRoutings(): Routing[] {
   return wipRuntimeProvider ? wipRuntimeProvider().routings : INITIAL_ROUTINGS;
+}
+
+function getLiveDies(): DieMold[] {
+  return wipRuntimeProvider?.().dies || INITIAL_DIES_MOLDS;
 }
 
 import fs from 'node:fs';
@@ -528,6 +533,20 @@ export function createManufacturingOrder(params: {
   notes?: string;
   createdBy: string;
 }): { success: boolean; data?: ManufacturingOrder; error?: string } {
+  const targetQty = Number(params.targetQuantity);
+  if (!Number.isFinite(targetQty) || targetQty <= 0) {
+    return { success: false, error: 'تیراژ هدف دستور تولید باید عددی بزرگتر از صفر باشد.' };
+  }
+
+  let initialInput = targetQty;
+  if (params.initialInputQuantity !== undefined && params.initialInputQuantity !== null) {
+    const parsedInitial = Number(params.initialInputQuantity);
+    if (!Number.isFinite(parsedInitial) || parsedInitial < 0) {
+      return { success: false, error: 'مقدار ورودی اولیه مواد نمی‌تواند منفی یا نامعتبر باشد.' };
+    }
+    initialInput = parsedInitial;
+  }
+
   const liveParts = getLiveParts();
   const liveRoutings = getLiveRoutings();
   const partLookup = params.partId || params.partCode || '';
@@ -552,10 +571,6 @@ export function createManufacturingOrder(params: {
     moId = `MO-2026-${String(seqNum).padStart(3, '0')}`;
   }
   const now = new Date().toISOString();
-  const initialInput =
-    params.initialInputQuantity !== undefined
-      ? Math.max(0, Number(params.initialInputQuantity) || 0)
-      : params.targetQuantity;
 
   // Generate operations from approved route version
   const operations: ManufacturingOperation[] = routing.operations.map((op, idx) => ({
@@ -591,7 +606,7 @@ export function createManufacturingOrder(params: {
     partId: part.id,
     partCode: part.code,
     partName: part.name,
-    targetQuantity: params.targetQuantity,
+    targetQuantity: targetQty,
     initialInputQuantity: initialInput,
     completedQuantity: 0,
     totalScrapQuantity: 0,
@@ -694,20 +709,21 @@ export function registerOperationInput(params: {
   const op = mo.operations.find(o => o.id === params.operationId);
   if (!op) return { success: false, error: 'مرحله عملیاتی یافت نشد.' };
 
-  if (params.quantity <= 0) {
-    return { success: false, error: 'مقدار ورودی باید بزرگتر از صفر باشد.' };
+  const qty = Number(params.quantity);
+  if (!Number.isFinite(qty) || qty <= 0) {
+    return { success: false, error: 'مقدار ورودی باید عددی بزرگتر از صفر باشد.' };
   }
 
-  if (params.quantity > op.waitingInputQty) {
+  if (qty > op.waitingInputQty) {
     return {
       success: false,
-      error: `موجودی در انتظار برای شروع پردازش کافی نیست. موجودی در انتظار: ${op.waitingInputQty}، مقدار درخواستی: ${params.quantity}`,
+      error: `موجودی در انتظار برای شروع پردازش کافی نیست. موجودی در انتظار: ${op.waitingInputQty}، مقدار درخواستی: ${qty}`,
     };
   }
 
   // State Transition & Conservation
-  op.waitingInputQty -= params.quantity;
-  op.inProgressQty += params.quantity;
+  op.waitingInputQty -= qty;
+  op.inProgressQty += qty;
   op.status = 'IN_PROGRESS';
   op.lastActivityAt = new Date().toISOString();
   if (params.machineId) op.machineId = params.machineId;
@@ -723,7 +739,7 @@ export function registerOperationInput(params: {
     stepNumber: op.stepNumber,
     stepName: op.stepName,
     activityType: 'INPUT_LOAD',
-    quantity: params.quantity,
+    quantity: qty,
     operatorName: params.operatorName,
     machineId: params.machineId,
     timestamp: new Date().toISOString(),
@@ -752,10 +768,18 @@ export function registerOperationProduction(params: {
   const op = mo.operations.find(o => o.id === params.operationId);
   if (!op) return { success: false, error: 'مرحله عملیاتی یافت نشد.' };
 
-  const good = Math.max(0, Number(params.goodQty) || 0);
-  const scrap = Math.max(0, Number(params.scrapQty) || 0);
-  const rework = Math.max(0, Number(params.reworkQty) || 0);
-  const rejected = Math.max(0, Number(params.rejectedQty) || 0);
+  const good = Number(params.goodQty ?? 0);
+  const scrap = Number(params.scrapQty ?? 0);
+  const rework = Number(params.reworkQty ?? 0);
+  const rejected = Number(params.rejectedQty ?? 0);
+  if (
+    !Number.isFinite(good) || good < 0 ||
+    !Number.isFinite(scrap) || scrap < 0 ||
+    !Number.isFinite(rework) || rework < 0 ||
+    !Number.isFinite(rejected) || rejected < 0
+  ) {
+    return { success: false, error: 'مقادیر تولید سالم، ضایعات، دوباره‌کاری و مردودی نمی‌توانند منفی یا نامعتبر باشند.' };
+  }
   const totalReported = good + scrap + rework + rejected;
 
   if (totalReported <= 0) {
@@ -781,6 +805,27 @@ export function registerOperationProduction(params: {
   op.reworkQty += rework;
   op.rejectedQty += rejected;
   op.lastActivityAt = postedAt;
+
+  // Increment die/mold stroke counter in sync with actual press/weld shop-floor strokes
+  const liveDies = getLiveDies();
+  const machineCodeOrId = params.machineId || op.machineId;
+  const matchedDie =
+    liveDies.find(
+      d =>
+        (d.partId === mo.partId || d.partCode === mo.partCode) &&
+        d.processType === op.processType &&
+        (!machineCodeOrId || !d.compatibleMachineCodes?.length || d.compatibleMachineCodes.includes(machineCodeOrId))
+    ) ||
+    liveDies.find(d => (d.partId === mo.partId || d.partCode === mo.partCode) && d.processType === op.processType);
+
+  let diePmNotice = '';
+  if (matchedDie) {
+    matchedDie.currentStrokes = (Number(matchedDie.currentStrokes) || 0) + totalReported;
+    if (matchedDie.strokeLifeTarget > 0 && matchedDie.currentStrokes >= matchedDie.strokeLifeTarget) {
+      matchedDie.status = 'UNDER_MAINTENANCE';
+      diePmNotice = ` [هشدار PM قالب ${matchedDie.code}: ضربه فعلی ${matchedDie.currentStrokes} به حد نصاب سرویس رسید]`;
+    }
+  }
 
   const nextOp = mo.operations.find(candidate => candidate.sequence === op.sequence + 1);
   op.transferredQty += good;
@@ -881,7 +926,7 @@ export function registerOperationProduction(params: {
     operatorName: params.operatorName,
     machineId: params.machineId,
     timestamp: postedAt,
-    notes: params.notes,
+    notes: `${params.notes || ''}${diePmNotice}`.trim() || undefined,
   });
   return { success: true, data: mo };
 }

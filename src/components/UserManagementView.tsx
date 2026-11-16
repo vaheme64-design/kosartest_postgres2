@@ -38,6 +38,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   const [dbStatus, setDbStatus] = useState<any>(null);
   const [loadingDb, setLoadingDb] = useState<boolean>(true);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+  const [authErrorMsg, setAuthErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setLoadingDb(true);
@@ -99,8 +100,6 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       color: 'border-[#f5b7b1] bg-[#ffecec] text-[#bb0000]',
     },
   ];
-
-  const [authErrorMsg, setAuthErrorMsg] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     setAuthErrorMsg(null);
@@ -325,7 +324,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 ) : (
                   <>
                     <AlertCircle className="w-3.5 h-3.5" />
-                    موتور پایدار سرور فعال است (DATABASE_URL تنظیم نشده)
+                    موتور پایدار دیسک فعال است ({dbStatus?.data?.storageMode || 'HYBRID_DURABLE_DISK'})
                   </>
                 )}
               </span>

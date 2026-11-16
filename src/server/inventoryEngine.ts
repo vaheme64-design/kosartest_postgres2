@@ -71,7 +71,8 @@ export interface ReversalResult {
 export function calculateDetailedStockBalances(
   documents: InventoryDocument[],
   reservations: InventoryReservation[],
-  parts: Part[]
+  parts: Part[],
+  qcHolds?: Record<string, any>
 ): {
   balances: DetailedStockBalance[];
   metrics: InventoryDashboardMetrics;
@@ -359,12 +360,12 @@ export function calculateDetailedStockBalances(
 
       for (const entry of matchingEntries) {
         if (remainingQtyToAllocate <= 0) break;
-        const availableToReserve = Math.max(0, entry.physicalQty - entry.reservedQty);
+        const availableToReserve = Math.max(0, entry.physicalQty - entry.reservedQty - entry.qualityBlockedQty);
         const qtyAllocated = Math.min(availableToReserve, remainingQtyToAllocate);
         const kgAllocated =
           part.unit === 'KG'
             ? qtyAllocated
-            : Math.min(entry.physicalKg - entry.reservedKg, remainingKgToAllocate);
+            : Math.min(Math.max(0, entry.physicalKg - entry.reservedKg - entry.qualityBlockedKg), remainingKgToAllocate);
 
         entry.reservedQty += qtyAllocated;
         entry.reservedKg += kgAllocated;
@@ -422,6 +423,21 @@ export function calculateDetailedStockBalances(
   const activeLots = new Set<string>();
 
   for (const item of balanceMap.values()) {
+    if (qcHolds && Object.keys(qcHolds).length > 0) {
+      const hold =
+        qcHolds[item.id] ||
+        (item.lotNumber ? qcHolds[item.lotNumber] : undefined) ||
+        qcHolds[`${item.partId}-${item.warehouseId}`];
+      if (hold && hold.isHeld) {
+        const addedBlocked =
+          item.unit === 'KG'
+            ? Number(hold.heldWeightKg || hold.heldQty || Math.max(0, item.physicalKg - item.qualityBlockedKg) || 0)
+            : Number(hold.heldQty || Math.max(0, item.physicalQty - item.qualityBlockedQty) || 0);
+        item.qualityBlockedQty = Math.min(item.physicalQty, (item.qualityBlockedQty || 0) + Math.max(0, addedBlocked));
+        const unitWeight = item.physicalQty > 0 ? item.physicalKg / item.physicalQty : 1;
+        item.qualityBlockedKg = Math.min(item.physicalKg, Math.round(item.qualityBlockedQty * unitWeight * 1000) / 1000);
+      }
+    }
     item.availableQty = Math.max(0, item.physicalQty - item.reservedQty - item.qualityBlockedQty);
     item.availableKg = Math.max(0, item.physicalKg - item.reservedKg - item.qualityBlockedKg);
 
@@ -496,7 +512,8 @@ export function atomicPostDocument(
   allDocuments: InventoryDocument[],
   reservations: InventoryReservation[],
   parts: Part[],
-  user: { uid: string; displayName: string }
+  user: { uid: string; displayName: string },
+  qcHolds?: Record<string, any>
 ): PostDocumentResult {
   // Rule 4: Prevent duplicate posting
   if (document.postingStatus === 'POSTED') {
@@ -520,8 +537,9 @@ export function atomicPostDocument(
     };
   }
 
-  // Reject zero and negative quantities for ordinary receipt, issue, and transfer lines
+  // Reject zero and negative quantities for ordinary opening balance, receipt, issue, and transfer lines
   const standardDocTypes: InventoryDocType[] = [
+    'OPENING_BALANCE',
     'RECEIPT_RAW_MATERIAL',
     'RECEIPT_FINISHED_GOODS',
     'ISSUE_RAW_MATERIAL',
@@ -532,12 +550,35 @@ export function atomicPostDocument(
   ];
   if (standardDocTypes.includes(document.documentType)) {
     for (const line of document.lines) {
-      if (Number(line.quantity) <= 0 || (line.quantityKg !== undefined && Number(line.quantityKg) <= 0)) {
+      if (
+        !Number.isFinite(Number(line.quantity)) ||
+        Number(line.quantity) <= 0 ||
+        (line.quantityKg !== undefined && (!Number.isFinite(Number(line.quantityKg)) || Number(line.quantityKg) <= 0))
+      ) {
         return {
           success: false,
           error: `خطای اعتبارسنجی مقداری: مقدار ردیف «${line.lineNumber}» قطعه «${line.partCode}» باید بزرگتر از صفر باشد. مقادیر منفی یا صفر مجاز نیستند.`,
         };
       }
+    }
+  }
+
+  // Transfer validation: must have distinct target warehouse or location
+  if (document.documentType === 'TRANSFER') {
+    if (!document.targetWarehouseId) {
+      return {
+        success: false,
+        error: 'برای ثبت سند انتقال بین‌انباری، انتخاب انبار مقصد الزامی است.',
+      };
+    }
+    if (
+      document.warehouseId === document.targetWarehouseId &&
+      document.lines.every(l => !l.targetLocationCode || l.targetLocationCode === l.locationCode)
+    ) {
+      return {
+        success: false,
+        error: 'انبار و موقعیت مبدأ و مقصد انتقال نمی‌توانند یکسان باشند.',
+      };
     }
   }
 
@@ -549,10 +590,10 @@ export function atomicPostDocument(
     };
   }
 
-  // Negative Stock Protection & CUMULATIVE validation across all lines
+  // Negative Stock & Quality Quarantine (QC Hold) Protection with CUMULATIVE validation across all lines
   const isStockDeduction = ['ISSUE_RAW_MATERIAL', 'ISSUE_FINISHED_GOODS', 'DELIVERY_CUSTOMER', 'SHIPMENT_CUSTOMER', 'TRANSFER'].includes(document.documentType);
   if (isStockDeduction) {
-    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts);
+    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts, qcHolds);
 
     // Group requested deductions by part + warehouse + lot to check cumulative demand
     const requestedMap = new Map<string, { partCode: string; totalRequested: number; lotNumber?: string }>();
@@ -568,7 +609,7 @@ export function atomicPostDocument(
       requestedMap.set(key, existing);
     }
 
-    // Validate each cumulative requirement against available stock
+    // Validate each cumulative requirement against available (non-reserved, non-quarantined) stock
     for (const [key, req] of requestedMap.entries()) {
       const [partId, warehouseId, lot] = key.split(':::');
       const matchingBalances = balances.filter(
@@ -579,19 +620,24 @@ export function atomicPostDocument(
       );
 
       const totalAvailableInStore = matchingBalances.reduce((sum, b) => sum + b.availableQty, 0);
+      const totalBlockedInStore = matchingBalances.reduce((sum, b) => sum + b.qualityBlockedQty, 0);
 
       if (req.totalRequested > totalAvailableInStore) {
+        const qcNote =
+          totalBlockedInStore > 0
+            ? ` (${totalBlockedInStore} واحد در قرنطینه کیفی QC Hold مسدود است)`
+            : '';
         return {
           success: false,
-          error: `خطای کنترل موجودی: مجموع تقاضای ردیف‌های سند برای قطعه «${req.partCode}» (${req.totalRequested}) بیش از موجودی آزاد انبار (${totalAvailableInStore}) است. جلوگیری از منفی شدن موجودی.`,
+          error: `خطای کنترل موجودی: مجموع تقاضای ردیف‌های سند برای قطعه «${req.partCode}» (${req.totalRequested}) بیش از موجودی آزاد انبار (${totalAvailableInStore}) است${qcNote}. جلوگیری از منفی شدن موجودی یا مصرف کالای قرنطینه.`,
         };
       }
     }
   }
 
-  // Negative adjustment validation: ensure negative adjustment does not exceed available stock
+  // Negative adjustment validation: ensure negative adjustment does not exceed available (non-quarantined) stock
   if (document.documentType === 'ADJUSTMENT') {
-    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts);
+    const { balances } = calculateDetailedStockBalances(allDocuments, reservations, parts, qcHolds);
     for (const line of document.lines) {
       if (Number(line.quantity) < 0) {
         const absQty = Math.abs(Number(line.quantity));

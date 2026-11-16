@@ -42,6 +42,7 @@ interface MovementHistoryViewProps {
   warehouses: WarehouseDefinition[];
   loading: boolean;
   initialSearchTerm?: string;
+  userRole?: string;
   onRefresh: () => Promise<void>;
   onReverseDocument: (documentId: string, reason: string) => Promise<{ success: boolean; message: string }>;
 }
@@ -51,6 +52,7 @@ export const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({
   warehouses,
   loading,
   initialSearchTerm,
+  userRole,
   onRefresh,
   onReverseDocument,
 }) => {
@@ -378,7 +380,10 @@ export const MovementHistoryView: React.FC<MovementHistoryViewProps> = ({
             const typeInfo = docTypeLabels[doc.documentType] || { label: doc.documentType, color: 'bg-slate-100 text-slate-700 border-slate-200', icon: FileText };
             const statusInfo = statusLabels[doc.postingStatus] || { label: doc.postingStatus, color: 'bg-slate-100 text-slate-700' };
             const Icon = typeInfo.icon;
-            const canReverse = doc.postingStatus === 'POSTED' && doc.documentType !== 'REVERSAL';
+            const roleAllowedToReverse =
+              !userRole || ['ADMIN', 'WAREHOUSE_KEEPER', 'PRODUCTION_MANAGER'].includes(userRole);
+            const canReverse =
+              roleAllowedToReverse && doc.postingStatus === 'POSTED' && doc.documentType !== 'REVERSAL';
 
             return (
               <div
